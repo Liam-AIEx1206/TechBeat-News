@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fff7ed;
+  --foreground: #1c1917;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(249, 115, 22, 0.3);
+  color: #1c1917;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.3);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.5);
+}
+
+/* ─── Animated mesh gradient background ─── */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%);
+}
+.mesh-bg::before,
+.mesh-bg::after {
+  content: "";
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.5;
+  animation: mesh-float 18s ease-in-out infinite;
+}
+.mesh-bg::before {
+  background: radial-gradient(circle, #fb923c 0%, transparent 70%);
+  top: -200px;
+  left: -200px;
+}
+.mesh-bg::after {
+  background: radial-gradient(circle, #f97316 0%, transparent 70%);
+  bottom: -300px;
+  right: -100px;
+  animation-delay: -9s;
+}
+@keyframes mesh-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(80px, -60px) scale(1.1); }
+  66% { transform: translate(-60px, 80px) scale(0.95); }
+}
+
+/* ─── Glass card ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px -8px rgba(249, 115, 22, 0.15),
+              0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 48px -12px rgba(249, 115, 22, 0.2),
+              0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+}
+
+/* ─── Animated gradient text ─── */
+.gradient-text {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 6s ease infinite;
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ─── Glow button ─── */
+.btn-glow {
+  position: relative;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 8px 24px -6px rgba(249, 115, 22, 0.6),
+              0 0 0 1px rgba(249, 115, 22, 0.4) inset;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px -6px rgba(249, 115, 22, 0.7),
+              0 0 0 1px rgba(249, 115, 22, 0.5) inset;
+}
+.btn-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ─── Pulse ring (active stage indicator) ─── */
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #f97316;
+  animation: pulse-ring 1.6s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ─── Shimmer skeleton ─── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(254, 215, 170, 0.4) 0%,
+    rgba(251, 146, 60, 0.6) 50%,
+    rgba(254, 215, 170, 0.4) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Fade-in-up entry ─── */
+.fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

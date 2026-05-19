@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperFrames: Viết HTML, Render Video cho AI Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0804;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    overflow: hidden;
+  }
+
+  #root {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+    overflow: hidden;
+  }
+
+  /* Background decorative elements */
+  #root::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 15% 50%, rgba(249,115,22,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 400px at 85% 30%, rgba(251,146,60,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scene {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .scene-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    max-width: 1600px;
+    width: 100%;
+    padding: 60px;
+    align-items: center;
+  }
+
+  /* Info Column */
+  .info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .scene-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(249,115,22,0.15);
+    border: 1px solid rgba(249,115,22,0.4);
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fb923c;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .scene-badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #f97316;
+    box-shadow: 0 0 8px rgba(249,115,22,0.8);
+  }
+
+  .scene-title {
+    font-size: 4.5rem;
+    font-weight: 900;
+    color: #fff7ed;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .scene-title span {
+    color: #f97316;
+  }
+
+  .scene-subtitle {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #fb923c;
+    line-height: 1.3;
+  }
+
+  .scene-description {
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: rgba(255,247,237,0.75);
+    line-height: 1.7;
+  }
+
+  /* Visual Column */
+  .visual-col {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ===================== SCENE 1 VISUALS ===================== */
+  .s1-logo-container {
+    position: relative;
+    width: 600px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+
+  .s1-logo-main {
+    background: linear-gradient(135deg, rgba(249,115,22,0.2), rgba(251,146,60,0.1));
+    border: 2px solid rgba(249,115,22,0.5);
+    border-radius: 24px;
+    padding: 40px 60px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(249,115,22,0.2), inset 0 0 40px rgba(249,115,22,0.05);
+  }
+
+  .s1-logo-text {
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: #fff7ed;
+    letter-spacing: -0.02em;
+  }
+
+  .s1-logo-text span { color: #f97316; }
+
+  .s1-tagline {
+    font-size: 1.1rem;
+    color: rgba(255,247,237,0.6);
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .s1-icons-row {
+    display: flex;
+    gap: 24px;
+  }
+
+  .s1-icon-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: rgba(249,115,22,0.1);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 16px;
+    padding: 20px 28px;
+    min-width: 110px;
+  }
+
+  .s1-icon-emoji { font-size: 2rem; }
+
+  .s1-icon-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fdba74;
+    letter-spacing: 0.05em;
+  }
+
+  .s1-glow-ring {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    border: 1px solid rgba(249,115,22,0.15);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* ===================== SCENE 2 VISUALS ===================== */
+  .s2-split {
+    display: flex;
+    gap: 24px;
+    width: 640px;
+  }
+
+  .s2-card {
+    flex: 1;
+    background: rgba(15,8,4,0.8);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 16px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .s2-card-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #f97316;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(249,115,22,0.15);
+    padding: 4px 12px;
+    border-radius: 50px;
+    width: fit-content;
+  }
+
+  .s2-terminal {
+    background: #0a0503;
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #a3e635;
+    line-height: 1.6;
+    border: 1px solid rgba(249,115,22,0.2);
+  }
+
+  .s2-terminal .prompt { color: #f97316; }
+  .s2-terminal .cmd { color: #fdba74; }
+  .s2-terminal .out { color: rgba(255,247,237,0.5); }
+
+  .s2-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff7ed;
+  }
+
+  /* ===================== SCENE 3 VISUALS ===================== */
+  .s3-agents-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    width: 600px;
+  }
+
+  .s3-agents-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+  }
+
+  .s3-agent-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15,8,4,0.9);
+    border: 1px solid rgba(249,115,22,0.35);
+    border-radius: 50px;
+    padding: 14px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  .s3-agent-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #f97316;
+    box-shadow: 0 0 10px rgba(249,115,22,0.8);
+  }
+
+  .s3-agent-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff7ed;
+  }
+
+  .s3-center-hub {
+    background: linear-gradient(135deg, rgba(249,115,22,0.3), rgba(251,146,60,0.15));
+    border: 2px solid rgba(249,115,22,0.6);
+    border-radius: 20px;
+    padding: 24px 48px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(249,115,22,0.25);
+  }
+
+  .s3-hub-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff7ed;
+  }
+
+  .s3-hub-sub {
+    font-size: 0.9rem;
+    color: #fb923c;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .s3-arrows {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+  }
+
+  .s3-arrow {
+    font-size: 1.5rem;
+    color: rgba(249,115,22,0.6);
+  }
+
+  /* ===================== SCENE 4 VISUALS ===================== */
+  .s4-code-container {
+    width: 620px;
+    background: #0a0503;
+    border-radius: 16px;
+    border: 1px solid rgba(249,115,22,0.3);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .s4-code-header {
+    background: rgba(249,115,22,0.1);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(249,115,22,0.2);
+  }
+
+  .s4-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .s4-dot.red { background: #ef4444; }
+  .s4-dot.yellow { background: #eab308; }
+  .s4-dot.green { background: #22c55e; }
+
+  .s4-filename {
+    font-size: 0.85rem;
+    color: rgba(255,247,237,0.5);
+    font-family: 'Courier New', monospace;
+    margin-left: 8px;
+  }
+
+  .s4-code-body {
+    padding: 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+  }
+
+  .s4-line { display: block; }
+  .s4-tag { color: #fb923c; }
+  .s4-attr { color: #a3e635; }
+  .s4-val { color: #38bdf8; }
+  .s4-comment { color: rgba(255,247,237,0.3); }
+  .s4-str { color: #f472b6; }
+
+  .s4-badge-row {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    background: rgba(249,115,22,0.05);
+    border-top: 1px solid rgba(249,115,22,0.15);
+  }
+
+  .s4-tech-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1px solid rgba(249,115,22,0.4);
+    color: #fb923c;
+    background: rgba(249,115,22,0.1);
+  }
+
+  /* ===================== SCENE 5 VISUALS ===================== */
+  .s5-compare-table {
+    width: 640px;
+    background: rgba(10,5,3,0.8);
+    border-radius: 16px;
+    border: 1px solid rgba(249,115,22,0.3);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .s5-table-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background: rgba(249,115,22,0.1);
+    border-bottom: 1px solid rgba(249,115,22,0.3);
+  }
+
+  .s5-th {
+    padding: 16px 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff7ed;
+    text-align: center;
+  }
+
+  .s5-th.hf { color: #f97316; }
+  .s5-th.rm { color: rgba(255,247,237,0.5); }
+
+  .s5-table-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid rgba(249,115,22,0.1);
+  }
+
+  .s5-table-row:last-child { border-bottom: none; }
+
+  .s5-td {
+    padding: 14px 20px;
+    font-size: 0.9rem;
+    color: rgba(255,247,237,0.7);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .s5-td.label { color: rgba(255,247,237,0.5); font-size: 0.85rem; justify-content: flex-start; }
+  .s5-check { color: #22c55e; font-size: 1.1rem; }
+  .s5-cross { color: #ef4444; font-size: 1.1rem; }
+  .s5-td.hf-val { color: #fdba74; font-weight: 600; }
+  .s5-td.rm-val { color: rgba(255,247,237,0.45); }
+
+  /* ===================== SCENE 6 VISUALS ===================== */
+  .s6-features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 580px;
+  }
+
+  .s6-feature-card {
+    background: rgba(15,8,4,0.9);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 20px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+  }
+
+  .s6-feature-icon {
+    font-size: 2.8rem;
+    line-height: 1;
+  }
+
+  .s6-feature-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff7ed;
+    line-height: 1.3;
+  }
+
+  .s6-feature-desc {
+    font-size: 0.82rem;
+    color: rgba(255,247,237,0.5);
+    line-height: 1.5;
+  }
+
+  /* ===================== SCENE 7 VISUALS ===================== */
+  .s7-catalog-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 600px;
+  }
+
+  .s7-component-card {
+    background: rgba(10,5,3,0.9);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .s7-comp-preview {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .s7-comp-preview::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(10,5,3,0.6));
+  }
+
+  .s7-comp-info {
+    padding: 14px 16px;
+  }
+
+  .s7-comp-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff7ed;
+  }
+
+  .s7-comp-tag {
+    font-size: 0.75rem;
+    color: #fb923c;
+    margin-top: 4px;
+  }
+
+  .s7-count-badge {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    border-radius: 16px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(249,115,22,0.4);
+  }
+
+  /* ===================== SCENE 8 VISUALS ===================== */
+  .s8-stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 580px;
+  }
+
+  .s8-main-badge {
+    background: linear-gradient(135deg, rgba(249,115,22,0.2), rgba(251,146,60,0.1));
+    border: 2px solid rgba(249,115,22,0.5);
+    border-radius: 20px;
+    padding: 28px 40px;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(249,115,22,0.2);
+  }
+
+  .s8-main-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #fff7ed;
+  }
+
+  .s8-license-tag {
+    display: inline-block;
+    background: rgba(249,115,22,0.2);
+    border: 1px solid rgba(249,115,22,0.4);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fb923c;
+    margin-top: 10px;
+  }
+
+  .s8-stats-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .s8-stat-card {
+    flex: 1;
+    background: rgba(10,5,3,0.9);
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .s8-stat-icon { font-size: 1.8rem; }
+
+  .s8-stat-num {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #f97316;
+    letter-spacing: -0.02em;
+  }
+
+  .s8-stat-label {
+    font-size: 0.8rem;
+    color: rgba(255,247,237,0.5);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .s8-code-pattern {
+    position: absolute;
+    inset: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: rgba(249,115,22,0.04);
+    line-height: 1.4;
+    overflow: hidden;
+    pointer-events: none;
+    word-break: break-all;
+    padding: 20px;
+  }
+
+  /* Shared decorative elements */
+  .deco-line {
+    position: absolute;
+    background: linear-gradient(90deg, transparent, rgba(249,115,22,0.3), transparent);
+    height: 1px;
+    width: 100%;
+    pointer-events: none;
+  }
+
+  .deco-line.top { top: 80px; }
+  .deco-line.bottom { bottom: 80px; }
+
+  .deco-corner {
+    position: absolute;
+    width: 60px; height: 60px;
+    pointer-events: none;
+  }
+
+  .deco-corner.tl { top: 30px; left: 30px; border-top: 2px solid rgba(249,115,22,0.3); border-left: 2px solid rgba(249,115,22,0.3); }
+  .deco-corner.tr { top: 30px; right: 30px; border-top: 2px solid rgba(249,115,22,0.3); border-right: 2px solid rgba(249,115,22,0.3); }
+  .deco-corner.bl { bottom: 30px; left: 30px; border-bottom: 2px solid rgba(249,115,22,0.3); border-left: 2px solid rgba(249,115,22,0.3); }
+  .deco-corner.br { bottom: 30px; right: 30px; border-bottom: 2px solid rgba(249,115,22,0.3); border-right: 2px solid rgba(249,115,22,0.3); }
+</style>
+</head>
+<body>
+<div id="root"
+  data-composition-id="main"
+  data-start="0"
+  data-width="1920"
+  data-height="1080"
+  data-duration="104">
+
+  <!-- Decorative corners (always visible) -->
+  <div class="deco-corner tl"></div>
+  <div class="deco-corner tr"></div>
+  <div class="deco-corner bl"></div>
+  <div class="deco-corner br"></div>
+  <div class="deco-line top"></div>
+  <div class="deco-line bottom"></div>
+
+  <!-- ==================== SCENE 1 ==================== -->
+  <div class="scene" id="scene1">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s1-badge">Phần 1</div>
+        <h1 class="scene-title" id="s1-title">Giới thiệu<br><span>HyperFrames</span></h1>
+        <h2 class="scene-subtitle" id="s1-subtitle">Framework Render Video Mã Nguồn Mở</h2>
+        <p class="scene-description" id="s1-desc">HyperFrames cho phép bạn tạo, xem trước và render các video composition dựa trên HTML — được thiết kế đặc biệt cho các AI agents.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s1-logo-container">
+          <div class="s1-glow-ring"></div>
+          <div class="s1-logo-main" id="s1-logo">
+            <div class="s1-logo-text">Hyper<span>Frames</span></div>
+            <div class="s1-tagline">Write HTML. Render Video. Built for Agents.</div>
+          </div>
+          <div class="s1-icons-row">
+            <div class="s1-icon-chip" id="s1-chip1">
+              <div class="s1-icon-emoji">🌐</div>
+              <div class="s1-icon-label">HTML</div>
+            </div>
+            <div class="s1-icon-chip" id="s1-chip2">
+              <div class="s1-icon-emoji">🎬</div>
+              <div class="s1-icon-label">Video</div>
+            </div>
+            <div class="s1-icon-chip" id="s1-chip3">
+              <div class="s1-icon-emoji">🤖</div>
+              <div class="s1-icon-label">AI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 2 ==================== -->
+  <div class="scene" id="scene2">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s2-badge">Phần 2</div>
+        <h1 class="scene-title" id="s2-title">Bắt Đầu<br><span>Nhanh Chóng</span></h1>
+        <h2 class="scene-subtitle" id="s2-subtitle">Hai Cách Khởi Tạo Dự Án</h2>
+        <p class="scene-description" id="s2-desc">Dùng AI coding agent với HyperFrames skills, hoặc khởi tạo thủ công bằng lệnh npx hyperframes init. Linh hoạt theo nhu cầu của bạn.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s2-split">
+          <div class="s2-card" id="s2-card1">
+            <div class="s2-card-badge">🤖 AI-Powered</div>
+            <div class="s2-card-title">Dùng AI Agent</div>
+            <div class="s2-terminal">
+              <span class="prompt">$ </span><span class="cmd">npx skills add</span><br>
+              <span class="cmd">heygen-com/hyperframes</span><br>
+              <span class="out">✓ Skills installed</span><br>
+              <span class="out">✓ Ready to use</span>
+            </div>
+          </div>
+          <div class="s2-card" id="s2-card2">
+            <div class="s2-card-badge">⚙️ Thủ Công</div>
+            <div class="s2-card-title">Khởi Tạo Thủ Công</div>
+            <div class="s2-terminal">
+              <span class="prompt">$ </span><span class="cmd">npx hyperframes</span><br>
+              <span class="cmd">init my-video</span><br>
+              <span class="out">✓ Project created</span><br>
+              <span class="out">✓ Dependencies ok</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 3 ==================== -->
+  <div class="scene" id="scene3">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s3-badge">Phần 3</div>
+        <h1 class="scene-title" id="s3-title">Tích Hợp<br><span>AI Agents</span></h1>
+        <h2 class="scene-subtitle" id="s3-subtitle">Hỗ Trợ Đa Nền Tảng AI</h2>
+        <p class="scene-description" id="s3-desc">Hoạt động với Claude Code, Cursor, Gemini CLI và Codex. Các agents hiểu HTML, CSS và GSAP một cách tự nhiên — bạn chỉ cần mô tả video muốn tạo.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s3-agents-grid">
+          <div class="s3-agents-row">
+            <div class="s3-agent-chip" id="s3-a1">
+              <div class="s3-agent-dot"></div>
+              <div class="s3-agent-name">Claude Code</div>
+            </div>
+            <div class="s3-agent-chip" id="s3-a2">
+              <div class="s3-agent-dot"></div>
+              <div class="s3-agent-name">Cursor</div>
+            </div>
+          </div>
+          <div class="s3-center-hub" id="s3-hub">
+            <div class="s3-hub-title">HyperFrames</div>
+            <div class="s3-hub-sub">AI-First Design ✦</div>
+          </div>
+          <div class="s3-agents-row">
+            <div class="s3-agent-chip" id="s3-a3">
+              <div class="s3-agent-dot"></div>
+              <div class="s3-agent-name">Gemini CLI</div>
+            </div>
+            <div class="s3-agent-chip" id="s3-a4">
+              <div class="s3-agent-dot"></div>
+              <div class="s3-agent-name">Codex</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 4 ==================== -->
+  <div class="scene" id="scene4">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s4-badge">Phần 4</div>
+        <h1 class="scene-title" id="s4-title">HTML<br><span>Thuần Túy</span></h1>
+        <h2 class="scene-subtitle" id="s4-subtitle">Không React, Không DSL Riêng</h2>
+        <p class="scene-description" id="s4-desc">HyperFrames sử dụng HTML thuần túy với data attributes. Compositions là các file HTML thông thường — dễ chỉnh sửa, dễ hiểu, dễ mở rộng.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s4-code-container" id="s4-code">
+          <div class="s4-code-header">
+            <div class="s4-dot red"></div>
+            <div class="s4-dot yellow"></div>
+            <div class="s4-dot green"></div>
+            <span class="s4-filename">composition.html</span>
+          </div>
+          <div class="s4-code-body">
+            <span class="s4-line"><span class="s4-tag">&lt;div</span> <span class="s4-attr">id</span>=<span class="s4-val">"root"</span></span>
+            <span class="s4-line">  <span class="s4-attr">data-composition-id</span>=<span class="s4-val">"main"</span></span>
+            <span class="s4-line">  <span class="s4-attr">data-start</span>=<span class="s4-val">"0"</span></span>
+            <span class="s4-line">  <span class="s4-attr">data-duration</span>=<span class="s4-val">"30"</span></span>
+            <span class="s4-line">  <span class="s4-attr">data-width</span>=<span class="s4-val">"1920"</span></span>
+            <span class="s4-line">  <span class="s4-attr">data-height</span>=<span class="s4-val">"1080"</span><span class="s4-tag">&gt;</span></span>
+            <span class="s4-line">&nbsp;</span>
+            <span class="s4-line">  <span class="s4-comment">&lt;!-- Scenes go here --&gt;</span></span>
+            <span class="s4-line">  <span class="s4-tag">&lt;div</span> <span class="s4-attr">class</span>=<span class="s4-val">"scene"</span></span>
+            <span class="s4-line">    <span class="s4-attr">data-track-index</span>=<span class="s4-val">"0"</span><span class="s4-tag">&gt;</span></span>
+            <span class="s4-line">  <span class="s4-tag">&lt;/div&gt;</span></span>
+            <span class="s4-line"><span class="s4-tag">&lt;/div&gt;</span></span>
+          </div>
+          <div class="s4-badge-row">
+            <div class="s4-tech-badge">HTML5</div>
+            <div class="s4-tech-badge">CSS3</div>
+            <div class="s4-tech-badge">GSAP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 5 ==================== -->
+  <div class="scene" id="scene5">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s5-badge">Phần 5</div>
+        <h1 class="scene-title" id="s5-title">So Sánh<br><span>với Remotion</span></h1>
+        <h2 class="scene-subtitle" id="s5-subtitle">Ưu Điểm Vượt Trội</h2>
+        <p class="scene-description" id="s5-desc">HyperFrames dùng HTML thay vì React, hoàn toàn mã nguồn mở theo Apache 2.0, không phí render, không giới hạn công ty — tự do tuyệt đối.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s5-compare-table" id="s5-table">
+          <div class="s5-table-header">
+            <div class="s5-th" style="text-align:left;padding-left:20px;">Tiêu Chí</div>
+            <div class="s5-th hf">HyperFrames</div>
+            <div class="s5-th rm">Remotion</div>
+          </div>
+          <div class="s5-table-row" id="s5-r1">
+            <div class="s5-td label">Authoring</div>
+            <div class="s5-td hf-val">HTML</div>
+            <div class="s5-td rm-val">React</div>
+          </div>
+          <div class="s5-table-row" id="s5-r2">
+            <div class="s5-td label">Mã nguồn mở</div>
+            <div class="s5-td hf-val"><span class="s5-check">✓</span> Có</div>
+            <div class="s5-td rm-val"><span class="s5-cross">✗</span> Không</div>
+          </div>
+          <div class="s5-table-row" id="s5-r3">
+            <div class="s5-td label">Giấy phép</div>
+            <div class="s5-td hf-val">Apache 2.0</div>
+            <div class="s5-td rm-val">Tùy chỉnh</div>
+          </div>
+          <div class="s5-table-row" id="s5-r4">
+            <div class="s5-td label">Phí render</div>
+            <div class="s5-td hf-val"><span class="s5-check">✓</span> Miễn phí</div>
+            <div class="s5-td rm-val"><span class="s5-cross">✗</span> Có phí</div>
+          </div>
+          <div class="s5-table-row" id="s5-r5">
+            <div class="s5-td label">AI-First</div>
+            <div class="s5-td hf-val"><span class="s5-check">✓</span> Có</div>
+            <div class="s5-td rm-val"><span class="s5-cross">✗</span> Không</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 6 ==================== -->
+  <div class="scene" id="scene6">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s6-badge">Phần 6</div>
+        <h1 class="scene-title" id="s6-title">Tính Năng<br><span>Chính</span></h1>
+        <h2 class="scene-subtitle" id="s6-subtitle">Mạnh Mẽ và Linh Hoạt</h2>
+        <p class="scene-description" id="s6-desc">Rendering xác định, Frame Adapter pattern hỗ trợ GSAP, Lottie, CSS và Three.js. Live preview tức thì và xuất MP4 chất lượng cao.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s6-features-grid">
+          <div class="s6-feature-card" id="s6-f1">
+            <div class="s6-feature-icon">⚙️</div>
+            <div class="s6-feature-name">Deterministic Rendering</div>
+            <div class="s6-feature-desc">Cùng input → output giống hệt mỗi lần render</div>
+          </div>
+          <div class="s6-feature-card" id="s6-f2">
+            <div class="s6-feature-icon">🧩</div>
+            <div class="s6-feature-name">Frame Adapters</div>
+            <div class="s6-feature-desc">GSAP, Lottie, CSS, Three.js và nhiều hơn nữa</div>
+          </div>
+          <div class="s6-feature-card" id="s6-f3">
+            <div class="s6-feature-icon">👁️</div>
+            <div class="s6-feature-name">Live Preview</div>
+            <div class="s6-feature-desc">Xem trước trực tiếp trong trình duyệt tức thì</div>
+          </div>
+          <div class="s6-feature-card" id="s6-f4">
+            <div class="s6-feature-icon">📥</div>
+            <div class="s6-feature-name">Xuất MP4</div>
+            <div class="s6-feature-desc">Render video chất lượng cao, sẵn sàng chia sẻ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 7 ==================== -->
+  <div class="scene" id="scene7">
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s7-badge">Phần 7</div>
+        <h1 class="scene-title" id="s7-title">Catalog<br><span>Components</span></h1>
+        <h2 class="scene-subtitle" id="s7-subtitle">Hơn 50 Blocks Sẵn Sàng</h2>
+        <p class="scene-description" id="s7-desc">Social overlays, shader transitions, data visualizations và cinematic effects — cài đặt ngay bằng lệnh npx hyperframes add.</p>
+      </div>
+      <div class="visual-col" style="position:relative;">
+        <div class="s7-count-badge" id="s7-count-badge">50+ Blocks</div>
+        <div class="s7-catalog-grid">
+          <div class="s7-component-card" id="s7-c1">
+            <div class="s7-comp-preview" style="background: linear-gradient(135deg, #1e3a5f, #2563eb);">📱</div>
+            <div class="s7-comp-info">
+              <div class="s7-comp-name">Instagram Follow</div>
+              <div class="s7-comp-tag">Social Overlay</div>
+            </div>
+          </div>
+          <div class="s7-component-card" id="s7-c2">
+            <div class="s7-comp-preview" style="background: linear-gradient(135deg, #1a0f08, #f97316);">✨</div>
+            <div class="s7-comp-info">
+              <div class="s7-comp-name">Flash Transition</div>
+              <div class="s7-comp-tag">Shader Effect</div>
+            </div>
+          </div>
+          <div class="s7-component-card" id="s7-c3">
+            <div class="s7-comp-preview" style="background: linear-gradient(135deg, #052e16, #16a34a);">📊</div>
+            <div class="s7-comp-info">
+              <div class="s7-comp-name">Data Chart</div>
+              <div class="s7-comp-tag">Visualization</div>
+            </div>
+          </div>
+          <div class="s7-component-card" id="s7-c4">
+            <div class="s7-comp-preview" style="background: linear-gradient(135deg, #1e1b4b, #7c3aed);">🎨</div>
+            <div class="s7-comp-info">
+              <div class="s7-comp-name">Cinematic FX</div>
+              <div class="s7-comp-tag">Shader Effects</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 8 ==================== -->
+  <div class="scene" id="scene8">
+    <div class="s8-code-pattern">
+      &lt;!-- Apache 2.0 --&gt; &lt;div data-composition&gt; &lt;scene&gt; &lt;/scene&gt; &lt;/div&gt; npx hyperframes init open-source free commercial use no seat limits github stars forks releases contributions community &lt;div data-start="0"&gt; &lt;/div&gt; &lt;!-- MIT Apache GPL --&gt; html css gsap animation render video export mp4 &lt;div class="scene"&gt;
+    </div>
+    <div class="scene-inner">
+      <div class="info-col">
+        <div class="scene-badge" id="s8-badge">Phần 8</div>
+        <h1 class="scene-title" id="s8-title">Mã Nguồn Mở<br><span>và Cộng Đồng</span></h1>
+        <h2 class="scene-subtitle" id="s8-subtitle">Tự Do Hoàn Toàn, Mãi Mãi</h2>
+        <p class="scene-description" id="s8-desc">Apache 2.0 — sử dụng thương mại ở bất kỳ quy mô nào, không phí, không giới hạn. 19.5k stars trên GitHub và cộng đồng đóng góp tích cực.</p>
+      </div>
+      <div class="visual-col">
+        <div class="s8-stats-container">
+          <div class="s8-main-badge" id="s8-main-badge">
+            <div class="s8-main-title">🔓 Hoàn Toàn Mã Nguồn Mở</div>
+            <div class="s8-license-tag">Apache License 2.0</div>
+          </div>
+          <div class="s8-stats-row">
+            <div class="s8-stat-card" id="s8-s1">
+              <div class="s8-stat-icon">⭐</div>
+              <div class="s8-stat-num" id="s8-stars">19.5k</div>
+              <div class="s8-stat-label">GitHub Stars</div>
+            </div>
+            <div class="s8-stat-card" id="s8-s2">
+              <div class="s8-stat-icon">🍴</div>
+              <div class="s8-stat-num" id="s8-forks">1.8k</div>
+              <div class="s8-stat-label">Forks</div>
+            </div>
+            <div class="s8-stat-card" id="s8-s3">
+              <div class="s8-stat-icon">🚀</div>
+              <div class="s8-stat-num" id="s8-releases">141</div>
+              <div class="s8-stat-label">Releases</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio tracks -->
+  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="12" data-volume="1"></audio>
+  <audio id="v2" src="assets/p2.wav" data-start="12" data-duration="14" data-volume="1"></audio>
+  <audio id="v3" src="assets/p3.wav" data-start="26" data-duration="13" data-volume="1"></audio>
+  <audio id="v4" src="assets/p4.wav" data-start="39" data-duration="12" data-volume="1"></audio>
+  <audio id="v5" src="assets/p5.wav" data-start="51" data-duration="14" data-volume="1"></audio>
+  <audio id="v6" src="assets/p6.wav" data-start="65" data-duration="13" data-volume="1"></audio>
+  <audio id="v7" src="assets/p7.wav" data-start="78" data-duration="12" data-volume="1"></audio>
+  <audio id="v8" src="assets/p8.wav" data-start="90" data-duration="14" data-volume="1"></audio>
+</div>
+
+<script>
+  const tl = gsap.timeline({ paused: true });
+
+  // ==================== SCENE 1 (0-12s) ====================
+  // Scene in
+  tl.set("#scene1", { opacity: 0, visibility: "visible" }, 0)
+    .to("#scene1", { opacity: 1, duration: 0.8, ease: "power3.out" }, 0)
+
+  // Elements animate in
+  .from("#s1-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 0.3)
+  .from("#s1-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 0.5)
+  .from("#s1-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.7)
+  .from("#s1-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 0.9)
+
+  // Logo
+  .from("#s1-logo", { scale: 0.7, opacity: 0, duration: 1.0, ease: "elastic.out(1, 0.6)" }, 0.4)
+
+  // Icon chips stagger
+  .from("#s1-chip1", { y: 40, opacity: 0, scale: 0.8, duration: 0.6, ease: "back.out(2)" }, 1.0)
+  .from("#s1-chip2", { y: 40, opacity: 0, scale: 0.8, duration: 0.6, ease: "back.out(2)" }, 1.15)
+  .from("#s1-chip3", { y: 40, opacity: 0, scale: 0.8, duration: 0.6, ease: "back.out(2)" }, 1.3)
+
+  // Glow ring pulse
+  .to("#scene1 .s1-glow-ring", { scale: 1.05, opacity: 0.6, duration: 1.5, yoyo: true, repeat: 4, ease: "sine.inOut" }, 1.0)
+
+  // Scene out
+  .to("#scene1", { opacity: 0, duration: 0.8, ease: "power2.in" }, 11)
+  .set("#scene1", { visibility: "hidden" }, 12)
+
+  // ==================== SCENE 2 (12-26s) ====================
+  .set("#scene2", { opacity: 0, visibility: "visible" }, 12)
+  .to("#scene2", { opacity: 1, duration: 0.8, ease: "power3.out" }, 12)
+
+  .from("#s2-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 12.3)
+  .from("#s2-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 12.5)
+  .from("#s2-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 12.7)
+  .from("#s2-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 12.9)
+
+  // Cards slide in from sides
+  .from("#s2-card1", { x: -120, opacity: 0, duration: 0.9, ease: "power3.out" }, 12.6)
+  .from("#s2-card2", { x: 120, opacity: 0, duration: 0.9, ease: "power3.out" }, 12.8)
+
+  .to("#scene2", { opacity: 0, duration: 0.8, ease: "power2.in" }, 25)
+  .set("#scene2", { visibility: "hidden" }, 26)
+
+  // ==================== SCENE 3 (26-39s) ====================
+  .set("#scene3", { opacity: 0, visibility: "visible" }, 26)
+  .to("#scene3", { opacity: 1, duration: 0.8, ease: "power3.out" }, 26)
+
+  .from("#s3-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 26.3)
+  .from("#s3-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 26.5)
+  .from("#s3-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 26.7)
+  .from("#s3-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 26.9)
+
+  // Agent chips stagger
+  .from("#s3-a1", { x: -60, opacity: 0, duration: 0.7, ease: "back.out(1.5)" }, 26.8)
+  .from("#s3-a2", { x: 60, opacity: 0, duration: 0.7, ease: "back.out(1.5)" }, 27.0)
+  .from("#s3-hub", { scale: 0.5, opacity: 0, duration: 0.9, ease: "elastic.out(1, 0.5)" }, 27.2)
+  .from("#s3-a3", { x: -60, opacity: 0, duration: 0.7, ease: "back.out(1.5)" }, 27.4)
+  .from("#s3-a4", { x: 60, opacity: 0, duration: 0.7, ease: "back.out(1.5)" }, 27.6)
+
+  // Hub pulse
+  .to("#s3-hub", { scale: 1.04, duration: 1.2, yoyo: true, repeat: 4, ease: "sine.inOut" }, 28.0)
+
+  .to("#scene3", { opacity: 0, duration: 0.8, ease: "power2.in" }, 38)
+  .set("#scene3", { visibility: "hidden" }, 39)
+
+  // ==================== SCENE 4 (39-51s) ====================
+  .set("#scene4", { opacity: 0, visibility: "visible" }, 39)
+  .to("#scene4", { opacity: 1, duration: 0.8, ease: "power3.out" }, 39)
+
+  .from("#s4-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 39.3)
+  .from("#s4-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 39.5)
+  .from("#s4-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 39.7)
+  .from("#s4-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 39.9)
+
+  // Code container slides up
+  .from("#s4-code", { y: 80, opacity: 0, scale: 0.95, duration: 1.0, ease: "power3.out" }, 39.6)
+
+  // Code lines stagger
+  .from("#scene4 .s4-line", { x: -20, opacity: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" }, 40.2)
+
+  .to("#scene4", { opacity: 0, duration: 0.8, ease: "power2.in" }, 50)
+  .set("#scene4", { visibility: "hidden" }, 51)
+
+  // ==================== SCENE 5 (51-65s) ====================
+  .set("#scene5", { opacity: 0, visibility: "visible" }, 51)
+  .to("#scene5", { opacity: 1, duration: 0.8, ease: "power3.out" }, 51)
+
+  .from("#s5-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 51.3)
+  .from("#s5-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 51.5)
+  .from("#s5-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 51.7)
+  .from("#s5-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 51.9)
+
+  // Table slides in
+  .from("#s5-table", { x: 80, opacity: 0, duration: 0.9, ease: "power3.out" }, 51.6)
+
+  // Rows stagger
+  .from("#s5-r1", { x: 40, opacity: 0, duration: 0.5, ease: "power2.out" }, 52.2)
+  .from("#s5-r2", { x: 40, opacity: 0, duration: 0.5, ease: "power2.out" }, 52.5)
+  .from("#s5-r3", { x: 40, opacity: 0, duration: 0.5, ease: "power2.out" }, 52.8)
+  .from("#s5-r4", { x: 40, opacity: 0, duration: 0.5, ease: "power2.out" }, 53.1)
+  .from("#s5-r5", { x: 40, opacity: 0, duration: 0.5, ease: "power2.out" }, 53.4)
+
+  .to("#scene5", { opacity: 0, duration: 0.8, ease: "power2.in" }, 64)
+  .set("#scene5", { visibility: "hidden" }, 65)
+
+  // ==================== SCENE 6 (65-78s) ====================
+  .set("#scene6", { opacity: 0, visibility: "visible" }, 65)
+  .to("#scene6", { opacity: 1, duration: 0.8, ease: "power3.out" }, 65)
+
+  .from("#s6-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 65.3)
+  .from("#s6-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 65.5)
+  .from("#s6-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 65.7)
+  .from("#s6-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 65.9)
+
+  // Feature cards stagger
+  .from("#s6-f1", { scale: 0.7, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 65.8)
+  .from("#s6-f2", { scale: 0.7, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 66.1)
+  .from("#s6-f3", { scale: 0.7, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 66.4)
+  .from("#s6-f4", { scale: 0.7, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 66.7)
+
+  // Icon rotate
+  .to("#s6-f1 .s6-feature-icon", { rotation: 360, duration: 3, ease: "none", repeat: 1 }, 67.0)
+  .to("#s6-f3 .s6-feature-icon", { scale: 1.2, duration: 0.8, yoyo: true, repeat: 4, ease: "sine.inOut" }, 67.0)
+
+  .to("#scene6", { opacity: 0, duration: 0.8, ease: "power2.in" }, 77)
+  .set("#scene6", { visibility: "hidden" }, 78)
+
+  // ==================== SCENE 7 (78-90s) ====================
+  .set("#scene7", { opacity: 0, visibility: "visible" }, 78)
+  .to("#scene7", { opacity: 1, duration: 0.8, ease: "power3.out" }, 78)
+
+  .from("#s7-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 78.3)
+  .from("#s7-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 78.5)
+  .from("#s7-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 78.7)
+  .from("#s7-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 78.9)
+
+  // Count badge
+  .from("#s7-count-badge", { scale: 0, rotation: -15, opacity: 0, duration: 0.8, ease: "elastic.out(1, 0.5)" }, 79.0)
+
+  // Component cards stagger
+  .from("#s7-c1", { y: 50, opacity: 0, scale: 0.9, duration: 0.6, ease: "back.out(1.5)" }, 79.2)
+  .from("#s7-c2", { y: 50, opacity: 0, scale: 0.9, duration: 0.6, ease: "back.out(1.5)" }, 79.45)
+  .from("#s7-c3", { y: 50, opacity: 0, scale: 0.9, duration: 0.6, ease: "back.out(1.5)" }, 79.7)
+  .from("#s7-c4", { y: 50, opacity: 0, scale: 0.9, duration: 0.6, ease: "back.out(1.5)" }, 79.95)
+
+  // Hover-like scale animation
+  .to("#s7-c1, #s7-c3", { scale: 1.03, duration: 0.8, yoyo: true, repeat: 2, ease: "sine.inOut" }, 81.0)
+  .to("#s7-c2, #s7-c4", { scale: 1.03, duration: 0.8, yoyo: true, repeat: 2, ease: "sine.inOut" }, 81.4)
+
+  .to("#scene7", { opacity: 0, duration: 0.8, ease: "power2.in" }, 89)
+  .set("#scene7", { visibility: "hidden" }, 90)
+
+  // ==================== SCENE 8 (90-104s) ====================
+  .set("#scene8", { opacity: 0, visibility: "visible" }, 90)
+  .to("#scene8", { opacity: 1, duration: 0.8, ease: "power3.out" }, 90)
+
+  .from("#s8-badge", { y: -30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 90.3)
+  .from("#s8-title", { y: 60, opacity: 0, duration: 0.8, ease: "power4.out" }, 90.5)
+  .from("#s8-subtitle", { y: 40, opacity: 0, duration: 0.7, ease: "power3.out" }, 90.7)
+  .from("#s8-desc", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 90.9)
+
+  // Main badge
+  .from("#s8-main-badge", { scale: 0.8, opacity: 0, duration: 0.9, ease: "elastic.out(1, 0.6)" }, 90.8)
+
+  // Stat cards stagger
+  .from("#s8-s1", { y: 60, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 91.4)
+  .from("#s8-s2", { y: 60, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 91.7)
+  .from("#s8-s3", { y: 60, opacity: 0, duration: 0.7, ease: "back.out(1.7)" }, 92.0)
+
+  // Stat numbers count-up effect (visual pulse)
+  .to("#s8-s1 .s8-stat-num", { scale: 1.2, color: "#fb923c", duration: 0.4, yoyo: true, repeat: 3, ease: "power2.inOut" }, 92.5)
+  .to("#s8-s2 .s8-stat-num", { scale: 1.2, color: "#fb923c", duration: 0.4, yoyo: true, repeat: 3, ease: "power2.inOut" }, 93.0)
+  .to("#s8-s3 .s8-stat-num", { scale: 1.2, color: "#fb923c", duration: 0.4, yoyo: true, repeat: 3, ease: "power2.inOut" }, 93.5)
+
+  // Main badge glow pulse
+  .to("#s8-main-badge", { boxShadow: "0 0 80px rgba(249,115,22,0.4)", duration: 1.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 92.0)
+
+  .to("#scene8", { opacity: 0, duration: 0.8, ease: "power2.in" }, 103)
+  .set("#scene8", { visibility: "hidden" }, 104);
+
+  // Register timeline
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

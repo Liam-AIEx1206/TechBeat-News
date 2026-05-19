@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quy Trình Hoạt Động (Pipeline) - HeyGen Hyperframes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #151d30;
+      --text-color: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #3b82f6;
+      --border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Outfit', sans-serif;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .logo {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 15px;
+    }
+
+    .intro {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Diagram */
+    .pipeline-flow {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 15px;
+      margin: 40px 0;
+      position: relative;
+    }
+
+    .flow-step {
+      flex: 1;
+      min-width: 140px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .flow-step:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);
+    }
+
+    .flow-step-num {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .flow-step-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    /* Cards */
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 15px;
+    }
+
+    .card-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .card-content p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Code highlights */
+    pre {
+      background-color: #070a13;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin: 15px 0;
+    }
+
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      color: #38bdf8;
+    }
+
+    .cli-command {
+      color: #34d399;
+    }
+
+    ul {
+      list-style-type: none;
+      margin: 15px 0;
+    }
+
+    li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      color: var(--text-muted);
+    }
+
+    li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+    }
+
+    /* Render flow chart visual */
+    .render-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .render-box {
+      background: #070a13;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .render-box span {
+      display: block;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    /* Detailed Block Diagram Styles */
+    .block-diagram {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 30px;
+      margin: 30px 0 50px 0;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .block-diagram-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 25px;
+      text-align: center;
+      color: var(--primary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .diagram-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      position: relative;
+    }
+
+    .diagram-block {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .diagram-block:hover {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+
+    .diagram-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+
+    .diagram-block-num {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .diagram-block-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--text-color);
+    }
+
+    .diagram-sub-blocks {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sub-block {
+      background: #070a13;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      border-left: 4px solid var(--primary);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-left-width: 4px;
+    }
+
+    .sub-block.input { border-left-color: var(--accent); }
+    .sub-block.preprocess { border-left-color: #f59e0b; }
+    .sub-block.code-part { border-left-color: #10b981; }
+    .sub-block.preview-part { border-left-color: #8b5cf6; }
+    .sub-block.engine { border-left-color: #ec4899; }
+    .sub-block.output { border-left-color: #3b82f6; }
+
+    .sub-block-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #e5e7eb;
+    }
+
+    .sub-block-desc {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="logo">HYPERFRAMES</div>
+      <h1>Quy Trình Hoạt Động (Pipeline)</h1>
+      <p class="intro">Tìm hiểu cách Hyperframes chuyển đổi các dòng mã HTML/CSS tĩnh thành những sản phẩm video sắc nét, hoạt động tất định thông qua sức mạnh của AI Agents.</p>
+    </header>
+
+    <!-- Visual Diagram Summary -->
+    <div class="pipeline-flow">
+      <div class="flow-step">
+        <div class="flow-step-num">Bước 1</div>
+        <div class="flow-step-title">Khởi tạo</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">Bước 2</div>
+        <div class="flow-step-title">Xử lý Tài nguyên</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">Bước 3</div>
+        <div class="flow-step-title">Viết Bố cục</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">Bước 4</div>
+        <div class="flow-step-title">Xem trước</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">Bước 5</div>
+        <div class="flow-step-title">Kết xuất</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-num">Bước 6</div>
+        <div class="flow-step-title">Mở rộng</div>
+      </div>
+    </div>
+
+    <!-- SƠ ĐỒ CHI TIẾT TỪNG KHỐI (BLOCK-BY-BLOCK DIAGRAM) -->
+    <div class="block-diagram">
+      <div class="block-diagram-title">Sơ đồ Chi tiết Từng Khối (Block-by-Block Diagram)</div>
+      <div class="diagram-grid">
+        
+        <!-- Khối 1 -->
+        <div class="diagram-block">
+          <div class="diagram-block-header">
+            <span class="diagram-block-num">Khối 1</span>
+            <span class="diagram-block-name">Đầu vào (Inputs)</span>
+          </div>
+          <div class="diagram-sub-blocks">
+            <div class="sub-block input">
+              <div class="sub-block-title">Kịch bản & Ý tưởng</div>
+              <div class="sub-block-desc">Các yêu cầu từ người dùng hoặc kịch bản chữ được AI phân tích.</div>
+            </div>
+            <div class="sub-block input">
+              <div class="sub-block-title">Tài nguyên Thô (Raw Assets)</div>
+              <div class="sub-block-desc">Hình ảnh gốc, video thô và nhạc nền chưa được xử lý.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối 2 -->
+        <div class="diagram-block">
+          <div class="diagram-block-header">
+            <span class="diagram-block-num">Khối 2</span>
+            <span class="diagram-block-name">Bộ xử lý AI (Preprocessors)</span>
+          </div>
+          <div class="diagram-sub-blocks">
+            <div class="sub-block preprocess">
+              <div class="sub-block-title">AI TTS (Kokoro)</div>
+              <div class="sub-block-desc">Đọc kịch bản chữ ra tệp thuyết minh audio (.wav) sắc nét.</div>
+            </div>
+            <div class="sub-block preprocess">
+              <div class="sub-block-title">Whisper Transcribe</div>
+              <div class="sub-block-desc">Sinh dữ liệu text kèm mốc thời gian (timestamp) chạy phụ đề.</div>
+            </div>
+            <div class="sub-block preprocess">
+              <div class="sub-block-title">u2net BG Remover</div>
+              <div class="sub-block-desc">Tự động tách nền vật thể làm lớp ảnh phủ đè trong suốt.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối 3 -->
+        <div class="diagram-block">
+          <div class="diagram-block-header">
+            <span class="diagram-block-num">Khối 3</span>
+            <span class="diagram-block-name">Mã nguồn (Web Composition)</span>
+          </div>
+          <div class="diagram-sub-blocks">
+            <div class="sub-block code-part">
+              <div class="sub-block-title">Cấu trúc HTML & CSS</div>
+              <div class="sub-block-desc">Định vị khung hình và sử dụng Tailwind CSS để dựng mỹ thuật.</div>
+            </div>
+            <div class="sub-block code-part">
+              <div class="sub-block-title">GSAP Timelines</div>
+              <div class="sub-block-desc">Lập trình các chuyển động mượt mà, đồng bộ với mốc thời gian.</div>
+            </div>
+            <div class="sub-block code-part">
+              <div class="sub-block-title">Lottie & Three.js</div>
+              <div class="sub-block-desc">Tích hợp các chuyển động vector phức tạp hoặc không gian 3D.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối 4 -->
+        <div class="diagram-block">
+          <div class="diagram-block-header">
+            <span class="diagram-block-num">Khối 4</span>
+            <span class="diagram-block-name">Xem trước (Studio UI)</span>
+          </div>
+          <div class="diagram-sub-blocks">
+            <div class="sub-block preview-part">
+              <div class="sub-block-title">Local Dev Server</div>
+              <div class="sub-block-desc">Host trang web video thời gian thực với cơ chế Live Reload.</div>
+            </div>
+            <div class="sub-block preview-part">
+              <div class="sub-block-title">Studio Viewer UI</div>
+              <div class="sub-block-desc">Giao diện xem trước video trực quan với thanh kéo timeline.</div>
+            </div>
+            <div class="sub-block preview-part">
+              <div class="sub-block-title">Ask Agent Control</div>
+              <div class="sub-block-desc">Công cụ chat AI tích hợp để chỉnh sửa nhanh bằng văn bản.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối 5 -->
+        <div class="diagram-block">
+          <div class="diagram-block-header">
+            <span class="diagram-block-num">Khối 5</span>
+            <span class="diagram-block-name">Động cơ Render (Engine)</span>
+          </div>
+          <div class="diagram-sub-blocks">
+            <div class="sub-block engine">
+              <div class="sub-block-title">Headless Chrome</div>
+              <div class="sub-block-desc">Trình duyệt ẩn khởi chạy mã nguồn và thực hiện ghi khung hình.</div>
+            </div>
+            <div class="sub-block engine">
+              <div class="sub-block-title">Frame Capturer</div>
+              <div class="sub-block-desc">Chụp ảnh pixel-perfect song song từng khung hình cực nhanh.</div>
+            </div>
+            <div class="sub-block engine">
+              <div class="sub-block-title">FFmpeg Streamer</div>
+              <div class="sub-block-desc">Ghép dòng ảnh và luồng âm thanh lại thành file video hoàn chỉnh.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khối 6 -->
+        <div class="diagram-block">
+          <div class="diagram-block-header">
+            <span class="diagram-block-num">Khối 6</span>
+            <span class="diagram-block-name">Đầu ra (Outputs)</span>
+          </div>
+          <div class="diagram-sub-blocks">
+            <div class="sub-block output">
+              <div class="sub-block-title">File MP4 Video</div>
+              <div class="sub-block-desc">Video chất lượng cao hoàn thiện với đầy đủ âm thanh và hiệu ứng.</div>
+            </div>
+            <div class="sub-block output">
+              <div class="sub-block-title">File WebM (Alpha)</div>
+              <div class="sub-block-desc">Video nền trong suốt để làm lớp phủ VFX trên nền tảng khác.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Details Card list -->
+    <div class="card-list">
+
+      <!-- Step 1 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-badge">Giai đoạn 1</span>
+          <span class="card-title">Khởi tạo & Thiết lập (Scaffolding)</span>
+        </div>
+        <div class="card-content">
+          <p>Thiết lập môi trường làm việc chuẩn cho dự án. Hyperframes tự động tạo cấu trúc và cung cấp các tệp chỉ dẫn dành riêng cho AI Agents để lập trình dễ dàng nhất.</p>
+          <pre><code><span class="cli-command">npx hyperframes init</span> &lt;ten-du-an&gt;</code></pre>
+          <ul>
+            <li><strong>index.html:</strong> Điểm bắt đầu chứa khung HTML của video.</li>
+            <li><strong>hyperframes.json:</strong> Cấu hình độ phân giải, tốc độ khung hình (fps) và danh sách compositions.</li>
+            <li><strong>AGENTS.md & CLAUDE.md:</strong> Hướng dẫn tối ưu hóa tác vụ cho các trợ lý AI.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-badge">Giai đoạn 2</span>
+          <span class="card-title">Xử lý Tài nguyên Đa phương tiện (Media Preprocessing)</span>
+        </div>
+        <div class="card-content">
+          <p>Hyperframes hỗ trợ các tác vụ AI mạnh mẽ chạy trực tiếp trên thiết bị (Local AI) mà không cần cài đặt phức tạp hay đăng ký API trực tuyến bên ngoài.</p>
+          
+          <pre><code><span class="comment">// 1. Chuyển văn bản thành giọng thuyết minh (Mô hình Kokoro-82M)</span>\n<span class="cli-command">npx hyperframes tts</span> "Chào mừng tới Barcelona!" -v af_heart -o assets/v1.wav\n\n<span class="comment">// 2. Tạo phụ đề khớp mốc thời gian từ file âm thanh (Mô hình Whisper)</span>\n<span class="cli-command">npx hyperframes transcribe</span> assets/v1.wav -o assets/transcript.json\n\n<span class="comment">// 3. Tách nền ảnh/video tạo overlay trong suốt (Mô hình u2net)</span>\n<span class="cli-command">npx hyperframes remove-background</span> assets/avatar.png</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-badge">Giai đoạn 3</span>
+          <span class="card-title">Thiết kế Bố cục & Hiệu ứng (Composition & Styling)</span>
+        </div>
+        <div class="card-content">
+          <p>Bạn tự do thiết kế bố cục phân cảnh bằng mã HTML và trang trí thẩm mỹ cao bằng mã CSS tiêu chuẩn (hỗ trợ sẵn Tailwind CSS v4).</p>
+          <ul>
+            <li><strong>Thuộc tính định thời gian:</strong> Quản lý xuất hiện bằng <code>data-start</code>, <code>data-duration</code>, <code>data-track-index</code> trực tiếp trên thẻ HTML.</li>
+            <li><strong>Chuyển động (Animations):</strong> Sử dụng GSAP Timeline để đồng bộ chuyển động hoàn hảo với trục thời gian của Hyperframes.</li>
+            <li><strong>Hỗ trợ phong phú:</strong> Cho phép tích hợp Lottie, WebGL (Three.js), CSS Keyframes để làm hiệu ứng phong phú.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-badge">Giai đoạn 4</span>
+          <span class="card-title">Xem trước thời gian thực (Live Preview & Studio)</span>
+        </div>
+        <div class="card-content">
+          <p>Không cần đợi render! Chạy máy chủ xem trước để kiểm tra ngay lập tức các thay đổi thiết kế trên trình duyệt web.</p>
+          <pre><code><span class="cli-command">npm run dev</span> <span class="comment">// (Hoặc npx hyperframes preview)</span></code></pre>
+          <ul>
+            <li><strong>Hot Reload:</strong> Tự động làm mới khung hình bất cứ khi nào lưu code.</li>
+            <li><strong>Ask Agent:</strong> Khung chat AI nhỏ gọn nằm ở thanh điều khiển bên phải cho phép nhập lệnh đổi giao diện/style nhanh chóng bằng văn bản.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-badge">Giai đoạn 5</span>
+          <span class="card-title">Kết xuất Video Tất định (Deterministic Rendering)</span>
+        </div>
+        <div class="card-content">
+          <p>Quy trình biến cấu trúc Web động thành tệp video vật lý (MP4/WebM). Quy trình kết xuất tất định đảm bảo chất lượng hình ảnh đồng đều đến từng pixel.</p>
+          <pre><code><span class="cli-command">npm run render</span> <span class="comment">// (Hoặc npx hyperframes render)</span></code></pre>
+          
+          <div class="render-steps">
+            <div class="render-box"><span>1. Nhúng nội dung</span>Font & CDN Scripts được nhúng cục bộ để tránh lỗi mạng.</div>
+            <div class="render-box"><span>2. Headless Chrome</span>Chạy một phiên bản ẩn trình duyệt Chrome để chạy trang web.</div>
+            <div class="render-box"><span>3. Chụp Khung Hình</span>Duyệt timeline chụp từng frame ảnh chất lượng cao.</div>
+            <div class="render-box"><span>4. FFmpeg Stream</span>Ghép luồng âm thanh cùng chuỗi frame ảnh xuất file video.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-badge">Giai đoạn 6</span>
+          <span class="card-title">Triển khai quy mô lớn (Scaling & Deployment)</span>
+        </div>
+        <div class="card-content">
+          <p>Khi bạn cần sản xuất hàng loạt hàng nghìn video cá nhân hóa chỉ trong chốc lát.</p>
+          <ul>
+            <li><strong>Multi-Worker:</strong> Tự động phân tách và xử lý song song các luồng frame dựa trên tổng số nhân CPU phần cứng hiện có.</li>
+            <li><strong>AWS Lambda:</strong> Đưa quá trình render lên môi trường serverless đám mây, giúp rút ngắn thời gian render video dài từ vài tiếng xuống vài giây.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+# Dependency directories
+node_modules/
+app/node_modules/
+backend/__pycache__/
+backend/venv/
+venv/
+.venv/
+__pycache__/
+
+# Next.js build output
+.next/
+app/.next/
+out/
+app/out/
+build/
+app/build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+app/.env*
+backend/.env
+
+# TS build info
+*.tsbuildinfo
+next-env.d.ts
+app/next-env.d.ts
+
+# Misc/OS files
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Agents/system temporary directories
+.agents/
+.claude/
+.gemini/
+
+# Hyperframes/video specific build cache & renders
+my-video/.thumbnails/
+my-video/.waveform-cache/
+my-video/renders/
+my-video/node_modules/
