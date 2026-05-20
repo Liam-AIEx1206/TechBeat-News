@@ -49,6 +49,126 @@ async def synthesize_tts(text: str, target: Path) -> None:
     await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
 
 
+def get_audio_duration_s(path: Path) -> float:
+    """Return duration in seconds of a wav/mp3 file. Falls back to 0 on error."""
+    try:
+        from pydub import AudioSegment
+        seg = AudioSegment.from_file(str(path))
+        return len(seg) / 1000.0
+    except Exception:
+        return 0.0
+
+
+def patch_html_timing(html: str, durations: list[float]) -> str:
+    """
+    Sync HTML timing to actual TTS audio lengths:
+    - Patches data-start / data-duration on each <audio id="vN"> tag
+    - Patches root data-duration
+    - Injects a JS snippet that rebuilds the GSAP timeline with correct scene
+      start/end times so visuals stay in sync with voice.
+    Each scene gets ceil(audio_duration) seconds + 0.5s tail for breathing room.
+    """
+    import math
+
+    int_durs = [max(1, math.ceil(d) + 1) for d in durations]  # +1s buffer per scene
+    starts: list[int] = []
+    cursor = 0
+    for d in int_durs:
+        starts.append(cursor)
+        cursor += d
+    total = cursor
+
+    # --- Patch <audio> tags ---
+    for i, (start, dur) in enumerate(zip(starts, int_durs)):
+        n = i + 1
+        html = re.sub(
+            rf'(<audio\s[^>]*id=["\']v{n}["\'][^>]*?)data-start=["\'][^"\']*["\']([^>]*?)data-duration=["\'][^"\']*["\']',
+            rf'\g<1>data-start="{start}"\2data-duration="{dur}"',
+            html,
+        )
+        html = re.sub(
+            rf'(<audio\s[^>]*id=["\']v{n}["\'][^>]*?)data-duration=["\'][^"\']*["\']([^>]*?)data-start=["\'][^"\']*["\']',
+            rf'\g<1>data-duration="{dur}"\2data-start="{start}"',
+            html,
+        )
+
+    # --- Patch root data-duration ---
+    html = re.sub(
+        r'(id=["\']root["\'][^>]*?)data-duration=["\'][^"\']*["\']',
+        rf'\1data-duration="{total}"',
+        html,
+    )
+    html = re.sub(
+        r'(data-composition-id=["\']main["\'][^>]*?)data-duration=["\'][^"\']*["\']',
+        rf'\1data-duration="{total}"',
+        html,
+    )
+
+    # --- Inject JS to rebuild GSAP timeline with correct timing ---
+    # This runs after the original script and replaces window.__timelines["main"]
+    # with a new timeline that uses actual audio durations.
+    starts_js = ", ".join(str(s) for s in starts)
+    durs_js = ", ".join(str(d) for d in int_durs)
+
+    inject = f"""
+<script>
+// Auto-injected by TechBeat build pipeline — syncs GSAP timeline to actual TTS durations
+(function() {{
+  var starts = [{starts_js}];
+  var durs   = [{durs_js}];
+  var total  = {total};
+
+  // Wait for original timeline to be registered, then replace it
+  function rebuildTimeline() {{
+    if (!window.gsap) return;
+    var tl = gsap.timeline({{ paused: true }});
+
+    for (var i = 0; i < starts.length; i++) {{
+      var n      = i + 1;
+      var s      = starts[i];
+      var d      = durs[i];
+      var sceneId = "#scene" + n;
+
+      // Fade in
+      tl.set(sceneId,  {{ opacity: 0, visibility: "visible" }}, s);
+      tl.to(sceneId,   {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
+
+      // Animate children in (badge, title, subtitle, desc)
+      tl.from(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s + 0.3);
+      tl.from(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.5);
+      tl.from(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }}, s + 0.7);
+      tl.from(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }}, s + 0.9);
+
+      // Animate visual column children
+      tl.from(sceneId + " .visual-col > *",   {{ scale: 0.9, opacity: 0, duration: 0.7, stagger: 0.15, ease: "back.out(1.5)" }}, s + 0.5);
+
+      // Fade out
+      tl.to(sceneId,  {{ opacity: 0, duration: 0.5, ease: "power2.in" }}, s + d - 0.6);
+      tl.set(sceneId, {{ visibility: "hidden" }}, s + d);
+    }}
+
+    window.__timelines = window.__timelines || {{}};
+    window.__timelines["main"] = tl;
+  }}
+
+  if (document.readyState === "loading") {{
+    document.addEventListener("DOMContentLoaded", rebuildTimeline);
+  }} else {{
+    rebuildTimeline();
+  }}
+}})();
+</script>
+"""
+
+    # Insert before </body>
+    if "</body>" in html:
+        html = html.replace("</body>", inject + "</body>")
+    else:
+        html += inject
+
+    return html
+
+
 # -------- Render via npx hyperframes render --------
 
 async def run_render(project_root: Path, on_log) -> Path:
@@ -189,14 +309,23 @@ async def build_pipeline(req: BuildRequest):
     # ---- Stage 3: TTS ----
     if not req.skipTts:
         yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
+        wav_paths: list[Path] = []
         for s in req.scenes:
             wav_path = assets_dir / f"p{s.index + 1}.wav"
+            wav_paths.append(wav_path)
             yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
             try:
                 await synthesize_tts(s.narration, wav_path)
             except Exception as e:
                 yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
                 return
+
+        # Measure actual audio durations and patch HTML timing
+        durations = [get_audio_duration_s(p) for p in wav_paths]
+        measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
+        print(f"[tts] Measured durations: {', '.join(measured)}")
+        html = patch_html_timing(html, durations)
+        target_html.write_text(html, encoding="utf-8")
         yield sse({"type": "stage", "stage": "tts", "status": "done"})
     else:
         yield sse({"type": "stage", "stage": "tts", "status": "skipped"})
