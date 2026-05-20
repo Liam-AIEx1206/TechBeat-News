@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ScenePlan } from "@/types/scene";
 
 interface Props {
@@ -11,150 +11,164 @@ interface Props {
 type StageKey = "composition" | "save" | "tts" | "render";
 type StageState = "pending" | "active" | "done" | "error";
 
-interface StageInfo {
-  key: StageKey;
-  label: string;
-  detail: string;
-  icon: string;
-}
-
-const STAGES: StageInfo[] = [
-  { key: "composition", label: "Sinh HTML composition", detail: "Claude Sonnet 4.6 viết HTML + GSAP timeline", icon: "🎨" },
-  { key: "save", label: "Lưu index.html", detail: "Ghi vào my-video/", icon: "💾" },
-  { key: "tts", label: "Tổng hợp giọng đọc", detail: "Google TTS tiếng Việt cho mỗi scene", icon: "🎙️" },
-  { key: "render", label: "Render MP4", detail: "Headless Chromium + FFmpeg, 2–3 phút", icon: "🎬" },
+const STAGES: { key: StageKey; label: string; detail: string; icon: string }[] = [
+  { key: "composition", label: "Sinh HTML",   detail: "LLM viết composition + GSAP", icon: "🎨" },
+  { key: "save",        label: "Lưu file",    detail: "Ghi index.html vào project",  icon: "💾" },
+  { key: "tts",         label: "Giọng đọc",   detail: "ElevenLabs / gTTS",            icon: "🎙️" },
+  { key: "render",      label: "Render MP4",  detail: "Chromium + FFmpeg · 2–3 phút", icon: "🎬" },
 ];
 
-export function VideoBuilder({ scenePlan, onBack }: Props) {
-  const [running, setRunning] = useState(false);
-  const [done, setDone] = useState(false);
-  const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({
-    composition: "pending",
-    save: "pending",
-    tts: "pending",
-    render: "pending",
-  });
-  const [stageDetail, setStageDetail] = useState<Record<StageKey, string>>({
-    composition: "",
-    save: "",
-    tts: "",
-    render: "",
-  });
-  const [renderLog, setRenderLog] = useState<string[]>([]);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [videoPath, setVideoPath] = useState("");
-  const [error, setError] = useState("");
-  const [renderProgress, setRenderProgress] = useState(0);
-  const abortRef = useRef<AbortController | null>(null);
+function fmtMs(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(1)}s`;
+  const m = Math.floor(s / 60);
+  const rem = Math.floor(s % 60);
+  return `${m}m ${rem.toString().padStart(2, "0")}s`;
+}
 
+export function VideoBuilder({ scenePlan, onBack }: Props) {
+  const [running, setRunning]         = useState(false);
+  const [done, setDone]               = useState(false);
+  const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({ composition:"pending", save:"pending", tts:"pending", render:"pending" });
+  const [stageDetail, setStageDetail] = useState<Record<StageKey, string>>({ composition:"", save:"", tts:"", render:"" });
+  const [stageStart,  setStageStart]  = useState<Record<StageKey, number | null>>({ composition:null, save:null, tts:null, render:null });
+  const [stageElapsed,setStageElapsed]= useState<Record<StageKey, number>>({ composition:0, save:0, tts:0, render:0 });
+  const [totalStart,  setTotalStart]  = useState<number | null>(null);
+  const [totalElapsed, setTotalElapsed] = useState<number>(0);
+  const [renderLog, setRenderLog]     = useState<string[]>([]);
+  const [compStream, setCompStream]   = useState<string>("");
+  const [compChars, setCompChars]     = useState(0);
+  const [videoUrl, setVideoUrl]       = useState("");
+  const [videoPath, setVideoPath]     = useState("");
+  const [error, setError]             = useState("");
+  const [progress, setProgress]       = useState(0);
+  const [ttsEngine, setTtsEngine]     = useState("");
+  const [actualDuration, setActualDuration] = useState<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const logRef   = useRef<HTMLPreElement>(null);
+  const compRef  = useRef<HTMLPreElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-  function setStage(key: StageKey, state: StageState, detail?: string) {
-    setStageStates((prev) => ({ ...prev, [key]: state }));
-    if (detail !== undefined) {
-      setStageDetail((prev) => ({ ...prev, [key]: detail }));
-    }
+  // Tick interval for live timer display (only while running)
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      const now = performance.now();
+      // Update total
+      if (totalStart !== null) setTotalElapsed(now - totalStart);
+      // Update active stage elapsed
+      setStageElapsed(prev => {
+        const next = { ...prev };
+        (Object.entries(stageStart) as [StageKey, number | null][]).forEach(([k, s]) => {
+          if (s !== null && stageStates[k] === "active") next[k] = now - s;
+        });
+        return next;
+      });
+    }, 100);
+    return () => clearInterval(id);
+  }, [running, totalStart, stageStart, stageStates]);
+
+  function startStage(key: StageKey, message?: string) {
+    const now = performance.now();
+    setStageStates(p => ({ ...p, [key]: "active" }));
+    setStageStart(p => ({ ...p, [key]: now }));
+    if (message !== undefined) setStageDetail(p => ({ ...p, [key]: message }));
+  }
+
+  function setStateOnly(key: StageKey, state: StageState, detail?: string) {
+    setStageStates(p => ({ ...p, [key]: state }));
+    if (detail !== undefined) setStageDetail(p => ({ ...p, [key]: detail }));
+  }
+
+  function finishStage(key: StageKey, state: "done" | "error" | "skipped", detail?: string) {
+    const now = performance.now();
+    const status: StageState = state === "skipped" ? "done" : state;
+    setStageStates(p => ({ ...p, [key]: status }));
+    setStageStart(p => {
+      const startTime = p[key];
+      if (startTime !== null) {
+        setStageElapsed(prev => ({ ...prev, [key]: now - startTime }));
+      }
+      return { ...p, [key]: null };
+    });
+    if (detail !== undefined) setStageDetail(p => ({ ...p, [key]: detail }));
   }
 
   async function build() {
-    setRunning(true);
-    setDone(false);
-    setError("");
-    setVideoUrl("");
-    setVideoPath("");
-    setRenderLog([]);
-    setRenderProgress(0);
-    setStageStates({ composition: "active", save: "pending", tts: "pending", render: "pending" });
-    setStageDetail({ composition: "Đang gọi LLM...", save: "", tts: "", render: "" });
+    const startNow = performance.now();
+    setRunning(true); setDone(false); setError(""); setVideoUrl(""); setVideoPath("");
+    setRenderLog([]); setCompStream(""); setCompChars(0); setProgress(0); setTtsEngine("");
+    setActualDuration(null);
+    setStageStates({ composition:"active", save:"pending", tts:"pending", render:"pending" });
+    setStageDetail({ composition:"Đang gọi LLM...", save:"", tts:"", render:"" });
+    setStageStart({ composition: startNow, save:null, tts:null, render:null });
+    setStageElapsed({ composition:0, save:0, tts:0, render:0 });
+    setTotalStart(startNow);
+    setTotalElapsed(0);
 
-    const abort = new AbortController();
-    abortRef.current = abort;
-
+    const abort = new AbortController(); abortRef.current = abort;
     try {
       const res = await fetch(`${API}/build-video`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scenePlan),
-        signal: abort.signal,
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scenePlan), signal: abort.signal,
       });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail ?? `HTTP ${res.status}`);
+      const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = "";
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail ?? `HTTP ${res.status}`);
-      }
-
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-
-      const handle = (event: {
-        type: string;
-        stage?: StageKey;
-        status?: string;
-        message?: string;
-        chars?: number;
-        scene?: number;
-        of?: number;
-        line?: string;
-        path?: string;
-        videoUrl?: string;
-        videoPath?: string;
-        log?: string;
-      }) => {
-        if (event.type === "stage" && event.stage) {
-          const k = event.stage;
-          if (event.status === "start") {
-            setStage(k, "active", event.message ?? "");
-          } else if (event.status === "progress") {
-            if (k === "composition" && event.chars) {
-              setStage(k, "active", `${event.chars.toLocaleString()} ký tự đã sinh...`);
-            } else if (k === "tts" && event.scene && event.of) {
-              setStage(k, "active", `Phân cảnh ${event.scene}/${event.of}...`);
+      const handle = (ev: Record<string, unknown>) => {
+        if (ev.type === "stage" && ev.stage) {
+          const k = ev.stage as StageKey;
+          if (ev.status === "start") startStage(k, (ev.message as string) ?? "");
+          else if (ev.status === "progress") {
+            if (k === "composition" && ev.chars) {
+              setCompChars(ev.chars as number);
+              setStateOnly(k, "active", `${(ev.chars as number).toLocaleString()} ký tự...`);
             }
-          } else if (event.status === "log" && event.line) {
-            setRenderLog((prev) => [...prev.slice(-40), event.line!]);
-            const m = event.line.match(/(\d+)%/);
-            if (m) setRenderProgress(parseInt(m[1], 10));
-          } else if (event.status === "done") {
-            setStage(k, "done", event.path ? `Đã lưu: ${event.path.split(/[\\/]/).pop()}` : "Hoàn tất");
-          } else if (event.status === "skipped") {
-            setStage(k, "done", "Đã bỏ qua");
+            else if (k === "tts" && ev.scene) setStateOnly(k, "active", `Phân cảnh ${ev.scene}/${ev.of}...`);
+          } else if (ev.status === "log" && ev.line) {
+            setRenderLog(p => { const n = [...p.slice(-100), ev.line as string]; setTimeout(() => logRef.current?.scrollTo(0, 99999), 50); return n; });
+            const m = (ev.line as string).match(/(\d+)%/); if (m) setProgress(parseInt(m[1], 10));
+          } else if (ev.status === "done") {
+            finishStage(k, "done", ev.path ? `✓ ${(ev.path as string).split(/[\\/]/).pop()}` : "✓ Hoàn tất");
+            if (k === "tts") {
+              if (ev.engine) setTtsEngine(ev.engine as string);
+              if (ev.actualDuration) setActualDuration(ev.actualDuration as number);
+            }
           }
-        } else if (event.type === "done") {
-          setStage("render", "done", "Hoàn tất");
-          setRenderProgress(100);
-          if (event.videoUrl) setVideoUrl(event.videoUrl);
-          if (event.videoPath) setVideoPath(event.videoPath);
+          else if (ev.status === "skipped") finishStage(k, "skipped", "Bỏ qua");
+        } else if (ev.type === "comp_chunk" && ev.text) {
+          setCompStream(p => {
+            const next = p + (ev.text as string);
+            setTimeout(() => compRef.current?.scrollTo(0, 99999), 30);
+            return next.slice(-8000); // cap to avoid memory bloat
+          });
+        } else if (ev.type === "done") {
+          finishStage("render", "done", "✓ Hoàn tất");
+          setProgress(100);
+          if (ev.videoUrl) setVideoUrl(ev.videoUrl as string);
+          if (ev.videoPath) setVideoPath(ev.videoPath as string);
           setDone(true);
-        } else if (event.type === "error") {
-          const stage = (event.stage as StageKey) ?? "composition";
-          setStage(stage, "error", event.message ?? "Lỗi");
-          if (event.log) setRenderLog((prev) => [...prev, "--- error log ---", event.log!]);
-          throw new Error(event.message ?? "Pipeline thất bại");
+          setTotalElapsed(performance.now() - startNow);
+        } else if (ev.type === "error") {
+          finishStage((ev.stage as StageKey) ?? "composition", "error", (ev.message as string) ?? "Lỗi");
+          if (ev.log) setRenderLog(p => [...p, "── error ──", ev.log as string]);
+          throw new Error((ev.message as string) ?? "Pipeline thất bại");
         }
       };
 
       const processLines = (raw: string) => {
-        const lines = raw.split("\n\n");
-        for (const line of lines) {
+        for (const line of raw.split("\n\n")) {
           if (!line.startsWith("data: ")) continue;
-          try {
-            handle(JSON.parse(line.slice(6)));
-          } catch {
-            // skip malformed
-          }
+          try { handle(JSON.parse(line.slice(6))); } catch { /* skip */ }
         }
       };
 
       while (true) {
-        const { done: streamDone, value } = await reader.read();
-        if (streamDone) {
-          if (buf.trim()) processLines(buf);
-          break;
-        }
+        const { done: sd, value } = await reader.read();
+        if (sd) { if (buf.trim()) processLines(buf); break; }
         buf += decoder.decode(value, { stream: true });
-        const split = buf.split("\n\n");
-        buf = split.pop() ?? "";
+        const split = buf.split("\n\n"); buf = split.pop() ?? "";
         processLines(split.join("\n\n") + "\n\n");
       }
     } catch (err) {
@@ -162,192 +176,204 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
       setError(err instanceof Error ? err.message : "Build thất bại");
     } finally {
       setRunning(false);
+      setTotalElapsed(performance.now() - startNow);
     }
-  }
-
-  function cancel() {
-    abortRef.current?.abort();
-    setRunning(false);
   }
 
   const fullVideoUrl = videoUrl ? `${API}${videoUrl}` : "";
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {error && (
-        <div className="px-5 py-4 bg-red-50/80 backdrop-blur border border-red-200 rounded-2xl text-sm text-red-700 fade-up">
+        <div className="fade-up px-4 py-3 rounded-xl text-sm"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
           ⚠ {error}
         </div>
       )}
 
-      <div className="glass-strong rounded-3xl p-7">
-        <div className="flex items-start justify-between mb-7 flex-wrap gap-4">
+      {/* Header card */}
+      <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-3)", borderRadius: "var(--r-xl)", padding: "clamp(20px,3vw,32px)" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
           <div>
-            <p className="text-[10px] font-black text-orange-700 uppercase tracking-widest mb-1.5">
-              {done ? "✓ Video sẵn sàng" : running ? "Đang dựng video..." : "Chuẩn bị dựng video"}
-            </p>
-            <h2 className="text-2xl font-black text-stone-900 mb-1">
+            <div className="hero-eyebrow" style={{ marginBottom: 10 }}>
+              {done ? "✓ Video sẵn sàng" : running ? "Đang dựng..." : "Chuẩn bị dựng"}
+            </div>
+            <h2 style={{ fontSize: "clamp(20px,2.5vw,32px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 8 }}>
               {scenePlan.title}
             </h2>
-            <p className="text-xs text-stone-500">
-              <span className="text-orange-700 font-semibold">{scenePlan.scenes.length} phân cảnh</span> ·
-              <span className="text-orange-700 font-semibold ml-1">{scenePlan.totalDuration}s</span> ·
-              1920×1080 · 30fps
+            <p style={{ fontSize: 12, color: "var(--gray-5)" }}>
+              <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{scenePlan.scenes.length} phân cảnh</span>
+              {" · "}
+              <span style={{ color: "var(--accent2)", fontWeight: 700 }}>
+                {actualDuration ?? scenePlan.totalDuration}s
+                {actualDuration && actualDuration !== scenePlan.totalDuration && (
+                  <span style={{ color: "var(--gray-5)", fontWeight: 400, marginLeft: 4 }}>
+                    (ước lượng {scenePlan.totalDuration}s)
+                  </span>
+                )}
+              </span>
+              {" · "}1920×1080 · 30fps
+              {ttsEngine && (<>{" · "}<span style={{ color: "#67e8f9", fontWeight: 700 }}>TTS: {ttsEngine}</span></>)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {!running && !done && (
-              <button
-                onClick={onBack}
-                className="text-sm px-4 py-2.5 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 font-semibold transition-colors"
-              >
-                ← Quay lại
-              </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {/* Total elapsed timer */}
+            {(running || done) && (
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "flex-end",
+                padding: "8px 14px", borderRadius: "var(--r)",
+                background: done ? "rgba(34,197,94,0.08)" : "var(--gray-2)",
+                border: done ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--gray-3)",
+                minWidth: 110,
+              }}>
+                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)" }}>Tổng thời gian</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 800, color: done ? "#22c55e" : "var(--accent)" }}>
+                  {fmtMs(totalElapsed)}
+                </span>
+              </div>
             )}
+            {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
             {!running && (
-              <button
-                onClick={build}
-                className="btn-glow px-6 py-3 rounded-xl text-white font-bold flex items-center gap-2"
-              >
-                <span className="text-lg">🎬</span>
-                <span>{done ? "Dựng lại" : "Bắt đầu dựng"}</span>
+              <button onClick={build} className="btn-primary magnetic">
+                <span>🎬 {done ? "Dựng lại" : "Bắt đầu dựng"}</span>
               </button>
             )}
             {running && (
-              <button
-                onClick={cancel}
-                className="text-sm px-4 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-semibold transition-colors"
-              >
+              <button onClick={() => { abortRef.current?.abort(); setRunning(false); }} className="btn-ghost"
+                style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}>
                 Huỷ
               </button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {STAGES.map((stage, idx) => {
-            const state = stageStates[stage.key];
-            const detail = stageDetail[stage.key];
+        {/* Stage grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
+          {STAGES.map((s, idx) => {
+            const state = stageStates[s.key];
+            const detail = stageDetail[s.key];
+            const elapsed = stageElapsed[s.key];
             return (
-              <div
-                key={stage.key}
-                className={`relative rounded-2xl p-4 transition-all duration-500 ${
-                  state === "active"
-                    ? "bg-gradient-to-br from-orange-100 to-orange-50 ring-2 ring-orange-400 shadow-lg shadow-orange-500/30"
-                    : state === "done"
-                    ? "bg-orange-50/80 ring-1 ring-orange-300/60"
-                    : state === "error"
-                    ? "bg-red-50 ring-1 ring-red-300"
-                    : "bg-white/40 ring-1 ring-stone-200/60"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 mb-2">
-                  <div
-                    className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black transition-all ${
-                      state === "active"
-                        ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/40"
-                        : state === "done"
-                        ? "bg-orange-500 text-white"
-                        : state === "error"
-                        ? "bg-red-500 text-white"
-                        : "bg-stone-200 text-stone-500"
-                    }`}
-                  >
-                    {state === "done" ? "✓" : state === "error" ? "!" : state === "active" ? stage.icon : idx + 1}
+              <div key={s.key} className={`stage-card ${state === "active" ? "stage-active" : state === "done" ? "stage-done" : state === "error" ? "stage-error" : ""}`}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <div style={{
+                    position: "relative", width: 28, height: 28, borderRadius: "var(--r-sm)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, fontWeight: 900, flexShrink: 0,
+                    background: state === "active" ? "var(--accent)" : state === "done" ? "rgba(34,197,94,0.15)" : state === "error" ? "rgba(239,68,68,0.15)" : "var(--gray-3)",
+                    color: state === "active" ? "var(--black)" : state === "done" ? "var(--green)" : state === "error" ? "var(--red)" : "var(--gray-5)",
+                  }}>
+                    {state === "done" ? "✓" : state === "error" ? "!" : state === "active" ? s.icon : idx + 1}
                     {state === "active" && (
-                      <span className="absolute inset-0 rounded-xl border-2 border-orange-400 animate-ping" />
+                      <span style={{ position: "absolute", inset: 0, borderRadius: "var(--r-sm)", border: "1px solid var(--accent)", animation: "ping 1.2s ease-out infinite" }} />
                     )}
                   </div>
-                  <span className="text-xs font-bold text-stone-800 leading-tight">
-                    {stage.label}
-                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "var(--white)", flex: 1 }}>{s.label}</span>
+                  {/* Per-stage timer */}
+                  {elapsed > 0 && (
+                    <span style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11, fontWeight: 700,
+                      color: state === "active" ? "var(--accent)" : state === "done" ? "#22c55e" : "var(--gray-5)",
+                    }}>
+                      {fmtMs(elapsed)}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] text-stone-500 leading-relaxed min-h-[32px]">
-                  {detail || stage.detail}
+                <p style={{ fontSize: 11, color: "var(--gray-5)", lineHeight: 1.5, minHeight: 28 }}>
+                  {detail || s.detail}
                 </p>
               </div>
             );
           })}
         </div>
 
-        {running && stageStates.render !== "pending" && (
-          <div className="mt-5 fade-up">
-            <div className="flex items-center justify-between text-[11px] text-stone-500 mb-1.5 font-semibold">
-              <span className="uppercase tracking-wider text-orange-700">Render progress</span>
-              <span className="text-orange-700">{renderProgress}%</span>
+        {/* Progress */}
+        {(running || done) && stageStates.render !== "pending" && (
+          <div style={{ marginTop: 20 }} className="fade-up">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 800, marginBottom: 8 }}>
+              <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--gray-5)" }}>Render progress</span>
+              <span style={{ color: "var(--accent2)" }}>{progress}%</span>
             </div>
-            <div className="h-2 rounded-full bg-orange-100 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-500 shadow-sm shadow-orange-500/40"
-                style={{ width: `${renderProgress}%` }}
-              />
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}
       </div>
 
-      {(running || renderLog.length > 0) && stageStates.render !== "pending" && (
-        <div className="rounded-3xl p-5 bg-stone-900/95 backdrop-blur border border-stone-800 shadow-xl shadow-stone-900/20 fade-up">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+      {/* Composition LLM stream preview */}
+      {(stageStates.composition === "active" || (compStream && stageStates.composition === "done")) && compStream && (
+        <div className="terminal p-4 fade-up" style={{ borderColor: "rgba(168,85,247,0.2)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["#a855f7", "#fbbf24", "#22c55e"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
+              </div>
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(168,85,247,0.65)" }}>composition.html (live stream)</span>
             </div>
-            <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest ml-2">
-              Render log
-            </p>
+            <span style={{ fontSize: 10, color: "var(--gray-5)", fontFamily: "var(--font-mono)" }}>
+              {compChars.toLocaleString()} ký tự
+            </span>
           </div>
-          <pre className="text-[11px] text-orange-200/90 font-mono whitespace-pre-wrap leading-relaxed max-h-56 overflow-auto">
+          <pre ref={compRef} style={{
+            maxHeight: 220, overflow: "auto",
+            whiteSpace: "pre-wrap", wordBreak: "break-all",
+            lineHeight: 1.6, fontSize: 11,
+            color: "rgba(216,180,254,0.85)",
+          }}>
+            {compStream}
+          </pre>
+        </div>
+      )}
+
+      {/* Render log */}
+      {(running || renderLog.length > 0) && stageStates.render !== "pending" && (
+        <div className="terminal p-4 fade-up">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["#ef4444","#fbbf24","#22c55e"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
+            </div>
+            <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(249,115,22,0.4)" }}>render log</span>
+          </div>
+          <pre ref={logRef} style={{ maxHeight: 200, overflow: "auto", whiteSpace: "pre-wrap", lineHeight: 1.7, fontSize: 11 }}>
             {renderLog.length > 0 ? renderLog.join("\n") : "Đang khởi động Chromium..."}
           </pre>
         </div>
       )}
 
+      {/* Video result */}
       {done && fullVideoUrl && (
-        <div className="glass-strong rounded-3xl p-5 fade-up">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-3)", borderRadius: "var(--r-xl)", padding: "clamp(20px,3vw,32px)" }} className="fade-up">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
             <div>
-              <p className="text-[10px] font-black text-orange-700 uppercase tracking-widest mb-0.5">
-                ✓ Video đã render xong
+              <div className="hero-eyebrow" style={{ marginBottom: 8 }}>✓ Video đã render xong</div>
+              <p style={{ fontSize: 15, fontWeight: 800, color: "var(--white)" }}>{scenePlan.title}.mp4</p>
+              <p style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 6 }}>
+                Tổng thời gian dựng: <span style={{ color: "#22c55e", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{fmtMs(totalElapsed)}</span>
+                {Object.entries(stageElapsed).filter(([, v]) => v > 0).map(([k, v]) => (
+                  <span key={k} style={{ marginLeft: 12, color: "var(--gray-5)" }}>
+                    {k}: <span style={{ color: "var(--accent2)", fontFamily: "var(--font-mono)" }}>{fmtMs(v)}</span>
+                  </span>
+                ))}
               </p>
-              <p className="text-base font-bold text-stone-900">{scenePlan.title}.mp4</p>
             </div>
-            <div className="flex items-center gap-2">
-              <a
-                href={fullVideoUrl}
-                download
-                className="text-sm px-4 py-2.5 rounded-xl border border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold transition-colors flex items-center gap-1.5"
-              >
-                <span>⬇</span>
-                <span>Tải xuống</span>
-              </a>
-              <a
-                href={fullVideoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-glow text-sm px-4 py-2.5 rounded-xl text-white font-bold flex items-center gap-1.5"
-              >
-                <span>↗</span>
-                <span>Mở tab mới</span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <a href={fullVideoUrl} download className="btn-ghost" style={{ fontSize: 12 }}>⬇ Tải xuống</a>
+              <a href={fullVideoUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ fontSize: 12 }}>
+                <span>↗ Mở tab mới</span>
               </a>
             </div>
           </div>
-
-          <video
-            src={fullVideoUrl}
-            controls
-            className="w-full rounded-2xl bg-black shadow-2xl shadow-orange-900/20"
-            style={{ aspectRatio: "16 / 9" }}
-          />
-
+          <video src={fullVideoUrl} controls style={{ width: "100%", borderRadius: "var(--r-lg)", background: "#000", aspectRatio: "16/9" }} />
           {videoPath && (
-            <p className="text-[10px] text-stone-400 mt-3 font-mono break-all bg-stone-100/60 px-3 py-1.5 rounded-lg">
+            <p style={{ fontSize: 10, marginTop: 12, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "var(--gray-2)", padding: "8px 12px", borderRadius: "var(--r-sm)", wordBreak: "break-all" }}>
               📁 {videoPath}
             </p>
           )}
         </div>
       )}
+      <style>{`@keyframes ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }`}</style>
     </div>
   );
 }

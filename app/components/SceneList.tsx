@@ -9,63 +9,53 @@ interface Props {
 }
 
 function emptyScene(index: number): Scene {
-  return {
-    id: `scene-${Date.now()}-${index}`,
-    index,
-    title: "Phân cảnh mới",
-    narration: "",
-    visualDescription: "",
-    duration: 8,
-  };
+  return { id: `scene-${Date.now()}-${index}`, index, title: "Phân cảnh mới", narration: "", visualDescription: "", duration: 8 };
 }
-
-function reindex(scenes: Scene[]): Scene[] {
-  return scenes.map((s, i) => ({ ...s, index: i }));
-}
-
-function totalOf(scenes: Scene[]): number {
-  return scenes.reduce((sum, s) => sum + s.duration, 0);
-}
+function reindex(scenes: Scene[]): Scene[] { return scenes.map((s, i) => ({ ...s, index: i })); }
+function totalOf(scenes: Scene[]): number  { return scenes.reduce((sum, s) => sum + s.duration, 0); }
 
 export function SceneList({ scenePlan, onChange }: Props) {
   function commit(scenes: Scene[]) {
-    const reindexed = reindex(scenes);
-    onChange({ ...scenePlan, scenes: reindexed, totalDuration: totalOf(reindexed) });
-  }
-
-  function updateScene(index: number, updated: Scene) {
-    const next = scenePlan.scenes.map((s, i) => (i === index ? updated : s));
-    commit(next);
-  }
-
-  function deleteScene(index: number) {
-    commit(scenePlan.scenes.filter((_, i) => i !== index));
-  }
-
-  function move(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= scenePlan.scenes.length) return;
-    const next = [...scenePlan.scenes];
-    [next[index], next[target]] = [next[target], next[index]];
-    commit(next);
-  }
-
-  function addScene() {
-    const next = [...scenePlan.scenes, emptyScene(scenePlan.scenes.length)];
-    commit(next);
+    const r = reindex(scenes);
+    onChange({ ...scenePlan, scenes: r, totalDuration: totalOf(r) });
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+      {/* Stats bar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--gray-3)" }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 4 }}>Phân cảnh</div>
+          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", color: "var(--white)" }}>{scenePlan.scenes.length}</div>
+        </div>
+        <div style={{ width: 1, height: 40, background: "var(--gray-3)" }} />
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 4 }}>Thời lượng</div>
+          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", color: "var(--accent)" }}>{scenePlan.totalDuration}s</div>
+        </div>
+        <div style={{ width: 1, height: 40, background: "var(--gray-3)" }} />
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 4 }}>Độ phân giải</div>
+          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", color: "var(--white)" }}>1080p</div>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12, marginBottom: 20 }}>
         {scenePlan.scenes.map((scene, i) => (
-          <div key={scene.id} className="fade-up" style={{ animationDelay: `${i * 60}ms` }}>
+          <div key={scene.id} className="fade-up" style={{ animationDelay: `${i * 40}ms` }}>
             <SceneCard
               scene={scene}
-              onUpdate={(updated) => updateScene(i, updated)}
-              onDelete={() => deleteScene(i)}
-              onMoveUp={() => move(i, -1)}
-              onMoveDown={() => move(i, 1)}
+              onUpdate={(u) => commit(scenePlan.scenes.map((s, j) => j === i ? u : s))}
+              onDelete={() => commit(scenePlan.scenes.filter((_, j) => j !== i))}
+              onMoveUp={() => {
+                if (i === 0) return;
+                const n = [...scenePlan.scenes]; [n[i], n[i-1]] = [n[i-1], n[i]]; commit(n);
+              }}
+              onMoveDown={() => {
+                if (i === scenePlan.scenes.length - 1) return;
+                const n = [...scenePlan.scenes]; [n[i], n[i+1]] = [n[i+1], n[i]]; commit(n);
+              }}
               isFirst={i === 0}
               isLast={i === scenePlan.scenes.length - 1}
             />
@@ -73,13 +63,14 @@ export function SceneList({ scenePlan, onChange }: Props) {
         ))}
       </div>
 
-      <div className="flex justify-center">
+      {/* Add scene */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
         <button
-          onClick={addScene}
-          className="text-sm px-5 py-3 rounded-2xl border-2 border-dashed border-orange-300 text-orange-700 hover:bg-orange-50 hover:border-orange-500 font-bold transition-all flex items-center gap-2"
+          onClick={() => commit([...scenePlan.scenes, emptyScene(scenePlan.scenes.length)])}
+          className="btn-ghost"
+          style={{ borderStyle: "dashed", borderColor: "rgba(249,115,22,0.25)", color: "var(--accent2)", fontSize: 12, padding: "10px 24px" }}
         >
-          <span className="text-lg">+</span>
-          <span>Thêm phân cảnh</span>
+          <span style={{ fontSize: 16, fontWeight: 900, marginRight: 4 }}>+</span> Thêm phân cảnh
         </button>
       </div>
     </div>

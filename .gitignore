@@ -24,6 +24,9 @@ app/build/
 app/.env*
 backend/.env
 
+# Junk/accidental downloads
+backend/1.34.0
+
 # TS build info
 *.tsbuildinfo
 next-env.d.ts

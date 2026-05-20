@@ -24,6 +24,9 @@ async def extract_url(body: UrlRequest):
     try:
         result = await extract_from_url(body.url)
         return result
+    except ValueError as e:
+        # User-facing extraction error (empty content, paywall, JS-rendered)
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

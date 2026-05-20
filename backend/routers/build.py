@@ -24,7 +24,62 @@ def sse(data: dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-# -------- TTS via gTTS (Google Translate, Vietnamese) --------
+# -------- TTS via ElevenLabs (primary) + gTTS (fallback) --------
+
+ELEVENLABS_API = "https://api.elevenlabs.io/v1/text-to-speech"
+# Default Vietnamese-capable voice — Adam (multilingual). User can override via env.
+DEFAULT_ELEVEN_VOICE_ID = "pNInz6obpgDQGcFmaJgB"
+
+
+async def _elevenlabs_to_wav(text: str, target: Path, voice_id: str | None = None) -> bool:
+    """Try ElevenLabs TTS → wav. Returns True on success, False to fall back."""
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    if not api_key:
+        return False
+
+    voice_id = voice_id or os.getenv("ELEVENLABS_VOICE_ID", DEFAULT_ELEVEN_VOICE_ID)
+    model_id = os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2")
+
+    url = f"{ELEVENLABS_API}/{voice_id}"
+    payload = {
+        "text": text,
+        "model_id": model_id,
+        "voice_settings": {
+            "stability": 0.45,
+            "similarity_boost": 0.75,
+            "style": 0.30,
+            "use_speaker_boost": True,
+        },
+    }
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+            if resp.status_code != 200:
+                print(f"[tts] ElevenLabs HTTP {resp.status_code}: {resp.text[:200]}")
+                return False
+            mp3_bytes = resp.content
+    except Exception as e:
+        print(f"[tts] ElevenLabs request failed: {e}")
+        return False
+
+    # Convert mp3 → wav for HyperFrames
+    try:
+        from pydub import AudioSegment
+        from io import BytesIO
+        seg = AudioSegment.from_file(BytesIO(mp3_bytes), format="mp3")
+        await asyncio.to_thread(seg.export, str(target), format="wav")
+        return True
+    except Exception as e:
+        print(f"[tts] mp3→wav conversion failed, writing raw mp3: {e}")
+        target.write_bytes(mp3_bytes)
+        return True
+
 
 def _gtts_to_wav_sync(text: str, lang: str, target: Path) -> None:
     """Run gTTS + mp3->wav conversion in a worker thread."""
@@ -44,9 +99,18 @@ def _gtts_to_wav_sync(text: str, lang: str, target: Path) -> None:
         target.write_bytes(mp3_buf.getvalue())
 
 
-async def synthesize_tts(text: str, target: Path) -> None:
+async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -> str:
+    """
+    Synthesize speech for `text` to `target`.
+    Order: ElevenLabs (if ELEVENLABS_API_KEY set) → gTTS fallback.
+    Returns the engine name actually used ('elevenlabs' or 'gtts').
+    """
+    if await _elevenlabs_to_wav(text, target, voice_id=voice_id):
+        return "elevenlabs"
+
     lang = os.getenv("TTS_LANG", "vi")
     await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
+    return "gtts"
 
 
 def get_audio_duration_s(path: Path) -> float:
@@ -59,14 +123,17 @@ def get_audio_duration_s(path: Path) -> float:
         return 0.0
 
 
-def patch_html_timing(html: str, durations: list[float]) -> str:
+def patch_html_timing(html: str, durations: list[float], scene_titles: list[str] | None = None) -> str:
     """
     Sync HTML timing to actual TTS audio lengths:
+    - Strips the LLM-authored GSAP timeline so HyperFrames doesn't capture a
+      reference to a timeline built on the (wrong) estimated durations.
     - Patches data-start / data-duration on each <audio id="vN"> tag
+    - Embeds scene title as data-title on each <audio> for fallback rendering
     - Patches root data-duration
-    - Injects a JS snippet that rebuilds the GSAP timeline with correct scene
-      start/end times so visuals stay in sync with voice.
-    Each scene gets ceil(audio_duration) seconds + 0.5s tail for breathing room.
+    - Injects a fresh <script> that builds the SOLE GSAP timeline using actual
+      audio durations and registers it on window.__timelines.
+    Each scene gets ceil(audio_duration) seconds + 1s tail for breathing room.
     """
     import math
 
@@ -78,7 +145,48 @@ def patch_html_timing(html: str, durations: list[float]) -> str:
         cursor += d
     total = cursor
 
-    # --- Patch <audio> tags ---
+    # --- 1. Strip ALL <script> blocks that author a GSAP timeline ---
+    # The LLM consistently builds a timeline based on its estimated scene
+    # durations. HyperFrames captures the first registered timeline, so even
+    # if we kill it client-side later, the render still uses the LLM's wrong
+    # timing. Removing the original script entirely is the only reliable fix.
+    def _is_timeline_script(body: str) -> bool:
+        return ("gsap.timeline" in body or "GSAP" in body.upper() and "timeline" in body) \
+               and ("__timelines" in body or "tl.to" in body or "tl.set" in body or "tl.from" in body)
+
+    def _strip_timeline_scripts(s: str) -> str:
+        out = []
+        i = 0
+        while True:
+            m = re.search(r"<script\b[^>]*>", s[i:], flags=re.IGNORECASE)
+            if not m:
+                out.append(s[i:])
+                break
+            tag_start = i + m.start()
+            tag_end = i + m.end()
+            close = re.search(r"</script\s*>", s[tag_end:], flags=re.IGNORECASE)
+            if not close:
+                out.append(s[i:])
+                break
+            body_end = tag_end + close.start()
+            block_end = tag_end + close.end()
+            tag_open = s[tag_start:tag_end]
+            body = s[tag_end:body_end]
+
+            # ALWAYS preserve content between previous cursor and this script tag
+            out.append(s[i:tag_start])
+
+            # Keep external <script src="..."> (GSAP CDN) and any non-timeline script
+            if re.search(r'\bsrc\s*=', tag_open, flags=re.IGNORECASE) or not _is_timeline_script(body):
+                out.append(s[tag_start:block_end])
+            # else: drop this <script>...</script> block (don't append it)
+
+            i = block_end
+        return "".join(out)
+
+    html = _strip_timeline_scripts(html)
+
+    # --- 2. Patch <audio> tags ---
     for i, (start, dur) in enumerate(zip(starts, int_durs)):
         n = i + 1
         html = re.sub(
@@ -92,7 +200,18 @@ def patch_html_timing(html: str, durations: list[float]) -> str:
             html,
         )
 
-    # --- Patch root data-duration ---
+        # Add data-title for fallback placeholder rendering
+        if scene_titles and i < len(scene_titles):
+            safe_title = scene_titles[i].replace('"', '&quot;')
+            # Only add if not already present
+            if not re.search(rf'<audio\s[^>]*id=["\']v{n}["\'][^>]*data-title=', html):
+                html = re.sub(
+                    rf'(<audio\s[^>]*id=["\']v{n}["\'])',
+                    rf'\1 data-title="{safe_title}"',
+                    html,
+                )
+
+    # --- 3. Patch root data-duration ---
     html = re.sub(
         r'(id=["\']root["\'][^>]*?)data-duration=["\'][^"\']*["\']',
         rf'\1data-duration="{total}"',
@@ -104,47 +223,81 @@ def patch_html_timing(html: str, durations: list[float]) -> str:
         html,
     )
 
-    # --- Inject JS to rebuild GSAP timeline with correct timing ---
-    # This runs after the original script and replaces window.__timelines["main"]
-    # with a new timeline that uses actual audio durations.
+    # --- 4. Inject SOLE timeline that uses actual TTS durations ---
     starts_js = ", ".join(str(s) for s in starts)
     durs_js = ", ".join(str(d) for d in int_durs)
 
     inject = f"""
 <script>
-// Auto-injected by TechBeat build pipeline — syncs GSAP timeline to actual TTS durations
+// Sole timeline injected by TechBeat build pipeline.
+// The LLM's original timeline script has been stripped server-side so this
+// is the ONLY timeline registered on window.__timelines["main"].
 (function() {{
   var starts = [{starts_js}];
   var durs   = [{durs_js}];
   var total  = {total};
 
-  // Wait for original timeline to be registered, then replace it
-  function rebuildTimeline() {{
+  function ensureScenes() {{
+    var root = document.getElementById("root");
+    if (!root) return;
+    for (var i = 0; i < starts.length; i++) {{
+      var n = i + 1;
+      if (document.getElementById("scene" + n)) continue;
+      var ph = document.createElement("div");
+      ph.id = "scene" + n;
+      ph.className = "scene scene-fallback";
+      ph.style.cssText = "position:absolute;inset:0;opacity:0;visibility:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg,#08080f),var(--bg2,#0f0f1a));";
+      var audio = document.querySelector("audio#v" + n);
+      var title = audio ? (audio.getAttribute("data-title") || "") : "";
+      ph.innerHTML = '<div style="text-align:center;padding:80px;max-width:1400px;">' +
+        '<div style="font-size:13px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accent,#f97316);margin-bottom:24px;">Phân cảnh ' + n + '</div>' +
+        '<div style="font-size:clamp(3rem,5vw,5rem);font-weight:900;line-height:1.1;letter-spacing:-.03em;color:var(--text1,#f5f3ff);">' + (title || ("Nội dung " + n)) + '</div>' +
+      '</div>';
+      root.appendChild(ph);
+    }}
+  }}
+
+  function buildTimeline() {{
     if (!window.gsap) return;
+    ensureScenes();
+
+    // Reset every scene's interior — LLM may have authored opacity:0 inline
+    // styles to support its own (now-stripped) tl.from() tweens. Clearing
+    // them ensures our fade-ins don't animate "0 -> 0" no-ops.
+    gsap.set(".scene *", {{ clearProps: "all", opacity: 1 }});
+    gsap.set(".scene", {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
+
     var tl = gsap.timeline({{ paused: true }});
+    var lastIdx = starts.length - 1;
+
+    function safeFrom(sel, vars, at) {{
+      if (document.querySelector(sel)) tl.from(sel, vars, at);
+    }}
 
     for (var i = 0; i < starts.length; i++) {{
-      var n      = i + 1;
-      var s      = starts[i];
-      var d      = durs[i];
+      var n = i + 1;
+      var s = starts[i];
+      var d = durs[i];
       var sceneId = "#scene" + n;
+      if (!document.querySelector(sceneId)) continue;
+      var isLast = (i === lastIdx);
 
-      // Fade in
-      tl.set(sceneId,  {{ opacity: 0, visibility: "visible" }}, s);
-      tl.to(sceneId,   {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
+      tl.set(sceneId, {{ opacity: 0, visibility: "visible" }}, s);
+      tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
 
-      // Animate children in (badge, title, subtitle, desc)
-      tl.from(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s + 0.3);
-      tl.from(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.5);
-      tl.from(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }}, s + 0.7);
-      tl.from(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }}, s + 0.9);
+      safeFrom(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s + 0.3);
+      safeFrom(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.5);
+      safeFrom(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }}, s + 0.7);
+      safeFrom(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }}, s + 0.9);
+      if (document.querySelector(sceneId + " .visual-col > *")) {{
+        tl.from(sceneId + " .visual-col > *", {{ scale: 0.9, opacity: 0, duration: 0.7, stagger: 0.15, ease: "back.out(1.5)" }}, s + 0.5);
+      }}
 
-      // Animate visual column children
-      tl.from(sceneId + " .visual-col > *",   {{ scale: 0.9, opacity: 0, duration: 0.7, stagger: 0.15, ease: "back.out(1.5)" }}, s + 0.5);
-
-      // Fade out
-      tl.to(sceneId,  {{ opacity: 0, duration: 0.5, ease: "power2.in" }}, s + d - 0.6);
-      tl.set(sceneId, {{ visibility: "hidden" }}, s + d);
+      // Last scene stays visible until total — visuals never go black before audio ends.
+      if (!isLast) {{
+        tl.to(sceneId,  {{ opacity: 0, duration: 0.5, ease: "power2.in" }}, s + d - 0.6);
+        tl.set(sceneId, {{ visibility: "hidden" }}, s + d);
+      }}
     }}
 
     window.__timelines = window.__timelines || {{}};
@@ -152,9 +305,9 @@ def patch_html_timing(html: str, durations: list[float]) -> str:
   }}
 
   if (document.readyState === "loading") {{
-    document.addEventListener("DOMContentLoaded", rebuildTimeline);
+    document.addEventListener("DOMContentLoaded", buildTimeline);
   }} else {{
-    rebuildTimeline();
+    buildTimeline();
   }}
 }})();
 </script>
@@ -238,6 +391,8 @@ class BuildRequest(BaseModel):
     totalDuration: int
     projectPath: str | None = None
     skipTts: bool = False
+    theme: str | None = None
+    voiceId: str | None = None
 
 
 async def build_pipeline(req: BuildRequest):
@@ -282,12 +437,19 @@ async def build_pipeline(req: BuildRequest):
     # ---- Stage 1: Composition ----
     yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Đang sinh composition HTML..."})
 
-    comp_req = CompositionRequest(title=req.title, scenes=scenes_with_assets, totalDuration=req.totalDuration)
+    comp_req = CompositionRequest(
+        title=req.title,
+        scenes=scenes_with_assets,
+        totalDuration=req.totalDuration,
+        theme=req.theme,
+    )
     html = ""
     char_count = 0
     async for ev in stream_composition_events(comp_req):
         if ev["type"] == "chunk":
             char_count += len(ev["text"])
+            # Forward the actual text chunk so frontend can show LLM stream live
+            yield sse({"type": "comp_chunk", "text": ev["text"]})
             if char_count % 500 < 50:
                 yield sse({"type": "stage", "stage": "composition", "status": "progress", "chars": char_count})
         elif ev["type"] == "done":
@@ -308,6 +470,7 @@ async def build_pipeline(req: BuildRequest):
 
     # ---- Stage 3: TTS ----
     if not req.skipTts:
+        engines_used: dict[str, int] = {}
         yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
         wav_paths: list[Path] = []
         for s in req.scenes:
@@ -315,18 +478,31 @@ async def build_pipeline(req: BuildRequest):
             wav_paths.append(wav_path)
             yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
             try:
-                await synthesize_tts(s.narration, wav_path)
+                engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
+                engines_used[engine] = engines_used.get(engine, 0) + 1
             except Exception as e:
                 yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
                 return
+
+        engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
+        print(f"[tts] engines: {engine_summary}")
 
         # Measure actual audio durations and patch HTML timing
         durations = [get_audio_duration_s(p) for p in wav_paths]
         measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
         print(f"[tts] Measured durations: {', '.join(measured)}")
-        html = patch_html_timing(html, durations)
+        scene_titles = [s.title for s in req.scenes]
+        html = patch_html_timing(html, durations, scene_titles)
         target_html.write_text(html, encoding="utf-8")
-        yield sse({"type": "stage", "stage": "tts", "status": "done"})
+        # Total composition duration after timing patch (ceil(d) + 1 buffer per scene)
+        import math as _math
+        actual_total = sum(max(1, _math.ceil(d) + 1) for d in durations)
+        yield sse({
+            "type": "stage", "stage": "tts", "status": "done",
+            "engine": engine_summary,
+            "actualDuration": actual_total,
+            "audioDurations": [round(d, 1) for d in durations],
+        })
     else:
         yield sse({"type": "stage", "stage": "tts", "status": "skipped"})
 

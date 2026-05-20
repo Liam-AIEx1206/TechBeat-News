@@ -13,14 +13,22 @@ from routers.scenes import router as scenes_router
 from routers.compositions import router as compositions_router
 from routers.build import router as build_router
 from routers.images import router as images_router
+from routers.projects import router as projects_router
+from routers.history import router as history_router
+from routers.voices import router as voices_router
 
-app = FastAPI(title="VideoAI Backend", version="1.0.0")
+app = FastAPI(title="TechBeat API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        os.getenv("FRONTEND_URL", ""),
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 app.include_router(extract_router)
@@ -28,6 +36,9 @@ app.include_router(scenes_router)
 app.include_router(compositions_router)
 app.include_router(build_router)
 app.include_router(images_router)
+app.include_router(projects_router)
+app.include_router(history_router)
+app.include_router(voices_router)
 
 # Serve rendered MP4 + assets
 project_path = os.getenv("HYPERFRAMES_PROJECT") or str(Path(__file__).resolve().parent.parent / "my-video")
