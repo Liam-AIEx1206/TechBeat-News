@@ -286,20 +286,30 @@ body {{
   opacity: 0.6;
 }}
 
-/* Image frame */
+/* Image frame — fixed aspect ratio so the visual-col never overflows its column */
 .img-frame {{
   position: relative; border-radius: 24px;
   overflow: hidden; isolation: isolate;
+  width: 100%; aspect-ratio: 16 / 10; max-height: 760px;
   box-shadow: 0 0 0 1px {accent}55, 0 30px 80px -20px var(--accent), 0 0 100px -30px var(--accent);
 }}
-.img-frame img {{ width: 100%; height: auto; min-height: 420px; object-fit: cover; display: block; }}
+.img-frame img {{
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  display: block;
+}}
 .img-frame::after {{
   content: ''; position: absolute; inset: 0;
   background:
-    linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 30%),
-    linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%),
+    linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
   pointer-events: none;
 }}
+
+/* When a scene uses .split layout with an image, ensure info-col stays
+   readable: never let the image column eat the text column. */
+.scene.split .info-col {{ min-width: 0; padding-right: 8px; }}
+.scene.split .visual-col {{ min-width: 0; max-width: 100%; }}
 .img-caption {{
   position: absolute; bottom: 18px; left: 18px;
   font-family: 'JetBrains Mono', monospace;
@@ -394,6 +404,13 @@ NGÔN NGỮ: tiếng Việt có dấu. Giữ nguyên văn narration/title/visual
 CSS framework + GSAP timeline + Inter/JetBrains Mono font đã được inject server-side.
 
 Class có sẵn (DÙNG, không tự viết): .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col, .badge, .title-xl, .title-hero, .subtitle, .body-text, .caption, .grad-text, .outline-text, .stat-hero, .stat-suffix, .visual-block, .img-frame, .img-caption, .terminal, .feat-grid, .feat-card, .compare, .tl-list, .tl-item, .quote-block, .quote-text, .corner-bracket (tl/tr/bl/br), .top-line, .scene-num, .scanlines.
+
+🔒 QUY TẮC ẢNH (BẮT BUỘC):
+- Khi user prompt liệt kê IllustrationImage cho 1 scene → scene đó BẮT BUỘC class="scene split".
+- Bố cục: .info-col (TRÁI) chứa text · .visual-col (PHẢI) chứa <div class="img-frame"><img src="..."><span class="img-caption">...</span></div>.
+- TUYỆT ĐỐI không đặt <img> hay background-image full-bleed cho .scene.
+- TUYỆT ĐỐI không position:absolute cho .img-frame/img.
+- TUYỆT ĐỐI không để chữ overlay trực tiếp lên ảnh (caption nằm trong frame là OK).
 
 ═══════ HTML TEMPLATE ═══════
 
@@ -929,7 +946,15 @@ def build_user_prompt(req: CompositionRequest) -> str:
         if s.imageQuery:
             lines.append(f"  ImageQuery: {s.imageQuery}")
         if s.imageAsset:
-            lines.append(f"  IllustrationImage: {s.imageAsset}  ← BẮT BUỘC dùng <img src=\"{s.imageAsset}\"> trong visual-col")
+            lines.append(
+                f"  IllustrationImage: {s.imageAsset}"
+                f"\n  ⚠️ SCENE NÀY BẮT BUỘC dùng <div class=\"scene split\" id=\"scene{s.index + 1}\">"
+                f" — KHÔNG được dùng .hero / .centered / .magazine / .data / .data-viz."
+                f"\n  Layout PHẢI là 2 cột: .info-col bên TRÁI chứa badge + title + subtitle + desc,"
+                f" .visual-col bên PHẢI chứa <div class=\"img-frame\"><img src=\"{s.imageAsset}\" alt=\"\"><span class=\"img-caption\">caption tiếng Việt</span></div>."
+                f"\n  KHÔNG đặt ảnh làm background của scene. KHÔNG để text overlay trực tiếp lên ảnh."
+                f" KHÔNG dùng position:absolute cho ảnh. Ảnh PHẢI nằm gọn trong .visual-col."
+            )
         else:
             lines.append("  ⚠️ KHÔNG CÓ ẢNH — bắt buộc tạo mock visual phong phú (stat card / code / feature grid / timeline / quote / data viz / fact cards) phù hợp với narration")
         cursor += s.duration
