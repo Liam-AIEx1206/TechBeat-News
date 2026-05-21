@@ -15,6 +15,12 @@ export interface ScenePlan {
   totalDuration: number;
   theme?: ThemeId; // user-selected theme; backend defaults to "cyber-orange" if missing
   voiceId?: string; // ElevenLabs voice_id; backend uses default if missing
+  /** Full composition HTML cached by the html-preview stage. When present, the
+   *  build pipeline skips the composition stage and uses this directly. */
+  compositionHtml?: string;
+  /** Per-scene flag — true when narration/title/image was edited after the
+   *  last successful HTML generation, so the user knows to regen that scene. */
+  sceneRegenFlags?: boolean[];
 }
 
 export interface ExtractedContent {

@@ -1,22 +1,601 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HLV Kỵ Giơ Của Pep Guardiola</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+/* === techbeat:base-css === */
+
+:root {
+  --bg: #0d0410;
+  --bg2: #1a0825;
+  --surface: #27123a;
+  --accent: #ec4899;
+  --accent2: #f472b6;
+  --accent3: #fde047;
+  --text1: #fdf4ff;
+  --text2: #f9a8d4;
+  --glow: #ec489955;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#root {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 1400px 900px at 20% 50%, #ec489914 0%, transparent 70%),
+    radial-gradient(ellipse 1000px 700px at 80% 20%, #f472b610 0%, transparent 60%),
+    radial-gradient(ellipse 800px 600px at 60% 80%, #fde0470a 0%, transparent 60%),
+    linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  transform-origin: top left;
+}
+
+#root::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, #ec489924 1px, transparent 1px);
+  background-size: 48px 48px; opacity: 0.32;
+  pointer-events: none; z-index: 0;
+}
+
+#root::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 140% 140% at 50% 50%, transparent 40%, rgba(0,0,0,0.65) 100%);
+  pointer-events: none; z-index: 1;
+}
+
+.scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+  pointer-events: none; z-index: 2;
+}
+
+.scene {
+  position: absolute; inset: 0;
+  opacity: 0; visibility: hidden; z-index: 10;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Frame-0 fallback — HyperFrames captures the static initial DOM before any
+   GSAP timeline seek runs, so without this the very first frame would be
+   black. The injected timeline overrides this once it seeks. */
+#scene1 {
+  opacity: 1; visibility: visible;
+}
+
+/* Standard layout patterns — pick one per scene via class on .scene */
+.scene .layout {
+  display: grid; gap: 60px; height: 100%;
+  padding: 80px; align-items: center;
+  position: relative; z-index: 10;
+}
+.scene.split .layout    { grid-template-columns: 1fr 1fr; }
+.scene.hero .layout     { grid-template-columns: 1fr; justify-items: start; }
+.scene.centered .layout { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.scene.magazine .layout { grid-template-columns: 7fr 5fr; gap: 80px; }
+.scene.data .layout     { grid-template-columns: 1fr 1.4fr; }
+
+.info-col   { display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+.visual-col { display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+
+/* Decorative chrome — present on every scene */
+.corner-bracket { position: absolute; width: 60px; height: 60px; opacity: 0.4; z-index: 15; }
+.corner-bracket.tl { top: 32px; left: 32px;  border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+.corner-bracket.tr { top: 32px; right: 32px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+.corner-bracket.bl { bottom: 32px; left: 32px;  border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+.corner-bracket.br { bottom: 32px; right: 32px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+
+.top-line {
+  position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 40%, var(--accent3) 60%, transparent 100%);
+  z-index: 20;
+}
+
+.scene-num {
+  position: absolute; bottom: 20px; right: 40px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9rem; font-weight: 800;
+  color: var(--accent); opacity: 0.06; line-height: 1;
+  pointer-events: none; z-index: 5;
+}
+
+.status-pill {
+  position: absolute; top: 36px; left: 50%; transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  color: var(--accent3); background: #fde0471a;
+  border: 1px solid #fde0474d;
+  border-radius: 99px; padding: 5px 16px;
+  letter-spacing: 0.18em; text-transform: uppercase; z-index: 20;
+}
+
+/* Typography utilities */
+.badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  color: var(--accent2); background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 99px; padding: 6px 16px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  width: fit-content;
+}
+
+.title-xl {
+  font-size: clamp(3.5rem, 6vw, 6rem);
+  font-weight: 900; line-height: 1.0; letter-spacing: -0.04em;
+  color: var(--text1);
+}
+.title-hero {
+  font-size: clamp(5rem, 8vw, 8rem);
+  font-weight: 900; line-height: 0.95; letter-spacing: -0.05em;
+  color: var(--text1);
+}
+.subtitle {
+  font-size: 1.6rem; font-weight: 700;
+  color: var(--accent2); line-height: 1.4;
+}
+.body-text {
+  font-size: 1.2rem; line-height: 1.7;
+  color: var(--text2); max-width: 560px;
+}
+.caption {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem; color: var(--text2);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+.grad-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.outline-text {
+  -webkit-text-stroke: 2px var(--accent); color: transparent;
+}
+
+/* Hero stat — for B1 BIG STAT pattern */
+.stat-hero {
+  font-size: clamp(7rem, 12vw, 12rem);
+  font-weight: 900; line-height: 1; letter-spacing: -0.05em;
+  font-feature-settings: 'tnum';
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.stat-suffix {
+  font-size: 2.4rem; font-weight: 700; color: var(--text2);
+  margin-left: 0.4rem;
+}
+
+/* Visual block — generic glass card wrapper */
+.visual-block {
+  background: linear-gradient(135deg, var(--surface), #27123ab3);
+  border: 1px solid #ec489933;
+  border-radius: 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 30px 80px -20px var(--glow), inset 0 0 60px rgba(255,255,255,0.02);
+  position: relative; overflow: hidden;
+  padding: 32px;
+}
+.visual-block::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+  opacity: 0.6;
+}
+
+/* Image frame */
+.img-frame {
+  position: relative; border-radius: 24px;
+  overflow: hidden; isolation: isolate;
+  box-shadow: 0 0 0 1px #ec489955, 0 30px 80px -20px var(--accent), 0 0 100px -30px var(--accent);
+}
+.img-frame img { width: 100%; height: auto; min-height: 420px; object-fit: cover; display: block; }
+.img-frame::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 30%),
+    linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+  pointer-events: none;
+}
+.img-caption {
+  position: absolute; bottom: 18px; left: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem; color: var(--text1);
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+  border: 1px solid #ec489955;
+  padding: 8px 14px; border-radius: 99px; z-index: 2;
+}
+
+/* Terminal block — for B2 CODE pattern */
+.terminal {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0,0,0,0.55); border: 1px solid #ec489933;
+  border-radius: 16px; padding: 24px 28px;
+  font-size: 0.95rem; line-height: 1.7; color: var(--text2);
+}
+.terminal .dots { display: flex; gap: 8px; margin-bottom: 16px; }
+.terminal .dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.terminal .dots i:nth-child(1) { background: #ef4444; }
+.terminal .dots i:nth-child(2) { background: #fbbf24; }
+.terminal .dots i:nth-child(3) { background: #22c55e; }
+.terminal .k { color: var(--accent3); }
+.terminal .s { color: var(--accent2); }
+.terminal .c { color: var(--text2); opacity: 0.6; }
+.terminal .cursor { display: inline-block; width: 9px; height: 1.1em; background: var(--accent); vertical-align: -2px; }
+
+/* Feature grid — for B3 */
+.feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.feat-card {
+  padding: 20px 22px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--surface), #27123a80);
+  border: 1px solid #ec489933;
+}
+.feat-card .ic { font-size: 2rem; margin-bottom: 10px; }
+.feat-card .t  { font-weight: 700; color: var(--text1); margin-bottom: 4px; font-size: 1.05rem; }
+.feat-card .d  { font-size: 0.92rem; color: var(--text2); line-height: 1.5; }
+
+/* Comparison — for B4 */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.compare .col { padding: 24px; border-radius: 20px; border: 1px solid #ec489933; background: var(--surface); }
+.compare .col h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 14px; }
+.compare .col li { list-style: none; padding: 6px 0; color: var(--text2); font-size: 0.98rem; }
+.compare .col li::before { content: '✓ '; color: var(--accent3); font-weight: 700; }
+.compare .col.bad li::before { content: '✗ '; color: #ef4444; }
+
+/* Timeline — for B5 */
+.tl-list { position: relative; padding-left: 32px; }
+.tl-list::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--accent), #ec489933); }
+.tl-item { position: relative; padding: 8px 0 18px; }
+.tl-item::before { content: ''; position: absolute; left: -29px; top: 14px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px #ec489933; }
+.tl-item .y { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent2); letter-spacing: 0.1em; }
+.tl-item .t { font-size: 1.1rem; font-weight: 700; color: var(--text1); margin: 4px 0; }
+.tl-item .d { color: var(--text2); font-size: 0.95rem; }
+
+/* Quote — for B6 */
+.quote-block { position: relative; padding: 60px 40px; }
+.quote-block::before {
+  content: '"'; position: absolute; left: -10px; top: -40px;
+  font-size: 14rem; line-height: 1; color: var(--accent);
+  opacity: 0.18; font-family: Georgia, serif;
+}
+.quote-text { font-size: 2rem; font-style: italic; line-height: 1.5; color: var(--text1); max-width: 600px; }
+.quote-attr { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent2); margin-top: 24px; letter-spacing: 0.1em; }
+.quote-attr::before { content: '— '; }
+
+/* Glow orb */
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+
+</style>
+
+  <meta charset="UTF-8">
+  <title>Công ty AI Anthropic tuyển nhân sự truyền bá sản phẩm, lương tới 315.000 USD/năm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    /* override tối đa 60 dòng */
+    body {
+      background-color: #f7f7f7;
+      font-family: 'Inter', sans-serif;
+    }
+    .scene {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .layout {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .info-col {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .visual-col {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .badge {
+      background-color: #ec4899;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+    .title-xl {
+      font-size: 36px;
+      font-weight: 600;
+    }
+    .subtitle {
+      font-size: 18px;
+      font-weight: 400;
+    }
+    .body-text {
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .visual-block {
+      text-align: center;
+    }
+    .stat-hero {
+      font-size: 48px;
+      font-weight: 600;
+    }
+    .stat-suffix {
+      font-size: 24px;
+      font-weight: 400;
+    }
+    .terminal {
+      background-color: #000000;
+      color: #ffffff;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .feat-card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .compare {
+      display: flex;
+      justify-content: space-between;
+    }
+    .tl-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .tl-item {
+      background-color: #ffffff;
+      padding: 10px;
+      border-bottom: 1px solid #dddddd;
+    }
+    .quote-block {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="179">
+    <div class="scanlines"></div>
+    <!-- Scene 1 -->
+    <div class="scene split" id="scene1">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s1-badge" class="badge">PHẦN 1</div>
+          <h1 id="s1-title" class="title-xl">Làn sóng AI tạo ra những công việc mới lạ</h1>
+          <p id="s1-subtitle" class="subtitle">Làn sóng AI không chỉ tạo ra những sản phẩm và startup mới mà còn sinh ra những chức danh công việc hiếm gặp trước đây.</p>
+          <p id="s1-desc" class="body-text">Mới nhất, công ty AI Anthropic đã đăng tuyển vị trí 'Applied AI Claude Evangelist' với vai trò được mô tả là 'gương mặt đại diện' của hãng trong cộng đồng startup.</p>
+        </div>
+        <div class="visual-col">
+          <div class="visual-block">
+            <span class="stat-hero">AI</span>
+            <span class="stat-suffix">Technology</span>
+            <p class="caption">Anthropic</p>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">01</span>
+    </div>
+    <!-- Scene 2 -->
+    <div class="scene centered" id="scene2">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s2-badge" class="badge">PHẦN 2</div>
+          <h1 id="s2-title" class="title-xl">Nhiệm vụ chính của vị trí này là gì?</h1>
+          <p id="s2-subtitle" class="subtitle">Người đảm nhiệm vị trí này sẽ làm việc trực tiếp với các startup để thúc đẩy việc sử dụng sản phẩm AI của Anthropic, đặc biệt là Claude.</p>
+          <p id="s2-desc" class="body-text">Công việc bao gồm hỗ trợ kỹ thuật, hướng dẫn nhà phát triển, xây dựng demo và viết hướng dẫn sử dụng.</p>
+        </div>
+        <div class="visual-col">
+          <div class="feat-grid">
+            <div class="feat-card">
+              <div class="ic">🔍</div>
+              <div class="t">Hỗ trợ kỹ thuật</div>
+              <div class="d">Hỗ trợ kỹ thuật cho các startup</div>
+            </div>
+            <div class="feat-card">
+              <div class="ic">📚</div>
+              <div class="t">Hướng dẫn</div>
+              <div class="d">Hướng dẫn cho các nhà phát triển</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">02</span>
+    </div>
+    <!-- Scene 3 -->
+    <div class="scene hero" id="scene3">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s3-badge" class="badge">PHẦN 3</div>
+          <h1 id="s3-title" class="title-xl">Kỹ năng thuyết trình và truyền cảm hứng quan trọng</h1>
+          <p id="s3-subtitle" class="subtitle">Một phần đáng kể của vai trò liên quan đến các sự kiện trực tiếp.</p>
+          <p id="s3-desc" class="body-text">Ứng viên phải có khả năng thiết kế và vận hành các buổi thực hành kỹ thuật để biến sự tò mò của lập trình viên thành việc xây dựng sản phẩm thực tế chỉ trong một sự kiện.</p>
+        </div>
+        <div class="visual-col">
+          <div class="quote-block">
+            <p class="quote-text">"Thuyết trình và truyền cảm hứng là chìa khóa để thành công trong lĩnh vực này."</p>
+            <p class="quote-attr">- Một chuyên gia trong lĩnh vực</p>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">03</span>
+    </div>
+    <!-- Scene 4 -->
+    <div class="scene data" id="scene4">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s4-badge" class="badge">PHẦN 4</div>
+          <h1 id="s4-title" class="title-xl">Yêu cầu tuyển dụng khắt khe</h1>
+          <p id="s4-subtitle" class="subtitle">Anthropic yêu cầu ứng viên có ít nhất 7 năm kinh nghiệm, từng là nhà sáng lập công nghệ hoặc nhân sự startup.</p>
+          <p id="s4-desc" class="body-text">Mức lương dao động từ 240.000 đến 315.000 USD mỗi năm, tương đương khoảng 8 tỷ đồng.</p>
+        </div>
+        <div class="visual-col">
+          <div class="visual-block">
+            <span class="stat-hero">7+</span>
+            <span class="stat-suffix">năm kinh nghiệm</span>
+            <p class="caption">Yêu cầu tuyển dụng</p>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">04</span>
+    </div>
+    <!-- Scene 5 -->
+    <div class="scene split" id="scene5">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s5-badge" class="badge">PHẦN 5</div>
+          <h1 id="s5-title" class="title-xl">Khái niệm 'Evangelist' trong công nghệ</h1>
+          <p id="s5-subtitle" class="subtitle">Tên gọi 'evangelist' có thể gây chú ý vì mang sắc thái tôn giáo, nhưng thực tế đã xuất hiện từ lâu trong ngành công nghệ.</p>
+          <p id="s5-desc" class="body-text">Apple trước đây từng có chức danh 'chief evangelist', và nhiều công ty từng tuyển vị trí 'product evangelist'.</p>
+        </div>
+        <div class="visual-col">
+          <div class="feat-grid">
+            <div class="feat-card">
+              <div class="ic">📈</div>
+              <div class="t">Product Evangelist</div>
+              <div class="d">Vị trí tại Apple</div>
+            </div>
+            <div class="feat-card">
+              <div class="ic">📊</div>
+              <div class="t">Chief Evangelist</div>
+              <div class="d">Chức danh tại Apple</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">05</span>
+    </div>
+    <!-- Scene 6 -->
+    <div class="scene centered" id="scene6">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s6-badge" class="badge">PHẦN 6</div>
+          <h1 id="s6-title" class="title-xl">Vai trò evangelist trong AI ngày nay</h1>
+          <p id="s6-subtitle" class="subtitle">Trong giới công nghệ, 'evangelist' chỉ những người đóng vai trò quảng bá công nghệ, xây dựng cộng đồng và thuyết phục lập trình viên sử dụng sản phẩm.</p>
+          <p id="s6-desc" class="body-text">Với AI, vai trò này đang được đẩy lên mức cao hơn khi các hãng cạnh tranh để thu hút nhà phát triển vào hệ sinh thái của mình.</p>
+        </div>
+        <div class="visual-col">
+          <div class="quote-block">
+            <p class="quote-text">"Vai trò evangelist trong AI là rất quan trọng để thu hút nhà phát triển và xây dựng cộng đồng."</p>
+            <p class="quote-attr">- Một chuyên gia trong lĩnh vực</p>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">06</span>
+    </div>
+    <!-- Scene 7 -->
+    <div class="scene hero" id="scene7">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s7-badge" class="badge">PHẦN 7</div>
+          <h1 id="s7-title" class="title-xl">Những công việc AI mới khác</h1>
+          <p id="s7-subtitle" class="subtitle">Claude Evangelist chỉ là một trong nhiều nghề mới xuất hiện cùng cơn sốt AI.</p>
+          <p id="s7-desc" class="body-text">Stripe tuyển vị trí 'Forward Deployed AI Accelerator' để giúp khách hàng xây dựng thói quen sử dụng AI hiệu quả.</p>
+        </div>
+        <div class="visual-col">
+          <div class="visual-block">
+            <span class="stat-hero">AI</span>
+            <span class="stat-suffix">Accelerator</span>
+            <p class="caption">Stripe</p>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">07</span>
+    </div>
+    <!-- Scene 8 -->
+    <div class="scene split" id="scene8">
+      <div class="layout">
+        <div class="info-col">
+          <div id="s8-badge" class="badge">PHẦN 8</div>
+          <h1 id="s8-title" class="title-xl">Cuộc cạnh tranh AI không chỉ về công nghệ</h1>
+          <p id="s8-subtitle" class="subtitle">Sự xuất hiện của các vị trí như 'Claude Evangelist' cho thấy cuộc cạnh tranh AI không còn chỉ xoay quanh mô hình ngôn ngữ hay năng lực xử lý dữ liệu.</p>
+          <p id="s8-desc" class="body-text">Các hãng công nghệ giờ cần những người có thể kết nối cộng đồng, đào tạo nhà phát triển và biến AI thành một phong trào lan tỏa trong giới startup.</p>
+        </div>
+        <div class="visual-col">
+          <div class="feat-grid">
+            <div class="feat-card">
+              <div class="ic">🌐</div>
+              <div class="t">Kết nối cộng đồng</div>
+              <div class="d">Kết nối cộng đồng để phát triển AI</div>
+            </div>
+            <div class="feat-card">
+              <div class="ic">📚</div>
+              <div class="t">Đào tạo</div>
+              <div class="d">Đào tạo nhà phát triển để sử dụng AI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+      <div class="top-line"></div>
+      <span class="scene-num">08</span>
+    </div>
+    <audio id="v1" data-title="Làn sóng AI tạo ra những công việc mới lạ" src="assets/p1.wav" data-start="0" data-duration="25" data-volume="1"></audio>
+    <audio id="v2" data-title="Nhiệm vụ chính của vị trí này là gì?" src="assets/p2.wav" data-start="25" data-duration="24" data-volume="1"></audio>
+    <audio id="v3" data-title="Kỹ năng thuyết trình và truyền cảm hứng quan trọng" src="assets/p3.wav" data-start="49" data-duration="19" data-volume="1"></audio>
+    <audio id="v4" data-title="Yêu cầu tuyển dụng khắt khe" src="assets/p4.wav" data-start="68" data-duration="21" data-volume="1"></audio>
+    <audio id="v5" data-title="Khái niệm 'Evangelist' trong công nghệ" src="assets/p5.wav" data-start="89" data-duration="22" data-volume="1"></audio>
+    <audio id="v6" data-title="Vai trò evangelist trong AI ngày nay" src="assets/p6.wav" data-start="111" data-duration="21" data-volume="1"></audio>
+    <audio id="v7" data-title="Những công việc AI mới khác" src="assets/p7.wav" data-start="132" data-duration="25" data-volume="1"></audio>
+    <audio id="v8" data-title="Cuộc cạnh tranh AI không chỉ về công nghệ" src="assets/p8.wav" data-start="157" data-duration="22" data-volume="1"></audio>
+  </div>
 
 <script>
 // Sole timeline injected by TechBeat build pipeline.
 // The LLM's original timeline script has been stripped server-side so this
 // is the ONLY timeline registered on window.__timelines["main"].
 (function() {
-  var starts = [0, 18, 42, 59, 83, 103, 131, 152];
-  var durs   = [18, 24, 17, 24, 20, 28, 21, 19];
-  var total  = 171;
+  var starts = [0, 25, 49, 68, 89, 111, 132, 157];
+  var durs   = [25, 24, 19, 21, 22, 21, 25, 22];
+  var total  = 179;
 
   function ensureScenes() {
     var root = document.getElementById("root");
@@ -46,7 +625,15 @@
     // styles to support its own (now-stripped) tl.from() tweens. Clearing
     // them ensures our fade-ins don't animate "0 -> 0" no-ops.
     gsap.set(".scene *", { clearProps: "all", opacity: 1 });
-    gsap.set(".scene", { opacity: 0, visibility: "hidden", position: "absolute", inset: 0 });
+    // Hide scenes 2..N via inline style. Scene1 keeps the CSS-level
+    // opacity:1/visibility:visible fallback so the static initial frame
+    // (captured before any timeline seek) renders correctly. The timeline
+    // animates scene1 in at t=0 cleanly because tl.set() fires there too.
+    gsap.utils.toArray(".scene").forEach(function(el, idx) {
+      if (idx === 0) return;
+      gsap.set(el, { opacity: 0, visibility: "hidden", position: "absolute", inset: 0 });
+    });
+    gsap.set("#scene1", { position: "absolute", inset: 0 });
 
     var tl = gsap.timeline({ paused: true });
     var lastIdx = starts.length - 1;
@@ -63,8 +650,13 @@
       if (!document.querySelector(sceneId)) continue;
       var isLast = (i === lastIdx);
 
-      tl.set(sceneId, { opacity: 0, visibility: "visible" }, s);
-      tl.to(sceneId,  { opacity: 1, duration: 0.6, ease: "power3.out" }, s);
+      // Scene 1 starts already visible (CSS fallback); only fade later scenes in.
+      if (i === 0) {
+        tl.set(sceneId, { opacity: 1, visibility: "visible" }, s);
+      } else {
+        tl.set(sceneId, { opacity: 0, visibility: "visible" }, s);
+        tl.to(sceneId,  { opacity: 1, duration: 0.6, ease: "power3.out" }, s);
+      }
 
       safeFrom(sceneId + " [id$='-badge']",    { y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }, s + 0.3);
       safeFrom(sceneId + " [id$='-title']",    { y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }, s + 0.5);
@@ -81,8 +673,16 @@
       }
     }
 
+    // Park timeline at t=0 so any pre-seek frame capture matches the
+    // intended initial state instead of post-set hidden state.
+    tl.progress(0).pause();
+
+    // Register under every plausible key — HyperFrames doc says key matches
+    // composition-id, but real-world runs vary. Cover "main" (our id) and
+    // "root" (the doc default) to be safe.
     window.__timelines = window.__timelines || {};
     window.__timelines["main"] = tl;
+    window.__timelines["root"] = tl;
   }
 
   if (document.readyState === "loading") {

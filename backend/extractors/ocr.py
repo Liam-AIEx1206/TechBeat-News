@@ -7,7 +7,7 @@ import base64
 import os
 from typing import List
 
-from routers.llm import get_async_client
+from routers.llm import chat_completions_with_fallback
 
 
 def get_ocr_model() -> str:
@@ -37,8 +37,6 @@ async def ocr_image_bytes(images: List[bytes]) -> str:
     """Send all page images in one multimodal request, ask the model to
     transcribe them in reading order. Returns the concatenated markdown text.
     """
-    client = get_async_client()
-
     content: list[dict] = [{
         "type": "text",
         "text": (
@@ -54,8 +52,9 @@ async def ocr_image_bytes(images: List[bytes]) -> str:
             "image_url": {"url": f"data:image/png;base64,{b64}"},
         })
 
-    resp = await client.chat.completions.create(
-        model=get_ocr_model(),
+    resp, _provider = await chat_completions_with_fallback(
+        model_kind="ocr",
+        _primary_model=get_ocr_model(),
         messages=[{"role": "user", "content": content}],
         temperature=0.1,
         max_tokens=8000,

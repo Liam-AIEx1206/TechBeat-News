@@ -15,7 +15,6 @@ from routers.compositions import (
     get_project_root,
     stream_composition_events,
 )
-from routers.llm import get_async_client
 
 router = APIRouter()
 
@@ -265,7 +264,15 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
     // styles to support its own (now-stripped) tl.from() tweens. Clearing
     // them ensures our fade-ins don't animate "0 -> 0" no-ops.
     gsap.set(".scene *", {{ clearProps: "all", opacity: 1 }});
-    gsap.set(".scene", {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
+    // Hide scenes 2..N via inline style. Scene1 keeps the CSS-level
+    // opacity:1/visibility:visible fallback so the static initial frame
+    // (captured before any timeline seek) renders correctly. The timeline
+    // animates scene1 in at t=0 cleanly because tl.set() fires there too.
+    gsap.utils.toArray(".scene").forEach(function(el, idx) {{
+      if (idx === 0) return;
+      gsap.set(el, {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
+    }});
+    gsap.set("#scene1", {{ position: "absolute", inset: 0 }});
 
     var tl = gsap.timeline({{ paused: true }});
     var lastIdx = starts.length - 1;
@@ -282,8 +289,13 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
       if (!document.querySelector(sceneId)) continue;
       var isLast = (i === lastIdx);
 
-      tl.set(sceneId, {{ opacity: 0, visibility: "visible" }}, s);
-      tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
+      // Scene 1 starts already visible (CSS fallback); only fade later scenes in.
+      if (i === 0) {{
+        tl.set(sceneId, {{ opacity: 1, visibility: "visible" }}, s);
+      }} else {{
+        tl.set(sceneId, {{ opacity: 0, visibility: "visible" }}, s);
+        tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
+      }}
 
       safeFrom(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s + 0.3);
       safeFrom(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.5);
@@ -300,8 +312,16 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
       }}
     }}
 
+    // Park timeline at t=0 so any pre-seek frame capture matches the
+    // intended initial state instead of post-set hidden state.
+    tl.progress(0).pause();
+
+    // Register under every plausible key — HyperFrames doc says key matches
+    // composition-id, but real-world runs vary. Cover "main" (our id) and
+    // "root" (the doc default) to be safe.
     window.__timelines = window.__timelines || {{}};
     window.__timelines["main"] = tl;
+    window.__timelines["root"] = tl;
   }}
 
   if (document.readyState === "loading") {{
@@ -393,6 +413,9 @@ class BuildRequest(BaseModel):
     skipTts: bool = False
     theme: str | None = None
     voiceId: str | None = None
+    # Pre-built composition HTML from the html-preview stage. When present,
+    # we skip the LLM composition stage entirely and go straight to save.
+    compositionHtml: str | None = None
 
 
 async def build_pipeline(req: BuildRequest):
@@ -435,28 +458,40 @@ async def build_pipeline(req: BuildRequest):
             scenes_with_assets.append(s.model_copy(update={"imageAsset": asset_rel}))
 
     # ---- Stage 1: Composition ----
-    yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Đang sinh composition HTML..."})
+    # If the html-preview stage already produced an HTML, skip the LLM call
+    # entirely and reuse it. Saves the composition cost AND lets the user
+    # see the exact same visual they previewed.
+    if req.compositionHtml and "<html" in req.compositionHtml.lower():
+        yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Sử dụng HTML từ bước xem trước..."})
+        html = req.compositionHtml
+        # Re-resolve image asset paths so that scenes whose images were
+        # downloaded above get used. The HTML already has the correct
+        # references because the preview stage rendered with the same
+        # imageUrls — but we don't strictly need to splice anything here.
+        yield sse({"type": "stage", "stage": "composition", "status": "done", "message": "Bỏ qua sinh HTML — dùng cache"})
+    else:
+        yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Đang sinh composition HTML..."})
 
-    comp_req = CompositionRequest(
-        title=req.title,
-        scenes=scenes_with_assets,
-        totalDuration=req.totalDuration,
-        theme=req.theme,
-    )
-    html = ""
-    char_count = 0
-    async for ev in stream_composition_events(comp_req):
-        if ev["type"] == "chunk":
-            char_count += len(ev["text"])
-            # Forward the actual text chunk so frontend can show LLM stream live
-            yield sse({"type": "comp_chunk", "text": ev["text"]})
-            if char_count % 500 < 50:
-                yield sse({"type": "stage", "stage": "composition", "status": "progress", "chars": char_count})
-        elif ev["type"] == "done":
-            html = ev["html"]
-        elif ev["type"] == "error":
-            yield sse({"type": "error", "stage": "composition", "message": ev["message"]})
-            return
+        comp_req = CompositionRequest(
+            title=req.title,
+            scenes=scenes_with_assets,
+            totalDuration=req.totalDuration,
+            theme=req.theme,
+        )
+        html = ""
+        char_count = 0
+        async for ev in stream_composition_events(comp_req):
+            if ev["type"] == "chunk":
+                char_count += len(ev["text"])
+                # Forward the actual text chunk so frontend can show LLM stream live
+                yield sse({"type": "comp_chunk", "text": ev["text"]})
+                if char_count % 500 < 50:
+                    yield sse({"type": "stage", "stage": "composition", "status": "progress", "chars": char_count})
+            elif ev["type"] == "done":
+                html = ev["html"]
+            elif ev["type"] == "error":
+                yield sse({"type": "error", "stage": "composition", "message": ev["message"]})
+                return
 
     if not html:
         yield sse({"type": "error", "stage": "composition", "message": "Không nhận được HTML"})
@@ -507,7 +542,7 @@ async def build_pipeline(req: BuildRequest):
         yield sse({"type": "stage", "stage": "tts", "status": "skipped"})
 
     # ---- Stage 4: Render ----
-    yield sse({"type": "stage", "stage": "render", "status": "start", "message": "Đang render MP4 (1-3 phút)..."})
+    yield sse({"type": "stage", "stage": "render", "status": "start", "message": "Đang render MP4..."})
 
     log_buffer: list[str] = []
     log_queue: asyncio.Queue[str] = asyncio.Queue()

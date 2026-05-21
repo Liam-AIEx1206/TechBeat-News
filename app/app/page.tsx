@@ -7,6 +7,7 @@ import { VideoBuilder } from "@/components/VideoBuilder";
 import { UserMenu } from "@/components/UserMenu";
 import { ThemePicker } from "@/components/ThemePicker";
 import { VoicePicker } from "@/components/VoicePicker";
+import { HtmlPreviewStage } from "@/components/HtmlPreviewStage";
 import {
   StageTransition,
   CurtainSweep,
@@ -19,7 +20,7 @@ import { motion } from "motion/react";
 import type { ExtractedContent, ScenePlan, ThemeId } from "@/types/scene";
 import { DEFAULT_THEME, getTheme } from "@/types/scene";
 
-type Stage = "dashboard" | "input" | "generating" | "preview" | "build";
+type Stage = "dashboard" | "input" | "generating" | "preview" | "htmlPreview" | "build";
 
 const TICKER_ITEMS = [
   "TECHBEAT LIVE",
@@ -76,6 +77,8 @@ export default function Home() {
           try { event = JSON.parse(line.slice(6)); } catch { continue; }
           if (event.type === "chunk" && event.text) {
             setStreamBuffer((prev) => prev + event.text);
+          } else if (event.type === "warning" && event.message) {
+            setStreamBuffer((prev) => `[!] ${event.message}\n\n${prev}`);
           } else if (event.type === "done" && event.scenePlan) {
             setScenePlan(event.scenePlan as ScenePlan);
             go("preview");
@@ -138,11 +141,19 @@ export default function Home() {
         )}
         {stage === "generating" && <GeneratingStage buffer={streamBuffer} onCancel={handleReset} />}
         {stage === "preview" && scenePlan && (
-          <PreviewStage scenePlan={scenePlan} setScenePlan={setScenePlan} onBuild={() => go("build")} />
+          <PreviewStage scenePlan={scenePlan} setScenePlan={setScenePlan} onBuild={() => go("htmlPreview")} />
+        )}
+        {stage === "htmlPreview" && scenePlan && (
+          <HtmlPreviewStage
+            scenePlan={scenePlan}
+            setScenePlan={setScenePlan}
+            onBack={() => go("preview")}
+            onBuild={() => go("build")}
+          />
         )}
         {stage === "build" && scenePlan && (
           <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px clamp(20px,4vw,48px)" }}>
-            <VideoBuilder scenePlan={scenePlan} onBack={() => go("preview")} />
+            <VideoBuilder scenePlan={scenePlan} onBack={() => go("htmlPreview")} />
           </main>
         )}
       </StageTransition>
@@ -154,11 +165,12 @@ export default function Home() {
 
 function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => void; onReset: () => void }) {
   const steps: { key: Stage; num: number; label: string }[] = [
-    { key: "input", num: 1, label: "Nhập" },
-    { key: "preview", num: 2, label: "Kịch bản" },
-    { key: "build", num: 3, label: "Dựng" },
+    { key: "input",       num: 1, label: "Nhập" },
+    { key: "preview",     num: 2, label: "Kịch bản" },
+    { key: "htmlPreview", num: 3, label: "Xem trước" },
+    { key: "build",       num: 4, label: "Dựng" },
   ];
-  const order: Stage[] = ["input", "generating", "preview", "build"];
+  const order: Stage[] = ["input", "generating", "preview", "htmlPreview", "build"];
   const cur = order.indexOf(stage);
 
   return (
@@ -186,7 +198,10 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
         <div className="stepper" style={{ display: "flex" }}>
           {steps.map((s, i) => {
             const sIdx = order.indexOf(s.key);
-            const isDone = cur > sIdx || (s.key === "preview" && stage === "build");
+            const isDone =
+              cur > sIdx ||
+              (s.key === "preview" && (stage === "htmlPreview" || stage === "build")) ||
+              (s.key === "htmlPreview" && stage === "build");
             const isActive =
               stage === s.key ||
               (s.key === "preview" && stage === "generating");
@@ -504,7 +519,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
         >
           {[
             { k: "1080p", v: "30fps · MP4" },
-            { k: "~2 phút", v: "thời gian dựng" },
+            { k: "6–8", v: "phân cảnh / video" },
             { k: "vi-VN", v: "TTS tiếng Việt" },
             { k: "Claude", v: "AI Sonnet 4" },
           ].map((s, i) => (
@@ -804,7 +819,7 @@ function PreviewStage({
               boxShadow: `0 12px 32px -4px ${theme.accent}99`,
             }}
           >
-            <span>🎬 Dựng video →</span>
+            <span>→ Xem trước HTML</span>
           </button>
         </div>
       </div>

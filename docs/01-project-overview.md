@@ -99,6 +99,7 @@ flowchart LR
 ### Backend:
 ```bash
 cd backend
+conda activate aieditor
 pip install -r requirements.txt
 # Tạo .env từ .env.example, điền OPENAI_API_KEY
 uvicorn main:app --reload --port 8000

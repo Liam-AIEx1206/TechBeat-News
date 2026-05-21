@@ -15,7 +15,7 @@ const STAGES: { key: StageKey; label: string; detail: string; icon: string }[] =
   { key: "composition", label: "Sinh HTML",   detail: "LLM viết composition + GSAP", icon: "🎨" },
   { key: "save",        label: "Lưu file",    detail: "Ghi index.html vào project",  icon: "💾" },
   { key: "tts",         label: "Giọng đọc",   detail: "ElevenLabs / gTTS",            icon: "🎙️" },
-  { key: "render",      label: "Render MP4",  detail: "Chromium + FFmpeg · 2–3 phút", icon: "🎬" },
+  { key: "render",      label: "Render MP4",  detail: "Chromium + FFmpeg",            icon: "🎬" },
 ];
 
 function fmtMs(ms: number): string {
@@ -143,6 +143,10 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             setTimeout(() => compRef.current?.scrollTo(0, 99999), 30);
             return next.slice(-8000); // cap to avoid memory bloat
           });
+        } else if (ev.type === "warning") {
+          const msg = (ev.message as string) ?? "";
+          setRenderLog(p => [...p, `⚠ ${msg}`]);
+          setStateOnly("composition", "active", msg.slice(0, 80));
         } else if (ev.type === "done") {
           finishStage("render", "done", "✓ Hoàn tất");
           setProgress(100);
@@ -205,10 +209,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
               <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{scenePlan.scenes.length} phân cảnh</span>
               {" · "}
               <span style={{ color: "var(--accent2)", fontWeight: 700 }}>
-                {actualDuration ?? scenePlan.totalDuration}s
+                {actualDuration
+                  ? `${actualDuration}s`
+                  : `khoảng ${scenePlan.totalDuration}s (ước tính)`}
                 {actualDuration && actualDuration !== scenePlan.totalDuration && (
                   <span style={{ color: "var(--gray-5)", fontWeight: 400, marginLeft: 4 }}>
-                    (ước lượng {scenePlan.totalDuration}s)
+                    (ban đầu khoảng {scenePlan.totalDuration}s)
                   </span>
                 )}
               </span>
