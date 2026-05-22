@@ -363,7 +363,7 @@ export default function LoginPage() {
         fontSize: 10, color: "#555", fontFamily: "monospace",
       }}>
         <span style={{ color: "#f97316", fontWeight: 700 }}>● TECHBEAT AI</span>
-        <span>Claude + HyperFrames + gTTS</span>
+        <span>GPT-4o + HyperFrames + gTTS</span>
         <span style={{ marginLeft: "auto" }}>1920×1080 · 30fps · Tiếng Việt</span>
         <span>© 2026</span>
       </div>

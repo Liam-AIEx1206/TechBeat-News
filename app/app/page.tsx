@@ -26,7 +26,7 @@ const TICKER_ITEMS = [
   "TECHBEAT LIVE",
   "AI bản tin tự động",
   "Render 1080p · 30fps",
-  "Powered by Claude + HyperFrames",
+  "Powered by GPT-4o + HyperFrames",
   "TTS tiếng Việt · Google Cloud",
   "Openverse · ảnh CC",
   "MP4 sẵn sàng đăng",
@@ -244,6 +244,21 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
 function Dashboard({ onStart }: { onStart: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [now, setNow] = useState<string>("");
+  const [history, setHistory] = useState<any[]>([]);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
+
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    fetch(`${API}/history/local`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.history) {
+          setHistory(data.history.slice(0, 5));
+        }
+      })
+      .catch(err => console.error("Error loading local history:", err));
+  }, []);
 
   // Animated star/galaxy field
   useEffect(() => {
@@ -504,6 +519,128 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           </motion.a>
         </motion.div>
 
+        {/* Highlight 5 latest videos */}
+        {history.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.95 }}
+            style={{
+              marginTop: 48,
+              width: "100%",
+              maxWidth: 640,
+              textAlign: "left",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              borderRadius: "var(--r-lg)",
+              padding: "16px 20px",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 8px var(--accent)" }} />
+                <h3 style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)" }}>
+                  📺 BẢN TIN MỚI NHẤT HÔM NAY
+                </h3>
+              </div>
+              <a href="/history" style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>
+                Xem tất cả →
+              </a>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {history.map((h) => {
+                const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+                const videoFullUrl = h.video_url.startsWith("http") ? h.video_url : `${API}${h.video_url}`;
+                
+                return (
+                  <div
+                    key={h.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: "8px 12px",
+                      borderRadius: "var(--r)",
+                      background: "rgba(255, 255, 255, 0.01)",
+                      border: "1px solid rgba(255, 255, 255, 0.03)",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                    onClick={() => {
+                      setActiveVideoUrl(videoFullUrl);
+                      setActiveVideoTitle(h.title);
+                    }}
+                    className="scene-card"
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 12, color: "var(--accent)" }}>▶</span>
+                      <h4 style={{ fontSize: 12, fontWeight: 700, color: "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0, padding: 0 }}>
+                        {h.title}
+                      </h4>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 10, color: "var(--gray-5)" }}>
+                        {new Date(h.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <div className="badge badge-accent" style={{ background: "rgba(249,115,22,0.06)", borderColor: "rgba(249,115,22,0.15)", fontSize: 8, padding: "2px 6px" }}>
+                        {Math.floor(h.duration / 60)}:{(h.duration % 60).toString().padStart(2, '0')}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Video Player Modal */}
+        {activeVideoUrl && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+            }}
+            onClick={() => setActiveVideoUrl(null)}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 960,
+                background: "var(--gray-1)",
+                border: "1px solid var(--gray-3)",
+                borderRadius: "var(--r-lg)",
+                overflow: "hidden",
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--gray-3)", background: "rgba(0,0,0,0.5)" }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "80%", margin: 0 }}>
+                  {activeVideoTitle}
+                </h3>
+                <button
+                  onClick={() => setActiveVideoUrl(null)}
+                  className="btn-ghost"
+                  style={{ padding: "4px 10px", fontSize: 11 }}
+                >
+                  ✕ Đóng
+                </button>
+              </div>
+              <video src={activeVideoUrl} controls autoPlay style={{ width: "100%", display: "block" }} />
+            </div>
+          </div>
+        )}
+
         {/* Stats row */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -521,7 +658,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             { k: "1080p", v: "30fps · MP4" },
             { k: "6–8", v: "phân cảnh / video" },
             { k: "vi-VN", v: "TTS tiếng Việt" },
-            { k: "Claude", v: "AI Sonnet 4" },
+            { k: "GPT-4o", v: "Premium AI" },
           ].map((s, i) => (
             <motion.div
               key={s.k}
@@ -726,7 +863,7 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
           fontWeight: 900, lineHeight: 1, letterSpacing: "-0.04em",
           marginBottom: 16,
         }}>
-          <span className="gradient-text">Claude Sonnet</span> đang suy nghĩ...
+          <span className="gradient-text">AI</span> đang suy nghĩ...
         </h1>
         <p style={{ fontSize: 14, color: "var(--gray-5)", maxWidth: 480, margin: "0 auto" }}>
           Phân tích bài viết và tạo 6–8 phân cảnh có lời dẫn tiếng Việt tự nhiên.
@@ -760,7 +897,7 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
             color: "rgba(249,115,22,0.85)",
           }}
         >
-          {buffer || "Đang khởi tạo phiên với Claude API..."}
+          {buffer || "Đang khởi tạo phiên với AI API..."}
           <span style={{
             display: "inline-block",
             width: 8, height: 14,

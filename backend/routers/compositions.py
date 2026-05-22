@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import re
 from pathlib import Path
@@ -69,8 +70,8 @@ THEMES: dict[str, dict] = {
         "bg": "#0d0410", "bg2": "#1a0825", "surface": "#27123a",
         "accent": "#ec4899", "accent2": "#f472b6", "accent3": "#fde047",
         "text1": "#fdf4ff", "text2": "#f9a8d4",
-        "vibe": "Y2K aesthetic với chrome highlights, bubble shapes, magenta-yellow contrast, playful nhưng vẫn premium",
-        "fx": "chrome reflection, bubble shapes floating, sparkle stars, holographic border",
+        "vibe": "Y2K aesthetic với bubble shapes, magenta-yellow contrast, holographic glow, sparkle stars, playful nhưng vẫn premium",
+        "fx": "bubble shapes floating (border-radius CSS), sparkle star keyframes, holographic neon border glow, gradient shimmer text — KHÔNG dùng repeating-linear-gradient diagonal stripes",
     },
     "gold-editorial": {
         "name": "Gold Editorial",
@@ -135,9 +136,10 @@ body {{
 
 #root::before {{
   content: ''; position: absolute; inset: 0;
-  background-image: radial-gradient(circle, {accent}24 1px, transparent 1px);
+  background-image: radial-gradient(circle, {accent}24 1.5px, transparent 1.5px);
   background-size: 48px 48px; opacity: 0.32;
   pointer-events: none; z-index: 0;
+  animation: grid-sweep 12s linear infinite;
 }}
 
 #root::after {{
@@ -158,17 +160,15 @@ body {{
   font-family: 'Inter', system-ui, sans-serif;
 }}
 
-/* Frame-0 fallback — HyperFrames captures the static initial DOM before any
-   GSAP timeline seek runs, so without this the very first frame would be
-   black. The injected timeline overrides this once it seeks. */
+/* Frame-0 fallback */
 #scene1 {{
   opacity: 1; visibility: visible;
 }}
 
-/* Standard layout patterns — pick one per scene via class on .scene */
+/* Standard layout patterns — expanded for video canvas */
 .scene .layout {{
-  display: grid; gap: 60px; height: 100%;
-  padding: 80px; align-items: center;
+  display: grid; gap: 80px; height: 100%;
+  padding: 100px 120px; align-items: center;
   position: relative; z-index: 10;
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
@@ -177,8 +177,8 @@ body {{
 .scene.magazine .layout {{ grid-template-columns: 7fr 5fr; gap: 80px; }}
 .scene.data .layout     {{ grid-template-columns: 1fr 1.4fr; }}
 
-.info-col   {{ display: flex; flex-direction: column; justify-content: center; gap: 18px; }}
-.visual-col {{ display: flex; flex-direction: column; justify-content: center; gap: 16px; }}
+.info-col   {{ display: flex; flex-direction: column; justify-content: center; gap: 28px; min-width: 0; }}
+.visual-col {{ display: flex; flex-direction: column; justify-content: center; gap: 24px; min-width: 0; max-width: 100%; }}
 
 /* Decorative chrome — present on every scene */
 .corner-bracket {{ position: absolute; width: 60px; height: 60px; opacity: 0.4; z-index: 15; }}
@@ -202,48 +202,49 @@ body {{
 }}
 
 .status-pill {{
-  position: absolute; top: 36px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; font-weight: 600;
+  font-size: 1.0rem; font-weight: 700;
   color: var(--accent3); background: {accent3}1a;
-  border: 1px solid {accent3}4d;
-  border-radius: 99px; padding: 5px 16px;
+  border: 2px solid {accent3}4d;
+  border-radius: 99px; padding: 8px 24px;
   letter-spacing: 0.18em; text-transform: uppercase; z-index: 20;
 }}
 
-/* Typography utilities */
+/* Typography utilities — scaled up */
 .badge {{
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; font-weight: 600;
+  font-size: 1.0rem; font-weight: 700;
   color: var(--accent2); background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 99px; padding: 6px 16px;
+  border: 2px solid var(--accent);
+  border-radius: 99px; padding: 10px 24px;
   letter-spacing: 0.18em; text-transform: uppercase;
   width: fit-content;
 }}
 
 .title-xl {{
-  font-size: clamp(3.5rem, 6vw, 6rem);
-  font-weight: 900; line-height: 1.0; letter-spacing: -0.04em;
+  font-size: clamp(4.0rem, 6.5vw, 6.5rem);
+  font-weight: 900; line-height: 1.1; letter-spacing: -0.04em;
   color: var(--text1);
 }}
 .title-hero {{
-  font-size: clamp(5rem, 8vw, 8rem);
-  font-weight: 900; line-height: 0.95; letter-spacing: -0.05em;
+  font-size: clamp(5.5rem, 8.5vw, 8.5rem);
+  font-weight: 900; line-height: 1.0; letter-spacing: -0.05em;
   color: var(--text1);
 }}
 .subtitle {{
-  font-size: 1.6rem; font-weight: 700;
+  font-size: 2.2rem; font-weight: 700;
   color: var(--accent2); line-height: 1.4;
 }}
 .body-text {{
-  font-size: 1.2rem; line-height: 1.7;
-  color: var(--text2); max-width: 560px;
+  font-size: 1.6rem; line-height: 1.8;
+  color: var(--text2); max-width: 720px;
+  word-break: break-word;
 }}
 .caption {{
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem; color: var(--text2);
+  font-size: 1.2rem; color: var(--text2);
   letter-spacing: 0.1em; text-transform: uppercase;
 }}
 
@@ -258,27 +259,28 @@ body {{
 
 /* Hero stat — for B1 BIG STAT pattern */
 .stat-hero {{
-  font-size: clamp(7rem, 12vw, 12rem);
-  font-weight: 900; line-height: 1; letter-spacing: -0.05em;
+  font-size: clamp(6.5rem, 9vw, 9.5rem);
+  font-weight: 900; line-height: 1.1; letter-spacing: -0.05em;
   font-feature-settings: 'tnum';
   background: linear-gradient(135deg, var(--accent), var(--accent3));
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
 }}
 .stat-suffix {{
-  font-size: 2.4rem; font-weight: 700; color: var(--text2);
+  font-size: 3.0rem; font-weight: 700; color: var(--text2);
   margin-left: 0.4rem;
 }}
 
 /* Visual block — generic glass card wrapper */
 .visual-block {{
   background: linear-gradient(135deg, var(--surface), {surface}b3);
-  border: 1px solid {accent}33;
-  border-radius: 24px;
+  border: 2px solid {accent}33;
+  border-radius: 32px;
   backdrop-filter: blur(12px);
-  box-shadow: 0 30px 80px -20px var(--glow), inset 0 0 60px rgba(255,255,255,0.02);
-  position: relative; overflow: hidden;
-  padding: 32px;
+  box-shadow: 0 40px 100px -20px var(--glow), inset 0 0 80px rgba(255,255,255,0.02);
+  position: relative; overflow: visible;
+  padding: 60px;
+  width: 100%;
 }}
 .visual-block::before {{
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
@@ -286,7 +288,7 @@ body {{
   opacity: 0.6;
 }}
 
-/* Image frame — fixed aspect ratio so the visual-col never overflows its column */
+/* Image frame — aspect ratio so visual-col never overflows its column */
 .img-frame {{
   position: relative; border-radius: 24px;
   overflow: hidden; isolation: isolate;
@@ -306,77 +308,350 @@ body {{
   pointer-events: none;
 }}
 
-/* When a scene uses .split layout with an image, ensure info-col stays
-   readable: never let the image column eat the text column. */
-.scene.split .info-col {{ min-width: 0; padding-right: 8px; }}
-.scene.split .visual-col {{ min-width: 0; max-width: 100%; }}
 .img-caption {{
-  position: absolute; bottom: 18px; left: 18px;
+  position: absolute; bottom: 24px; left: 24px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem; color: var(--text1);
-  background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+  font-size: 1.1rem; color: var(--text1);
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
   border: 1px solid {accent}55;
-  padding: 8px 14px; border-radius: 99px; z-index: 2;
+  padding: 10px 20px; border-radius: 99px; z-index: 2;
 }}
 
 /* Terminal block — for B2 CODE pattern */
 .terminal {{
   font-family: 'JetBrains Mono', monospace;
-  background: rgba(0,0,0,0.55); border: 1px solid {accent}33;
-  border-radius: 16px; padding: 24px 28px;
-  font-size: 0.95rem; line-height: 1.7; color: var(--text2);
+  background: rgba(0,0,0,0.65); border: 2px solid {accent}44;
+  border-radius: 24px; padding: 40px 48px;
+  font-size: 1.35rem; line-height: 1.8; color: var(--text2);
+  box-shadow: 0 20px 50px -10px var(--glow);
+  width: 100%;
 }}
-.terminal .dots {{ display: flex; gap: 8px; margin-bottom: 16px; }}
-.terminal .dots i {{ width: 12px; height: 12px; border-radius: 50%; display: block; }}
+.terminal .dots {{ display: flex; gap: 10px; margin-bottom: 24px; }}
+.terminal .dots i {{ width: 16px; height: 16px; border-radius: 50%; display: block; }}
 .terminal .dots i:nth-child(1) {{ background: #ef4444; }}
 .terminal .dots i:nth-child(2) {{ background: #fbbf24; }}
 .terminal .dots i:nth-child(3) {{ background: #22c55e; }}
-.terminal .k {{ color: var(--accent3); }}
+.terminal .k {{ color: var(--accent3); font-weight: 600; }}
 .terminal .s {{ color: var(--accent2); }}
 .terminal .c {{ color: var(--text2); opacity: 0.6; }}
-.terminal .cursor {{ display: inline-block; width: 9px; height: 1.1em; background: var(--accent); vertical-align: -2px; }}
+.terminal .cursor {{ display: inline-block; width: 12px; height: 1.1em; background: var(--accent); vertical-align: -2px; }}
 
 /* Feature grid — for B3 */
-.feat-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }}
+.feat-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }}
 .feat-card {{
-  padding: 20px 22px; border-radius: 18px;
+  padding: 32px; border-radius: 24px;
   background: linear-gradient(135deg, var(--surface), {surface}80);
   border: 1px solid {accent}33;
+  transition: all 0.3s ease;
 }}
-.feat-card .ic {{ font-size: 2rem; margin-bottom: 10px; }}
-.feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 4px; font-size: 1.05rem; }}
-.feat-card .d  {{ font-size: 0.92rem; color: var(--text2); line-height: 1.5; }}
+.feat-card:hover {{
+  transform: translateY(-4px);
+  border-color: var(--accent2);
+  box-shadow: 0 15px 40px -10px var(--glow);
+}}
+.feat-card .ic {{ font-size: 3rem; margin-bottom: 16px; }}
+.feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.5rem; }}
+.feat-card .d  {{ font-size: 1.15rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
 
 /* Comparison — for B4 */
-.compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }}
-.compare .col {{ padding: 24px; border-radius: 20px; border: 1px solid {accent}33; background: var(--surface); }}
-.compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 14px; }}
-.compare .col li {{ list-style: none; padding: 6px 0; color: var(--text2); font-size: 0.98rem; }}
+.compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 32px; min-height: 0; width: 100%; }}
+.compare .col {{ padding: 40px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
+.compare .col:hover {{ border-color: var(--accent2); transform: scale(1.02); }}
+.compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 24px; }}
+.compare .col li {{ list-style: none; padding: 12px 0; color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
 .compare .col li::before {{ content: '✓ '; color: var(--accent3); font-weight: 700; }}
 .compare .col.bad li::before {{ content: '✗ '; color: #ef4444; }}
 
 /* Timeline — for B5 */
-.tl-list {{ position: relative; padding-left: 32px; }}
-.tl-list::before {{ content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--accent), {accent}33); }}
-.tl-item {{ position: relative; padding: 8px 0 18px; }}
-.tl-item::before {{ content: ''; position: absolute; left: -29px; top: 14px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px {accent}33; }}
-.tl-item .y {{ font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent2); letter-spacing: 0.1em; }}
-.tl-item .t {{ font-size: 1.1rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
-.tl-item .d {{ color: var(--text2); font-size: 0.95rem; }}
+.tl-list {{ position: relative; padding-left: 48px; width: 100%; }}
+.tl-list::before {{ content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), {accent}33); }}
+.tl-item {{ position: relative; padding: 16px 0 28px; }}
+.tl-item::before {{ content: ''; position: absolute; left: -43px; top: 20px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 6px {accent}33; }}
+.tl-item .y {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--accent2); letter-spacing: 0.1em; }}
+.tl-item .t {{ font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 8px 0; }}
+.tl-item .d {{ color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; }}
 
 /* Quote — for B6 */
-.quote-block {{ position: relative; padding: 60px 40px; }}
+.quote-block {{ position: relative; padding: 80px 60px; width: 100%; }}
 .quote-block::before {{
-  content: '"'; position: absolute; left: -10px; top: -40px;
-  font-size: 14rem; line-height: 1; color: var(--accent);
+  content: '"'; position: absolute; left: -20px; top: -60px;
+  font-size: 18rem; line-height: 1; color: var(--accent);
   opacity: 0.18; font-family: Georgia, serif;
 }}
-.quote-text {{ font-size: 2rem; font-style: italic; line-height: 1.5; color: var(--text1); max-width: 600px; }}
-.quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent2); margin-top: 24px; letter-spacing: 0.1em; }}
+.quote-text {{ font-size: 2.5rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }}
+.quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 32px; letter-spacing: 0.1em; }}
 .quote-attr::before {{ content: '— '; }}
 
-/* Glow orb */
+/* Glass stat-list (horizontal stack cards like 4x, 12x, 50% column) */
+.stat-list {{
+  display: flex; flex-direction: column; gap: 24px; width: 100%;
+}}
+.stat-list-card {{
+  display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
+  padding: 32px 36px; border-radius: 28px;
+  background: linear-gradient(135deg, {surface}a3, {surface}66);
+  border: 1px solid {accent}33;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 15px 45px -10px var(--glow), inset 0 0 40px rgba(255,255,255,0.01);
+  position: relative; overflow: visible;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}}
+.stat-list-card:hover {{
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 50px -5px var(--accent), inset 0 0 40px rgba(255,255,255,0.02);
+  border-color: var(--accent2);
+}}
+.stat-list-card::before {{
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+  opacity: 0.5;
+}}
+.stat-list-card .ic-wrap {{
+  display: flex; align-items: center; justify-content: center;
+  width: 76px; height: 76px; border-radius: 18px;
+  background: {accent}1c; border: 2px solid {accent}4d;
+  color: var(--accent2); font-size: 2.2rem; flex-shrink: 0;
+}}
+.stat-list-card .num {{
+  font-size: 4.2rem; font-weight: 900;
+  color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  line-height: 1; min-width: 120px; text-shadow: 0 0 15px var(--glow);
+  flex-shrink: 0;
+}}
+.stat-list-card .details {{
+  display: flex; flex-direction: column; gap: 6px;
+  min-width: 0; flex: 1;
+}}
+.stat-list-card .title {{
+  font-size: 1.6rem; font-weight: 700; color: var(--text1); line-height: 1.3;
+}}
+.stat-list-card .desc {{
+  font-size: 1.2rem; color: var(--text2); opacity: 0.85;
+}}
+
+/* ───────────────── PREMIUM COMPONENT EXTENSIONS (FROM IMAGE REFERENCE) ───────────────── */
+
+/* Chat Dialogue Simulator (Scene 1) */
+.chat-box {{
+  display: flex; flex-direction: column; gap: 20px; width: 100%; position: relative;
+}}
+.chat-bubble {{
+  padding: 24px 28px; border-radius: 24px; max-width: 85%; line-height: 1.6; font-size: 1.35rem;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.35); position: relative;
+  border: 1px solid rgba(255,255,255,0.08); color: var(--text1);
+}}
+.chat-bubble.user {{
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(236,72,153,0.05));
+  border-color: rgba(236, 72, 153, 0.3);
+}}
+.chat-bubble.ai {{
+  align-self: flex-start;
+  background: linear-gradient(135deg, var(--surface), rgba(0,0,0,0.45));
+  border-color: {accent}4d;
+}}
+.chat-bubble .sender-tag {{
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+  margin-bottom: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+}}
+.chat-bubble.user .sender-tag {{ color: var(--accent2); }}
+.chat-bubble.ai .sender-tag {{ color: var(--accent3); }}
+.chat-footer-pill {{
+  align-self: center; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+  padding: 12px 28px; border-radius: 99px; background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.08); color: var(--text2); text-align: center;
+  width: 100%; margin-top: 12px;
+}}
+
+/* 3-Column Glass Row (Scene 2) */
+.feat-row {{
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; width: 100%; margin-top: 40px;
+}}
+.glass-card {{
+  padding: 40px 32px; border-radius: 28px; text-align: center;
+  background: linear-gradient(135deg, var(--surface), {surface}66);
+  border: 1px solid {accent}22; backdrop-filter: blur(16px);
+  transition: all 0.3s ease; position: relative; overflow: visible;
+}}
+.glass-card:hover {{
+  transform: translateY(-8px); border-color: var(--accent2);
+  box-shadow: 0 25px 60px -10px var(--glow);
+}}
+.glass-card .emoji {{ font-size: 3.5rem; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
+.glass-card .title {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }}
+.glass-card .desc {{ font-size: 1.2rem; color: var(--text2); line-height: 1.6; }}
+
+/* Google I/O tech card (Scene 3) */
+.tech-card {{
+  background: linear-gradient(135deg, rgba(15,10,25,0.85), rgba(5,3,10,0.95));
+  border: 2px solid {accent}4d; border-radius: 32px; padding: 48px;
+  box-shadow: 0 40px 100px -15px var(--glow); position: relative; width: 100%;
+}}
+.tech-card .brand {{
+  font-size: 3.8rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 20px;
+  background: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}}
+.tech-card .meta {{
+  display: flex; align-items: center; gap: 12px; font-family: 'JetBrains Mono', monospace;
+  font-size: 1.15rem; color: var(--accent3); margin-bottom: 28px;
+}}
+.tech-card .bullets {{
+  display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px;
+  font-size: 1.35rem; color: var(--text2); line-height: 1.7; text-align: left;
+}}
+.tech-card .tags {{
+  display: flex; flex-wrap: wrap; gap: 12px;
+}}
+.tech-card .tag {{
+  font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600;
+  padding: 8px 18px; border-radius: 99px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text1);
+}}
+
+/* Multi-Agent Collaboration Coordinator (Scene 5) */
+.agent-grid {{
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; position: relative;
+}}
+.agent-card {{
+  padding: 32px; border-radius: 24px;
+  background: linear-gradient(135deg, var(--surface), {surface}66);
+  border: 1px solid {accent}33; position: relative; text-align: left;
+}}
+.agent-card .header-wrap {{
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}}
+.agent-card .icon {{ font-size: 2.8rem; filter: drop-shadow(0 0 6px var(--glow)); }}
+.agent-card .role {{
+  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2);
+}}
+.agent-card .desc {{
+  font-size: 1.25rem; color: var(--text2); line-height: 1.6;
+}}
+.agent-grid-center-pill {{
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  color: #000; background: var(--accent3); border: 2px solid var(--accent);
+  padding: 10px 24px; border-radius: 99px; z-index: 5;
+  box-shadow: 0 0 25px var(--accent3);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}}
+
+/* Glow and animation helpers */
+.glow-border {{ box-shadow: 0 0 30px -4px var(--accent); }}
+.glow-text {{ text-shadow: 0 0 20px var(--accent2); }}
 .glow-orb {{ position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }}
+
+/* Premium UI/UX Pro Max Animations & Shimmers */
+@keyframes floating {{
+  0%, 100% {{ transform: translateY(0px) rotate(0deg); }}
+  50% {{ transform: translateY(-12px) rotate(0.5deg); }}
+}}
+@keyframes pulse-sparkle {{
+  0%, 100% {{ opacity: 0.2; transform: scale(0.7); filter: drop-shadow(0 0 2px var(--accent3)); }}
+  50% {{ opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 10px var(--accent3)); }}
+}}
+@keyframes grid-sweep {{
+  0% {{ background-position: 0 0; }}
+  100% {{ background-position: 48px 48px; }}
+}}
+@keyframes shimmer-sweep {{
+  0% {{ left: -150%; }}
+  100% {{ left: 150%; }}
+}}
+@keyframes cursor-blink {{
+  0%, 100% {{ opacity: 0; }}
+  50% {{ opacity: 1; }}
+}}
+
+.breath {{
+  animation: floating 6s ease-in-out infinite;
+}}
+.shimmer-fast {{
+  position: relative;
+  overflow: hidden;
+}}
+.shimmer-fast::after {{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-25deg);
+  animation: shimmer-sweep 3.2s infinite ease-in-out;
+  pointer-events: none;
+}}
+.y2k-sparkle {{
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: var(--accent3);
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  animation: pulse-sparkle 2.2s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 10;
+}}
+.glow-card {{
+  border: 1px solid {accent}33;
+  box-shadow: 0 10px 40px 0 var(--glow);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}}
+.glow-card:hover {{
+  border-color: var(--accent2);
+  box-shadow: 0 20px 60px -5px var(--accent), 0 0 30px var(--accent2);
+  transform: translateY(-6px) scale(1.015);
+}}
+.terminal .cursor {{
+  animation: cursor-blink 0.9s infinite step-end;
+}}
+
+/* Custom Subtitle Styles matching reference */
+.techbeat-subtitles {{
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1400px;
+  z-index: 1000;
+  pointer-events: none;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}}
+.sub-scene {{
+  display: none;
+  opacity: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 14px;
+  width: 100%;
+}}
+.sub-scene .word {{
+  display: inline-block;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 2.6rem;
+  font-weight: 300; /* Beautiful thin font weight! */
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  transition: color 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease, font-weight 0.2s ease;
+  transform: scale(0.96);
+  letter-spacing: -0.01em;
+}}
+.sub-scene .word.active {{
+  color: #ff3b30; /* Vibrant red matching reference */
+  font-weight: 600;
+  transform: scale(1.06);
+  text-shadow: 0 0 12px rgba(255, 59, 48, 0.5), 0 2px 8px rgba(0, 0, 0, 0.8);
+}}
 """
 
 
@@ -457,34 +732,25 @@ BẮT BUỘC: 4 element id="sN-badge"/"sN-title"/"sN-subtitle"/"sN-desc" trong m
 ═══════ VISUAL-COL — chọn 1 pattern, ĐA DẠNG, KHÔNG để trống ═══════
 
 A) Có IllustrationImage:
-<div class="img-frame"><img src="{{path}}" alt=""><span class="img-caption">{{caption}}</span></div>
-
-B) Không ảnh — chọn 1:
-- BIG STAT: <div class="visual-block" style="text-align:center"><span class="stat-hero">87</span><span class="stat-suffix">%</span><p class="caption">{{nhãn}}</p></div>
-- TERMINAL: <div class="terminal"><div class="dots"><i></i><i></i><i></i></div><div><span class="c">// comment</span></div>...<div>$ <span class="cursor"></span></div></div>
-- FEATURE GRID 2x2: <div class="feat-grid"><div class="feat-card"><div class="ic">⚡</div><div class="t">{{tên}}</div><div class="d">{{mô tả}}</div></div>×4</div>
-- COMPARE: <div class="compare"><div class="col"><h4>X</h4><ul><li>...</li></ul></div><div class="col bad"><h4>Y</h4>...</div></div>
-- TIMELINE: <div class="tl-list"><div class="tl-item"><div class="y">2024</div><div class="t">{{event}}</div><div class="d">{{detail}}</div></div>×4-6</div>
-- QUOTE: <div class="quote-block"><p class="quote-text">{{trích}}</p><p class="quote-attr">{{tác giả}}</p></div>
-- DATA VIZ: SVG bars/sparkline trong .visual-block
-- HEADLINE BANNER (broadcast theme): badge BREAKING + headline lớn
-
-═══════ NHẮC CUỐI ═══════
-- TUYỆT ĐỐI tạo ĐỦ N scene id="scene1"…"sceneN". Đếm trước khi output.
-- KHÔNG dùng Date.now / setTimeout / Math.random / fetch.
-- OUTPUT: HTML thuần từ <!doctype html> đến </html>. KHÔNG markdown fence."""
-
+<div class="img-frame"><img src="{{path}}" alt=""><span class="img-caption">{{caption}}</span></div>"""
 
 def build_system_prompt_full(theme: dict) -> str:
-    """Rich prompt — for paid providers (Pinkyne, Anthropic) where token cost
+    """Rich prompt - for paid providers (Pinkyne, Anthropic) where token cost
     is fine. Asks for more elaborate decoration, motion, and creative
     visuals while still leveraging the server-injected CSS framework."""
-    return f"""Bạn là chuyên gia tạo composition HyperFrames trình độ AWWWARDS — sinh ra HTML cinematic, lung linh, gây WOW. Sinh `index.html` HOÀN CHỈNH cho theme **{theme['name']}**.
+    return f"""Bạn là chuyên gia thiết kế giao diện AWWWARDS & UI/UX PRO MAX — sinh ra HTML cinematic, lung linh, gây ấn tượng WOW tuyệt đối. Sinh `index.html` HOÀN CHỈNH cho theme **{theme['name']}**.
+
+⚠️ TỐI ƯU HÓA TOKEN ĐỂ TRÁNH BỊ CẮT CỤT (TRUNCATED):
+- Để tránh bị giới hạn 4096-token cắt cụt HTML giữa chừng (khiến hệ thống phải chèn placeholder basic cho các scene cuối 6, 7, 8):
+  - Hãy viết mã HTML cực kỳ gọn gàng, súc tích.
+  - KHÔNG viết custom CSS dài dòng hay lặp lại trong thẻ <style>. TẬN DỤNG 100% các class CSS tiện ích cực mạnh có sẵn trong framework (như .feat-grid, .terminal, .stat-list, .compare, .tl-list...).
+  - Chỉ viết tối đa 30 dòng CSS override trong <style> cho các hiệu ứng/keyframes thực sự đặc biệt.
+  - Tránh viết comment code dài dòng hay giải thích bằng văn bản ở đầu/cuối response.
 
 ⚠️ NGÔN NGỮ: TIẾNG VIỆT có dấu đầy đủ. Giữ NGUYÊN VĂN narration/title/visualDescription. Tiếng Anh chỉ cho class CSS / comment / tên biến.
 
 ═══════════════════════════════════════
-🎯 BẠN CHỈ VIẾT: HTML structure + <style> override (≤120 dòng cho scene-specific). KHÔNG VIẾT <script> GSAP timeline.
+🎯 BẠN CHỈ VIẾT: HTML structure + <style> override (≤30 dòng cho scene-specific). KHÔNG VIẾT <script> GSAP timeline.
 ═══════════════════════════════════════
 
 HỆ THỐNG ĐÃ LO SẴN — KHÔNG CẦN BẠN VIẾT LẠI:
@@ -492,7 +758,7 @@ HỆ THỐNG ĐÃ LO SẴN — KHÔNG CẦN BẠN VIẾT LẠI:
 ✅ GSAP timeline với fade in/out scene, audio sync, scene visibility lifecycle sẽ được inject server-side với duration thật từ TTS.
 ✅ Font Inter + JetBrains Mono đã link sẵn.
 
-⚠️ TUYỆT ĐỐI KHÔNG VIẾT `<script>` chứa `gsap.timeline`. Build pipeline strip mọi script timeline rồi inject lại với duration thật. Viết script chỉ tốn token và bị xóa sạch.
+⚠️ TUYỆT ĐỐI KHÔNG VIẾT `<script>` chứa `gsap.timeline`.
 
 ═══════════════════════════════════════
 THEME — {theme['name'].upper()}
@@ -506,15 +772,32 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
 --bg, --bg2, --surface, --accent, --accent2, --accent3, --text1, --text2, --glow
 
 ═══════════════════════════════════════
-QUY TẮC HTML BẮT BUỘC
+✨ HIỆU ỨNG ĐỘNG & BIỆN PHÁP CHỐNG ĐÈ CHỮ / CLIPPING (QUAN TRỌNG):
+═══════════════════════════════════════
+- ⚠️ QUY TẮC TUYỆT ĐỐI CHỐNG THIẾU ẢNH (BẮT BUỘC):
+  - TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame NẾU TRONG PROMPT NGƯỜI DÙNG KHÔNG CÓ DÒNG `IllustrationImage: assets/...`.
+  - Nếu không có dòng `IllustrationImage: assets/...`, cấm tuyệt đối việc tự tạo đường dẫn ảnh giả. Bắt buộc dùng mock visual phong phú hoàn toàn bằng HTML/CSS (B1-B8, B11-B15) để lấp đầy .visual-col. Việc để xuất hiện khung đen trống hoặc icon ảnh lỗi là cấm kỵ.
+- Chúng ta sử dụng framework có sẵn các class động cực kỳ lung linh:
+  - `.breath`: Tạo chuyển động bay bổng, nhịp thở êm ái. Hãy áp dụng cho các card như `.visual-block`, `.terminal`, `.feat-card`, `.compare`, `.quote-block` hoặc các ảnh `.img-frame`.
+  - `.glow-card`: Viền neon lung linh tỏa sáng rực rỡ, kèm hiệu ứng 3D co giãn phóng to khi rê chuột cực kỳ mượt mà.
+  - `.shimmer-fast`: Tạo hiệu ứng vệt sáng quét ngang thời thượng trên card (rất hợp với `.stat-list-card`).
+  - `.y2k-sparkle`: Chèn ngôi sao lấp lánh vector retro. Ví dụ chèn vào trong visual block: `<span class="y2k-sparkle" style="top: 15%; left: 10%;"></span>`. Lưu ý: Container chứa ngôi sao sparkle phải có `position: relative`!
+  - `.terminal .cursor`: Dùng class `cursor` nhấp nháy cho terminal: `<div>$ <span class="cursor"></span></div>`.
+- 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
+  - Do có hiệu ứng viền phát sáng (box-shadow neon) rực rỡ, chúng ta đã set `overflow: visible` cho `.visual-block` và `.stat-list-card`. Tuyệt đối KHÔNG override lại thành `overflow: hidden` trên các card này, để ánh sáng viền không bị cắt cụt.
+  - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
+  - Với các con số thống kê hoặc chữ dài, tuyệt đối không lạm dụng các size chữ quá khổng lồ hoặc nhồi nhét quá nhiều chữ trong các khối hẹp để tránh chữ bị đè chèn lấp nhau.
+
+═══════════════════════════════════════
+QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
 ═══════════════════════════════════════
 
 1. ROOT:
    <div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="{{TOTAL}}">
 
-2. SCENE COUNT: PHẢI tạo ĐỦ N scene (N từ user prompt). Mỗi scene <div class="scene LAYOUT" id="sceneN"> với LAYOUT là 1 trong: split, centered, hero, magazine, data.
+2. SCENE COUNT: PHẦN tạo ĐỦ N scene (N từ user prompt). Mỗi scene <div class="scene LAYOUT" id="sceneN"> với LAYOUT là 1 trong: split, centered, hero, magazine, data.
 
-3. SCENE STRUCTURE — bắt buộc đầy đủ id pattern này:
+3. SCENE STRUCTURE:
    <div class="scene split" id="sceneN">
      <div class="layout">
        <div class="info-col">
@@ -531,19 +814,15 @@ QUY TẮC HTML BẮT BUỘC
      <span class="scene-num">{{N với padding 0, "01"–"99"}}</span>
    </div>
 
-4. AUDIO (đặt cuối root, trước </div>):
-   <audio id="vN" src="assets/pN.wav" data-start="0" data-duration="10" data-volume="1"></audio>
-   data-start/duration sẽ được patch lại — placeholder OK.
-
-5. LAYOUT VARIETY — KHÔNG lặp class giữa các scene:
-   - .scene.split    → 2 cột info|visual — dùng cho stat/code/img
-   - .scene.centered → 1 cột center text — dùng cho intro/quote
-   - .scene.hero     → title cực to căn trái — dùng cho headline
-   - .scene.magazine → 7:5 asymmetric — dùng cho mix text+visual
-   - .scene.data     → info nhỏ + visual lớn — dùng cho data viz/chart
+4. LAYOUT VARIETY:
+   - .scene.split    → 2 cột info|visual
+   - .scene.centered → 1 cột center text
+   - .scene.hero     → title cực to căn trái
+   - .scene.magazine → 7:5 asymmetric
+   - .scene.data     → info nhỏ + visual lớn
 
 ═══════════════════════════════════════
-🎨 VISUAL-COL — RICHE BẮT BUỘC
+🎨 VISUAL-COL — RICHE BẮT BUỘC (AWWWARDS GRADE)
 ═══════════════════════════════════════
 
 A) NẾU có IllustrationImage (assets/sceneN.jpg):
@@ -554,101 +833,134 @@ A) NẾU có IllustrationImage (assets/sceneN.jpg):
 
 B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KHÔNG ĐƯỢC ĐỂ TRỐNG:
 
-   B1 — BIG STAT CARD (số liệu dramatic):
-   <div class="visual-block" style="text-align:center;padding:60px;">
+   B1 — BIG STAT CARD:
+   <div class="visual-block" style="text-align:center;padding:50px;">
      <div><span class="stat-hero">{{số}}</span><span class="stat-suffix">{{đơn vị}}</span></div>
-     <p class="caption" style="margin-top:24px;">{{nhãn}}</p>
-     <p class="body-text" style="margin:16px auto 0;max-width:480px;">{{2-3 dòng giải thích}}</p>
+     <p class="caption" style="margin-top:20px;">{{nhãn}}</p>
+     <p class="body-text" style="margin:12px auto 0;max-width:480px;">{{2-3 dòng giải thích}}</p>
    </div>
 
-   B2 — TERMINAL/CODE (cyber themes):
+   B2 — TERMINAL/CODE:
    <div class="terminal">
      <div class="dots"><i></i><i></i><i></i></div>
-     <div><span class="c">// {{comment liên quan content}}</span></div>
+     <div><span class="c">// {{comment}}</span></div>
      <div><span class="k">const</span> data = <span class="s">"{{value}}"</span>;</div>
-     <div><span class="k">function</span> analyze(input) {{</div>
-     <div>  <span class="k">return</span> ai.process(input);</div>
-     <div>}}</div>
      <div>$ <span class="cursor"></span></div>
    </div>
 
-   B3 — FEATURE GRID 2×2 (so sánh 4 ý):
-   <div class="feat-grid">
-     <div class="feat-card">
-       <div class="ic">{{emoji 1}}</div>
-       <div class="t">{{tên ngắn}}</div>
-       <div class="d">{{mô tả 1 dòng}}</div>
-     </div>
-     ... 4 cards với emoji + nội dung khác nhau ...
-   </div>
-
-   B4 — COMPARISON (X vs Y):
+   B4 — COMPARISON:
    <div class="compare">
-     <div class="col">
-       <h4>{{label tốt}}</h4>
-       <ul><li>{{point 1}}</li><li>{{point 2}}</li><li>{{point 3}}</li></ul>
-     </div>
-     <div class="col bad">
-       <h4>{{label xấu}}</h4>
-       <ul><li>{{point 1}}</li><li>{{point 2}}</li><li>{{point 3}}</li></ul>
-     </div>
+     <div class="col"><h4>{{label tốt}}</h4><ul><li>{{point 1}}</li><li>{{point 2}}</li></ul></div>
+     <div class="col bad"><h4>{{label xấu}}</h4><ul><li>{{point 1}}</li><li>{{point 2}}</li></ul></div>
    </div>
 
-   B5 — TIMELINE (4-6 mốc):
+   B5 — TIMELINE:
    <div class="tl-list">
-     <div class="tl-item">
-       <div class="y">{{năm/giai đoạn}}</div>
-       <div class="t">{{tiêu đề mốc}}</div>
-       <div class="d">{{mô tả 1 dòng}}</div>
-     </div>
-     ... 4-6 items ...
+     <div class="tl-item"><div class="y">{{năm}}</div><div class="t">{{event}}</div><div class="d">{{mô tả}}</div></div>
    </div>
 
-   B6 — QUOTE (trích dẫn nhân vật):
+   B6 — QUOTE:
    <div class="quote-block">
-     <p class="quote-text">"{{trích dẫn dài}}"</p>
+     <p class="quote-text">"{{trích dẫn}}"</p>
      <p class="quote-attr">{{tác giả · vai trò}}</p>
    </div>
 
-   B7 — DATA VIZ:
-   <div class="visual-block" style="padding:48px;">
-     <svg width="100%" height="320" viewBox="0 0 600 320">
-       <!-- bars/sparkline với stroke, fill var(--accent), gradient -->
-     </svg>
-     <p class="caption">{{label}}</p>
+   B11 — STAT-LIST (SIÊU ĐẸP, 3-STACK STATS cho Tốc độ/Chi phí/Chỉ số):
+   <div class="stat-list">
+     <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">⚡</div><div class="num">4x</div><div class="details"><div class="title">Nhanh hơn so với cùng thế hệ</div><div class="desc">Standard Mode · Benchmark 2024</div></div></div>
+     <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">🚀</div><div class="num">12x</div><div class="details"><div class="title">Nhanh hơn (phiên bản tối ưu)</div><div class="desc">Optimized Mode · Ultra Performance</div></div></div>
+     <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;"><div class="ic-wrap">💰</div><div class="num">50%</div><div class="details"><div class="title">Rẻ hơn so với frontier model</div><div class="desc">Cost Efficiency · Per 1M tokens</div></div></div>
    </div>
 
-   B8 — FACT CARDS scatter:
-   <div style="position:relative;height:480px;">
-     <div class="feat-card" style="position:absolute;top:8%;left:5%;transform:rotate(-2deg);width:280px;">{{fact 1}}</div>
-     <div class="feat-card" style="position:absolute;top:35%;right:8%;transform:rotate(1.5deg);width:260px;">{{fact 2}}</div>
-     <div class="feat-card" style="position:absolute;bottom:8%;left:15%;transform:rotate(0.8deg);width:300px;">{{fact 3}}</div>
+   B12 — CHAT DIALOGUE SIMULATOR (MÔ PHỎNG HỘI THOẠI CHAT):
+   <div class="chat-box breath">
+     <div class="chat-bubble user">
+       <div class="sender-tag">NGƯỜI DÙNG</div>
+       {{câu hỏi của người dùng}}
+     </div>
+     <div class="chat-bubble ai">
+       <div class="sender-tag">AI</div>
+       {{câu trả lời của AI}}
+     </div>
+     <div class="chat-footer-pill">
+       {{tóm tắt mô hình hoặc chú thích chân trang}}
+     </div>
    </div>
 
-   B9 — HEADLINE BANNER (broadcast themes):
-   <div style="padding:60px;border-left:6px solid var(--accent);background:rgba(0,0,0,0.4);">
-     <span class="badge" style="background:var(--accent);color:#000;">BREAKING</span>
-     <h2 class="title-hero" style="margin:24px 0;">{{headline}}</h2>
-     <p class="caption">{{source · timestamp}}</p>
+   B13 — 3-COLUMN GLASS CARD ROW (HÀNG 3 THẺ KÍNH TRONG SUỐT):
+   <div class="feat-row">
+     <div class="glass-card breath">
+       <span class="emoji">🙋‍♂️</span>
+       <div class="title">{{tiêu đề 1}}</div>
+       <div class="desc">{{mô tả 1}}</div>
+     </div>
+     <div class="glass-card breath" style="animation-delay: 0.5s;">
+       <span class="emoji">👁️</span>
+       <div class="title">{{tiêu đề 2}}</div>
+       <div class="desc">{{mô tả 2}}</div>
+     </div>
+     <div class="glass-card breath" style="animation-delay: 1.0s;">
+       <span class="emoji">🔧</span>
+       <div class="title">{{tiêu đề 3}}</div>
+       <div class="desc">{{mô tả 3}}</div>
+     </div>
    </div>
 
-   B10 — NEURAL NET (cyber themes):
-   <svg width="100%" height="420" viewBox="0 0 600 420">
-     <!-- 6-12 nodes với <circle r=8> + edges <line> + pulse animation via class -->
-   </svg>
+   B14 — TECH SHOWCASE CARD (THẺ KỸ THUẬT GOOGLE I/O CAO CẤP):
+   <div class="tech-card glow-card breath">
+     <div class="brand">{{tên thương hiệu/sự kiện ví dụ Google I/O}}</div>
+     <div class="meta">📅 {{ngày tháng · địa điểm}}</div>
+     <div class="bullets">
+       <div>{{dòng thông tin kỹ thuật 1}}</div>
+       <div>{{dòng thông tin kỹ thuật 2}}</div>
+       <div>{{dòng thông tin kỹ thuật 3}}</div>
+     </div>
+     <div class="tags">
+       <span class="tag">{{tag 1}}</span>
+       <span class="tag">{{tag 2}}</span>
+       <span class="tag">{{tag 3}}</span>
+     </div>
+   </div>
 
-   KHÔNG ĐƯỢC để visual-col trống. KHÔNG được gen visual-col chỉ chứa text trùng info-col.
-   ⚠️ TUYỆT ĐỐI KHÔNG dùng <img> hay .img-frame trừ khi user prompt ghi rõ "IllustrationImage: assets/...". Nếu KHÔNG có IllustrationImage → BẮT BUỘC dùng mock visual (B1-B10).
+   B15 — MULTI-AGENT GRID COORDINATOR (LƯỚI 2X2 PHỐI HỢP CÁC AGENT):
+   <div class="agent-grid">
+     <div class="agent-card glow-card">
+       <div class="header-wrap">
+         <span class="icon">🧠</span>
+         <div class="role">{{vai trò 1}}</div>
+       </div>
+       <div class="desc">{{mô tả nhiệm vụ 1}}</div>
+     </div>
+     <div class="agent-card glow-card">
+       <div class="header-wrap">
+         <span class="icon">💻</span>
+         <div class="role">{{vai trò 2}}</div>
+       </div>
+       <div class="desc">{{mô tả nhiệm vụ 2}}</div>
+     </div>
+     <div class="agent-card glow-card">
+       <div class="header-wrap">
+         <span class="icon">🔍</span>
+         <div class="role">{{vai trò 3}}</div>
+       </div>
+       <div class="desc">{{mô tả nhiệm vụ 3}}</div>
+     </div>
+     <div class="agent-card glow-card">
+       <div class="header-wrap">
+         <span class="icon">🚀</span>
+         <div class="role">{{vai trò 4}}</div>
+       </div>
+       <div class="desc">{{mô tả nhiệm vụ 4}}</div>
+     </div>
+     <div class="agent-grid-center-pill">⚡ PHỐI HỢP</div>
+   </div>
+
+   KHÔNG ĐƯỢC để visual-col trống.
 
 ═══════════════════════════════════════
-TYPOGRAPHY (đã có sẵn class — DÙNG):
+TYPOGRAPHY & GLOWS (DÙNG sẵn):
 ═══════════════════════════════════════
-- .badge (mono uppercase pill)
-- .title-xl (clamp 3.5-6rem) cho hầu hết title
-- .title-hero (clamp 5-8rem) cho hero scene
-- .subtitle, .body-text, .caption
-- .grad-text (gradient accent), .outline-text (chỉ outline)
-- .stat-hero (số khổng lồ gradient)
+- .badge, .title-xl, .title-hero, .stat-hero, .grad-text, .glow-border, .glow-text
 
 ═══════════════════════════════════════
 HEAD BOILERPLATE (copy nguyên xi):
@@ -690,6 +1002,7 @@ NHẮC CUỐI:
 - Visual-col KHÔNG ĐƯỢC TRỐNG.
 - Title quan trọng có .grad-text hoặc .outline-text.
 - KHÔNG dùng Date.now / setTimeout / Math.random / fetch / repeat:-1.
+- TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
 - TUYỆT ĐỐI tạo ĐỦ N scene "scene1"…"sceneN". Đếm trước khi output.
 - OUTPUT: chỉ HTML thuần từ <!doctype html> đến </html>. KHÔNG markdown fence, KHÔNG giải thích, KHÔNG comment trên đầu."""
 
@@ -725,6 +1038,23 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 
 ═══════ CLASS CÓ SẴN — DÙNG ═══════
 .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col, .badge, .title-xl, .title-hero, .subtitle, .body-text, .caption, .grad-text, .outline-text, .stat-hero, .stat-suffix, .visual-block, .img-frame, .img-caption, .terminal, .feat-grid, .feat-card, .compare, .tl-list, .tl-item, .quote-block, .quote-text, .corner-bracket (tl/tr/bl/br), .top-line, .scene-num, .scanlines.
+
+═══════════════════════════════════════
+✨ HIỆU ỨNG ĐỘNG & BIỆN PHÁP CHỐNG ĐÈ CHỮ / CLIPPING (QUAN TRỌNG):
+═══════════════════════════════════════
+- ⚠️ QUY TẮC TUYỆT ĐỐI CHỐNG THIẾU ẢNH (BẮT BUỘC):
+  - TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame NẾU TRONG PROMPT NGƯỜI DÙNG KHÔNG CÓ DÒNG `IllustrationImage: assets/...`.
+  - Nếu không có dòng `IllustrationImage: assets/...`, cấm tuyệt đối việc tự tạo đường dẫn ảnh giả. Bắt buộc dùng mock visual phong phú hoàn toàn bằng HTML/CSS (B1-B8, B11-B15) để lấp đầy .visual-col. Việc để xuất hiện khung đen trống hoặc icon ảnh lỗi là cấm kỵ.
+- Chúng ta sử dụng framework có sẵn các class động cực kỳ lung linh:
+  - `.breath`: Tạo chuyển động bay bổng, nhịp thở êm ái. Hãy áp dụng cho các card như `.visual-block`, `.terminal`, `.feat-card`, `.compare`, `.quote-block` hoặc các ảnh `.img-frame`.
+  - `.glow-card`: Viền neon lung linh tỏa sáng rực rỡ, kèm hiệu ứng 3D co giãn phóng to khi rê chuột cực kỳ mượt mà.
+  - `.shimmer-fast`: Tạo hiệu ứng vệt sáng quét ngang thời thượng trên card (rất hợp với `.stat-list-card`).
+  - `.y2k-sparkle`: Chèn ngôi sao lấp lánh vector retro. Ví dụ chèn vào trong visual block: `<span class="y2k-sparkle" style="top: 15%; left: 10%;"></span>`. Lưu ý: Container chứa ngôi sao sparkle phải có `position: relative`!
+  - `.terminal .cursor`: Dùng class `cursor` nhấp nháy cho terminal: `<div>$ <span class="cursor"></span></div>`.
+- 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
+  - Do có hiệu ứng viền phát sáng (box-shadow neon) rực rỡ, chúng ta đã set `overflow: visible` cho `.visual-block` và `.stat-list-card`. Tuyệt đối KHÔNG override lại thành `overflow: hidden` trên các card này, để ánh sáng viền không bị cắt cụt.
+  - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
+  - Với các con số thống kê hoặc chữ dài, tuyệt đối không lạm dụng các size chữ quá khổng lồ hoặc nhồi nhét quá nhiều chữ trong các khối hẹp để tránh chữ bị đè chèn lấp nhau.
 
 ═══════ HTML TEMPLATE ═══════
 <!doctype html>
@@ -838,6 +1168,96 @@ B8 HEADLINE BANNER (broadcast):
   <p class="caption">{{source · timestamp}}</p>
 </div>
 
+B11 STAT-LIST (SIÊU ĐẸP, 3-STACK STATS cho Tốc độ/Chi phí/Chỉ số):
+<div class="stat-list">
+  <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">⚡</div><div class="num">4x</div><div class="details"><div class="title">Nhanh hơn so với cùng thế hệ</div><div class="desc">Standard Mode · Benchmark 2024</div></div></div>
+  <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">🚀</div><div class="num">12x</div><div class="details"><div class="title">Nhanh hơn (phiên bản tối ưu)</div><div class="desc">Optimized Mode · Ultra Performance</div></div></div>
+  <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;"><div class="ic-wrap">💰</div><div class="num">50%</div><div class="details"><div class="title">Rẻ hơn so với frontier model</div><div class="desc">Cost Efficiency · Per 1M tokens</div></div></div>
+</div>
+
+B12 CHAT DIALOGUE SIMULATOR (MÔ PHỎNG HỘI THOẠI CHAT):
+<div class="chat-box breath">
+  <div class="chat-bubble user">
+    <div class="sender-tag">NGƯỜI DÙNG</div>
+    {{câu hỏi của người dùng}}
+  </div>
+  <div class="chat-bubble ai">
+    <div class="sender-tag">AI</div>
+    {{câu trả lời của AI}}
+  </div>
+  <div class="chat-footer-pill">
+    {{tóm tắt mô hình hoặc chú thích chân trang}}
+  </div>
+</div>
+
+B13 3-COLUMN GLASS CARD ROW (HÀNG 3 THẺ KÍNH TRONG SUỐT):
+<div class="feat-row">
+  <div class="glass-card breath">
+    <span class="emoji">🙋‍♂️</span>
+    <div class="title">{{tiêu đề 1}}</div>
+    <div class="desc">{{mô tả 1}}</div>
+  </div>
+  <div class="glass-card breath" style="animation-delay: 0.5s;">
+    <span class="emoji">👁️</span>
+    <div class="title">{{tiêu đề 2}}</div>
+    <div class="desc">{{mô tả 2}}</div>
+  </div>
+  <div class="glass-card breath" style="animation-delay: 1.0s;">
+    <span class="emoji">🔧</span>
+    <div class="title">{{tiêu đề 3}}</div>
+    <div class="desc">{{mô tả 3}}</div>
+  </div>
+</div>
+
+B14 TECH SHOWCASE CARD (THẺ KỸ THUẬT GOOGLE I/O CAO CẤP):
+<div class="tech-card glow-card breath">
+  <div class="brand">{{tên thương hiệu/sự kiện ví dụ Google I/O}}</div>
+  <div class="meta">📅 {{ngày tháng · địa điểm}}</div>
+  <div class="bullets">
+    <div>{{dòng thông tin kỹ thuật 1}}</div>
+    <div>{{dòng thông tin kỹ thuật 2}}</div>
+    <div>{{dòng thông tin kỹ thuật 3}}</div>
+  </div>
+  <div class="tags">
+    <span class="tag">{{tag 1}}</span>
+    <span class="tag">{{tag 2}}</span>
+    <span class="tag">{{tag 3}}</span>
+  </div>
+</div>
+
+B15 MULTI-AGENT GRID COORDINATOR (LƯỚI 2X2 PHỐI HỢP CÁC AGENT):
+<div class="agent-grid">
+  <div class="agent-card glow-card">
+    <div class="header-wrap">
+      <span class="icon">🧠</span>
+      <div class="role">{{vai trò 1}}</div>
+    </div>
+    <div class="desc">{{mô tả nhiệm vụ 1}}</div>
+  </div>
+  <div class="agent-card glow-card">
+    <div class="header-wrap">
+      <span class="icon">💻</span>
+      <div class="role">{{vai trò 2}}</div>
+    </div>
+    <div class="desc">{{mô tả nhiệm vụ 2}}</div>
+  </div>
+  <div class="agent-card glow-card">
+    <div class="header-wrap">
+      <span class="icon">🔍</span>
+      <div class="role">{{vai trò 3}}</div>
+    </div>
+    <div class="desc">{{mô tả nhiệm vụ 3}}</div>
+  </div>
+  <div class="agent-card glow-card">
+    <div class="header-wrap">
+      <span class="icon">🚀</span>
+      <div class="role">{{vai trò 4}}</div>
+    </div>
+    <div class="desc">{{mô tả nhiệm vụ 4}}</div>
+  </div>
+  <div class="agent-grid-center-pill">⚡ PHỐI HỢP</div>
+</div>
+
 ═══════ AUDIO ═══════
 <audio id="vN" src="assets/pN.wav" data-start="0" data-duration="10" data-volume="1"></audio>
 (start/duration sẽ patch lại — placeholder OK)
@@ -846,6 +1266,7 @@ B8 HEADLINE BANNER (broadcast):
 - TUYỆT ĐỐI tạo ĐỦ {scene_count} scene, id="scene1"…"scene{scene_count}". Đếm trước khi output.
 - KHÔNG dùng Date.now / setTimeout / Math.random / fetch.
 - KHÔNG redeclare CSS class đã có sẵn.
+- TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
 - OUTPUT: chỉ HTML từ <!doctype html> đến </html>. KHÔNG markdown fence."""
 
 
@@ -956,7 +1377,11 @@ def build_user_prompt(req: CompositionRequest) -> str:
                 f" KHÔNG dùng position:absolute cho ảnh. Ảnh PHẢI nằm gọn trong .visual-col."
             )
         else:
-            lines.append("  ⚠️ KHÔNG CÓ ẢNH — bắt buộc tạo mock visual phong phú (stat card / code / feature grid / timeline / quote / data viz / fact cards) phù hợp với narration")
+            lines.append(
+                f"  ⚠️ CẢNH BÁO: SCENE NÀY TUYỆT ĐỐI KHÔNG CÓ ẢNH MINH HỌA."
+                f"\n  ⚠️ TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame HOẶC BẤT KỲ ĐƯỜNG DẪN ẢNH NÀO."
+                f"\n  ⚠️ BẮT BUỘC DÙNG MOCK VISUAL HTML/CSS (B1-B8, B11-B15) ĐỂ ĐIỀN VÀO .visual-col."
+            )
         cursor += s.duration
     lines.append(
         f"\nSinh composition HTML hoàn chỉnh dài đúng {cursor} giây với {len(req.scenes)} scene như trên. "
@@ -1052,7 +1477,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                     {"role": "user", "content": prompt_full},
                 ],
                 "temperature": 0.7,
-                "max_tokens": 24000,
+                "max_tokens": 16000,
                 "stream": True,
             }
 

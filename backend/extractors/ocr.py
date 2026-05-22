@@ -11,7 +11,7 @@ from routers.llm import chat_completions_with_fallback
 
 
 def get_ocr_model() -> str:
-    return os.getenv("OPENAI_OCR_MODEL") or os.getenv("OPENAI_COMPOSITION_MODEL", "claude-sonnet-4-6")
+    return os.getenv("OPENAI_OCR_MODEL") or os.getenv("OPENAI_COMPOSITION_MODEL", "gpt-4o")
 
 
 def render_pdf_pages_to_images(data: bytes, dpi: int = 144, max_pages: int = 30) -> List[bytes]:

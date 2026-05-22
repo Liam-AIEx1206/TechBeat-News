@@ -48,6 +48,13 @@ if (project_dir / "renders").exists():
 if (project_dir / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(project_dir / "assets")), name="assets")
 
+# Serve static history
+history_dir = project_dir / "history"
+history_dir.mkdir(exist_ok=True)
+(history_dir / "htmls").mkdir(exist_ok=True)
+(history_dir / "videos").mkdir(exist_ok=True)
+app.mount("/static-history", StaticFiles(directory=str(history_dir)), name="static-history")
+
 
 @app.get("/health")
 def health():

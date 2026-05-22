@@ -122,7 +122,12 @@ def get_audio_duration_s(path: Path) -> float:
         return 0.0
 
 
-def patch_html_timing(html: str, durations: list[float], scene_titles: list[str] | None = None) -> str:
+def patch_html_timing(
+    html: str, 
+    durations: list[float], 
+    scene_titles: list[str] | None = None,
+    scene_narrations: list[str] | None = None
+) -> str:
     """
     Sync HTML timing to actual TTS audio lengths:
     - Strips the LLM-authored GSAP timeline so HyperFrames doesn't capture a
@@ -225,6 +230,14 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
     # --- 4. Inject SOLE timeline that uses actual TTS durations ---
     starts_js = ", ".join(str(s) for s in starts)
     durs_js = ", ".join(str(d) for d in int_durs)
+    actual_durs_js = ", ".join(f"{d:.3f}" for d in durations)
+    
+    scene_narrations = scene_narrations or []
+    safe_narrations = []
+    for narration in scene_narrations:
+        clean = narration.replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ')
+        safe_narrations.append(clean)
+    narrations_js = ", ".join(f'"{n}"' for n in safe_narrations)
 
     inject = f"""
 <script>
@@ -234,6 +247,8 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
 (function() {{
   var starts = [{starts_js}];
   var durs   = [{durs_js}];
+  var actualDurs = [{actual_durs_js}];
+  var narrations = [{narrations_js}];
   var total  = {total};
 
   function ensureScenes() {{
@@ -256,9 +271,39 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
     }}
   }}
 
+  function ensureSubtitles() {{
+    var root = document.getElementById("root");
+    if (!root) return;
+    if (document.getElementById("techbeat-subtitles")) return;
+    
+    var subContainer = document.createElement("div");
+    subContainer.id = "techbeat-subtitles";
+    subContainer.className = "techbeat-subtitles";
+    
+    for (var i = 0; i < starts.length; i++) {{
+      var n = i + 1;
+      var text = narrations[i] || "";
+      var subScene = document.createElement("div");
+      subScene.id = "sub-scene" + n;
+      subScene.className = "sub-scene";
+      subScene.style.cssText = "display: none; opacity: 0;";
+      
+      var words = text.split(/\\s+/).filter(Boolean);
+      for (var j = 0; j < words.length; j++) {{
+        var wordSpan = document.createElement("span");
+        wordSpan.className = "word sub-w-" + j;
+        wordSpan.innerText = words[j];
+        subScene.appendChild(wordSpan);
+      }}
+      subContainer.appendChild(subScene);
+    }}
+    root.appendChild(subContainer);
+  }}
+
   function buildTimeline() {{
     if (!window.gsap) return;
     ensureScenes();
+    ensureSubtitles();
 
     // Reset every scene's interior — LLM may have authored opacity:0 inline
     // styles to support its own (now-stripped) tl.from() tweens. Clearing
@@ -295,6 +340,41 @@ def patch_html_timing(html: str, durations: list[float], scene_titles: list[str]
       }} else {{
         tl.set(sceneId, {{ opacity: 0, visibility: "visible" }}, s);
         tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
+      }}
+
+      // --- SUBTITLE TIMING ---
+      var subSceneId = "#sub-scene" + n;
+      if (document.getElementById("sub-scene" + n)) {{
+        tl.set(subSceneId, {{ display: "flex", opacity: 1 }}, s);
+        
+        var words = document.querySelectorAll(subSceneId + " .word");
+        var numWords = words.length;
+        if (numWords > 0) {{
+          var totalAudioTime = actualDurs[i] || d;
+          var speechDur = totalAudioTime * 0.95; // use 95% of speech length to avoid trailing silence overlap
+          var wordDur = speechDur / numWords;
+          
+          words.forEach(function(wordEl, wIdx) {{
+            var wordStart = s + wIdx * wordDur;
+            var wordEnd = wordStart + wordDur;
+            
+            // Highlight word
+            tl.fromTo(wordEl,
+              {{ color: "rgba(255, 255, 255, 0.75)", scale: 0.96, fontWeight: "300" }},
+              {{ color: "#ff3b30", scale: 1.06, fontWeight: "600", duration: 0.12, immediateRender: false }},
+              wordStart
+            );
+            // Revert word
+            tl.to(wordEl,
+              {{ color: "rgba(255, 255, 255, 0.75)", scale: 0.96, fontWeight: "300", duration: 0.12 }},
+              wordEnd
+            );
+          }});
+        }}
+        
+        // Hide subtitles at the end of the scene
+        tl.to(subSceneId, {{ opacity: 0, duration: 0.3 }}, s + d - 0.3);
+        tl.set(subSceneId, {{ display: "none" }}, s + d);
       }}
 
       safeFrom(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s + 0.3);
@@ -527,7 +607,8 @@ async def build_pipeline(req: BuildRequest):
         measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
         print(f"[tts] Measured durations: {', '.join(measured)}")
         scene_titles = [s.title for s in req.scenes]
-        html = patch_html_timing(html, durations, scene_titles)
+        scene_narrations = [s.narration for s in req.scenes]
+        html = patch_html_timing(html, durations, scene_titles, scene_narrations)
         target_html.write_text(html, encoding="utf-8")
         # Total composition duration after timing patch (ceil(d) + 1 buffer per scene)
         import math as _math
@@ -577,6 +658,54 @@ async def build_pipeline(req: BuildRequest):
         return
 
     rel_url = f"/renders/{mp4_path.name}"
+
+    # Save to history automatically
+    try:
+        import datetime
+        import shutil
+
+        # 1. Ensure history directory structures
+        history_dir = project_root / "history"
+        htmls_dir = history_dir / "htmls"
+        videos_dir = history_dir / "videos"
+        history_dir.mkdir(exist_ok=True)
+        htmls_dir.mkdir(exist_ok=True)
+        videos_dir.mkdir(exist_ok=True)
+
+        # 2. Generate timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        hist_html_name = f"html_{timestamp}.html"
+        hist_video_name = f"video_{timestamp}.mp4"
+
+        # 3. Write HTML file copy
+        (htmls_dir / hist_html_name).write_text(html, encoding="utf-8")
+
+        # 4. Copy MP4 video file
+        shutil.copy2(mp4_path, videos_dir / hist_video_name)
+
+        # 5. Append to db.json
+        db_path = history_dir / "db.json"
+        history_list = []
+        if db_path.exists():
+            try:
+                history_list = json.loads(db_path.read_text(encoding="utf-8"))
+            except Exception:
+                history_list = []
+
+        new_entry = {
+            "id": timestamp,
+            "title": req.title,
+            "html_url": f"/static-history/htmls/{hist_html_name}",
+            "video_url": f"/static-history/videos/{hist_video_name}",
+            "duration": actual_total if ('actual_total' in locals() and actual_total) else req.totalDuration,
+            "created_at": datetime.datetime.now().isoformat()
+        }
+        history_list.insert(0, new_entry) # newest first
+        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[history] Saved snapshot {timestamp} successfully!")
+    except Exception as he:
+        print(f"[history ERROR] Failed to save history snapshot: {he}")
+
     yield sse({
         "type": "done",
         "videoUrl": rel_url,

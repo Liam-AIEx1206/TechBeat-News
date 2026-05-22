@@ -58,19 +58,7 @@ PROVIDER_CHAIN: list[Provider] = [
         composition_model_env="OPENAI_COMPOSITION_MODEL",
         ocr_model_env="OPENAI_OCR_MODEL",
     ),
-    # 2. Anthropic via OpenAI-compat endpoint — paid but reliable
-    Provider(
-        name="anthropic",
-        api_key_env="FALLBACK_API_KEY",  # also accepts ANTHROPIC_API_KEY (handled below)
-        base_url_env="FALLBACK_BASE_URL",
-        base_url_default="https://api.anthropic.com/v1/",
-        model_env="FALLBACK_MODEL",
-        model_default="claude-sonnet-4-6",
-        scenes_model_env="FALLBACK_SCENES_MODEL",
-        composition_model_env="FALLBACK_COMPOSITION_MODEL",
-        ocr_model_env="FALLBACK_OCR_MODEL",
-    ),
-    # 3. Groq — generous free tier, Llama 3.3 70B
+    # 2. Groq — generous free tier, Llama 3.3 70B
     Provider(
         name="groq",
         api_key_env="GROQ_API_KEY",
@@ -82,7 +70,7 @@ PROVIDER_CHAIN: list[Provider] = [
         composition_model_env="GROQ_COMPOSITION_MODEL",
         ocr_model_env="GROQ_OCR_MODEL",
     ),
-    # 4. Groq fallback — same key, Llama 4 Scout when 70B hits TPD cap
+    # 3. Groq fallback — same key, Llama 4 Scout when 70B hits TPD cap
     # TPM: 30K (vs 12K for 70B), TPD: 500K (vs 100K) — much more headroom
     Provider(
         name="groq-fast",
@@ -169,11 +157,12 @@ def _is_quota_or_billing_error(e: Exception) -> bool:
         "quota", "balance", "insufficient", "payment_required", "paid_plan",
         "billing", "credit", "exhausted", "out of credits",
         "rate limit", "rate_limit", "free users",
+        "invalid tokens",  # Pinkyne: "used invalid tokens multiple times"
     )
     if any(k in msg for k in keywords):
         return True
     code = getattr(e, "status_code", None) or getattr(e, "code", None)
-    if code == 402:  # payment required is unambiguous
+    if code in (402, 429):  # 402 = payment required, 429 = rate limit / quota
         return True
     return False
 

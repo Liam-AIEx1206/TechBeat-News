@@ -207,17 +207,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             </h2>
             <p style={{ fontSize: 12, color: "var(--gray-5)" }}>
               <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{scenePlan.scenes.length} phân cảnh</span>
-              {" · "}
-              <span style={{ color: "var(--accent2)", fontWeight: 700 }}>
-                {actualDuration
-                  ? `${actualDuration}s`
-                  : `khoảng ${scenePlan.totalDuration}s (ước tính)`}
-                {actualDuration && actualDuration !== scenePlan.totalDuration && (
-                  <span style={{ color: "var(--gray-5)", fontWeight: 400, marginLeft: 4 }}>
-                    (ban đầu khoảng {scenePlan.totalDuration}s)
-                  </span>
-                )}
-              </span>
+              {actualDuration && (
+                <>
+                  {" · "}
+                  <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{actualDuration}s</span>
+                </>
+              )}
               {" · "}1920×1080 · 30fps
               {ttsEngine && (<>{" · "}<span style={{ color: "#67e8f9", fontWeight: 700 }}>TTS: {ttsEngine}</span></>)}
             </p>
