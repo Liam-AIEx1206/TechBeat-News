@@ -732,7 +732,12 @@ BẮT BUỘC: 4 element id="sN-badge"/"sN-title"/"sN-subtitle"/"sN-desc" trong m
 ═══════ VISUAL-COL — chọn 1 pattern, ĐA DẠNG, KHÔNG để trống ═══════
 
 A) Có IllustrationImage:
-<div class="img-frame"><img src="{{path}}" alt=""><span class="img-caption">{{caption}}</span></div>"""
+<div class="img-frame"><img src="{{path}}" alt=""><span class="img-caption">{{caption}}</span></div>
+
+═══════ NHẮC CUỐI ═══════
+- TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
+- TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge)."""
+
 
 def build_system_prompt_full(theme: dict) -> str:
     """Rich prompt - for paid providers (Pinkyne, Anthropic) where token cost
@@ -1003,6 +1008,7 @@ NHẮC CUỐI:
 - Title quan trọng có .grad-text hoặc .outline-text.
 - KHÔNG dùng Date.now / setTimeout / Math.random / fetch / repeat:-1.
 - TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
+- TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
 - TUYỆT ĐỐI tạo ĐỦ N scene "scene1"…"sceneN". Đếm trước khi output.
 - OUTPUT: chỉ HTML thuần từ <!doctype html> đến </html>. KHÔNG markdown fence, KHÔNG giải thích, KHÔNG comment trên đầu."""
 
@@ -1267,6 +1273,7 @@ B15 MULTI-AGENT GRID COORDINATOR (LƯỚI 2X2 PHỐI HỢP CÁC AGENT):
 - KHÔNG dùng Date.now / setTimeout / Math.random / fetch.
 - KHÔNG redeclare CSS class đã có sẵn.
 - TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
+- TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
 - OUTPUT: chỉ HTML từ <!doctype html> đến </html>. KHÔNG markdown fence."""
 
 

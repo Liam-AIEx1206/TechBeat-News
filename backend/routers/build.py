@@ -190,30 +190,33 @@ def patch_html_timing(
 
     html = _strip_timeline_scripts(html)
 
-    # --- 2. Patch <audio> tags ---
+    # --- 2. Clean, Generate & Inject <audio> tags ---
+    # Strip any existing <audio> tags matching vN to avoid duplicates or buggy formatting
+    html = re.sub(r'<audio\s+[^>]*id=["\']v\d+["\'][^>]*>.*?</audio>', '', html, flags=re.IGNORECASE)
+    html = re.sub(r'<audio\s+[^>]*id=["\']v\d+["\'][^>]*>', '', html, flags=re.IGNORECASE)
+
+    audio_tags = []
     for i, (start, dur) in enumerate(zip(starts, int_durs)):
         n = i + 1
-        html = re.sub(
-            rf'(<audio\s[^>]*id=["\']v{n}["\'][^>]*?)data-start=["\'][^"\']*["\']([^>]*?)data-duration=["\'][^"\']*["\']',
-            rf'\g<1>data-start="{start}"\2data-duration="{dur}"',
-            html,
-        )
-        html = re.sub(
-            rf'(<audio\s[^>]*id=["\']v{n}["\'][^>]*?)data-duration=["\'][^"\']*["\']([^>]*?)data-start=["\'][^"\']*["\']',
-            rf'\g<1>data-duration="{dur}"\2data-start="{start}"',
-            html,
-        )
-
-        # Add data-title for fallback placeholder rendering
+        safe_title = ""
         if scene_titles and i < len(scene_titles):
             safe_title = scene_titles[i].replace('"', '&quot;')
-            # Only add if not already present
-            if not re.search(rf'<audio\s[^>]*id=["\']v{n}["\'][^>]*data-title=', html):
-                html = re.sub(
-                    rf'(<audio\s[^>]*id=["\']v{n}["\'])',
-                    rf'\1 data-title="{safe_title}"',
-                    html,
-                )
+        audio_tags.append(
+            f'<audio id="v{n}" src="assets/p{n}.wav" data-start="{start}" data-duration="{dur}" data-volume="1" data-title="{safe_title}"></audio>'
+        )
+    audio_block = "\n  " + "\n  ".join(audio_tags) + "\n"
+
+    # Inject right after opening root div
+    root_match = re.search(r'(<div\s+[^>]*?(?:id=["\']root["\']|data-composition-id=["\']main["\'])[^>]*>)', html, flags=re.IGNORECASE)
+    if root_match:
+        idx = root_match.end()
+        html = html[:idx] + audio_block + html[idx:]
+    else:
+        # Fallback
+        if "</body>" in html:
+            html = html.replace("</body>", audio_block + "</body>")
+        else:
+            html += audio_block
 
     # --- 3. Patch root data-duration ---
     html = re.sub(
