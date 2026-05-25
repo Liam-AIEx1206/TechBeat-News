@@ -54,11 +54,9 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div className="field-label" style={{ marginBottom: 0 }}>Thời lượng</div>
-          <input type="number" min={3} max={60} className="input-dark"
-            style={{ width: 64, textAlign: "center", padding: "6px 10px", fontSize: 13, fontWeight: 700 }}
-            value={draft.duration} onChange={(e) => setDraft({ ...draft, duration: Number(e.target.value) })} />
-          <span style={{ fontSize: 12, color: "var(--gray-5)" }}>giây</span>
+          <div style={{ fontSize: 11, color: "var(--gray-5)", fontStyle: "italic" }}>
+            Thời lượng sẽ tính tự động theo audio sau khi build
+          </div>
           <div style={{ flex: 1 }} />
           <button onClick={cancel} className="btn-ghost" style={{ fontSize: 12 }}>Huỷ</button>
           <button onClick={save} className="btn-primary" style={{ fontSize: 12, padding: "8px 18px" }}>
@@ -112,13 +110,10 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
 
           {/* Content */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+            <div style={{ marginBottom: 6 }}>
               <h3 style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.3, color: "var(--white)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                 {scene.title}
               </h3>
-              <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 99, background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)", color: "var(--accent2)" }}>
-                {scene.duration}s
-              </span>
             </div>
             <p style={{ fontSize: 12, color: "var(--gray-5)", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: 4 }}>
               {scene.narration}

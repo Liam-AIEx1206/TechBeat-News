@@ -17,13 +17,24 @@ interface Props {
  *  show that scene visible at frame 0 (no GSAP timeline running). The
  *  document is sized 1920×1080 and we apply a CSS transform on the iframe
  *  to fit it into the parent container. */
-function buildIsolatedDoc(fullHtml: string, sceneIndex: number): string {
+function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string): string {
   let doc = fullHtml;
 
   // Strip ALL <script> tags — GSAP timeline must not run in preview mode.
   // The timeline would immediately hide all scenes via gsap.set opacity:0,
   // fighting our visibility override. Static HTML is all we need here.
   doc = doc.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // ── Base URL for relative paths ──────────────────────────────────────
+  // The HTML references images as `assets/scene1.jpg` (relative). Inside an
+  // iframe loaded via `srcDoc`, the document URL is `about:srcdoc` so any
+  // relative href resolves to nothing → the image appears as a broken/empty
+  // box. Injecting a <base href> right after <head> makes the browser
+  // resolve every relative URL against the FastAPI backend, which mounts
+  // /assets/ at the project's assets/ folder. Strip any existing <base> so
+  // ours wins (rare but safe).
+  doc = doc.replace(/<base\b[^>]*>/gi, "");
+  const baseTag = `<base href="${apiUrl.replace(/\/$/, "")}/">`;
 
   // Hide all scenes, show only the target. Using both CSS and inline-style
   // removal (via the script below) to handle any leftover inline styles.
@@ -39,6 +50,9 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number): string {
   *, *::before, *::after { animation-play-state: paused !important; transition: none !important; }
 </style>`;
 
+  // Inject base tag right AFTER <head ...> so it precedes anything else,
+  // then the CSS override before </head>.
+  doc = doc.replace(/<head\b([^>]*)>/i, `<head$1>${baseTag}`);
   doc = doc.replace(/<\/head>/i, overrideCss + "</head>");
   return doc;
 }
@@ -46,6 +60,7 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number): string {
 export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height = 1080 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
   // Resize observer — keep the 1920×1080 stage scaled to fit container
   useEffect(() => {
@@ -59,7 +74,7 @@ export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height 
     return () => ro.disconnect();
   }, [width]);
 
-  const doc = buildIsolatedDoc(fullHtml, sceneIndex);
+  const doc = buildIsolatedDoc(fullHtml, sceneIndex, API);
 
   return (
     <div

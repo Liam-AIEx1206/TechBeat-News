@@ -1873,11 +1873,13 @@ def build_user_prompt(req: CompositionRequest) -> str:
         if s.imageAsset:
             lines.append(
                 f"  IllustrationImage: {s.imageAsset}"
-                f"\n  ⚠️ Ảnh PHẢI nằm trong <div class=\"img-frame\"><img src=\"{s.imageAsset}\" alt=\"\"><span class=\"img-caption\">caption tiếng Việt</span></div>."
-                f"\n  ✅ TỰ DO chọn layout: .scene.split / .magazine / .data / .hero / .centered / bento — đa dạng giữa các scene."
-                f"\n  ✅ Có thể đảo: ảnh BÊN TRÁI thay vì phải; ảnh dưới title; ảnh trong bento-cell."
-                f"\n  ✗ KHÔNG: full-bleed background, position:absolute cho img, text overlay trực tiếp lên ảnh."
-                f"\n  ✗ KHÔNG: lặp lại cùng 1 layout với scene ảnh khác — mỗi scene KHÁC NHAU."
+                f"\n  ⚠️ BẮT BUỘC dùng EXACT HTML này (copy nguyên): <div class=\"img-frame\"><img src=\"{s.imageAsset}\" alt=\"\"><span class=\"img-caption\">[caption tiếng Việt ngắn ≤10 chữ]</span></div>"
+                f"\n  ⚠️ <img> PHẢI nằm BÊN TRONG .img-frame — KHÔNG đặt thẳng dưới .visual-col hay .scene."
+                f"\n  ⚠️ Dùng layout `.scene.split` (50/50 text–ảnh) HOẶC `.scene.magazine` (7:5). KHÔNG dùng .hero, .centered, .data, .bento cho scene có ảnh."
+                f"\n  ⚠️ .img-frame nằm trong .visual-col, KHÔNG được nằm trong .info-col hay tràn ra ngoài."
+                f"\n  ✗ TUYỆT ĐỐI KHÔNG: <img> full-bleed background của .scene, position:absolute trên <img>, background-image url(...) lên #root/.scene, text overlay trực tiếp lên ảnh."
+                f"\n  ✗ TUYỆT ĐỐI KHÔNG: width/height 100vw/100vh trên img, object-fit: cover trên cả màn hình."
+                f"\n  ✗ KHÔNG lặp lại cùng 1 layout với scene ảnh khác — đa dạng split/magazine giữa các scene có ảnh."
             )
         elif not is_first:
             lines.append(
@@ -1938,12 +1940,88 @@ def inject_base_css(html: str, theme: dict) -> str:
     return block + html
 
 
+async def _materialise_scene_images(scenes: list, project_root: Path) -> list:
+    """Download / decode every scene's `imageUrl` into an actual file under
+    `assets/sceneN.<ext>` and populate `imageAsset`.
+
+    Why: the LLM's image instructions are gated on `imageAsset` (a real
+    file path). When the user picks an image in the preview stage, only
+    `imageUrl` is set — it might be a data URL, blob URL, or HTTPS URL.
+    Without materialising, the LLM is told "no image" for every scene and
+    the generated HTML has no <img> tags at all.
+
+    Returns a NEW list of ScenePayload with `imageAsset` set where possible.
+    Never raises — image fetch failures degrade gracefully (scene treated
+    as image-less by the LLM).
+    """
+    import base64 as _b64
+    import re as _re
+    import httpx as _httpx
+
+    assets_dir = project_root / "assets"
+    assets_dir.mkdir(exist_ok=True)
+
+    out: list = []
+    async with _httpx.AsyncClient(timeout=15.0, follow_redirects=True) as http:
+        for s in scenes:
+            asset_rel = s.imageAsset  # respect any already-set value
+            url = s.imageUrl or ""
+
+            if not asset_rel and url.startswith("data:image/"):
+                m = _re.match(r"^data:image/([a-z0-9+.-]+);base64,(.+)$", url, _re.IGNORECASE)
+                if m:
+                    ext_raw = m.group(1).lower()
+                    ext = {"jpeg": "jpg", "svg+xml": "svg"}.get(ext_raw, ext_raw)
+                    if ext not in ("jpg", "png", "webp", "gif", "svg"):
+                        ext = "jpg"
+                    try:
+                        raw = _b64.b64decode(m.group(2))
+                        local = assets_dir / f"scene{s.index + 1}.{ext}"
+                        local.write_bytes(raw)
+                        asset_rel = f"assets/{local.name}"
+                        print(f"[preview] decoded uploaded image scene {s.index + 1} → {asset_rel}")
+                    except Exception as e:
+                        print(f"[preview] decode data URL scene {s.index + 1} failed: {e}")
+
+            elif not asset_rel and url.startswith(("http://", "https://")):
+                ext = ".jpg"
+                low = url.lower().split("?")[0]
+                for cand in (".png", ".webp", ".jpeg", ".jpg", ".gif"):
+                    if low.endswith(cand):
+                        ext = ".jpg" if cand == ".jpeg" else cand
+                        break
+                local = assets_dir / f"scene{s.index + 1}{ext}"
+                try:
+                    resp = await http.get(
+                        url,
+                        headers={"User-Agent": "Mozilla/5.0", "Referer": "https://duckduckgo.com/"},
+                    )
+                    if resp.status_code == 200 and resp.content:
+                        local.write_bytes(resp.content)
+                        asset_rel = f"assets/{local.name}"
+                        print(f"[preview] downloaded HTTPS image scene {s.index + 1} → {asset_rel}")
+                except Exception as e:
+                    print(f"[preview] download scene {s.index + 1} failed: {e}")
+
+            out.append(s.model_copy(update={"imageAsset": asset_rel}))
+    return out
+
+
 async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[dict, None]:
     """Yield raw event dicts: {type:'chunk',text} | {type:'done',html,scenes?} | {type:'error',message}"""
     import os as _os
     theme = get_theme(req.theme)
     full_text = ""
     finish_reason: str | None = None
+
+    # ── Materialise images FIRST so the LLM gets real file paths ────────
+    # Without this, the LLM is told "scene has no image" for every scene
+    # the user picked, and the generated HTML contains zero <img> tags.
+    try:
+        materialised = await _materialise_scene_images(req.scenes, get_project_root())
+        req = req.model_copy(update={"scenes": materialised})
+    except Exception as e:
+        print(f"[preview] image materialisation skipped: {e}")
 
     # Groq free tier struggles with 8 dense scenes — quality drops to bare
     # cards on empty backgrounds. We merge adjacent scenes into a smaller
@@ -2198,11 +2276,24 @@ async def regen_scene(body: RegenSceneRequest):
             detail=f"Không tìm thấy #scene{body.sceneIndex} trong HTML đã có.",
         )
 
+    # ── Resolve image source ─────────────────────────────────────────────
+    # Reuse the shared image materialiser so data URLs (upload) AND https
+    # URLs (Openverse) both get downloaded/decoded to assets/sceneN.<ext>
+    # before the LLM is told about them. Without this, the regen call ends
+    # up sending the raw imageUrl (megabytes for data URLs, or unfetched
+    # https for search results) and the LLM either explodes on token limit
+    # or skips the image entirely.
+    materialised_scenes = await _materialise_scene_images([body.scene], get_project_root())
+    effective_asset = materialised_scenes[0].imageAsset if materialised_scenes else body.scene.imageAsset
+
     image_clause = ""
-    if body.scene.imageAsset:
-        image_clause = f"\n  ImageAsset: {body.scene.imageAsset} → BẮT BUỘC dùng <img src=\"{body.scene.imageAsset}\">"
-    elif body.scene.imageUrl:
-        image_clause = f"\n  ImageUrl: {body.scene.imageUrl}"
+    if effective_asset:
+        image_clause = (
+            f"\n  IllustrationImage: {effective_asset}"
+            f"\n  ⚠️ BẮT BUỘC dùng EXACT HTML: <div class=\"img-frame\"><img src=\"{effective_asset}\" alt=\"\"><span class=\"img-caption\">[caption ≤10 chữ]</span></div>"
+            f"\n  ⚠️ Layout PHẢI là .scene.split hoặc .scene.magazine — KHÔNG .hero/.centered/.bento."
+            f"\n  ✗ TUYỆT ĐỐI KHÔNG full-bleed background image, position:absolute trên <img>, hay background-image url(...) lên #root/.scene."
+        )
 
     sys_msg = f"""Bạn re-generate MỘT scene HyperFrames.
 

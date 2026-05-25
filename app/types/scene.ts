@@ -6,7 +6,11 @@ export interface Scene {
   visualDescription: string;
   duration: number; // seconds
   imageQuery?: string; // search query for finding/selecting an image
-  imageUrl?: string; // user-picked illustration image URL
+  imageUrl?: string;   // user-picked illustration URL (data URL / https / blob)
+  /** Local asset path like "assets/scene1.jpg" once the backend has
+   *  downloaded/decoded imageUrl. Cleared when imageUrl changes so the next
+   *  regen call re-materialises the file. */
+  imageAsset?: string;
 }
 
 export interface ScenePlan {

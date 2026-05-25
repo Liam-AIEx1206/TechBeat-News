@@ -30,11 +30,6 @@ export function SceneList({ scenePlan, onChange }: Props) {
         </div>
         <div style={{ width: 1, height: 40, background: "var(--gray-3)" }} />
         <div>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 4 }}>Thời lượng</div>
-          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", color: "var(--accent)" }}>{scenePlan.totalDuration}s</div>
-        </div>
-        <div style={{ width: 1, height: 40, background: "var(--gray-3)" }} />
-        <div>
           <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 4 }}>Độ phân giải</div>
           <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em", color: "var(--white)" }}>1080p</div>
         </div>

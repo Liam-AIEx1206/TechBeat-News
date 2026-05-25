@@ -911,14 +911,41 @@ async def build_pipeline(req: BuildRequest):
     assets_dir = project_root / "assets"
     assets_dir.mkdir(exist_ok=True)
 
-    # ---- Stage 0: Download chosen illustration images ----
+    # ---- Stage 0: Download / decode chosen illustration images ----
+    # imageUrl can be:
+    #   • https://… (CDN) — fetch via httpx
+    #   • data:image/...;base64,…  (user upload via ImagePicker) — base64-decode
+    #   • blob:…  (browser-only URL) — unusable, skip
+    import base64 as _b64
+    import re as _re
+
     scenes_with_assets: list[ScenePayload] = []
     async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as http:
         for s in req.scenes:
             asset_rel: str | None = None
-            if s.imageUrl:
+            url = s.imageUrl or ""
+
+            # ── Case 1: data: URL — decode locally ──────────────────────
+            if url.startswith("data:image/"):
+                m = _re.match(r"^data:image/([a-z0-9+.-]+);base64,(.+)$", url, _re.IGNORECASE)
+                if m:
+                    ext_raw = m.group(1).lower()
+                    ext = {"jpeg": "jpg", "svg+xml": "svg"}.get(ext_raw, ext_raw)
+                    if ext not in ("jpg", "png", "webp", "gif", "svg"):
+                        ext = "jpg"
+                    try:
+                        raw = _b64.b64decode(m.group(2))
+                        local = assets_dir / f"scene{s.index + 1}.{ext}"
+                        local.write_bytes(raw)
+                        asset_rel = f"assets/{local.name}"
+                        print(f"[build] Lưu ảnh upload scene {s.index + 1} → {asset_rel}")
+                    except Exception as e:
+                        print(f"[build] Decode data URL scene {s.index + 1} lỗi: {e}")
+
+            # ── Case 2: http(s) URL — fetch via httpx ────────────────────
+            elif url.startswith(("http://", "https://")):
                 ext = ".jpg"
-                low = s.imageUrl.lower().split("?")[0]
+                low = url.lower().split("?")[0]
                 for cand in (".png", ".webp", ".jpeg", ".jpg", ".gif"):
                     if low.endswith(cand):
                         ext = ".jpg" if cand == ".jpeg" else cand
@@ -926,7 +953,7 @@ async def build_pipeline(req: BuildRequest):
                 local = assets_dir / f"scene{s.index + 1}{ext}"
                 try:
                     resp = await http.get(
-                        s.imageUrl,
+                        url,
                         headers={
                             "User-Agent": "Mozilla/5.0",
                             "Referer": "https://duckduckgo.com/",
@@ -937,6 +964,8 @@ async def build_pipeline(req: BuildRequest):
                         asset_rel = f"assets/{local.name}"
                 except Exception as e:
                     print(f"[build] Tải ảnh scene {s.index + 1} lỗi: {e}")
+
+            # ── Case 3: blob: or other — skip silently ───────────────────
             scenes_with_assets.append(s.model_copy(update={"imageAsset": asset_rel}))
 
     # ── Build log: collect info about every tool/model used ──────────────

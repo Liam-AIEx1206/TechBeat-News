@@ -134,8 +134,16 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
     }
   }
 
-  async function regenOne(idx: number) {
-    if (!html) return;
+  /** Regenerate one scene's HTML.
+   *
+   *  @param idx           0-based scene index
+   *  @param sceneOverride pass the latest scene snapshot when state hasn't
+   *                       flushed yet (e.g. immediately after picking an
+   *                       image — scenePlan.scenes[idx] is still stale). */
+  async function regenOne(idx: number, sceneOverride?: Scene) {
+    const currentHtml = scenePlanRef.current.compositionHtml;
+    if (!currentHtml) return;
+    const sceneForRegen = sceneOverride ?? scenePlanRef.current.scenes[idx];
     setRegenScene(idx + 1);
     setGenStatus("regenScene");
     setGenError(null);
@@ -144,10 +152,10 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullHtml: html,
+          fullHtml: currentHtml,
           sceneIndex: idx + 1,
-          scene: scenePlan.scenes[idx],
-          theme: scenePlan.theme,
+          scene: sceneForRegen,
+          theme: scenePlanRef.current.theme,
         }),
       });
       if (!res.ok) {
@@ -155,9 +163,10 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
         throw new Error(data.detail ?? `HTTP ${res.status}`);
       }
       const data: { html: string } = await res.json();
-      const flags = [...(scenePlan.sceneRegenFlags ?? [])];
+      const latest = scenePlanRef.current;
+      const flags = [...(latest.sceneRegenFlags ?? [])];
       flags[idx] = false;
-      setScenePlan({ ...scenePlan, compositionHtml: data.html, sceneRegenFlags: flags });
+      setScenePlan({ ...latest, compositionHtml: data.html, sceneRegenFlags: flags });
       setGenStatus("idle");
     } catch (e) {
       setGenError(e instanceof Error ? e.message : "Regen scene thất bại");
@@ -457,7 +466,21 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           open={pickerOpen}
           initialQuery={active.imageQuery?.trim() || active.title}
           onClose={() => setPickerOpen(false)}
-          onPick={(url) => setScene(activeIdx, { imageUrl: url })}
+          onPick={(url) => {
+            // 1. Update scene state (also marks dirty flag for fallback UI)
+            setScene(activeIdx, { imageUrl: url, imageAsset: undefined });
+            // 2. Auto-regen the scene so the preview reflects the new image
+            //    immediately — the user clearly intended this change. Pass a
+            //    fresh scene snapshot because React state hasn't flushed yet.
+            if (html) {
+              const fresh: Scene = {
+                ...scenePlanRef.current.scenes[activeIdx],
+                imageUrl: url,
+                imageAsset: undefined,
+              };
+              void regenOne(activeIdx, fresh);
+            }
+          }}
         />
       )}
     </main>

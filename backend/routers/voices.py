@@ -13,16 +13,8 @@ router = APIRouter()
 # Default ElevenLabs premade voices — accessible to every account, no need to add.
 # (voice_id, name, gender, description)
 DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
-    {"voice_id": "pNInz6obpgDQGcFmaJgB", "name": "Adam",     "gender": "male",   "description": "Trầm, rõ, broadcast — multilingual, đọc tiếng Việt OK"},
-    {"voice_id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel",   "gender": "female", "description": "Nữ ấm, rõ, nhịp đều — multilingual"},
-    {"voice_id": "EXAVITQu4vr4xnSDxMAh", "name": "Bella",    "gender": "female", "description": "Nữ trẻ, sáng, năng lượng — multilingual"},
-    {"voice_id": "ErXwobaYiN019PkySvjV", "name": "Antoni",   "gender": "male",   "description": "Nam sáng, rõ ràng — multilingual"},
-    {"voice_id": "yoZ06aMxZJJ28mfd3POQ", "name": "Sam",      "gender": "male",   "description": "Nam casual, conversation — multilingual"},
-    {"voice_id": "AZnzlk1XvdvUeBnXmlld", "name": "Domi",     "gender": "female", "description": "Nữ mạnh, confident, tự tin"},
-    {"voice_id": "MF3mGyEYCl7XYWbV9V6O", "name": "Elli",     "gender": "female", "description": "Nữ trẻ, mềm — multilingual"},
-    {"voice_id": "VR6AewLTigWG4xSOukaG", "name": "Arnold",   "gender": "male",   "description": "Nam trầm, narrative — multilingual"},
-    {"voice_id": "TxGEqnHWrfWFTfGW9XjX", "name": "Josh",     "gender": "male",   "description": "Nam thoải mái, casual"},
-    {"voice_id": "onwK4e9ZLuTAKqWW03F9", "name": "Daniel",   "gender": "male",   "description": "Nam British, news — multilingual"},
+    {"voice_id": "pNInz6obpgDQGcFmaJgB", "name": "Adam",   "gender": "male",   "description": "Trầm, rõ, broadcast — multilingual, đọc tiếng Việt OK"},
+    {"voice_id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel", "gender": "female", "description": "Nữ ấm, rõ, nhịp đều — multilingual"},
 ]
 
 

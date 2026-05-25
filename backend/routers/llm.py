@@ -171,6 +171,12 @@ def _is_quota_or_billing_error(e: Exception) -> bool:
         "billing", "credit", "exhausted", "out of credits",
         "rate limit", "rate_limit", "free users",
         "invalid tokens",  # Pinkyne: "used invalid tokens multiple times"
+        # Groq on-demand tier sometimes wraps TPM/context errors as 400 with
+        # these messages. Treat them as quota-style so the chain falls
+        # through to groq-fast (Scout 17B, looser caps) instead of aborting.
+        "reduce the length", "messages or completion",
+        "request too large", "context length", "context_length_exceeded",
+        "too many tokens",
     )
     if any(k in msg for k in keywords):
         return True
