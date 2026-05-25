@@ -60,3 +60,4 @@ my-video/.thumbnails/
 my-video/.waveform-cache/
 my-video/renders/
 my-video/node_modules/
+my-video/history/

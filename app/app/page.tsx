@@ -356,39 +356,40 @@ function Dashboard({ onStart }: { onStart: () => void }) {
     <div style={{
       position: "relative",
       width: "100%",
-      height: "100vh",
-      overflow: "hidden",
+      minHeight: "100vh",
       background: "radial-gradient(ellipse at center, #0a0510 0%, #000 60%)",
     }}>
-      <canvas
-        ref={canvasRef}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 0 }}
-      />
+      {/* Fixed decorative layer — canvas + blobs + vignette stay in viewport while content scrolls */}
+      <div aria-hidden style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        />
 
-      {/* Parallax glow blobs */}
-      <ParallaxBlob size={520} color="rgba(249,115,22,0.18)" top="-10%" left="5%" duration={16} />
-      <ParallaxBlob size={420} color="rgba(251,146,60,0.12)" bottom="-15%" right="-5%" duration={20} delay={1.5} />
-      <ParallaxBlob size={300} color="rgba(251,191,36,0.08)" top="40%" right="20%" duration={14} delay={3} />
+        {/* Parallax glow blobs */}
+        <ParallaxBlob size={520} color="rgba(249,115,22,0.18)" top="-10%" left="5%" duration={16} />
+        <ParallaxBlob size={420} color="rgba(251,146,60,0.12)" bottom="-15%" right="-5%" duration={20} delay={1.5} />
+        <ParallaxBlob size={300} color="rgba(251,191,36,0.08)" top="40%" right="20%" duration={14} delay={3} />
 
-      {/* Vignette */}
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 1,
-        background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%)",
-        pointerEvents: "none",
-      }} />
+        {/* Vignette */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%)",
+        }} />
+      </div>
 
-      {/* User menu top-right */}
-      <div style={{ position: "absolute", top: 24, right: 28, zIndex: 30 }}>
+      {/* User menu top-right — fixed so it stays in viewport while scrolling */}
+      <div style={{ position: "fixed", top: 24, right: 28, zIndex: 30 }}>
         <UserMenu />
       </div>
 
-      {/* LIVE badge top-left */}
+      {/* LIVE badge top-left — fixed */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
         style={{
-          position: "absolute", top: 24, left: 28, zIndex: 30,
+          position: "fixed", top: 24, left: 28, zIndex: 30,
           display: "flex", alignItems: "center", gap: 16,
         }}
       >
@@ -401,12 +402,12 @@ function Dashboard({ onStart }: { onStart: () => void }) {
         </div>
       </motion.div>
 
-      {/* Ticker bottom */}
+      {/* Ticker bottom — fixed */}
       <motion.div
         initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.7, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20 }}
+        style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 20 }}
       >
         <div className="ticker-wrap">
           <div className="ticker-track">
@@ -419,13 +420,13 @@ function Dashboard({ onStart }: { onStart: () => void }) {
         </div>
       </motion.div>
 
-      {/* Center content */}
+      {/* Center content — scrollable; centers vertically when short, grows when history list is long */}
       <div style={{
         position: "relative", zIndex: 10,
-        height: "100%",
+        minHeight: "100vh",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: "0 24px",
+        padding: "80px 24px 120px",
         textAlign: "center",
       }}>
         <motion.div
@@ -745,7 +746,8 @@ function InputStage({
           {[
             { n: "01", t: "Trích xuất nội dung", d: "Bài viết → văn bản sạch" },
             { n: "02", t: "AI viết kịch bản", d: "Phân cảnh + lời dẫn tiếng Việt" },
-            { n: "03", t: "Render MP4 1080p", d: "GSAP + TTS + FFmpeg" },
+            { n: "03", t: "Xem trước & chỉnh sửa", d: "Theme · giọng đọc · ảnh minh hoạ" },
+            { n: "04", t: "Render MP4 1080p", d: "GSAP + TTS + FFmpeg" },
           ].map((s, i) => (
             <motion.div
               key={s.n}
@@ -809,7 +811,7 @@ function InputStage({
                 <span /> Sẵn sàng nhận nội dung
               </div>
               <div style={{ fontSize: 10, color: "var(--gray-5)", fontFamily: "var(--font-mono)", letterSpacing: "0.08em" }}>
-                STEP_01 / 03
+                STEP_01 / 04
               </div>
             </div>
 

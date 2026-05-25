@@ -29,9 +29,26 @@ ELEVENLABS_API = "https://api.elevenlabs.io/v1/text-to-speech"
 # Default Vietnamese-capable voice — Adam (multilingual). User can override via env.
 DEFAULT_ELEVEN_VOICE_ID = "pNInz6obpgDQGcFmaJgB"
 
+# Once ElevenLabs returns 401/402/quota_exceeded for ANY scene in a build, skip
+# it for the remaining scenes so the final video has a single consistent voice
+# (instead of one scene using a foreign male and the rest using gTTS).
+# Reset to False at the start of each build via `reset_elevenlabs_state()`.
+_elevenlabs_disabled = False
+
+
+def reset_elevenlabs_state() -> None:
+    """Call at the start of each build so a previous quota error doesn't
+    permanently disable ElevenLabs for the process."""
+    global _elevenlabs_disabled
+    _elevenlabs_disabled = False
+
 
 async def _elevenlabs_to_wav(text: str, target: Path, voice_id: str | None = None) -> bool:
     """Try ElevenLabs TTS → wav. Returns True on success, False to fall back."""
+    global _elevenlabs_disabled
+    if _elevenlabs_disabled:
+        return False
+
     api_key = os.getenv("ELEVENLABS_API_KEY")
     if not api_key:
         return False
@@ -60,7 +77,13 @@ async def _elevenlabs_to_wav(text: str, target: Path, voice_id: str | None = Non
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(url, json=payload, headers=headers)
             if resp.status_code != 200:
-                print(f"[tts] ElevenLabs HTTP {resp.status_code}: {resp.text[:200]}")
+                body = resp.text[:300]
+                print(f"[tts] ElevenLabs HTTP {resp.status_code}: {body}")
+                # Disable ElevenLabs for the rest of this build on quota/auth errors
+                # so all scenes use the same engine (consistent voice).
+                if resp.status_code in (401, 402, 403, 429) or "quota" in body.lower() or "payment" in body.lower():
+                    _elevenlabs_disabled = True
+                    print("[tts] ElevenLabs disabled for the rest of this build — falling back to gTTS for consistency.")
                 return False
             mp3_bytes = resp.content
     except Exception as e:
@@ -262,42 +285,85 @@ def patch_html_timing(
       if (document.getElementById("scene" + n)) continue;
       var ph = document.createElement("div");
       ph.id = "scene" + n;
-      ph.className = "scene scene-fallback";
-      ph.style.cssText = "position:absolute;inset:0;opacity:0;visibility:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg,#08080f),var(--bg2,#0f0f1a));";
+      ph.className = "scene scene-fallback centered";
+      ph.style.cssText = "position:absolute;inset:0;opacity:0;visibility:hidden;background:linear-gradient(135deg,var(--bg,#08080f),var(--bg2,#0f0f1a));";
       var audio = document.querySelector("audio#v" + n);
       var title = audio ? (audio.getAttribute("data-title") || "") : "";
-      ph.innerHTML = '<div style="text-align:center;padding:80px;max-width:1400px;">' +
-        '<div style="font-size:13px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accent,#f97316);margin-bottom:24px;">Phân cảnh ' + n + '</div>' +
-        '<div style="font-size:clamp(3rem,5vw,5rem);font-weight:900;line-height:1.1;letter-spacing:-.03em;color:var(--text1,#f5f3ff);">' + (title || ("Nội dung " + n)) + '</div>' +
-      '</div>';
+      var narration = narrations[i] || "";
+      var sceneNumPadded = (n < 10 ? "0" + n : "" + n);
+      // Pick deterministic emoji + accent rotation per scene number
+      var emojis = ["✨", "⚡", "🚀", "💫", "🎯", "🔥", "💎", "🌟"];
+      var emoji = emojis[(n - 1) % emojis.length];
+      ph.innerHTML =
+        '<div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>' +
+        '<div class="corner-bracket bl"></div><div class="corner-bracket br"></div>' +
+        '<div class="top-line"></div>' +
+        '<span class="scene-num">' + sceneNumPadded + '</span>' +
+        '<div class="layout" style="padding:100px 140px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:36px;">' +
+          '<div class="badge" style="margin:0 auto;">' + emoji + ' &nbsp; PHẦN ' + n + '</div>' +
+          '<h1 class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">' + (title || ("Nội dung phân cảnh " + n)) + '</h1>' +
+          (narration ? ('<p class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">' + narration.slice(0, 220) + (narration.length > 220 ? "…" : "") + '</p>') : '') +
+          '<div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">' +
+            '<div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>' +
+            '<div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE ' + sceneNumPadded + '</div>' +
+            '<div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; TECHBEAT</div>' +
+          '</div>' +
+        '</div>';
       root.appendChild(ph);
     }}
+  }}
+
+  // Chunk a string into 1-line-friendly segments (≤ ~8 words each).
+  // Prefers natural pause points (. , ! ? ; : — —) before forcing word splits.
+  function chunkText(text) {{
+    if (!text) return [];
+    var maxWords = 8;
+    // Split by punctuation that signals a natural pause; keep them attached.
+    var parts = text.split(/(?<=[\\.,!?;:—–])\\s+/);
+    var chunks = [];
+    parts.forEach(function(part) {{
+      var words = part.trim().split(/\\s+/).filter(Boolean);
+      if (!words.length) return;
+      if (words.length <= maxWords) {{
+        chunks.push(words.join(" "));
+      }} else {{
+        for (var i = 0; i < words.length; i += maxWords) {{
+          chunks.push(words.slice(i, i + maxWords).join(" "));
+        }}
+      }}
+    }});
+    return chunks;
   }}
 
   function ensureSubtitles() {{
     var root = document.getElementById("root");
     if (!root) return;
     if (document.getElementById("techbeat-subtitles")) return;
-    
+
     var subContainer = document.createElement("div");
     subContainer.id = "techbeat-subtitles";
     subContainer.className = "techbeat-subtitles";
-    
+
     for (var i = 0; i < starts.length; i++) {{
       var n = i + 1;
       var text = narrations[i] || "";
+      var chunks = chunkText(text);
+
       var subScene = document.createElement("div");
       subScene.id = "sub-scene" + n;
       subScene.className = "sub-scene";
-      subScene.style.cssText = "display: none; opacity: 0;";
-      
-      var words = text.split(/\\s+/).filter(Boolean);
-      for (var j = 0; j < words.length; j++) {{
-        var wordSpan = document.createElement("span");
-        wordSpan.className = "word sub-w-" + j;
-        wordSpan.innerText = words[j];
-        subScene.appendChild(wordSpan);
-      }}
+      subScene.style.cssText = "display: none;";
+      subScene.setAttribute("data-chunk-count", chunks.length);
+
+      chunks.forEach(function(chunk, ci) {{
+        var chunkEl = document.createElement("div");
+        chunkEl.id = "sub-" + n + "-" + ci;
+        chunkEl.className = "sub-chunk";
+        chunkEl.style.cssText = "display: none; opacity: 0;";
+        chunkEl.innerText = chunk;
+        subScene.appendChild(chunkEl);
+      }});
+
       subContainer.appendChild(subScene);
     }}
     root.appendChild(subContainer);
@@ -345,47 +411,76 @@ def patch_html_timing(
         tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
       }}
 
-      // --- SUBTITLE TIMING ---
+      // --- SUBTITLE TIMING (chunk-based: one short line at a time) ---
       var subSceneId = "#sub-scene" + n;
-      if (document.getElementById("sub-scene" + n)) {{
-        tl.set(subSceneId, {{ display: "flex", opacity: 1 }}, s);
-        
-        var words = document.querySelectorAll(subSceneId + " .word");
-        var numWords = words.length;
-        if (numWords > 0) {{
+      var subSceneEl = document.getElementById("sub-scene" + n);
+      if (subSceneEl) {{
+        var chunkEls = subSceneEl.querySelectorAll(".sub-chunk");
+        var numChunks = chunkEls.length;
+        if (numChunks > 0) {{
+          tl.set(subSceneId, {{ display: "block" }}, s);
+
           var totalAudioTime = actualDurs[i] || d;
-          var speechDur = totalAudioTime * 0.95; // use 95% of speech length to avoid trailing silence overlap
-          var wordDur = speechDur / numWords;
-          
-          words.forEach(function(wordEl, wIdx) {{
-            var wordStart = s + wIdx * wordDur;
-            var wordEnd = wordStart + wordDur;
-            
-            // Highlight word
-            tl.fromTo(wordEl,
-              {{ color: "rgba(255, 255, 255, 0.75)", scale: 0.96, fontWeight: "300" }},
-              {{ color: "#ff3b30", scale: 1.06, fontWeight: "600", duration: 0.12, immediateRender: false }},
-              wordStart
-            );
-            // Revert word
-            tl.to(wordEl,
-              {{ color: "rgba(255, 255, 255, 0.75)", scale: 0.96, fontWeight: "300", duration: 0.12 }},
-              wordEnd
-            );
+          var speechDur = totalAudioTime * 0.95; // avoid trailing silence overlap
+          var chunkDur = speechDur / numChunks;
+          var fadeIn = 0.18;
+          var fadeOut = 0.18;
+
+          chunkEls.forEach(function(chunkEl, ci) {{
+            var chunkStart = s + ci * chunkDur;
+            var chunkEnd = chunkStart + chunkDur;
+            // Reveal
+            tl.set(chunkEl, {{ display: "block", opacity: 0 }}, chunkStart);
+            tl.to(chunkEl, {{ opacity: 1, duration: fadeIn, ease: "power2.out" }}, chunkStart);
+            // Hide (except last chunk — it fades out with the scene)
+            if (ci < numChunks - 1) {{
+              tl.to(chunkEl, {{ opacity: 0, duration: fadeOut, ease: "power2.in" }}, chunkEnd - fadeOut);
+              tl.set(chunkEl, {{ display: "none" }}, chunkEnd);
+            }}
           }});
+
+          // Fade out the whole subtitle block at scene end
+          tl.to(subSceneId, {{ opacity: 0, duration: 0.3 }}, s + d - 0.3);
+          tl.set(subSceneId, {{ display: "none" }}, s + d);
+          tl.set(subSceneId, {{ opacity: 1 }}, s + d + 0.001); // reset for replay
         }}
-        
-        // Hide subtitles at the end of the scene
-        tl.to(subSceneId, {{ opacity: 0, duration: 0.3 }}, s + d - 0.3);
-        tl.set(subSceneId, {{ display: "none" }}, s + d);
       }}
 
-      safeFrom(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s + 0.3);
-      safeFrom(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.5);
-      safeFrom(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }}, s + 0.7);
-      safeFrom(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }}, s + 0.9);
+      // Ambient decoratives fade in IMMEDIATELY at scene start so the
+      // background never feels empty (orbs, aurora, grid, ghost-text...)
+      var ambientSelectors = [
+        ".aurora-glow", ".animated-grid", ".retro-grid", ".light-rays",
+        ".particle-field", ".ghost-text", ".float-orb-lg", ".float-orb-md",
+        ".float-orb-sm", ".y2k-sparkle", ".glow-orb", ".marquee-strip"
+      ];
+      ambientSelectors.forEach(function(sel) {{
+        if (document.querySelector(sceneId + " " + sel)) {{
+          tl.from(sceneId + " " + sel, {{
+            scale: 0.7, opacity: 0, duration: 0.7, stagger: 0.06, ease: "power2.out"
+          }}, s);
+        }}
+      }});
+
+      // Decorative chrome (corner brackets + top-line + scene-num) entrance
+      tl.from(sceneId + " .corner-bracket, " + sceneId + " .top-line, " + sceneId + " .scene-num",
+        {{ opacity: 0, duration: 0.4, stagger: 0.05, ease: "power1.out" }}, s);
+
+      // Content entry — start IMMEDIATELY at t=s, tight stagger so the first
+      // 0.5s is filled with motion instead of an empty stationary frame.
+      safeFrom(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s);
+      safeFrom(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.12);
+      safeFrom(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }}, s + 0.25);
+      safeFrom(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }}, s + 0.38);
       if (document.querySelector(sceneId + " .visual-col > *")) {{
-        tl.from(sceneId + " .visual-col > *", {{ scale: 0.9, opacity: 0, duration: 0.7, stagger: 0.15, ease: "back.out(1.5)" }}, s + 0.5);
+        tl.from(sceneId + " .visual-col > *",
+          {{ scale: 0.88, opacity: 0, duration: 0.7, stagger: 0.12, ease: "back.out(1.6)" }},
+          s + 0.18);
+      }}
+      // Bento / hero-stat banner inner items (when not using visual-col wrapper)
+      if (document.querySelector(sceneId + " .bento-cell, " + sceneId + " .hero-stat-banner > *")) {{
+        tl.from(sceneId + " .bento-cell, " + sceneId + " .hero-stat-banner > *",
+          {{ y: 24, opacity: 0, duration: 0.55, stagger: 0.08, ease: "power3.out" }},
+          s + 0.15);
       }}
 
       // Last scene stays visible until total — visuals never go black before audio ends.
@@ -588,6 +683,9 @@ async def build_pipeline(req: BuildRequest):
 
     # ---- Stage 3: TTS ----
     if not req.skipTts:
+        # Reset ElevenLabs state so a previous build's quota error doesn't
+        # carry over and skip ElevenLabs unnecessarily this run.
+        reset_elevenlabs_state()
         engines_used: dict[str, int] = {}
         yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
         wav_paths: list[Path] = []

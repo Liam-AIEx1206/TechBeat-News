@@ -40,13 +40,16 @@ app.include_router(projects_router)
 app.include_router(history_router)
 app.include_router(voices_router)
 
-# Serve rendered MP4 + assets
+# Serve rendered MP4 + assets — create dirs eagerly so the mount works on first
+# render, not only after the folder happens to exist at startup.
 project_path = os.getenv("HYPERFRAMES_PROJECT") or str(Path(__file__).resolve().parent.parent / "my-video")
 project_dir = Path(project_path)
-if (project_dir / "renders").exists():
-    app.mount("/renders", StaticFiles(directory=str(project_dir / "renders")), name="renders")
-if (project_dir / "assets").exists():
-    app.mount("/assets", StaticFiles(directory=str(project_dir / "assets")), name="assets")
+renders_dir = project_dir / "renders"
+assets_dir = project_dir / "assets"
+renders_dir.mkdir(parents=True, exist_ok=True)
+assets_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/renders", StaticFiles(directory=str(renders_dir)), name="renders")
+app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
 # Serve static history
 history_dir = project_dir / "history"

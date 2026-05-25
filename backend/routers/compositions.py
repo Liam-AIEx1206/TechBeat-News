@@ -177,8 +177,23 @@ body {{
 .scene.magazine .layout {{ grid-template-columns: 7fr 5fr; gap: 80px; }}
 .scene.data .layout     {{ grid-template-columns: 1fr 1.4fr; }}
 
-.info-col   {{ display: flex; flex-direction: column; justify-content: center; gap: 28px; min-width: 0; }}
-.visual-col {{ display: flex; flex-direction: column; justify-content: center; gap: 24px; min-width: 0; max-width: 100%; }}
+.info-col   {{
+  display: flex; flex-direction: column; justify-content: center; gap: 28px;
+  min-width: 0; max-height: 100%; overflow: hidden;
+}}
+.visual-col {{
+  display: flex; flex-direction: column; justify-content: center; gap: 24px;
+  min-width: 0; max-width: 100%; max-height: 100%; overflow: hidden;
+}}
+
+/* Inner content boxes must stay within their column.
+   Lists inside visual-block (.compare, .feat-grid, etc.) get tightened so
+   long bullet lists shrink instead of bleeding past the 1080 viewport. */
+.visual-block, .terminal, .stat-list, .chat-box, .agent-grid,
+.feat-grid, .feat-row, .compare, .tl-list, .quote-block, .tech-card {{
+  max-height: 100%;
+}}
+.visual-block > *, .compare .col > * {{ min-height: 0; }}
 
 /* Decorative chrome — present on every scene */
 .corner-bracket {{ position: absolute; width: 60px; height: 60px; opacity: 0.4; z-index: 15; }}
@@ -544,6 +559,176 @@ body {{
 .glow-text {{ text-shadow: 0 0 20px var(--accent2); }}
 .glow-orb {{ position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }}
 
+/* ═══════════════════════════════════════════════════
+   MAGIC-UI INSPIRED AMBIENT LAYERS
+   Use absolutely-positioned inside .scene to fill empty space.
+   ═══════════════════════════════════════════════════ */
+
+/* Floating colored orbs — 3 sizes for depth (with gentle breathing animation) */
+@keyframes orb-breath {{
+  0%, 100% {{ transform: scale(1) translate(0, 0); }}
+  50% {{ transform: scale(1.08) translate(20px, -15px); }}
+}}
+.float-orb-lg {{
+  position: absolute; width: 720px; height: 720px; border-radius: 50%;
+  filter: blur(120px); opacity: 0.48; pointer-events: none; z-index: 0;
+  animation: orb-breath 12s ease-in-out infinite;
+}}
+.float-orb-md {{
+  position: absolute; width: 420px; height: 420px; border-radius: 50%;
+  filter: blur(90px); opacity: 0.38; pointer-events: none; z-index: 0;
+  animation: orb-breath 10s ease-in-out infinite;
+  animation-delay: -3s;
+}}
+.float-orb-sm {{
+  position: absolute; width: 220px; height: 220px; border-radius: 50%;
+  filter: blur(60px); opacity: 0.32; pointer-events: none; z-index: 0;
+  animation: orb-breath 8s ease-in-out infinite;
+  animation-delay: -5s;
+}}
+
+/* Animated grid pattern — adds depth + tech feel */
+.animated-grid {{
+  position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0.55;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.075) 1px, transparent 1px);
+  background-size: 64px 64px;
+  animation: grid-sweep 14s linear infinite;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 0%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 0%, transparent 80%);
+}}
+
+/* Retro perspective grid — y2k/synthwave floor */
+.retro-grid {{
+  position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
+  pointer-events: none; z-index: 0; opacity: 0.45;
+  background-image:
+    linear-gradient(var(--accent2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent2) 1px, transparent 1px);
+  background-size: 80px 80px;
+  transform: perspective(600px) rotateX(60deg);
+  transform-origin: bottom;
+  mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+}}
+
+/* Aurora wave — soft gradient blob that drifts */
+@keyframes aurora-drift {{
+  0%, 100% {{ transform: translate(0, 0) rotate(0deg); }}
+  33% {{ transform: translate(30px, -20px) rotate(20deg); }}
+  66% {{ transform: translate(-25px, 15px) rotate(-15deg); }}
+}}
+.aurora-glow {{
+  position: absolute; width: 80%; height: 60%; border-radius: 50%;
+  filter: blur(140px); opacity: 0.48; pointer-events: none; z-index: 0;
+  animation: aurora-drift 18s ease-in-out infinite;
+  background: radial-gradient(circle, var(--accent) 0%, var(--accent2) 40%, transparent 70%);
+}}
+
+/* Light rays — radial beams from top */
+.light-rays {{
+  position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+  width: 1500px; height: 1500px; pointer-events: none; z-index: 0; opacity: 0.35;
+  background: conic-gradient(from 180deg at 50% 50%,
+    transparent 0deg, var(--accent) 30deg, transparent 60deg,
+    transparent 120deg, var(--accent2) 150deg, transparent 180deg,
+    transparent 240deg, var(--accent3) 270deg, transparent 300deg);
+  filter: blur(60px);
+  mask-image: radial-gradient(circle, #000 0%, transparent 60%);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 60%);
+}}
+
+/* Ghost text — large thematic word at very low opacity */
+.ghost-text {{
+  position: absolute; font-family: 'Inter', system-ui, sans-serif;
+  font-size: clamp(18rem, 28vw, 32rem); font-weight: 900;
+  color: var(--accent); opacity: 0.085; line-height: 0.85;
+  letter-spacing: -0.05em; pointer-events: none; user-select: none;
+  z-index: 0; white-space: nowrap;
+  animation: floating 16s ease-in-out infinite;
+}}
+
+/* Marquee strip — auto-scrolling tags/keywords */
+@keyframes marquee-scroll {{
+  0% {{ transform: translateX(0); }}
+  100% {{ transform: translateX(-50%); }}
+}}
+.marquee-strip {{
+  position: absolute; left: 0; right: 0; overflow: hidden;
+  display: flex; gap: 0; pointer-events: none; z-index: 1;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}}
+.marquee-strip .track {{
+  display: flex; gap: 36px; white-space: nowrap;
+  animation: marquee-scroll 28s linear infinite;
+  padding-right: 36px;
+}}
+.marquee-strip .pill {{
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent2); background: rgba(255,255,255,0.04);
+  border: 1px solid {accent}33; border-radius: 99px;
+  padding: 10px 22px;
+}}
+.marquee-strip .pill::before {{
+  content: "◆"; color: var(--accent3); font-size: 0.7em;
+}}
+
+/* Big number callout — for hero scene with stat focus */
+.mega-num {{
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: clamp(10rem, 18vw, 18rem);
+  font-weight: 900; line-height: 0.9; letter-spacing: -0.06em;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 40%, var(--accent3) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  text-shadow: 0 0 80px var(--glow);
+}}
+
+/* Particle field — small dots randomly placed for cosmic texture */
+.particle-field {{
+  position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, var(--accent3), transparent),
+    radial-gradient(1px 1px at 40% 70%, var(--accent2), transparent),
+    radial-gradient(1.5px 1.5px at 60% 20%, var(--accent), transparent),
+    radial-gradient(1px 1px at 80% 80%, var(--accent3), transparent),
+    radial-gradient(2px 2px at 30% 90%, var(--accent2), transparent),
+    radial-gradient(1px 1px at 90% 50%, var(--accent), transparent),
+    radial-gradient(1.5px 1.5px at 10% 60%, var(--accent3), transparent),
+    radial-gradient(1px 1px at 70% 10%, var(--accent2), transparent);
+  background-size: 100% 100%;
+  animation: floating 20s ease-in-out infinite;
+}}
+
+/* Hero stat banner — full-bleed centered showcase */
+.hero-stat-banner {{
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 32px; z-index: 5;
+  padding: 100px 120px;
+}}
+
+/* Bento grid — for dashboards / feature showcases */
+.bento-grid {{
+  display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(180px, auto);
+  gap: 24px; width: 100%;
+}}
+.bento-cell {{
+  background: linear-gradient(135deg, var(--surface), {surface}80);
+  border: 1px solid {accent}33;
+  border-radius: 28px; padding: 32px;
+  position: relative; overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}}
+.bento-cell.wide {{ grid-column: span 2; }}
+.bento-cell.tall {{ grid-row: span 2; }}
+.bento-cell.hero {{ grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), {accent}1a); border-color: {accent}66; }}
+.bento-cell:hover {{ transform: translateY(-4px); border-color: var(--accent2); }}
+
 /* Premium UI/UX Pro Max Animations & Shimmers */
 @keyframes floating {{
   0%, 100% {{ transform: translateY(0px) rotate(0deg); }}
@@ -609,48 +794,57 @@ body {{
   animation: cursor-blink 0.9s infinite step-end;
 }}
 
-/* Custom Subtitle Styles matching reference */
+/* Chunked Subtitle Styles — one short line at a time, fades in/out */
 .techbeat-subtitles {{
   position: absolute;
-  bottom: 80px;
+  bottom: 72px;
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
-  max-width: 1400px;
+  width: auto;
+  max-width: 90%;
   z-index: 1000;
   pointer-events: none;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
 }}
 .sub-scene {{
   display: none;
+  position: relative;
+  min-height: 80px;
+}}
+.sub-chunk {{
+  display: none;
   opacity: 0;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px 14px;
-  width: 100%;
-}}
-.sub-scene .word {{
-  display: inline-block;
+  position: relative;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 2.6rem;
-  font-weight: 300; /* Beautiful thin font weight! */
-  color: rgba(255, 255, 255, 0.75);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-  transition: color 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease, font-weight 0.2s ease;
-  transform: scale(0.96);
-  letter-spacing: -0.01em;
-}}
-.sub-scene .word.active {{
-  color: #ff3b30; /* Vibrant red matching reference */
+  font-size: 2.4rem;
   font-weight: 600;
-  transform: scale(1.06);
-  text-shadow: 0 0 12px rgba(255, 59, 48, 0.5), 0 2px 8px rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(0, 0, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 14px 36px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  max-width: 1400px;
+}}
+/* Active chunk: accent underline shimmer */
+.sub-chunk::before {{
+  content: "";
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 6px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent, #f97316), transparent);
+  opacity: 0.55;
+  border-radius: 2px;
 }}
 """
 
@@ -678,14 +872,47 @@ NGÔN NGỮ: tiếng Việt có dấu. Giữ nguyên văn narration/title/visual
 
 CSS framework + GSAP timeline + Inter/JetBrains Mono font đã được inject server-side.
 
-Class có sẵn (DÙNG, không tự viết): .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col, .badge, .title-xl, .title-hero, .subtitle, .body-text, .caption, .grad-text, .outline-text, .stat-hero, .stat-suffix, .visual-block, .img-frame, .img-caption, .terminal, .feat-grid, .feat-card, .compare, .tl-list, .tl-item, .quote-block, .quote-text, .corner-bracket (tl/tr/bl/br), .top-line, .scene-num, .scanlines.
+Class có sẵn (DÙNG, không tự viết):
+LAYOUT: .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col
+TEXT: .badge, .title-xl, .title-hero, .subtitle, .body-text, .caption, .grad-text, .outline-text, .mega-num
+VISUAL BLOCKS: .visual-block, .img-frame, .img-caption, .terminal, .feat-grid, .feat-card, .compare, .tl-list, .tl-item, .quote-block, .quote-text, .stat-list, .stat-list-card, .chat-box, .chat-bubble, .agent-grid, .agent-card, .tech-card, .glass-card, .feat-row, .bento-grid, .bento-cell, .hero-stat-banner
+CHROME: .corner-bracket (tl/tr/bl/br), .top-line, .scene-num, .scanlines, .status-pill
+DECORATIVES (lấp đầy không gian): .float-orb-lg/.float-orb-md/.float-orb-sm, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .marquee-strip, .y2k-sparkle, .glow-orb
+ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 
-🔒 QUY TẮC ẢNH (BẮT BUỘC):
-- Khi user prompt liệt kê IllustrationImage cho 1 scene → scene đó BẮT BUỘC class="scene split".
-- Bố cục: .info-col (TRÁI) chứa text · .visual-col (PHẢI) chứa <div class="img-frame"><img src="..."><span class="img-caption">...</span></div>.
-- TUYỆT ĐỐI không đặt <img> hay background-image full-bleed cho .scene.
-- TUYỆT ĐỐI không position:absolute cho .img-frame/img.
-- TUYỆT ĐỐI không để chữ overlay trực tiếp lên ảnh (caption nằm trong frame là OK).
+🌌 LẤP ĐẦY KHÔNG GIAN — MỖI scene 2-5 decoratives (position:absolute):
+  • 1 .float-orb-lg/aurora-glow (background presence)
+  • 1 .animated-grid/retro-grid/light-rays (texture)
+  • 1 .ghost-text với thematic word (depth)
+  • 2-3 .y2k-sparkle hoặc .float-orb-sm rải rác
+
+🎬 SCENE #1 BẮT BUỘC HERO CINEMATIC (không split logo nhỏ):
+  Dùng .scene.hero hoặc .scene.centered + .hero-stat-banner + 3-4 decoratives + .title-hero.grad-text/.mega-num + 2-3 .badge stack.
+
+🔒 QUY TẮC ẢNH (an toàn, vẫn sáng tạo):
+- Khi user prompt liệt kê IllustrationImage → ảnh PHẢI nằm trong <div class="img-frame"><img src="..."><span class="img-caption">...</span></div>.
+- Bạn được TỰ DO chọn layout phù hợp:
+  • .scene.split (50/50) — text bên này, ảnh bên kia (đảo trái/phải tùy ý)
+  • .scene.magazine (7:5) — text 60%, ảnh 40% kéo dọc
+  • .scene.data (1:1.4) — text nhỏ, ảnh lớn
+  • .scene.hero — ảnh trong card phụ + title overlay phía dưới ảnh hoặc bên cạnh
+  • .scene.centered — ảnh trung tâm với caption, text phía trên/dưới
+  • Bento — ảnh ở 1 cell .bento-cell, text/stats ở các cell khác
+- TUYỆT ĐỐI KHÔNG:
+  ✗ <img> hay background-image full-bleed cho .scene (đè text)
+  ✗ position:absolute cho .img-frame/img (ảnh tràn ra ngoài)
+  ✗ Text overlay trực tiếp lên ảnh (caption nằm trong .img-frame thì OK)
+- Mục tiêu: đa dạng layout giữa các scene, không lặp .split 8 lần.
+
+🎬 SCENE 1 = OPENING HERO (BẮT BUỘC ấn tượng):
+- Scene #1 PHẢI là class="scene centered" hoặc class="scene hero" — KHÔNG được để trống visual-col chỉ vài chữ.
+- BẮT BUỘC có: title-hero gradient cực to (.title-hero.grad-text), 2-3 badge/status-pill stack ngang, eyebrow .caption, decorative effect (status-pill phía trên + corner-bracket + breath animation).
+- Nếu không có ảnh ở scene 1 → dùng VISUAL pattern B14 (tech-card) HOẶC B13 (3-column glass cards) HOẶC B11 (stat-list) ở visual-col để LẤP ĐẦY màn hình. KHÔNG được chỉ hiển thị 1 box logo nhỏ chính giữa.
+
+📐 CHỐNG CONTENT TRÀN KHUNG 1080px (BẮT BUỘC):
+- Toàn bộ nội dung mỗi scene PHẢI vừa trong viewport 1920×1080. KHÔNG được để content dài hơn chiều cao 880px (sau khi trừ padding).
+- Nếu danh sách bullet/feature dài hơn 4 dòng → CẮT GỌN xuống tối đa 4 mục, mỗi mục ngắn gọn.
+- Title trong visual-block không lấy font-size > 2rem; bullet list không > 1.2rem để tránh tràn xuống.
 
 ═══════ HTML TEMPLATE ═══════
 
@@ -707,23 +934,30 @@ Class có sẵn (DÙNG, không tự viết): .scene/.split/.centered/.hero/.maga
 
 ═══════ MỖI SCENE ═══════
 
-<div class="scene split" id="sceneN">
+<div class="scene LAYOUT" id="sceneN">  <!-- LAYOUT = chọn 1 trong: split, centered, hero, magazine, data -->
   <div class="layout">
     <div class="info-col">
       <div id="sN-badge" class="badge">PHẦN N</div>
       <h1 id="sN-title" class="title-xl">{{tiêu đề}}</h1>
-      <p id="sN-subtitle" class="subtitle">{{phụ đề}}</p>
-      <p id="sN-desc" class="body-text">{{mô tả}}</p>
+      <p id="sN-subtitle" class="subtitle">{{phụ đề CỰC NGẮN ≤ 8 chữ}}</p>
+      <p id="sN-desc" class="body-text">{{TỐI ĐA 1 dòng ngắn — KHÔNG copy narration}}</p>
     </div>
     <div class="visual-col">{{VISUAL}}</div>
   </div>
+  <!-- 2-5 decoratives ở đây: .float-orb-md, .aurora-glow, .ghost-text, .y2k-sparkle... -->
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">0N</span>
 </div>
 
-BẮT BUỘC: 4 element id="sN-badge"/"sN-title"/"sN-subtitle"/"sN-desc" trong mỗi scene. Layout class chọn 1 trong: split, centered, hero, magazine, data — đa dạng giữa các scene.
+BẮT BUỘC:
+- 4 element id="sN-badge"/"sN-title"/"sN-subtitle"/"sN-desc" trong mỗi scene
+- Mỗi scene MỘT LAYOUT KHÁC NHAU. Đa dạng split/centered/hero/magazine/data — KHÔNG lặp .split liên tục
+- ⚠️ TUYỆT ĐỐI KHÔNG copy nguyên văn narration vào sN-desc. Narration đã hiển thị qua phụ đề karaoke phía dưới — copy lại sẽ ĐÈ NHAU XẤU XÍ.
+- sN-subtitle ≤ 8 chữ (1 cụm danh từ hoặc tagline)
+- sN-desc ≤ 12 chữ (1 dòng tóm tắt KHÁC narration — ví dụ: "Cảm biến WiFi · Edge AI" thay vì "Hệ thống dùng cảm biến WiFi kết hợp...")
+- Dồn nội dung chi tiết vào VISUAL-COL (feat-grid, stat-list, terminal, chat-box, agent-grid...) — không nhồi text vào info-col
 
 ═══════ AUDIO ═══════
 <audio id="vN" src="assets/pN.wav" data-start="0" data-duration="10" data-volume="1"></audio>
@@ -802,16 +1036,19 @@ QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
 
 2. SCENE COUNT: PHẦN tạo ĐỦ N scene (N từ user prompt). Mỗi scene <div class="scene LAYOUT" id="sceneN"> với LAYOUT là 1 trong: split, centered, hero, magazine, data.
 
-3. SCENE STRUCTURE:
-   <div class="scene split" id="sceneN">
+3. SCENE STRUCTURE (LAYOUT = chọn 1 trong: split / centered / hero / magazine / data — TỰ DO theo content):
+   <div class="scene LAYOUT" id="sceneN">
+     <!-- 2-5 ambient decoratives ở đây cho mỗi scene -->
+     <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+     <div class="ghost-text" style="bottom:-5%; right:-5%;">KEYWORD</div>
      <div class="layout">
        <div class="info-col">
          <div id="sN-badge" class="badge">PHẦN N</div>
          <h1 id="sN-title" class="title-xl grad-text">{{tiêu đề}}</h1>
-         <p id="sN-subtitle" class="subtitle">{{phụ đề ngắn}}</p>
-         <p id="sN-desc" class="body-text">{{mô tả 2-3 dòng}}</p>
+         <p id="sN-subtitle" class="subtitle">{{phụ đề CỰC NGẮN ≤ 8 chữ}}</p>
+         <p id="sN-desc" class="body-text">{{TỐI ĐA 1 dòng tagline ≤ 12 chữ — KHÔNG copy narration}}</p>
        </div>
-       <div class="visual-col">{{... pattern A hoặc B ...}}</div>
+       <div class="visual-col">{{... pattern A hoặc B — có thể đảo trái/phải qua order/flex-direction ...}}</div>
      </div>
      <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
      <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
@@ -819,12 +1056,137 @@ QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
      <span class="scene-num">{{N với padding 0, "01"–"99"}}</span>
    </div>
 
-4. LAYOUT VARIETY:
-   - .scene.split    → 2 cột info|visual
-   - .scene.centered → 1 cột center text
-   - .scene.hero     → title cực to căn trái
-   - .scene.magazine → 7:5 asymmetric
-   - .scene.data     → info nhỏ + visual lớn
+   ✅ Nếu có ảnh: được tự do chọn layout (split / magazine / data / hero / centered / bento) — đảo trái/phải tùy, miễn ảnh nằm trong .img-frame.
+   ✅ Nếu không có ảnh: visual-col dùng B1-B15 pattern phong phú.
+   ⚠️ MỖI scene LAYOUT KHÁC NHAU — đếm trước khi output để tránh lặp.
+
+   ⚠️ QUY TẮC TEXT BẮT BUỘC (chống đè phụ đề karaoke):
+   - Phụ đề karaoke đã hiển thị nguyên văn narration ở dưới scene — chia thành chunk 1 dòng xuất hiện tuần tự.
+   - TUYỆT ĐỐI KHÔNG copy/paste narration vào sN-desc hoặc sN-subtitle. Nội dung text trong info-col phải KHÁC narration.
+   - sN-subtitle = 1 cụm danh từ ngắn (vd: "Cảm biến WiFi thế hệ mới"). KHÔNG phải câu hoàn chỉnh.
+   - sN-desc = 1 tagline metadata ngắn (vd: "ESP32 · Edge AI · Privacy First"). KHÔNG phải câu mô tả dài.
+   - Dồn 100% chi tiết vào VISUAL-COL (feat-grid, stat-list, terminal, chat-box, agent-grid...). Info-col chỉ là TITLE + 2 dòng metadata.
+
+4. LAYOUT FREEDOM (chọn layout phù hợp content, KHÔNG ép split mặc định):
+   - .scene.split    → 2 cột info|visual (dùng khi có ảnh thật assets/sceneN.jpg)
+   - .scene.centered → 1 cột center text + mega-num/stat-banner ở giữa
+   - .scene.hero     → title cực to căn trái, decoratives full-bleed
+   - .scene.magazine → 7:5 asymmetric (text trái, visual phải kéo dài)
+   - .scene.data     → info nhỏ + visual lớn (cho data viz/bento)
+   - Bạn ĐƯỢC PHÉP tự do chọn layout. Mỗi scene KHÁC NHAU. KHÔNG lặp .split 8 lần liên tiếp.
+
+5. 🎬 SCENE #1 = OPENING HERO CINEMATIC (BẮT BUỘC WOW):
+   - Scene đầu PHẢI gây ấn tượng trong 3 giây đầu. CẤM 1 logo box nhỏ giữa màn.
+   - Chọn 1 trong 4 TEMPLATES sau (tự do, đừng dùng .split):
+
+   ▸ TEMPLATE A — FULL-BLEED HERO (recommended cho intro):
+     <div class="scene hero" id="scene1">
+       <div class="aurora-glow" style="top:-10%; left:-15%; background:radial-gradient(circle, var(--accent), transparent);"></div>
+       <div class="aurora-glow" style="bottom:-15%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+       <div class="animated-grid"></div>
+       <div class="ghost-text" style="top:5%; left:5%;">TECHBEAT</div>
+       <div class="particle-field"></div>
+       <div class="status-pill">● ON AIR · LIVE</div>
+       <div class="layout">
+         <div class="info-col">
+           <div id="s1-badge" class="badge">📡 PHẦN 1 · INTRO</div>
+           <h1 id="s1-title" class="title-hero grad-text">{{tiêu đề SIÊU TO}}</h1>
+           <p id="s1-subtitle" class="subtitle">{{tagline cực ngắn ≤ 8 chữ}}</p>
+           <div id="s1-desc" style="display:flex; gap:14px; flex-wrap:wrap; margin-top:8px;">
+             <div class="badge">🚀 Edge AI</div>
+             <div class="badge">🔒 Privacy First</div>
+             <div class="badge">⚡ Real-time</div>
+           </div>
+         </div>
+         <div class="visual-col">{{tech-card B14 HOẶC bento-grid B16 HOẶC mega-num}}</div>
+       </div>
+       <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+       <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+       <span class="scene-num">01</span>
+     </div>
+
+   ▸ TEMPLATE B — MEGA-NUM HERO (cho intro stats):
+     <div class="scene centered" id="scene1">
+       <div class="light-rays"></div>
+       <div class="float-orb-lg" style="top:-10%; left:50%; transform:translateX(-50%); background:var(--accent);"></div>
+       <div class="ghost-text" style="bottom:-5%; left:-10%;">2026</div>
+       <div class="hero-stat-banner">
+         <div id="s1-badge" class="badge">🔥 BREAKING TECH</div>
+         <div class="mega-num breath">{{số liệu lớn ví dụ "9x"}}</div>
+         <h1 id="s1-title" class="title-xl">{{tiêu đề}}</h1>
+         <p id="s1-subtitle" class="subtitle" style="max-width:1200px;">{{tagline}}</p>
+         <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
+           <div class="badge">🏷 Tag 1</div><div class="badge">🏷 Tag 2</div><div class="badge">🏷 Tag 3</div>
+         </div>
+       </div>
+       <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+       <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+       <span class="scene-num">01</span>
+     </div>
+
+   ▸ TEMPLATE C — RETRO/SYNTHWAVE HERO (cho theme y2k/violet):
+     <div class="scene centered" id="scene1">
+       <div class="retro-grid"></div>
+       <div class="float-orb-lg" style="top:10%; left:50%; transform:translateX(-50%); background:var(--accent2);"></div>
+       <div class="aurora-glow" style="top:-20%; right:-10%;"></div>
+       <div class="hero-stat-banner">
+         <div id="s1-badge" class="badge shimmer-fast">📺 NEW SHOW</div>
+         <h1 id="s1-title" class="title-hero outline-text">{{tiêu đề lớn}}</h1>
+         <p id="s1-subtitle" class="subtitle">{{tagline ≤ 8 chữ}}</p>
+         <div id="s1-desc" class="caption">PHIÊN BẢN 2026 · TECHBEAT STUDIO</div>
+       </div>
+       <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+       <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+       <span class="scene-num">01</span>
+     </div>
+
+   ▸ TEMPLATE D — BENTO HERO (cho tech showcase):
+     <div class="scene" id="scene1" style="padding:80px;">
+       <div class="animated-grid"></div>
+       <div class="float-orb-md" style="top:-5%; left:-5%; background:var(--accent);"></div>
+       <div class="float-orb-md" style="bottom:-5%; right:-5%; background:var(--accent3);"></div>
+       <div class="ghost-text" style="top:-10%; right:-10%;">AI</div>
+       <div style="position:relative; z-index:5; display:flex; flex-direction:column; gap:24px; height:100%;">
+         <div id="s1-badge" class="badge">📡 PHẦN 1</div>
+         <h1 id="s1-title" class="title-xl grad-text">{{tiêu đề}}</h1>
+         <p id="s1-subtitle" class="subtitle">{{tagline}}</p>
+         <p id="s1-desc" class="caption">META · TAGS</p>
+         <div class="bento-grid" style="flex:1;">
+           <div class="bento-cell hero"><h3 style="font-size:2rem;font-weight:800;">{{feature chính}}</h3></div>
+           <div class="bento-cell"><div class="ic" style="font-size:2.5rem;">⚡</div><div style="font-weight:700;">{{tag 1}}</div></div>
+           <div class="bento-cell"><div class="ic" style="font-size:2.5rem;">🚀</div><div style="font-weight:700;">{{tag 2}}</div></div>
+           <div class="bento-cell wide"><div style="font-family:'JetBrains Mono';color:var(--accent2);">{{quote/stat}}</div></div>
+         </div>
+       </div>
+       <span class="scene-num">01</span>
+     </div>
+
+6. 🌌 DECORATIVE DENSITY (CHỐNG SLIDE TRỐNG):
+   - MỖI scene BẮT BUỘC có 2-5 ambient decoratives lấp đầy không gian trống. KHÔNG được để vùng nào của 1920×1080 trống không.
+   - Vocabulary class CÓ SẴN (mix & match, dùng position:absolute):
+     • `.float-orb-lg/.float-orb-md/.float-orb-sm` — colored glow orbs (set top/left/bottom/right + background:var(--accentX))
+     • `.aurora-glow` — soft gradient blob drifting
+     • `.animated-grid` — subtle moving grid pattern
+     • `.retro-grid` — perspective synthwave floor
+     • `.light-rays` — radial beams từ top
+     • `.particle-field` — small stars pattern
+     • `.ghost-text` — large thematic word low opacity
+     • `.marquee-strip` ở bottom với .track > .pill — auto-scroll tags
+     • `.y2k-sparkle` × 4-6 rải rác
+     • `.glow-orb` custom với background:radial-gradient + filter:blur
+   - Quy tắc combine: 1 orb lớn (background presence) + 1 grid/rays (texture) + 1 ghost-text (depth) + 2-3 sparkles/small-orbs (accent details).
+   - TUYỆT ĐỐI không để 1 scene chỉ có nội dung text + 1 box nhỏ. Background phải có chiều sâu.
+
+7. 📐 CHỐNG CONTENT TRÀN KHUNG 1920×1080:
+   - Mọi content PHẢI vừa trong 880px (1080 - padding 100×2).
+   - Danh sách bullet ≤ 4 mục, 1 dòng/mục.
+   - Font-size trong visual-block: title ≤ 2rem, bullet ≤ 1.2rem.
+   - KHÔNG dùng padding > 60px cho .visual-block content dài.
+
+8. 🎯 TEXT TRONG INFO-COL — CỰC GỌN (vì phụ đề karaoke đã hiển thị narration):
+   - sN-subtitle ≤ 8 chữ (cụm danh từ, KHÔNG phải câu)
+   - sN-desc ≤ 12 chữ (tagline metadata, hoặc badge stack với 3 tag)
+   - TUYỆT ĐỐI KHÔNG copy narration. Dồn chi tiết vào visual-col.
 
 ═══════════════════════════════════════
 🎨 VISUAL-COL — RICHE BẮT BUỘC (AWWWARDS GRADE)
@@ -1365,6 +1727,8 @@ def build_user_prompt(req: CompositionRequest) -> str:
     ]
     cursor = 0
     for s in req.scenes:
+        is_first = s.index == 0
+        is_last = s.index == len(req.scenes) - 1
         lines.append(
             f"\n[Scene {s.index + 1}] start={cursor}s, duration={s.duration}s, end={cursor + s.duration}s"
         )
@@ -1373,21 +1737,48 @@ def build_user_prompt(req: CompositionRequest) -> str:
         lines.append(f"  Visual: {s.visualDescription}")
         if s.imageQuery:
             lines.append(f"  ImageQuery: {s.imageQuery}")
+
+        if is_first and not s.imageAsset:
+            lines.append(
+                "  🎬 SCENE MỞ ĐẦU — BẮT BUỘC CINEMATIC HERO:"
+                "\n  ⚠️ CHỌN 1 trong 4 TEMPLATE A/B/C/D ở system prompt (FULL-BLEED / MEGA-NUM / RETRO / BENTO HERO)."
+                "\n  ⚠️ TUYỆT ĐỐI không dùng .scene.split với info-col + 1 logo box nhỏ — quá đơn điệu, không gây WOW."
+                "\n  ⚠️ BẮT BUỘC kết hợp ÍT NHẤT 3 ambient decoratives: .aurora-glow + .animated-grid (hoặc .retro-grid hoặc .light-rays) + .ghost-text + .float-orb-lg."
+                "\n  ⚠️ Title PHẢI dùng .title-hero.grad-text hoặc .mega-num cực to."
+                "\n  ⚠️ Có 2-3 .badge dạng tech tags (Edge AI · Privacy First · Real-time...) thay vì viết text dài."
+                "\n  ⚠️ Mục tiêu: 3 giây đầu cinematic AWWWARDS quality — KHÔNG mockup nháp."
+            )
+        elif not is_first and not s.imageAsset:
+            lines.append(
+                "  🌌 SCENE NÀY (không ảnh) — BẮT BUỘC LẤP ĐẦY KHÔNG GIAN:"
+                "\n  ⚠️ Background PHẢI có 2-4 ambient decoratives (.float-orb-md/.aurora-glow/.animated-grid/.ghost-text/.particle-field/.y2k-sparkle)."
+                "\n  ⚠️ Visual-col dùng pattern phong phú (B1-B15) phù hợp với nội dung scene."
+                "\n  ⚠️ Đa dạng layout — không lặp .split. Cân nhắc .centered/.hero/.magazine/.data tùy nội dung."
+            )
+
         if s.imageAsset:
             lines.append(
                 f"  IllustrationImage: {s.imageAsset}"
-                f"\n  ⚠️ SCENE NÀY BẮT BUỘC dùng <div class=\"scene split\" id=\"scene{s.index + 1}\">"
-                f" — KHÔNG được dùng .hero / .centered / .magazine / .data / .data-viz."
-                f"\n  Layout PHẢI là 2 cột: .info-col bên TRÁI chứa badge + title + subtitle + desc,"
-                f" .visual-col bên PHẢI chứa <div class=\"img-frame\"><img src=\"{s.imageAsset}\" alt=\"\"><span class=\"img-caption\">caption tiếng Việt</span></div>."
-                f"\n  KHÔNG đặt ảnh làm background của scene. KHÔNG để text overlay trực tiếp lên ảnh."
-                f" KHÔNG dùng position:absolute cho ảnh. Ảnh PHẢI nằm gọn trong .visual-col."
+                f"\n  ⚠️ Ảnh PHẢI nằm trong <div class=\"img-frame\"><img src=\"{s.imageAsset}\" alt=\"\"><span class=\"img-caption\">caption tiếng Việt</span></div>."
+                f"\n  ✅ TỰ DO chọn layout: .scene.split / .magazine / .data / .hero / .centered / bento — đa dạng giữa các scene."
+                f"\n  ✅ Có thể đảo: ảnh BÊN TRÁI thay vì phải; ảnh dưới title; ảnh trong bento-cell."
+                f"\n  ✗ KHÔNG: full-bleed background, position:absolute cho img, text overlay trực tiếp lên ảnh."
+                f"\n  ✗ KHÔNG: lặp lại cùng 1 layout với scene ảnh khác — mỗi scene KHÁC NHAU."
             )
-        else:
+        elif not is_first:
             lines.append(
                 f"  ⚠️ CẢNH BÁO: SCENE NÀY TUYỆT ĐỐI KHÔNG CÓ ẢNH MINH HỌA."
                 f"\n  ⚠️ TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame HOẶC BẤT KỲ ĐƯỜNG DẪN ẢNH NÀO."
                 f"\n  ⚠️ BẮT BUỘC DÙNG MOCK VISUAL HTML/CSS (B1-B8, B11-B15) ĐỂ ĐIỀN VÀO .visual-col."
+            )
+
+        if is_last:
+            lines.append(
+                "  📐 SCENE CUỐI — CHỐNG OVERFLOW BẮT BUỘC:"
+                "\n  ⚠️ Toàn bộ content visual-col PHẢI vừa trong khung 1920×1080 (chiều cao usable ~880px sau padding)."
+                "\n  ⚠️ Nếu có danh sách bullet/feature > 4 mục → CẮT XUỐNG tối đa 4 mục."
+                "\n  ⚠️ Padding visual-block ≤ 48px. Title trong card ≤ 2rem. Bullet ≤ 1.2rem."
+                "\n  ⚠️ KHÔNG được để box content bị cắt mất ở mép dưới scene."
             )
         cursor += s.duration
     lines.append(
@@ -1475,7 +1866,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                         {"role": "user", "content": prompt_groq},
                     ],
                     "temperature": 0.75,
-                    "max_tokens": 8000,
+                    "max_tokens": 16000,
                     "stream": True,
                 }
             return {
