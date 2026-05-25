@@ -145,11 +145,256 @@ def get_audio_duration_s(path: Path) -> float:
         return 0.0
 
 
+_faster_whisper_model_cache: dict = {}   # module-level model cache (avoid re-downloading)
+
+
+def _transcribe_sync(wav_path: Path) -> list[dict]:
+    """Run Whisper synchronously (called via asyncio.to_thread).
+    Tries faster-whisper (tiny, auto compute_type) first, then openai-whisper, then [].
+    Each entry: {"word": str, "start": float, "end": float}
+    """
+    import traceback as _tb
+
+    # ── faster-whisper (preferred: 4-10× faster on CPU) ──────────────────
+    try:
+        from faster_whisper import WhisperModel  # type: ignore
+        if "model" not in _faster_whisper_model_cache:
+            print("[whisper] Loading faster-whisper 'tiny' model (first run – may download ~39 MB) …")
+            loaded = None
+            for ct in ("int8", "float32"):
+                try:
+                    loaded = WhisperModel("tiny", device="cpu", compute_type=ct)
+                    print(f"[whisper] faster-whisper model ready (compute_type={ct})")
+                    break
+                except Exception as le:
+                    print(f"[whisper] load failed (compute_type={ct}): {le}")
+            if loaded is None:
+                raise RuntimeError("faster-whisper: could not load model with any compute_type")
+            _faster_whisper_model_cache["model"] = loaded
+        model = _faster_whisper_model_cache["model"]
+        segments, _ = model.transcribe(str(wav_path), language="vi", word_timestamps=True)
+        words = []
+        for seg in segments:
+            if seg.words:
+                for w in seg.words:
+                    text = w.word.strip()
+                    if text:
+                        words.append({"word": text, "start": round(w.start, 3), "end": round(w.end, 3)})
+        print(f"[whisper/faster] {wav_path.name}: {len(words)} words")
+        return words
+    except ImportError:
+        print("[whisper] faster-whisper not installed")
+    except Exception as e:
+        print(f"[whisper/faster] error: {e}")
+        _tb.print_exc()
+        _faster_whisper_model_cache.pop("model", None)  # reset so next build retries
+
+    # ── openai-whisper (fallback) ─────────────────────────────────────────
+    try:
+        import whisper  # type: ignore
+        model = whisper.load_model("tiny")
+        result = model.transcribe(str(wav_path), language="vi", word_timestamps=True, verbose=False)
+        words = []
+        for seg in result.get("segments", []):
+            for w in seg.get("words", []):
+                text = w["word"].strip()
+                if text:
+                    words.append({"word": text, "start": round(w["start"], 3), "end": round(w["end"], 3)})
+        print(f"[whisper/openai] {wav_path.name}: {len(words)} words")
+        return words
+    except ImportError:
+        print("[whisper] openai-whisper not installed — using chunk fallback")
+    except Exception as e:
+        print(f"[whisper/openai] error: {e}")
+        _tb.print_exc()
+
+    return []
+
+
+async def _transcribe_openai_api(wav_path: Path) -> list[dict]:
+    """Use OpenAI Whisper API (whisper-1) for word-level timestamps.
+    Uses OPENAI_API_KEY + OPENAI_BASE_URL from .env.
+    Returns [] on any failure so callers fall through to Groq / local.
+    """
+    api_key  = os.getenv("OPENAI_API_KEY", "")
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    if not api_key:
+        return []
+    try:
+        file_bytes = wav_path.read_bytes()
+        if len(file_bytes) > 24 * 1024 * 1024:
+            print(f"[whisper/openai-api] {wav_path.name} too large — skipping")
+            return []
+        # Same httpx multipart workaround as Groq: encode all fields into files=
+        multipart = [
+            ("file",                       (wav_path.name, file_bytes, "audio/wav")),
+            ("model",                      (None, "whisper-1")),
+            ("language",                   (None, "vi")),
+            ("response_format",            (None, "verbose_json")),
+            ("timestamp_granularities[]",  (None, "word")),
+            ("timestamp_granularities[]",  (None, "segment")),
+        ]
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                f"{base_url}/audio/transcriptions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                files=multipart,
+            )
+        if resp.status_code != 200:
+            print(f"[whisper/openai-api] HTTP {resp.status_code}: {resp.text[:200]}")
+            return []
+        data = resp.json()
+        words: list[dict] = []
+
+        # Word-level timestamps (preferred)
+        if data.get("words"):
+            for w in data["words"]:
+                text = str(w.get("word", "")).strip()
+                if text:
+                    words.append({
+                        "word":  text,
+                        "start": round(float(w.get("start", 0)), 3),
+                        "end":   round(float(w.get("end",   0)), 3),
+                    })
+
+        # Segment-level fallback: interpolate within each segment
+        if not words and data.get("segments"):
+            for seg in data["segments"]:
+                ws = [t for t in str(seg.get("text", "")).split() if t]
+                if not ws:
+                    continue
+                t0   = float(seg.get("start", 0))
+                t1   = float(seg.get("end", t0 + 1))
+                step = (t1 - t0) / len(ws)
+                for k, w in enumerate(ws):
+                    words.append({
+                        "word":  w,
+                        "start": round(t0 + k * step,       3),
+                        "end":   round(t0 + (k + 1) * step, 3),
+                    })
+
+        print(f"[whisper/openai-api] {wav_path.name}: {len(words)} words")
+        return words
+    except Exception as e:
+        print(f"[whisper/openai-api] error: {e}")
+        return []
+
+
+async def _transcribe_groq_api(wav_path: Path) -> list[dict]:
+    """Use Groq's hosted Whisper API (whisper-large-v3-turbo) for word-level timestamps.
+    Returns [] on any failure so callers can transparently fall through to local Whisper.
+    Requires GROQ_API_KEY in the environment.
+    """
+    api_key = os.getenv("GROQ_API_KEY", "")
+    if not api_key:
+        return []
+    try:
+        file_bytes = wav_path.read_bytes()
+        if len(file_bytes) > 24 * 1024 * 1024:  # Groq limit is 25 MB
+            print(f"[whisper/groq] {wav_path.name} too large ({len(file_bytes)//1024} KB) — skipping")
+            return []
+        # IMPORTANT: encode ALL fields (including form fields) into `files=`
+        # using (None, value) tuples — mixing `data=list-of-tuples` with
+        # `files=dict` triggers httpx's "sync request with AsyncClient" error
+        # in 0.28+ because the multipart encoder takes an incompatible path.
+        multipart = [
+            ("file",                       (wav_path.name, file_bytes, "audio/wav")),
+            ("model",                      (None, "whisper-large-v3-turbo")),
+            ("language",                   (None, "vi")),
+            ("response_format",            (None, "verbose_json")),
+            ("timestamp_granularities[]",  (None, "word")),
+            ("timestamp_granularities[]",  (None, "segment")),
+        ]
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                files=multipart,
+            )
+        if resp.status_code != 200:
+            print(f"[whisper/groq] HTTP {resp.status_code}: {resp.text[:300]}")
+            return []
+        data = resp.json()
+        words: list[dict] = []
+
+        # Word-level timestamps (preferred — returned when Groq supports it)
+        if data.get("words"):
+            for w in data["words"]:
+                text = str(w.get("word", "")).strip()
+                if text:
+                    words.append({
+                        "word":  text,
+                        "start": round(float(w.get("start", 0)), 3),
+                        "end":   round(float(w.get("end",   0)), 3),
+                    })
+
+        # Segment-level fallback: interpolate word positions within each segment
+        if not words and data.get("segments"):
+            for seg in data["segments"]:
+                ws = [t for t in str(seg.get("text", "")).split() if t]
+                if not ws:
+                    continue
+                t0 = float(seg.get("start", 0))
+                t1 = float(seg.get("end", t0 + 1))
+                step = (t1 - t0) / len(ws)
+                for k, w in enumerate(ws):
+                    words.append({
+                        "word":  w,
+                        "start": round(t0 + k * step,       3),
+                        "end":   round(t0 + (k + 1) * step, 3),
+                    })
+
+        print(f"[whisper/groq] {wav_path.name}: {len(words)} words")
+        return words
+    except Exception as e:
+        print(f"[whisper/groq] error: {e}")
+        return []
+
+
+async def transcribe_audio_whisper(wav_path: Path) -> tuple[list[dict], str]:
+    """Transcribe audio → (word_list, engine_name).
+    Priority: OpenAI Whisper API → Groq Whisper API → faster-whisper local → chunk fallback.
+    engine_name: 'openai-whisper-1' | 'groq-whisper-v3-turbo' | 'faster-whisper-tiny' | 'chunk-fallback'
+    """
+    # 1. OpenAI Whisper API (whisper-1)
+    words = await _transcribe_openai_api(wav_path)
+    if words:
+        return words, "openai-whisper-1"
+    # 2. Groq Whisper API (whisper-large-v3-turbo)
+    words = await _transcribe_groq_api(wav_path)
+    if words:
+        return words, "groq-whisper-v3-turbo"
+    # 3. Local faster-whisper / openai-whisper
+    try:
+        words = await asyncio.to_thread(_transcribe_sync, wav_path)
+        if words:
+            return words, "faster-whisper-tiny"
+    except Exception as e:
+        print(f"[whisper] local thread error: {e}")
+    return [], "chunk-fallback"
+
+
+def _word_data_to_js(word_data: list[list[dict]], n_scenes: int) -> str:
+    """Serialize word_data to a JS array literal safe to embed in a <script>."""
+    parts = []
+    for i in range(n_scenes):
+        if i < len(word_data) and word_data[i]:
+            items = ",".join(
+                f'{{"word":{json.dumps(w["word"], ensure_ascii=False)},"start":{w["start"]:.3f},"end":{w["end"]:.3f}}}'
+                for w in word_data[i]
+            )
+            parts.append(f"[{items}]")
+        else:
+            parts.append("[]")
+    return "[" + ",".join(parts) + "]"
+
+
 def patch_html_timing(
-    html: str, 
-    durations: list[float], 
+    html: str,
+    durations: list[float],
     scene_titles: list[str] | None = None,
-    scene_narrations: list[str] | None = None
+    scene_narrations: list[str] | None = None,
+    word_data: list[list[dict]] | None = None,
 ) -> str:
     """
     Sync HTML timing to actual TTS audio lengths:
@@ -257,7 +502,7 @@ def patch_html_timing(
     starts_js = ", ".join(str(s) for s in starts)
     durs_js = ", ".join(str(d) for d in int_durs)
     actual_durs_js = ", ".join(f"{d:.3f}" for d in durations)
-    
+
     scene_narrations = scene_narrations or []
     safe_narrations = []
     for narration in scene_narrations:
@@ -265,17 +510,29 @@ def patch_html_timing(
         safe_narrations.append(clean)
     narrations_js = ", ".join(f'"{n}"' for n in safe_narrations)
 
+    n_scenes = len(durations)
+    word_data_js = _word_data_to_js(word_data or [], n_scenes)
+
     inject = f"""
 <script>
 // Sole timeline injected by TechBeat build pipeline.
 // The LLM's original timeline script has been stripped server-side so this
 // is the ONLY timeline registered on window.__timelines["main"].
 (function() {{
-  var starts = [{starts_js}];
-  var durs   = [{durs_js}];
-  var actualDurs = [{actual_durs_js}];
-  var narrations = [{narrations_js}];
-  var total  = {total};
+  var starts    = [{starts_js}];
+  var durs      = [{durs_js}];
+  var actualDurs= [{actual_durs_js}];
+  var narrations= [{narrations_js}];
+  var total     = {total};
+  // Word-level Whisper data. Each entry: [{{word,start,end}},...] or []
+  var wordData  = {word_data_js};
+  var WLINE     = 7; // words per subtitle line
+
+  function groupLines(ws) {{
+    var r = [], i = 0;
+    for (; i < ws.length; i += WLINE) r.push(ws.slice(i, i + WLINE));
+    return r;
+  }}
 
   function ensureScenes() {{
     var root = document.getElementById("root");
@@ -291,7 +548,6 @@ def patch_html_timing(
       var title = audio ? (audio.getAttribute("data-title") || "") : "";
       var narration = narrations[i] || "";
       var sceneNumPadded = (n < 10 ? "0" + n : "" + n);
-      // Pick deterministic emoji + accent rotation per scene number
       var emojis = ["✨", "⚡", "🚀", "💫", "🎯", "🔥", "💎", "🌟"];
       var emoji = emojis[(n - 1) % emojis.length];
       ph.innerHTML =
@@ -313,60 +569,65 @@ def patch_html_timing(
     }}
   }}
 
-  // Chunk a string into 1-line-friendly segments (≤ ~8 words each).
-  // Prefers natural pause points (. , ! ? ; : — —) before forcing word splits.
+  // Chunk fallback: split text into uniform 6-word groups (natural reading pace).
   function chunkText(text) {{
     if (!text) return [];
-    var maxWords = 8;
-    // Split by punctuation that signals a natural pause; keep them attached.
-    var parts = text.split(/(?<=[\\.,!?;:—–])\\s+/);
+    var maxWords = 6;
+    var words = text.trim().split(/\\s+/).filter(Boolean);
     var chunks = [];
-    parts.forEach(function(part) {{
-      var words = part.trim().split(/\\s+/).filter(Boolean);
-      if (!words.length) return;
-      if (words.length <= maxWords) {{
-        chunks.push(words.join(" "));
-      }} else {{
-        for (var i = 0; i < words.length; i += maxWords) {{
-          chunks.push(words.slice(i, i + maxWords).join(" "));
-        }}
-      }}
-    }});
+    for (var i = 0; i < words.length; i += maxWords) {{
+      chunks.push(words.slice(i, i + maxWords).join(" "));
+    }}
     return chunks;
   }}
 
   function ensureSubtitles() {{
     var root = document.getElementById("root");
-    if (!root) return;
-    if (document.getElementById("techbeat-subtitles")) return;
-
-    var subContainer = document.createElement("div");
-    subContainer.id = "techbeat-subtitles";
-    subContainer.className = "techbeat-subtitles";
+    if (!root || document.getElementById("techbeat-subtitles")) return;
+    var c = document.createElement("div");
+    c.id = "techbeat-subtitles";
+    c.className = "techbeat-subtitles";
 
     for (var i = 0; i < starts.length; i++) {{
       var n = i + 1;
-      var text = narrations[i] || "";
-      var chunks = chunkText(text);
+      var ss = document.createElement("div");
+      ss.id = "sub-scene" + n;
+      ss.className = "sub-scene";
+      ss.style.display = "none";
 
-      var subScene = document.createElement("div");
-      subScene.id = "sub-scene" + n;
-      subScene.className = "sub-scene";
-      subScene.style.cssText = "display: none;";
-      subScene.setAttribute("data-chunk-count", chunks.length);
-
-      chunks.forEach(function(chunk, ci) {{
-        var chunkEl = document.createElement("div");
-        chunkEl.id = "sub-" + n + "-" + ci;
-        chunkEl.className = "sub-chunk";
-        chunkEl.style.cssText = "display: none; opacity: 0;";
-        chunkEl.innerText = chunk;
-        subScene.appendChild(chunkEl);
-      }});
-
-      subContainer.appendChild(subScene);
+      var wd = wordData[i];
+      if (wd && wd.length > 0) {{
+        // ── Whisper word-level mode ──────────────────────────────────────
+        var lines = groupLines(wd);
+        for (var li = 0; li < lines.length; li++) {{
+          var lineEl = document.createElement("div");
+          lineEl.id = "sub-l" + n + "-" + li;
+          lineEl.className = "sub-line";
+          var lw = lines[li];
+          for (var wi = 0; wi < lw.length; wi++) {{
+            var sp = document.createElement("span");
+            sp.id = "sub-w" + n + "-" + li + "-" + wi;
+            sp.className = "sub-word";
+            sp.textContent = lw[wi].word + (wi < lw.length - 1 ? " " : "");
+            lineEl.appendChild(sp);
+          }}
+          ss.appendChild(lineEl);
+        }}
+      }} else {{
+        // ── Chunk fallback ───────────────────────────────────────────────
+        var chunks = chunkText(narrations[i] || "");
+        chunks.forEach(function(chunk, ci) {{
+          var ce = document.createElement("div");
+          ce.id = "sub-" + n + "-" + ci;
+          ce.className = "sub-chunk";
+          ce.style.cssText = "display:none;opacity:0;";
+          ce.innerText = chunk;
+          ss.appendChild(ce);
+        }});
+      }}
+      c.appendChild(ss);
     }}
-    root.appendChild(subContainer);
+    root.appendChild(c);
   }}
 
   function buildTimeline() {{
@@ -374,14 +635,7 @@ def patch_html_timing(
     ensureScenes();
     ensureSubtitles();
 
-    // Reset every scene's interior — LLM may have authored opacity:0 inline
-    // styles to support its own (now-stripped) tl.from() tweens. Clearing
-    // them ensures our fade-ins don't animate "0 -> 0" no-ops.
     gsap.set(".scene *", {{ clearProps: "all", opacity: 1 }});
-    // Hide scenes 2..N via inline style. Scene1 keeps the CSS-level
-    // opacity:1/visibility:visible fallback so the static initial frame
-    // (captured before any timeline seek) renders correctly. The timeline
-    // animates scene1 in at t=0 cleanly because tl.set() fires there too.
     gsap.utils.toArray(".scene").forEach(function(el, idx) {{
       if (idx === 0) return;
       gsap.set(el, {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
@@ -403,7 +657,6 @@ def patch_html_timing(
       if (!document.querySelector(sceneId)) continue;
       var isLast = (i === lastIdx);
 
-      // Scene 1 starts already visible (CSS fallback); only fade later scenes in.
       if (i === 0) {{
         tl.set(sceneId, {{ opacity: 1, visibility: "visible" }}, s);
       }} else {{
@@ -411,38 +664,89 @@ def patch_html_timing(
         tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
       }}
 
-      // --- SUBTITLE TIMING (chunk-based: one short line at a time) ---
-      var subSceneId = "#sub-scene" + n;
+      // ── SUBTITLE TIMING ────────────────────────────────────────────────
       var subSceneEl = document.getElementById("sub-scene" + n);
       if (subSceneEl) {{
-        var chunkEls = subSceneEl.querySelectorAll(".sub-chunk");
-        var numChunks = chunkEls.length;
-        if (numChunks > 0) {{
-          tl.set(subSceneId, {{ display: "block" }}, s);
+        tl.set("#sub-scene" + n, {{ display: "block", opacity: 1 }}, s);
+        var scWd = wordData[i];
 
-          var totalAudioTime = actualDurs[i] || d;
-          var speechDur = totalAudioTime * 0.95; // avoid trailing silence overlap
-          var chunkDur = speechDur / numChunks;
-          var fadeIn = 0.18;
-          var fadeOut = 0.18;
+        if (scWd && scWd.length > 0) {{
+          // ── Whisper word-level timing ──────────────────────────────────
+          var lines = groupLines(scWd);
+          for (var li = 0; li < lines.length; li++) {{
+            var lw       = lines[li];
+            var lineId   = "#sub-l" + n + "-" + li;
+            var lStart   = s + lw[0].start;
 
-          chunkEls.forEach(function(chunkEl, ci) {{
-            var chunkStart = s + ci * chunkDur;
-            var chunkEnd = chunkStart + chunkDur;
-            // Reveal
-            tl.set(chunkEl, {{ display: "block", opacity: 0 }}, chunkStart);
-            tl.to(chunkEl, {{ opacity: 1, duration: fadeIn, ease: "power2.out" }}, chunkStart);
-            // Hide (except last chunk — it fades out with the scene)
-            if (ci < numChunks - 1) {{
-              tl.to(chunkEl, {{ opacity: 0, duration: fadeOut, ease: "power2.in" }}, chunkEnd - fadeOut);
-              tl.set(chunkEl, {{ display: "none" }}, chunkEnd);
+            tl.set(lineId, {{ display: "block", opacity: 0 }}, lStart);
+            tl.to(lineId,  {{ opacity: 1, duration: 0.15, ease: "power2.out" }}, lStart);
+
+            // Fade out previous line as new one appears
+            if (li > 0) {{
+              var pId = "#sub-l" + n + "-" + (li - 1);
+              tl.to(pId,  {{ opacity: 0, duration: 0.1 }}, lStart);
+              tl.set(pId, {{ display: "none" }}, lStart + 0.1);
             }}
-          }});
 
-          // Fade out the whole subtitle block at scene end
-          tl.to(subSceneId, {{ opacity: 0, duration: 0.3 }}, s + d - 0.3);
-          tl.set(subSceneId, {{ display: "none" }}, s + d);
-          tl.set(subSceneId, {{ opacity: 1 }}, s + d + 0.001); // reset for replay
+            // Word-level karaoke highlight — RED (use literal hex; GSAP cannot
+            // resolve CSS variables during headless HyperFrames rendering)
+            for (var wi = 0; wi < lw.length; wi++) {{
+              var w   = lw[wi];
+              var wId = "#sub-w" + n + "-" + li + "-" + wi;
+              // Active word: bright RED + scale + glow
+              tl.set(wId, {{
+                color: "#ff2d2d",
+                fontWeight: "900",
+                scale: 1.15,
+                textShadow: "0 0 24px rgba(255,45,45,1), 0 0 10px rgba(255,45,45,0.95), 0 2px 4px rgba(0,0,0,0.9)"
+              }}, s + w.start);
+              // Spoken word: return to white but slightly dim
+              tl.set(wId, {{
+                color: "rgba(255,255,255,0.85)",
+                fontWeight: "600",
+                scale: 1,
+                textShadow: "0 1px 4px rgba(0,0,0,0.85)"
+              }}, s + w.end);
+            }}
+          }}
+          // Fade out subtitle block at scene end
+          tl.to("#sub-scene" + n,  {{ opacity: 0, duration: 0.3 }}, s + d - 0.3);
+          tl.set("#sub-scene" + n, {{ display: "none", opacity: 1 }}, s + d);
+
+        }} else {{
+          // ── Chunk fallback timing ──────────────────────────────────────
+          var chunkEls  = subSceneEl.querySelectorAll(".sub-chunk");
+          var numChunks = chunkEls.length;
+          if (numChunks > 0) {{
+            var totalAudioTime = actualDurs[i] || d;
+            // AUDIO_LEAD: TTS engines (ElevenLabs/gTTS) start speaking after a
+            // brief silence (~0.15 s). Without this offset the subtitle would
+            // appear before the voice, making it feel "ahead" of the audio.
+            var AUDIO_LEAD = 0.15;
+            var speechDur  = (totalAudioTime - AUDIO_LEAD) * 0.93;
+            // Proportional timing: chunks with more characters get more screen time.
+            var chunkLens = [], totalLen = 0;
+            chunkEls.forEach(function(el) {{
+              var l = (el.textContent || "").length || 1;
+              chunkLens.push(l); totalLen += l;
+            }});
+            var fadeIn = 0.15, fadeOut = 0.15, elapsed = 0;
+            chunkEls.forEach(function(chunkEl, ci) {{
+              var chunkDur_c = (chunkLens[ci] / totalLen) * speechDur;
+              var chunkStart = s + AUDIO_LEAD + elapsed;
+              var chunkEnd   = chunkStart + chunkDur_c;
+              tl.set(chunkEl, {{ display: "block", opacity: 0 }}, chunkStart);
+              tl.to(chunkEl,  {{ opacity: 1, duration: fadeIn, ease: "power2.out" }}, chunkStart);
+              if (ci < numChunks - 1) {{
+                tl.to(chunkEl,  {{ opacity: 0, duration: fadeOut, ease: "power2.in" }}, chunkEnd - fadeOut);
+                tl.set(chunkEl, {{ display: "none" }}, chunkEnd);
+              }}
+              elapsed += chunkDur_c;
+            }});
+            tl.to("#sub-scene" + n,  {{ opacity: 0, duration: 0.3 }}, s + d - 0.3);
+            tl.set("#sub-scene" + n, {{ display: "none" }},           s + d);
+            tl.set("#sub-scene" + n, {{ opacity: 1 }},                s + d + 0.001);
+          }}
         }}
       }}
 
@@ -635,6 +939,9 @@ async def build_pipeline(req: BuildRequest):
                     print(f"[build] Tải ảnh scene {s.index + 1} lỗi: {e}")
             scenes_with_assets.append(s.model_copy(update={"imageAsset": asset_rel}))
 
+    # ── Build log: collect info about every tool/model used ──────────────
+    build_log: list[str] = []
+
     # ---- Stage 1: Composition ----
     # If the html-preview stage already produced an HTML, skip the LLM call
     # entirely and reuse it. Saves the composition cost AND lets the user
@@ -642,10 +949,7 @@ async def build_pipeline(req: BuildRequest):
     if req.compositionHtml and "<html" in req.compositionHtml.lower():
         yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Sử dụng HTML từ bước xem trước..."})
         html = req.compositionHtml
-        # Re-resolve image asset paths so that scenes whose images were
-        # downloaded above get used. The HTML already has the correct
-        # references because the preview stage rendered with the same
-        # imageUrls — but we don't strictly need to splice anything here.
+        build_log.append("🎨 HTML: cache (từ bước xem trước — không gọi LLM)")
         yield sse({"type": "stage", "stage": "composition", "status": "done", "message": "Bỏ qua sinh HTML — dùng cache"})
     else:
         yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Đang sinh composition HTML..."})
@@ -665,6 +969,11 @@ async def build_pipeline(req: BuildRequest):
                 yield sse({"type": "comp_chunk", "text": ev["text"]})
                 if char_count % 500 < 50:
                     yield sse({"type": "stage", "stage": "composition", "status": "progress", "chars": char_count})
+            elif ev["type"] == "model_info":
+                # Capture which LLM generated the HTML
+                build_log.append(f"🎨 HTML: {ev['provider']} / {ev['model']}")
+                yield sse({"type": "stage", "stage": "composition", "status": "progress",
+                           "message": f"LLM: {ev['provider']} ({ev['model']})"})
             elif ev["type"] == "done":
                 html = ev["html"]
             elif ev["type"] == "error":
@@ -701,15 +1010,36 @@ async def build_pipeline(req: BuildRequest):
                 return
 
         engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
+        build_log.append(f"🎙 TTS: {engine_summary}")
         print(f"[tts] engines: {engine_summary}")
 
-        # Measure actual audio durations and patch HTML timing
+        # Measure actual audio durations
         durations = [get_audio_duration_s(p) for p in wav_paths]
         measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
         print(f"[tts] Measured durations: {', '.join(measured)}")
+
+        # ── Whisper word-level transcription ────────────────────────────
+        yield sse({"type": "stage", "stage": "whisper", "status": "start",
+                   "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
+        word_data: list[list[dict]] = []
+        whisper_engines_used: dict[str, int] = {}
+        for idx, p in enumerate(wav_paths):
+            yield sse({"type": "stage", "stage": "whisper", "status": "progress",
+                       "scene": idx + 1, "of": len(wav_paths)})
+            words, w_engine = await transcribe_audio_whisper(p)
+            word_data.append(words)
+            whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+        whisper_ok = sum(1 for w in word_data if w)
+        whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
+        build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
+        yield sse({"type": "stage", "stage": "whisper", "status": "done",
+                   "engine": whisper_engine_summary,
+                   "message": f"Hoàn tất: {whisper_engine_summary}"
+                               + (" — chunk fallback cho scene còn lại" if whisper_ok < len(wav_paths) else "")})
+
         scene_titles = [s.title for s in req.scenes]
         scene_narrations = [s.narration for s in req.scenes]
-        html = patch_html_timing(html, durations, scene_titles, scene_narrations)
+        html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
         target_html.write_text(html, encoding="utf-8")
         # Total composition duration after timing patch (ceil(d) + 1 buffer per scene)
         import math as _math
@@ -807,11 +1137,19 @@ async def build_pipeline(req: BuildRequest):
     except Exception as he:
         print(f"[history ERROR] Failed to save history snapshot: {he}")
 
+    # ── Print build summary to backend console ──────────────────────────
+    print("\n" + "=" * 55)
+    print(f"[BUILD SUMMARY] {req.title}")
+    for line in build_log:
+        print(f"  {line}")
+    print("=" * 55 + "\n")
+
     yield sse({
         "type": "done",
         "videoUrl": rel_url,
         "videoPath": str(mp4_path),
         "html": html,
+        "buildLog": build_log,
     })
 
 

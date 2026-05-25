@@ -16,8 +16,12 @@ from routers.images import router as images_router
 from routers.projects import router as projects_router
 from routers.history import router as history_router
 from routers.voices import router as voices_router
+from routers.llm import log_provider_status
 
 app = FastAPI(title="TechBeat API", version="2.0.0")
+
+# Log active LLM providers immediately so you can see what's configured
+log_provider_status()
 
 app.add_middleware(
     CORSMiddleware,

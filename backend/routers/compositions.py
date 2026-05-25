@@ -794,6 +794,69 @@ body {{
   animation: cursor-blink 0.9s infinite step-end;
 }}
 
+/* ── Contrast safety net — override any LLM-generated low-contrast text ── */
+.scene .body-text,
+.scene .subtitle,
+.scene .caption,
+.scene .feat-card p,
+.scene .feat-card li,
+.scene .feat-card div,
+.scene .visual-block p,
+.scene .visual-block li,
+.scene .visual-block div:not(.stat-hero):not(.stat-suffix):not([class*="bracket"]):not(.layout):not(.info-col):not(.visual-col),
+.scene .tl-item .t,
+.scene .tl-item div,
+.scene .quote-text,
+.scene .compare p,
+.scene .compare div,
+.scene .stat-list-card div:not(.stat-hero):not(.stat-suffix),
+.scene .bento-cell p,
+.scene .bento-cell div,
+.scene p,
+.scene li,
+.scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix) {{
+  color: var(--text1, #e8e8f0) !important;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+}}
+.scene .body-text,
+.scene .subtitle,
+.scene .caption {{
+  font-size: max(1.4rem, 1em);
+}}
+.scene .stat-hero,
+.scene .stat-suffix {{
+  color: var(--accent, #f97316) !important;
+  text-shadow: 0 0 20px rgba(249,115,22,0.4);
+}}
+/* NUCLEAR override: any inline dark color forced to white */
+.scene [style*="color:#0"],
+.scene [style*="color: #0"],
+.scene [style*="color:#1"],
+.scene [style*="color: #1"],
+.scene [style*="color:#2"],
+.scene [style*="color: #2"],
+.scene [style*="color:#3"],
+.scene [style*="color: #3"],
+.scene [style*="color:#4"],
+.scene [style*="color: #4"],
+.scene [style*="color:#5"],
+.scene [style*="color: #5"],
+.scene [style*="color:rgb(0"],
+.scene [style*="color: rgb(0"],
+.scene [style*="color:rgba(0"],
+.scene [style*="color: rgba(0"],
+.scene [style*="color:black"],
+.scene [style*="color: black"] {{
+  color: var(--text1, #e8e8f0) !important;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.85) !important;
+}}
+.scene [style*="color:#fff"],
+.scene [style*="color: #fff"],
+.scene [style*="color:white"],
+.scene [style*="color: white"] {{
+  text-shadow: 0 1px 6px rgba(0,0,0,0.7) !important;
+}}
+
 /* Chunked Subtitle Styles — one short line at a time, fades in/out */
 .techbeat-subtitles {{
   position: absolute;
@@ -845,6 +908,43 @@ body {{
   background: linear-gradient(90deg, transparent, var(--accent, #f97316), transparent);
   opacity: 0.55;
   border-radius: 2px;
+}}
+
+/* ── Word-level karaoke (Whisper mode) ── */
+.sub-line {{
+  display: none;
+  opacity: 0;
+  position: relative;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  text-shadow: 0 0 14px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.8);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  white-space: nowrap;
+  padding: 14px 36px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.65));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6);
+}}
+.sub-line::before {{
+  content: "";
+  position: absolute;
+  left: 20%; right: 20%; bottom: 6px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #f97316, transparent);
+  opacity: 0.6;
+  border-radius: 2px;
+}}
+.sub-word {{
+  display: inline;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  transition: none;
 }}
 """
 
@@ -970,10 +1070,11 @@ A) Có IllustrationImage:
 
 ═══════ NHẮC CUỐI ═══════
 - TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
-- TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge)."""
+- TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
+- ĐỌC ĐƯỢC (CONTRAST): body text ≥ 1.4rem dùng var(--text1)/var(--text2). KHÔNG dùng màu tối trên nền tối. Text trên ảnh phải có text-shadow đậm."""
 
 
-def build_system_prompt_full(theme: dict) -> str:
+def build_system_prompt_full(theme: dict, scene_count: int = 0) -> str:
     """Rich prompt - for paid providers (Pinkyne, Anthropic) where token cost
     is fine. Asks for more elaborate decoration, motion, and creative
     visuals while still leveraging the server-injected CSS framework."""
@@ -1372,7 +1473,20 @@ NHẮC CUỐI:
 - TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
 - TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
 - TUYỆT ĐỐI tạo ĐỦ N scene "scene1"…"sceneN". Đếm trước khi output.
-- OUTPUT: chỉ HTML thuần từ <!doctype html> đến </html>. KHÔNG markdown fence, KHÔNG giải thích, KHÔNG comment trên đầu."""
+
+⚠️ QUY TẮC ĐỌC ĐƯỢC (CONTRAST & FONT SIZE) — VI PHẠM = VIDEO THẤT BẠI:
+- Body text (.body-text, .subtitle, .caption, .feat-card p, li) PHẢI ≥ 1.4rem, color var(--text1) hoặc var(--text2) — TUYỆT ĐỐI không dùng màu tối (opacity < 0.5) trên nền tối.
+- Stat số (.stat-hero) ≥ 4rem, luôn dùng var(--accent) hoặc var(--text1) — không dùng màu xám nhạt.
+- Tất cả text PHẢI có text-shadow hoặc background đủ tương phản để đọc được trên background tối.
+- KHÔNG inline style `color: rgba(0,0,0,...)`, `color: #333`, `color: #555` hay bất kỳ màu tối nào vì background luôn tối.
+- Nếu text nằm trên ảnh hoặc gradient, PHẢI thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9)`.
+
+- OUTPUT: chỉ HTML thuần từ <!doctype html> đến </html>. KHÔNG markdown fence, KHÔNG giải thích, KHÔNG comment trên đầu.
+
+═══════ NHẮC CUỐI — BẮT BUỘC ═══════
+- TUYỆT ĐỐI phải tạo ĐỦ {scene_count} scene với id="scene1" đến id="scene{scene_count}". Đếm lại trước khi đóng </html>.
+- Nếu còn thiếu scene nào, hãy viết thêm ngay trước </body> — dù ngắn vẫn phải có id đúng.
+- KHÔNG được đóng </html> khi chưa có đủ {scene_count} scene."""
 
 
 # Backwards-compat default — anyone calling build_system_prompt() unchanged
@@ -1854,19 +1968,22 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
             prompt_groq = prompt_full
             groq_scene_count = len(req.scenes)
 
-        sys_full           = build_system_prompt_full(theme)
+        sys_full           = build_system_prompt_full(theme, len(req.scenes))
         sys_groq_premium   = build_system_prompt_groq_premium(theme, groq_scene_count)
 
         def _kwargs(provider_name: str) -> dict:
             if provider_name in ("groq", "groq-fast"):
-                # Compact prompt + merged scenes + smaller budget for free-tier models
+                # Groq has hard caps:
+                # - llama-3.3-70b-versatile: 12000 TPM (input+output) — keep prompt small
+                # - llama-4-scout-17b: max_tokens ≤ 8192 — cap output
+                max_tok = 7800 if provider_name == "groq-fast" else 8000
                 return {
                     "messages": [
                         {"role": "system", "content": sys_groq_premium},
                         {"role": "user", "content": prompt_groq},
                     ],
                     "temperature": 0.75,
-                    "max_tokens": 16000,
+                    "max_tokens": max_tok,
                     "stream": True,
                 }
             return {
@@ -1879,17 +1996,19 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                 "stream": True,
             }
 
-        stream, provider = await chat_completions_with_fallback(
+        stream, provider, model = await chat_completions_with_fallback(
             model_kind="composition",
             kwargs_factory=_kwargs,
         )
+        # Always surface which model is generating the HTML
+        yield {"type": "model_info", "provider": provider, "model": model}
         if provider != "primary":
             extra = ""
             if provider in ("groq", "groq-fast") and merged_scenes_for_groq:
                 extra = f" Đã gộp {len(req.scenes)} scene → {len(merged_scenes_for_groq)} scene để giữ chất lượng visual."
             yield {
                 "type": "warning",
-                "message": f"Primary LLM hết quota — đã chuyển sang {provider}.{extra}",
+                "message": f"Primary LLM hết quota — đã chuyển sang {provider} ({model}).{extra}",
             }
         async for chunk in stream:
             if not chunk.choices:
@@ -1907,6 +2026,12 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
         if "<html" not in html.lower():
             yield {"type": "error", "message": "Không tìm thấy HTML hợp lệ trong response"}
             return
+
+        # Hard truncation: finish_reason=length means model hit output token cap.
+        # Log it even when the proxy auto-appended </html> to mask the cutoff.
+        if finish_reason == "length":
+            print(f"[composition] ⚠ finish_reason=length — model hit output token cap "
+                  f"(len={len(html)}). HTML có thể thiếu scene cuối.")
 
         # Auto-recover truncated output. Provider often drops the closing tags
         # when it hits max_tokens; the body before the cutoff is usually
@@ -1958,6 +2083,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                 missing.append(i)
         if missing:
             print(f"[composition] WARNING: LLM produced HTML missing scenes {missing} of {expected}. "
+                  f"finish_reason={finish_reason}, html_len={len(html)}. "
                   f"Build pipeline will inject placeholder cards so audio stays in sync.")
 
         done_event: dict = {"type": "done", "html": html}
@@ -2114,7 +2240,7 @@ Duration: {body.scene.duration}s{image_clause}
 Sinh lại block <div class="scene ..." id="scene{body.sceneIndex}"> với nội dung trên."""
 
     try:
-        resp, provider = await chat_completions_with_fallback(
+        resp, provider, model = await chat_completions_with_fallback(
             model_kind="composition",
             messages=[
                 {"role": "system", "content": sys_msg},

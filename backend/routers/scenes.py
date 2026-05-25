@@ -11,23 +11,29 @@ from routers.llm import chat_completions_with_fallback
 router = APIRouter()
 
 
-SYSTEM_PROMPT_FULL = """Bạn là chuyên gia viết kịch bản video tiếng Việt và chiến lược nội dung.
-Phân tích nội dung được cung cấp và tạo kế hoạch scene video có cấu trúc.
+SYSTEM_PROMPT_FULL = """Bạn là chuyên gia viết kịch bản video tin tức tiếng Việt cho đài truyền hình.
+Nhiệm vụ: chuyển nội dung bài báo thành kịch bản video ĐẦY ĐỦ, SÂU SẮC — KHÔNG tóm tắt sơ sài.
 
-⚠️ NGÔN NGỮ BẮT BUỘC: TIẾNG VIỆT
-- TẤT CẢ trường text (title, narration, visualDescription) PHẢI viết bằng tiếng Việt tự nhiên, có dấu đầy đủ
-- KHÔNG được dùng tiếng Anh cho narration hay title (trừ khi là tên riêng/thương hiệu)
-- imageQuery có thể giữ tiếng Anh vì đó là search query
+⚠️ NGÔN NGỮ BẮT BUỘC: TIẾNG VIỆT tự nhiên, có dấu đầy đủ
+- KHÔNG dùng tiếng Anh cho narration/title (trừ tên riêng/thương hiệu)
+- imageQuery giữ tiếng Anh (2-5 từ, dùng để tìm ảnh stock)
 
-Quy tắc:
-- Trích xuất những điểm quan trọng và hấp dẫn nhất
-- Tạo 4-8 scene tùy độ dài và phức tạp của nội dung
-- Mỗi scene 8-20 giây (ngắn gọn, súc tích)
-- Narration rõ ràng, hấp dẫn, gần gũi — là những gì người dẫn thực sự nói bằng tiếng Việt
-- Visual description cụ thể tiếng Việt: mô tả text overlay, hình ảnh, animation xuất hiện
-- imageQuery là query tìm kiếm ảnh stock cụ thể (2-5 từ tiếng Anh)
+━━━ QUY TẮC NARRATION (QUAN TRỌNG NHẤT) ━━━
+Mỗi narration PHẢI giải thích ĐẦY ĐỦ theo công thức:
+  VẤN ĐỀ/SỰ KIỆN LÀ GÌ → TẠI SAO xảy ra / quan trọng → SỐ LIỆU / DẪN CHỨNG CỤ THỂ → Ý NGHĨA / HỆ QUẢ
+Viết như phóng viên truyền hình đang đọc bản tin — người xem CHƯA BIẾT GÌ về chủ đề này.
+KHÔNG chỉ nêu tên sự kiện, PHẢI kể câu chuyện đằng sau với đầy đủ bối cảnh.
+Mỗi narration dài 60-90 từ tiếng Việt (tương đương 25-35 giây đọc tự nhiên).
 
-Chỉ trả về JSON hợp lệ, không có markdown fence, không giải thích ngoài JSON.
+━━━ QUY TẮC SCENE ━━━
+- 5-6 scene, tổng 150-180 giây (2.5-3 phút)
+- Scene 1 — Mở đầu & bối cảnh: 20-25s, hook hấp dẫn, đặt vấn đề rõ ràng
+- Scene 2-4 — Nội dung chính: 30-40s mỗi scene, mỗi scene một khía cạnh sâu khác nhau
+- Scene 5 — Chi tiết / Dẫn chứng: 30-35s, số liệu, ví dụ cụ thể từ bài báo
+- Scene cuối — Kết luận & Tầm quan trọng: 20-30s, tổng kết, mở ra tương lai
+- visualDescription: mô tả cụ thể text overlay, infographic, animation sẽ hiển thị
+
+Chỉ trả về JSON hợp lệ, KHÔNG markdown fence, KHÔNG giải thích ngoài JSON.
 
 Định dạng JSON:
 {
@@ -37,27 +43,32 @@ Chỉ trả về JSON hợp lệ, không có markdown fence, không giải thíc
       "id": "scene-1",
       "index": 0,
       "title": "Tiêu đề scene tiếng Việt",
-      "narration": "Người dẫn đọc đoạn này bằng tiếng Việt",
-      "visualDescription": "Mô tả tiếng Việt những gì hiển thị trên màn hình",
-      "duration": 12,
+      "narration": "60-90 từ tiếng Việt giải thích đầy đủ: vấn đề, nguyên nhân, số liệu, ý nghĩa",
+      "visualDescription": "Mô tả cụ thể những gì hiển thị: số liệu lớn, biểu đồ, icon, text key points",
+      "duration": 30,
       "imageQuery": "english stock photo query"
     }
   ],
-  "totalDuration": 90
+  "totalDuration": 165
 }"""
 
 
 def build_system_prompt_groq(max_scenes: int) -> str:
-    return f"""Bạn là chuyên gia viết kịch bản video tiếng Việt.
-Phân tích nội dung và tạo kế hoạch scene video CÔ ĐỌNG.
+    return f"""Bạn là chuyên gia viết kịch bản video tin tức tiếng Việt.
+Viết kịch bản ĐẦY ĐỦ, SÂU SẮC — không tóm tắt sơ sài.
 
-⚠️ NGÔN NGỮ BẮT BUỘC: TIẾNG VIỆT có dấu đầy đủ.
+⚠️ TIẾNG VIỆT bắt buộc, có dấu đầy đủ. imageQuery giữ tiếng Anh.
 
-Quy tắc:
-- Tạo TỐI ĐA {max_scenes} scene (gộp ý nhỏ vào scene lớn hơn)
-- Mỗi scene 10-25 giây để narration đủ phong phú
-- Narration rõ ràng, hấp dẫn bằng tiếng Việt
-- imageQuery giữ tiếng Anh (2-5 từ)
+QUY TẮC NARRATION:
+- Mỗi narration: VẤN ĐỀ → TẠI SAO → SỐ LIỆU CỤ THỂ → Ý NGHĨA
+- Viết như phóng viên truyền hình — người xem chưa biết gì về chủ đề
+- Dài 50-75 từ tiếng Việt (20-30 giây đọc)
+
+QUY TẮC SCENE:
+- Tạo TỐI ĐA {max_scenes} scene, tổng 120-180 giây
+- Scene 1: mở đầu & bối cảnh 20-25s
+- Scene 2 đến {max_scenes-1}: nội dung chính 25-35s mỗi scene
+- Scene {max_scenes}: kết luận 20-25s
 
 Chỉ trả về JSON hợp lệ, không markdown fence, không giải thích.
 
@@ -69,13 +80,13 @@ Chỉ trả về JSON hợp lệ, không markdown fence, không giải thích.
       "id": "scene-1",
       "index": 0,
       "title": "Tiêu đề scene tiếng Việt",
-      "narration": "Người dẫn đọc đoạn này bằng tiếng Việt",
-      "visualDescription": "Mô tả tiếng Việt những gì hiển thị trên màn hình",
-      "duration": 15,
+      "narration": "50-75 từ tiếng Việt: vấn đề, nguyên nhân, số liệu, ý nghĩa",
+      "visualDescription": "Mô tả cụ thể: số liệu, biểu đồ, text key points",
+      "duration": 28,
       "imageQuery": "english stock photo query"
     }}
   ],
-  "totalDuration": 75
+  "totalDuration": 150
 }}"""
 
 
@@ -112,18 +123,18 @@ async def stream_scenes(content: str, title: str):
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0.7,
-                "max_tokens": 8000,
+                "max_tokens": 12000,
                 "stream": True,
             }
 
-        stream, provider = await chat_completions_with_fallback(
+        stream, provider, model = await chat_completions_with_fallback(
             model_kind="scenes",
             kwargs_factory=_kwargs,
         )
         if provider != "primary":
             yield sse({
                 "type": "warning",
-                "message": f"Primary LLM hết quota — đã chuyển sang {provider}.",
+                "message": f"Primary LLM hết quota — đã chuyển sang {provider} ({model}).",
             })
 
         async for chunk in stream:
@@ -138,7 +149,8 @@ async def stream_scenes(content: str, title: str):
         match = re.search(r"\{[\s\S]*\}", full_text)
         if match:
             scene_plan = json.loads(match.group())
-            yield sse({"type": "done", "scenePlan": scene_plan})
+            yield sse({"type": "done", "scenePlan": scene_plan,
+                       "llmProvider": provider, "llmModel": model})
         else:
             yield sse({"type": "error", "message": "Không tìm thấy JSON hợp lệ trong response"})
 

@@ -80,6 +80,9 @@ export default function Home() {
           } else if (event.type === "warning" && event.message) {
             setStreamBuffer((prev) => `[!] ${event.message}\n\n${prev}`);
           } else if (event.type === "done" && event.scenePlan) {
+            if (event.llmProvider || event.llmModel) {
+              setStreamBuffer(prev => prev + `\n\n✅ Kịch bản: ${event.llmProvider ?? ""}/${event.llmModel ?? ""}`);
+            }
             setScenePlan(event.scenePlan as ScenePlan);
             go("preview");
           } else if (event.type === "error") {

@@ -8,14 +8,15 @@ interface Props {
   onBack: () => void;
 }
 
-type StageKey = "composition" | "save" | "tts" | "render";
+type StageKey = "composition" | "save" | "tts" | "whisper" | "render";
 type StageState = "pending" | "active" | "done" | "error";
 
 const STAGES: { key: StageKey; label: string; detail: string; icon: string }[] = [
-  { key: "composition", label: "Sinh HTML",   detail: "LLM viết composition + GSAP", icon: "🎨" },
-  { key: "save",        label: "Lưu file",    detail: "Ghi index.html vào project",  icon: "💾" },
-  { key: "tts",         label: "Giọng đọc",   detail: "ElevenLabs / gTTS",            icon: "🎙️" },
-  { key: "render",      label: "Render MP4",  detail: "Chromium + FFmpeg",            icon: "🎬" },
+  { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP",    icon: "🎨" },
+  { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project",     icon: "💾" },
+  { key: "tts",         label: "Giọng đọc",      detail: "ElevenLabs / gTTS",              icon: "🎙️" },
+  { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ", icon: "🎤" },
+  { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg",              icon: "🎬" },
 ];
 
 function fmtMs(ms: number): string {
@@ -30,10 +31,10 @@ function fmtMs(ms: number): string {
 export function VideoBuilder({ scenePlan, onBack }: Props) {
   const [running, setRunning]         = useState(false);
   const [done, setDone]               = useState(false);
-  const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({ composition:"pending", save:"pending", tts:"pending", render:"pending" });
-  const [stageDetail, setStageDetail] = useState<Record<StageKey, string>>({ composition:"", save:"", tts:"", render:"" });
-  const [stageStart,  setStageStart]  = useState<Record<StageKey, number | null>>({ composition:null, save:null, tts:null, render:null });
-  const [stageElapsed,setStageElapsed]= useState<Record<StageKey, number>>({ composition:0, save:0, tts:0, render:0 });
+  const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({ composition:"pending", save:"pending", tts:"pending", whisper:"pending", render:"pending" });
+  const [stageDetail, setStageDetail] = useState<Record<StageKey, string>>({ composition:"", save:"", tts:"", whisper:"", render:"" });
+  const [stageStart,  setStageStart]  = useState<Record<StageKey, number | null>>({ composition:null, save:null, tts:null, whisper:null, render:null });
+  const [stageElapsed,setStageElapsed]= useState<Record<StageKey, number>>({ composition:0, save:0, tts:0, whisper:0, render:0 });
   const [totalStart,  setTotalStart]  = useState<number | null>(null);
   const [totalElapsed, setTotalElapsed] = useState<number>(0);
   const [renderLog, setRenderLog]     = useState<string[]>([]);
@@ -44,6 +45,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
   const [error, setError]             = useState("");
   const [progress, setProgress]       = useState(0);
   const [ttsEngine, setTtsEngine]     = useState("");
+  const [buildLog,  setBuildLog]      = useState<string[]>([]);
   const [actualDuration, setActualDuration] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const logRef   = useRef<HTMLPreElement>(null);
@@ -98,12 +100,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
   async function build() {
     const startNow = performance.now();
     setRunning(true); setDone(false); setError(""); setVideoUrl(""); setVideoPath("");
-    setRenderLog([]); setCompStream(""); setCompChars(0); setProgress(0); setTtsEngine("");
+    setRenderLog([]); setCompStream(""); setCompChars(0); setProgress(0); setTtsEngine(""); setBuildLog([]);
     setActualDuration(null);
-    setStageStates({ composition:"active", save:"pending", tts:"pending", render:"pending" });
-    setStageDetail({ composition:"Đang gọi LLM...", save:"", tts:"", render:"" });
-    setStageStart({ composition: startNow, save:null, tts:null, render:null });
-    setStageElapsed({ composition:0, save:0, tts:0, render:0 });
+    setStageStates({ composition:"active", save:"pending", tts:"pending", whisper:"pending", render:"pending" });
+    setStageDetail({ composition:"Đang gọi LLM...", save:"", tts:"", whisper:"", render:"" });
+    setStageStart({ composition: startNow, save:null, tts:null, whisper:null, render:null });
+    setStageElapsed({ composition:0, save:0, tts:0, whisper:0, render:0 });
     setTotalStart(startNow);
     setTotalElapsed(0);
 
@@ -152,6 +154,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           setProgress(100);
           if (ev.videoUrl) setVideoUrl(ev.videoUrl as string);
           if (ev.videoPath) setVideoPath(ev.videoPath as string);
+          if (ev.buildLog) setBuildLog(ev.buildLog as string[]);
           setDone(true);
           setTotalElapsed(performance.now() - startNow);
         } else if (ev.type === "error") {
@@ -249,7 +252,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
         </div>
 
         {/* Stage grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
           {STAGES.map((s, idx) => {
             const state = stageStates[s.key];
             const detail = stageDetail[s.key];
@@ -371,6 +374,22 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             <p style={{ fontSize: 10, marginTop: 12, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "var(--gray-2)", padding: "8px 12px", borderRadius: "var(--r-sm)", wordBreak: "break-all" }}>
               📁 {videoPath}
             </p>
+          )}
+
+          {/* Build Summary */}
+          {buildLog.length > 0 && (
+            <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: "var(--r)", background: "var(--gray-2)", border: "1px solid var(--gray-3)" }}>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 10 }}>
+                🛠 Build Summary — Models &amp; Tools
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {buildLog.map((line, i) => (
+                  <div key={i} style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--accent2)", lineHeight: 1.5 }}>
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -147,6 +147,19 @@ def configured_providers() -> list[Provider]:
     return [p for p in PROVIDER_CHAIN if _resolve_provider_key(p)]
 
 
+def log_provider_status() -> None:
+    """Print which providers are active/skipped — call once at startup."""
+    print("[LLM] ══ Provider chain ══")
+    for p in PROVIDER_CHAIN:
+        key = _resolve_provider_key(p)
+        if key:
+            masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "***"
+            print(f"[LLM]   ✓ {p.name:12s} key={masked}  url={p.base_url}")
+        else:
+            print(f"[LLM]   ✗ {p.name:12s} (key '{p.api_key_env}' chưa set → bỏ qua)")
+    print("[LLM] ══════════════════")
+
+
 # ─── Quota / billing detection ───────────────────────────────────────────
 
 def _is_quota_or_billing_error(e: Exception) -> bool:
@@ -212,7 +225,7 @@ async def chat_completions_with_fallback(*, model_kind: str, kwargs_factory=None
             if i > 0:
                 print(f"[llm] Used fallback provider '{p.name}' (model={model}). "
                       f"Skipped: {tried}")
-            return resp, p.name
+            return resp, p.name, model  # (response, provider_name, model_name)
         except Exception as e:
             tried.append(f"{p.name}={type(e).__name__}")
             last_err = e

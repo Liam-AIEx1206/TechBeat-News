@@ -30,9 +30,10 @@ async def extract_from_pdf(data: bytes, filename: str) -> dict:
         except Exception as e:
             print(f"[extract pdf] pypdf fallback failed: {e}")
 
+    print(f"[PDF] '{filename}' — {len(text)} ký tự ({used})")
     return {
         "title": title,
-        "text": text[:20000],
+        "text": text,  # không giới hạn — gửi full để LLM có đủ nội dung
         "source": filename,
         "extractor": used,
     }
