@@ -870,6 +870,22 @@ def patch_html_timing(
           s + 0.15);
       }}
 
+      // Stagger inner cards sequentially (Awwwards pro-grade layout stagger)
+      var innerCardSel = [
+        ".feat-card", ".stat-list-card", ".chat-bubble",
+        ".tl-item", ".agent-card", ".tech-card", ".feat-row"
+      ].map(function(sel) {{ return sceneId + " " + sel; }}).join(", ");
+
+      if (document.querySelector(innerCardSel)) {{
+        tl.from(innerCardSel, {{
+          y: 28,
+          opacity: 0,
+          duration: 0.6,
+          stagger: 0.18, // Stagger each block to appear sequentially!
+          ease: "back.out(1.4)"
+        }}, s + 0.22);
+      }}
+
       // Last scene stays visible until total — visuals never go black before audio ends.
       if (!isLast) {{
         tl.to(sceneId,  {{ opacity: 0, duration: 0.5, ease: "power2.in" }}, s + d - 0.6);
