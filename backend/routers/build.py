@@ -70,7 +70,8 @@ async def _edge_to_wav(text: str, target: Path, voice_name: str | None = None) -
 
         # We save to a temporary mp3 file first, then convert it to wav via pydub
         temp_mp3 = target.with_suffix(".mp3.tmp")
-        communicate = edge_tts.Communicate(clean_text, voice)
+        proxy = os.getenv("EDGE_TTS_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
+        communicate = edge_tts.Communicate(clean_text, voice, proxy=proxy)
         await communicate.save(str(temp_mp3))
 
         if not temp_mp3.exists():
@@ -175,14 +176,127 @@ def _gtts_to_wav_sync(text: str, lang: str, target: Path) -> None:
         target.write_bytes(mp3_buf.getvalue())
 
 
+async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None) -> bool:
+    """Try Gemini TTS (via api.pinkyne.com) → wav. Returns True on success, False to fall back.
+    Uses OPENAI_API_KEY from environment.
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        print("[tts] Gemini TTS: OPENAI_API_KEY not found in environment.")
+        return False
+
+    voice = voice_name or "Puck"
+    
+    # Clean text: remove HTML/XML tags
+    clean_text = re.sub(r"<[^>]*>", "", text)
+    clean_text = clean_text.replace("<", "").replace(">", "").strip()
+    
+    if not clean_text:
+        print("[tts] Gemini TTS: Cleaned text is empty, skipping")
+        return False
+
+    url = "https://api.pinkyne.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "contents": [{
+            "parts": [{
+                "text": clean_text
+            }]
+        }],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {
+                    "prebuiltVoiceConfig": {
+                        "voiceName": voice
+                    }
+                }
+            }
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+            if resp.status_code != 200:
+                print(f"[tts] Gemini TTS HTTP {resp.status_code}: {resp.text[:300]}")
+                return False
+            
+            res_json = resp.json()
+            parts = res_json.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+            b64_audio = None
+            for part in parts:
+                if "inlineData" in part:
+                    b64_audio = part["inlineData"]["data"]
+                    break
+            
+            if not b64_audio:
+                print("[tts] Gemini TTS: Could not find audio inlineData in response.")
+                return False
+            
+            audio_bytes = base64.b64decode(b64_audio)
+    except Exception as e:
+        print(f"[tts] Gemini TTS request failed: {e}")
+        return False
+
+    # Save and convert raw PCM L16 (big-endian) → wav
+    try:
+        from pydub import AudioSegment
+        from io import BytesIO
+        import array
+        import sys
+        
+        a = array.array('h')
+        a.frombytes(audio_bytes)
+        if sys.byteorder == 'little':
+            a.byteswap()
+        audio_bytes_le = a.tobytes()
+        
+        seg = AudioSegment.from_file(
+            BytesIO(audio_bytes_le),
+            format="raw",
+            sample_width=2,
+            channels=1,
+            frame_rate=24000
+        )
+        await asyncio.to_thread(seg.export, str(target), format="wav")
+        return True
+    except Exception as e:
+        print(f"[tts] Gemini raw PCM L16 → wav conversion failed: {e}")
+        return False
+
+
 async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -> str:
     """
     Synthesize speech for `text` to `target`.
-    Order: If voice_id starts with 'edge-', use Edge TTS directly.
+    Order: If voice_id starts with 'gemini-', use Gemini TTS.
+           If voice_id starts with 'edge-', use Edge TTS directly.
            Else: ElevenLabs (if ELEVENLABS_API_KEY set) → Edge TTS → gTTS fallback.
-    Returns the engine name actually used ('elevenlabs', 'edge', or 'gtts').
+    Returns the engine name actually used ('gemini', 'elevenlabs', 'edge', or 'gtts').
     """
-    # 1. Direct Edge TTS routing if explicitly selected in UI
+    # 1. Direct Gemini TTS routing if explicitly selected in UI
+    if voice_id and voice_id.startswith("gemini-"):
+        voice_name = "Puck"
+        if ":" in voice_id:
+            parts = voice_id.split(":")
+            if len(parts) > 1 and parts[1]:
+                voice_name = parts[1]
+        
+        if await _gemini_to_wav(text, target, voice_name=voice_name):
+            return "gemini"
+            
+        # If Gemini fails, fallback to Edge TTS or gTTS
+        if await _edge_to_wav(text, target):
+            return "edge"
+        lang = os.getenv("TTS_LANG", "vi")
+        await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
+        return "gtts"
+
+    # 2. Direct Edge TTS routing if explicitly selected in UI
     if voice_id and voice_id.startswith("edge-"):
         edge_voice = voice_id.replace("edge-", "")
         if await _edge_to_wav(text, target, voice_name=edge_voice):
@@ -195,14 +309,14 @@ async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -
         await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
         return "gtts"
 
-    # 2. Standard pipeline (for ElevenLabs or unconfigured builds)
+    # 3. Standard pipeline (for ElevenLabs or unconfigured builds)
     if await _elevenlabs_to_wav(text, target, voice_id=voice_id):
         return "elevenlabs"
 
     if await _edge_to_wav(text, target):
         return "edge"
 
-    # 3. Fallback
+    # 4. Fallback
     lang = os.getenv("TTS_LANG", "vi")
     await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
     return "gtts"
@@ -219,6 +333,7 @@ def get_audio_duration_s(path: Path) -> float:
 
 
 _faster_whisper_model_cache: dict = {}   # module-level model cache (avoid re-downloading)
+_whisperx_model_cache: dict = {}          # WhisperX model cache (torch-based, GPU/CPU)
 
 
 # Rich vocabulary prompt to guide Whisper for technical terms and project names
@@ -227,6 +342,75 @@ WHISPER_PROMPT = (
     "npx, skills, add, HTML, CSS, JavaScript, GSAP, keyframe, transition, overlay, "
     "canvas, scene, narration, karaoke, techbeat"
 )
+
+
+def _transcribe_whisperx_sync(wav_path: Path) -> list[dict]:
+    """Transcribe with WhisperX using Wav2Vec word alignment for superior accuracy.
+    Falls back to [] on any import/runtime error so caller can continue to faster-whisper.
+    Each entry: {"word": str, "start": float, "end": float}
+    """
+    import traceback as _tb
+    try:
+        import torch  # type: ignore
+        import whisperx  # type: ignore
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        compute_type = "float16" if device == "cuda" else "int8"
+
+        # Load or reuse cached WhisperX model
+        cache_key = f"whisperx_{device}"
+        if cache_key not in _whisperx_model_cache:
+            print(f"[whisperx] Loading 'tiny' model on {device} (first run — may download ~39 MB)…")
+            _whisperx_model_cache[cache_key] = whisperx.load_model(
+                "tiny", device, compute_type=compute_type,
+                language="vi", asr_options={"initial_prompt": WHISPER_PROMPT}
+            )
+            print(f"[whisperx] Model ready on {device}")
+
+        model = _whisperx_model_cache[cache_key]
+
+        # Step 1: transcribe
+        import torchaudio  # type: ignore (ships with torch)
+        audio = whisperx.load_audio(str(wav_path))
+        result = model.transcribe(audio, batch_size=4, language="vi")
+
+        if not result.get("segments"):
+            print(f"[whisperx] {wav_path.name}: no segments found")
+            return []
+
+        # Step 2: align words with Wav2Vec
+        try:
+            align_model, metadata = whisperx.load_align_model(language_code="vi", device=device)
+            aligned = whisperx.align(
+                result["segments"], align_model, metadata,
+                audio, device, return_char_alignments=False
+            )
+            segments = aligned.get("segments", result["segments"])
+        except Exception as ae:
+            print(f"[whisperx] Alignment skipped (no vi Wav2Vec model): {ae}")
+            segments = result["segments"]
+
+        # Flatten word-level entries
+        words: list[dict] = []
+        for seg in segments:
+            for w in seg.get("words", []):
+                text = str(w.get("word", "")).strip()
+                if text:
+                    words.append({
+                        "word":  text,
+                        "start": round(float(w.get("start", 0)), 3),
+                        "end":   round(float(w.get("end",   0)), 3),
+                    })
+
+        print(f"[whisperx] {wav_path.name}: {len(words)} words (device={device})")
+        return words
+    except ImportError:
+        print("[whisperx] whisperx or torch not installed — skipping")
+    except Exception as e:
+        print(f"[whisperx] error: {e}")
+        _tb.print_exc()
+        _whisperx_model_cache.clear()  # reset cache so next run retries cleanly
+    return []
 
 
 def _transcribe_sync(wav_path: Path) -> list[dict]:
@@ -436,8 +620,8 @@ async def _transcribe_groq_api(wav_path: Path) -> list[dict]:
 
 async def transcribe_audio_whisper(wav_path: Path) -> tuple[list[dict], str]:
     """Transcribe audio → (word_list, engine_name).
-    Priority: OpenAI Whisper API → Groq Whisper API → faster-whisper local → chunk fallback.
-    engine_name: 'openai-whisper-1' | 'groq-whisper-v3-turbo' | 'faster-whisper-tiny' | 'chunk-fallback'
+    Priority: OpenAI API → Groq API → WhisperX local (Wav2Vec aligned) → faster-whisper local → chunk fallback.
+    engine_name: 'openai-whisper-1' | 'groq-whisper-v3-turbo' | 'whisperx-tiny' | 'faster-whisper-tiny' | 'chunk-fallback'
     """
     # 1. OpenAI Whisper API (whisper-1)
     words = await _transcribe_openai_api(wav_path)
@@ -447,7 +631,14 @@ async def transcribe_audio_whisper(wav_path: Path) -> tuple[list[dict], str]:
     words = await _transcribe_groq_api(wav_path)
     if words:
         return words, "groq-whisper-v3-turbo"
-    # 3. Local faster-whisper / openai-whisper
+    # 3. WhisperX local (Wav2Vec word alignment — most accurate offline option)
+    try:
+        words = await asyncio.to_thread(_transcribe_whisperx_sync, wav_path)
+        if words:
+            return words, "whisperx-tiny"
+    except Exception as e:
+        print(f"[whisperx] thread error: {e}")
+    # 4. Local faster-whisper / openai-whisper (lighter fallback)
     try:
         words = await asyncio.to_thread(_transcribe_sync, wav_path)
         if words:
@@ -597,6 +788,7 @@ def patch_html_timing(
     word_data_js = _word_data_to_js(word_data or [], n_scenes)
 
     inject = f"""
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js"></script>
 <script>
 // Sole timeline injected by TechBeat build pipeline.
 // The LLM's original timeline script has been stripped server-side so this
@@ -610,6 +802,92 @@ def patch_html_timing(
   // Word-level Whisper data. Each entry: [{{word,start,end}},...] or []
   var wordData  = {word_data_js};
   var WLINE     = 7; // words per subtitle line
+
+  function backspaceWord(tl, el, word, startTime, cps) {{
+    var interval = 1 / cps;
+    for (var k = word.length - 1; k >= 0; k--) {{
+      (function(index) {{
+        tl.call(function() {{
+          el.textContent = word.slice(0, index);
+        }}, [], startTime + (word.length - index) * interval);
+      }})(k);
+    }}
+    return word.length * interval;
+  }}
+
+  function compileTextEffects(sceneId, sceneStart) {{
+    var scEl = document.querySelector(sceneId);
+    if (!scEl) return;
+
+    // A. Typewriter effect
+    var typewriters = scEl.querySelectorAll("[data-effect='typewriter']");
+    typewriters.forEach(function(el) {{
+      var text = el.textContent.trim();
+      if (!text) return;
+
+      var cursor = el.nextElementSibling;
+      var hasCursor = cursor && (cursor.className.indexOf("cursor") !== -1);
+
+      var cps = 12; // conversational speed
+      var dur = text.length / cps;
+      var startOffset = sceneStart + 0.3; // wait briefly for badge entrance
+
+      // Deterministically clear the element at the beginning of its typing
+      tl.set(el, {{ text: "" }}, startOffset);
+
+      if (hasCursor) {{
+        tl.call(function() {{ cursor.className = "cursor-solid"; }}, [], startOffset);
+      }}
+      tl.to(el, {{ text: {{ value: text }}, duration: dur, ease: "none" }}, startOffset);
+      if (hasCursor) {{
+        tl.call(function() {{ cursor.className = "cursor-blink"; }}, [], startOffset + dur);
+      }}
+    }});
+
+    // B. Word Rotations
+    var rotators = scEl.querySelectorAll("[data-effect='word-rotate']");
+    rotators.forEach(function(el) {{
+      var wordsStr = el.getAttribute("data-words");
+      if (!wordsStr) return;
+      var words = wordsStr.split(",").map(function(w) {{ return w.trim(); }});
+      if (words.length === 0) return;
+
+      var cursor = el.nextElementSibling;
+      var hasCursor = cursor && (cursor.className.indexOf("cursor") !== -1);
+
+      var offset = sceneStart + 0.4;
+      
+      // Deterministically clear the element at the beginning of its rotation
+      tl.set(el, {{ text: "" }}, offset);
+
+      words.forEach(function(word, i) {{
+        var typeDur = word.length / 10;
+
+        // Type word
+        if (hasCursor) {{
+          tl.call(function() {{ cursor.className = "cursor-solid"; }}, [], offset);
+        }}
+        tl.to(el, {{ text: {{ value: word }}, duration: typeDur, ease: "none" }}, offset);
+        if (hasCursor) {{
+          tl.call(function() {{ cursor.className = "cursor-blink"; }}, [], offset + typeDur);
+        }}
+
+        offset += typeDur + 1.2; // hold word
+
+        // Backspace if not the last word
+        if (i < words.length - 1) {{
+          if (hasCursor) {{
+            tl.call(function() {{ cursor.className = "cursor-solid"; }}, [], offset);
+          }}
+          var clearDur = backspaceWord(tl, el, word, offset, 16);
+          if (hasCursor) {{
+            tl.call(function() {{ cursor.className = "cursor-blink"; }}, [], offset + clearDur);
+          }}
+          offset += clearDur + 0.2; // brief pause before next word
+        }}
+      }});
+    }});
+  }}
 
   function groupLines(ws) {{
     var r = [], i = 0;
@@ -715,21 +993,67 @@ def patch_html_timing(
 
   function buildTimeline() {{
     if (!window.gsap) return;
+    if (window.TextPlugin) gsap.registerPlugin(TextPlugin);
     ensureScenes();
     ensureSubtitles();
 
-    gsap.set(".scene *", {{ clearProps: "all", opacity: 1 }});
-    gsap.utils.toArray(".scene").forEach(function(el, idx) {{
-      if (idx === 0) return;
-      gsap.set(el, {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
+    // Bug5 fix: do NOT clearProps on ".scene *" — that forces opacity:1 on all children before
+    // gsap.from() tweens run, making every block appear simultaneously.
+    // Instead: explicitly preset children of non-first scenes to opacity:0 so from() has a valid start state.
+    // Store natural opacities before presetting them to 0
+    function getNaturalOpacity(target) {{
+      if (target.classList.contains("ghost-text")) return 0.085;
+      if (target.classList.contains("aurora-glow") || target.classList.contains("glow-orb")) return 0.48;
+      if (target.classList.contains("animated-grid")) return 0.55;
+      if (target.classList.contains("retro-grid")) return 0.45;
+      if (target.classList.contains("light-rays")) return 0.35;
+      if (target.classList.contains("particle-field")) return 0.5;
+      if (target.classList.contains("float-orb-lg")) return 0.48;
+      if (target.classList.contains("float-orb-md")) return 0.38;
+      if (target.classList.contains("float-orb-sm")) return 0.32;
+      
+      var computed = window.getComputedStyle(target).opacity;
+      if (computed && computed !== "1" && computed !== "0") {{
+        return parseFloat(computed);
+      }}
+      return 1;
+    }}
+
+    gsap.utils.toArray(".scene").forEach(function(el) {{
+      var ambientSelectors = [
+        ".aurora-glow", ".animated-grid", ".retro-grid", ".light-rays",
+        ".particle-field", ".ghost-text", ".float-orb-lg", ".float-orb-md",
+        ".float-orb-sm", ".y2k-sparkle", ".glow-orb", ".marquee-strip"
+      ];
+      ambientSelectors.forEach(function(sel) {{
+        el.querySelectorAll(sel).forEach(function(target) {{
+          target._naturalOpacity = getNaturalOpacity(target);
+        }});
+      }});
     }});
-    gsap.set("#scene1", {{ position: "absolute", inset: 0 }});
+
+    gsap.utils.toArray(".scene").forEach(function(el, idx) {{
+      if (idx === 0) {{
+        gsap.set(el, {{ opacity: 1, visibility: "visible", position: "absolute", inset: 0 }});
+      }} else {{
+        gsap.set(el, {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
+      }}
+      // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
+      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
+      gsap.set(el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .visual-col > *"), {{ opacity: 0 }});
+      
+      // Preset ambient elements to opacity:0 so they fade in cleanly and deterministically
+      gsap.set(el.querySelectorAll(".aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .float-orb-lg, .float-orb-md, .float-orb-sm, .y2k-sparkle, .glow-orb, .marquee-strip"), {{ opacity: 0 }});
+    }});
 
     var tl = gsap.timeline({{ paused: true }});
     var lastIdx = starts.length - 1;
 
-    function safeFrom(sel, vars, at) {{
-      if (document.querySelector(sel)) tl.from(sel, vars, at);
+    function safeFromTo(sel, fromVars, toVars, at) {{
+      if (document.querySelector(sel)) {{
+        toVars.immediateRender = false;
+        tl.fromTo(sel, fromVars, toVars, at);
+      }}
     }}
 
     for (var i = 0; i < starts.length; i++) {{
@@ -740,12 +1064,44 @@ def patch_html_timing(
       if (!document.querySelector(sceneId)) continue;
       var isLast = (i === lastIdx);
 
+      // 1. Gather all subtitle times (chunk starts) for the current scene to sync visual block entrances
+      var subtitleTimes = [];
+      var scWd = wordData[i];
+      if (scWd && scWd.length > 0) {{
+        var lines = groupLines(scWd);
+        for (var li = 0; li < lines.length; li++) {{
+          subtitleTimes.push(s + lines[li][0].start);
+        }}
+      }} else {{
+        var chunks = chunkText(narrations[i] || "");
+        if (chunks.length > 0) {{
+          var totalAudioTime = actualDurs[i] || d;
+          var AUDIO_LEAD = 0.15;
+          var speechDur = (totalAudioTime - AUDIO_LEAD) * 0.93;
+          var chunkLens = [], totalLen = 0;
+          chunks.forEach(function(c) {{
+            var l = c.length || 1;
+            chunkLens.push(l); totalLen += l;
+          }});
+          var elapsed = 0;
+          chunks.forEach(function(c, ci) {{
+            var chunkStart = s + AUDIO_LEAD + elapsed;
+            subtitleTimes.push(chunkStart);
+            var chunkDur_c = (chunkLens[ci] / totalLen) * speechDur;
+            elapsed += chunkDur_c;
+          }});
+        }}
+      }}
+
       if (i === 0) {{
         tl.set(sceneId, {{ opacity: 1, visibility: "visible" }}, s);
       }} else {{
         tl.set(sceneId, {{ opacity: 0, visibility: "visible" }}, s);
         tl.to(sceneId,  {{ opacity: 1, duration: 0.6, ease: "power3.out" }}, s);
       }}
+
+      // Compile declarative typewriter & word rotation effects
+      compileTextEffects(sceneId, s);
 
       // ── SUBTITLE TIMING ────────────────────────────────────────────────
       var subSceneEl = document.getElementById("sub-scene" + n);
@@ -842,48 +1198,83 @@ def patch_html_timing(
       ];
       ambientSelectors.forEach(function(sel) {{
         if (document.querySelector(sceneId + " " + sel)) {{
-          tl.from(sceneId + " " + sel, {{
-            scale: 0.7, opacity: 0, duration: 0.7, stagger: 0.06, ease: "power2.out"
-          }}, s);
+          tl.fromTo(sceneId + " " + sel,
+            {{ scale: 0.7, opacity: 0 }},
+            {{ 
+              scale: 1, 
+              opacity: function(i, target) {{ return target._naturalOpacity || 1; }}, 
+              duration: 0.7, 
+              stagger: 0.06, 
+              ease: "power2.out", 
+              immediateRender: false 
+            }},
+            s);
         }}
       }});
 
       // Decorative chrome (corner brackets + top-line + scene-num) entrance
-      tl.from(sceneId + " .corner-bracket, " + sceneId + " .top-line, " + sceneId + " .scene-num",
-        {{ opacity: 0, duration: 0.4, stagger: 0.05, ease: "power1.out" }}, s);
+      var chromeClasses = [".corner-bracket", ".top-line", ".scene-num"];
+      var existingChrome = [];
+      chromeClasses.forEach(function(sel) {{
+        var fullSel = sceneId + " " + sel;
+        if (document.querySelector(fullSel)) {{
+          existingChrome.push(fullSel);
+        }}
+      }});
+      if (existingChrome.length > 0) {{
+        tl.fromTo(existingChrome.join(", "),
+          {{ opacity: 0 }},
+          {{ opacity: 1, duration: 0.4, stagger: 0.05, ease: "power1.out", immediateRender: false }}, s);
+      }}
 
       // Content entry — start IMMEDIATELY at t=s, tight stagger so the first
       // 0.5s is filled with motion instead of an empty stationary frame.
-      safeFrom(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }}, s);
-      safeFrom(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }}, s + 0.12);
-      safeFrom(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }}, s + 0.25);
-      safeFrom(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }}, s + 0.38);
-      if (document.querySelector(sceneId + " .visual-col > *")) {{
-        tl.from(sceneId + " .visual-col > *",
-          {{ scale: 0.88, opacity: 0, duration: 0.7, stagger: 0.12, ease: "back.out(1.6)" }},
+      safeFromTo(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }}, s);
+      safeFromTo(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.7, ease: "power4.out"   }}, s + 0.12);
+      safeFromTo(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.6, ease: "power3.out"   }}, s + 0.25);
+      safeFromTo(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.5, ease: "power2.out"   }}, s + 0.38);
+      var containerExclude = ":not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)";
+      if (document.querySelector(sceneId + " .visual-col > *" + containerExclude)) {{
+        tl.fromTo(sceneId + " .visual-col > *" + containerExclude,
+          {{ scale: 0.88, opacity: 0 }},
+          {{ scale: 1, opacity: 1, duration: 0.7, stagger: 0.12, ease: "back.out(1.6)", immediateRender: false }},
           s + 0.18);
       }}
-      // Bento / hero-stat banner inner items (when not using visual-col wrapper)
-      if (document.querySelector(sceneId + " .bento-cell, " + sceneId + " .hero-stat-banner > *")) {{
-        tl.from(sceneId + " .bento-cell, " + sceneId + " .hero-stat-banner > *",
-          {{ y: 24, opacity: 0, duration: 0.55, stagger: 0.08, ease: "power3.out" }},
-          s + 0.15);
-      }}
 
-      // Stagger inner cards sequentially (Awwwards pro-grade layout stagger)
-      var innerCardSel = [
-        ".feat-card", ".stat-list-card", ".chat-bubble",
-        ".tl-item", ".agent-card", ".tech-card", ".feat-row"
-      ].map(function(sel) {{ return sceneId + " " + sel; }}).join(", ");
+      // 2. Query all visual blocks in document order to animate them dynamically based on speech/subtitles
+      var blockSelectors = [
+        ".bento-cell", ".feat-card", ".stat-list-card", ".chat-bubble",
+        ".tl-item", ".agent-card", ".tech-card", ".compare .col", ".visual-block",
+        ".step-item", ".formula-pill", ".command-pill",
+        ".visual-col > *:not(.stat-list):not(.feat-row):not(.bento-grid):not(.bento-3x2):not(.agent-grid):not(.compare):not(.step-list):not(.formula-stack)"
+      ];
+      var blocks = [];
+      blockSelectors.forEach(function(sel) {{
+        var els = document.querySelectorAll(sceneId + " " + sel);
+        els.forEach(function(el) {{
+          if (blocks.indexOf(el) === -1) blocks.push(el);
+        }});
+      }});
 
-      if (document.querySelector(innerCardSel)) {{
-        tl.from(innerCardSel, {{
-          y: 28,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.18, // Stagger each block to appear sequentially!
-          ease: "back.out(1.4)"
-        }}, s + 0.22);
+      // 3. Animate each block at its corresponding subtitle start timestamp!
+      if (blocks.length > 0) {{
+        blocks.forEach(function(blockEl, bi) {{
+          var blockStart;
+          if (subtitleTimes.length > 0) {{
+            // Map block index to subtitle time index proportionally
+            var subIdx = Math.floor((bi / blocks.length) * subtitleTimes.length);
+            blockStart = subtitleTimes[subIdx];
+          }} else {{
+            // Fallback stagger if no subtitles exist
+            blockStart = s + 0.2 + (bi * 0.45);
+          }}
+          
+          // Animate the block dynamically at the exact timestamp!
+          tl.fromTo(blockEl,
+            {{ y: 28, opacity: 0 }},
+            {{ y: 0, opacity: 1, duration: 0.65, ease: "back.out(1.4)", immediateRender: false }},
+            blockStart);
+        }});
       }}
 
       // Last scene stays visible until total — visuals never go black before audio ends.
@@ -897,12 +1288,12 @@ def patch_html_timing(
     // intended initial state instead of post-set hidden state.
     tl.progress(0).pause();
 
-    // Register under every plausible key — HyperFrames doc says key matches
-    // composition-id, but real-world runs vary. Cover "main" (our id) and
-    // "root" (the doc default) to be safe.
+    // Register the timeline dynamically under the exact data-composition-id
+    // of the root element (fallback to "main"). Avoid extra keys to prevent timeline_id_mismatch.
     window.__timelines = window.__timelines || {{}};
-    window.__timelines["main"] = tl;
-    window.__timelines["root"] = tl;
+    var rootEl = document.getElementById("root");
+    var compId = rootEl ? (rootEl.getAttribute("data-composition-id") || "main") : "main";
+    window.__timelines[compId] = tl;
   }}
 
   if (document.readyState === "loading") {{
@@ -997,6 +1388,8 @@ class BuildRequest(BaseModel):
     # Pre-built composition HTML from the html-preview stage. When present,
     # we skip the LLM composition stage entirely and go straight to save.
     compositionHtml: str | None = None
+    # Subtitle toggle — when False, inject CSS to hide .techbeat-subtitles in rendered video
+    subtitlesEnabled: bool = True
 
 
 async def build_pipeline(req: BuildRequest):
@@ -1168,6 +1561,10 @@ async def build_pipeline(req: BuildRequest):
         scene_titles = [s.title for s in req.scenes]
         scene_narrations = [s.narration for s in req.scenes]
         html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
+        # ── Subtitle toggle: hide .techbeat-subtitles if user disabled them ─
+        if not req.subtitlesEnabled:
+            hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+            html = html.replace("</head>", hide_css + "</head>", 1)
         target_html.write_text(html, encoding="utf-8")
         # Total composition duration after timing patch (ceil(d) + 1 buffer per scene)
         import math as _math
@@ -1179,6 +1576,13 @@ async def build_pipeline(req: BuildRequest):
             "audioDurations": [round(d, 1) for d in durations],
         })
     else:
+        # skipTts path — still apply subtitle toggle to already-saved index.html
+        if not req.subtitlesEnabled:
+            existing_html = target_html.read_text(encoding="utf-8")
+            hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+            if 'id="tb-subtitle-hide"' not in existing_html:
+                existing_html = existing_html.replace("</head>", hide_css + "</head>", 1)
+                target_html.write_text(existing_html, encoding="utf-8")
         yield sse({"type": "stage", "stage": "tts", "status": "skipped"})
 
     # ---- Stage 4: Render ----

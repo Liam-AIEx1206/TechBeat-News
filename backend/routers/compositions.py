@@ -174,6 +174,9 @@ body {{
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
 .scene.hero .layout     {{ grid-template-columns: 1fr; justify-items: start; }}
 .scene.centered .layout {{ grid-template-columns: 1fr; justify-items: center; text-align: center; }}
+/* Bug2 fix: cascade text-align into info-col and all its direct children so body-text/caption inherit centering */
+.scene.centered .info-col {{ align-items: center; text-align: center; }}
+.scene.centered .info-col > * {{ text-align: center; }}
 .scene.magazine .layout {{ grid-template-columns: 7fr 5fr; gap: 80px; }}
 .scene.data .layout     {{ grid-template-columns: 1fr 1.4fr; }}
 
@@ -240,12 +243,12 @@ body {{
 
 .title-xl {{
   font-size: clamp(4.0rem, 6.5vw, 6.5rem);
-  font-weight: 900; line-height: 1.1; letter-spacing: -0.04em;
+  font-weight: 900; line-height: 1.25; letter-spacing: -0.04em;
   color: var(--text1);
 }}
 .title-hero {{
   font-size: clamp(5.5rem, 8.5vw, 8.5rem);
-  font-weight: 900; line-height: 1.0; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.2; letter-spacing: -0.05em;
   color: var(--text1);
 }}
 .subtitle {{
@@ -267,19 +270,24 @@ body {{
   background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
+  /* Bug1 fix: force independent GPU layer to prevent parent blur bleeding into text rasterisation */
+  will-change: transform; isolation: isolate; transform: translateZ(0);
+  padding-bottom: 0.18em; margin-bottom: -0.18em;
 }}
 .outline-text {{
   -webkit-text-stroke: 2px var(--accent); color: transparent;
+  padding-bottom: 0.18em; margin-bottom: -0.18em;
 }}
 
 /* Hero stat — for B1 BIG STAT pattern */
 .stat-hero {{
   font-size: clamp(6.5rem, 9vw, 9.5rem);
-  font-weight: 900; line-height: 1.1; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.25; letter-spacing: -0.05em;
   font-feature-settings: 'tnum';
   background: linear-gradient(135deg, var(--accent), var(--accent3));
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
+  padding-bottom: 0.18em; margin-bottom: -0.18em;
 }}
 .stat-suffix {{
   font-size: 3.0rem; font-weight: 700; color: var(--text2);
@@ -366,14 +374,14 @@ body {{
 }}
 .feat-card .ic {{ font-size: 3rem; margin-bottom: 16px; }}
 .feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.5rem; }}
-.feat-card .d  {{ font-size: 1.15rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
+.feat-card .d  {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
 
 /* Comparison — for B4 */
 .compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 32px; min-height: 0; width: 100%; }}
 .compare .col {{ padding: 40px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
 .compare .col:hover {{ border-color: var(--accent2); transform: scale(1.02); }}
 .compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 24px; }}
-.compare .col li {{ list-style: none; padding: 12px 0; color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
+.compare .col li {{ list-style: none; padding: 12px 0; color: var(--text2); font-size: 1.6rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
 .compare .col li::before {{ content: '✓ '; color: var(--accent3); font-weight: 700; }}
 .compare .col.bad li::before {{ content: '✗ '; color: #ef4444; }}
 
@@ -441,7 +449,7 @@ body {{
   font-size: 1.6rem; font-weight: 700; color: var(--text1); line-height: 1.3;
 }}
 .stat-list-card .desc {{
-  font-size: 1.2rem; color: var(--text2); opacity: 0.85;
+  font-size: 1.5rem; color: var(--text2); opacity: 0.85;
 }}
 
 /* ───────────────── PREMIUM COMPONENT EXTENSIONS (FROM IMAGE REFERENCE) ───────────────── */
@@ -494,7 +502,7 @@ body {{
 }}
 .glass-card .emoji {{ font-size: 3.5rem; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
 .glass-card .title {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }}
-.glass-card .desc {{ font-size: 1.2rem; color: var(--text2); line-height: 1.6; }}
+.glass-card .desc {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; }}
 
 /* Google I/O tech card (Scene 3) */
 .tech-card {{
@@ -720,14 +728,23 @@ body {{
 .bento-cell {{
   background: linear-gradient(135deg, var(--surface), {surface}80);
   border: 1px solid {accent}33;
+  border-top: 3px solid {accent};
   border-radius: 28px; padding: 32px;
   position: relative; overflow: hidden;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }}
+/* Bug3 fix: distinct accent colors per cell position + icon/title/desc sub-selectors */
+.bento-cell:nth-child(2) {{ border-top-color: var(--accent2); }}
+.bento-cell:nth-child(3) {{ border-top-color: #38bdf8; }}
+.bento-cell:nth-child(4) {{ border-top-color: #4ade80; }}
+.bento-cell:nth-child(5) {{ border-top-color: #f472b6; }}
+.bento-cell .ic  {{ font-size: 3.2rem; margin-bottom: 14px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
+.bento-cell .t   {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }}
+.bento-cell .d   {{ font-size: 1.5rem; color: var(--text2); line-height: 1.5; }}
 .bento-cell.wide {{ grid-column: span 2; }}
 .bento-cell.tall {{ grid-row: span 2; }}
-.bento-cell.hero {{ grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), {accent}1a); border-color: {accent}66; }}
-.bento-cell:hover {{ transform: translateY(-4px); border-color: var(--accent2); }}
+.bento-cell.hero {{ grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), {accent}1a); border-color: {accent}66; border-top-color: {accent}; }}
+.bento-cell:hover {{ transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 20px 50px -10px var(--glow); }}
 
 /* Premium UI/UX Pro Max Animations & Shimmers */
 @keyframes floating {{
@@ -749,6 +766,25 @@ body {{
 @keyframes cursor-blink {{
   0%, 100% {{ opacity: 0; }}
   50% {{ opacity: 1; }}
+}}
+.cursor-blink {{
+  animation: cursor-blink 0.8s step-end infinite;
+  color: var(--accent);
+  margin-left: 4px;
+  display: inline-block;
+}}
+.cursor-solid {{
+  animation: none;
+  opacity: 1;
+  color: var(--accent);
+  margin-left: 4px;
+  display: inline-block;
+}}
+.cursor-hide {{
+  animation: none;
+  opacity: 0;
+  margin-left: 4px;
+  display: inline-block;
 }}
 
 .breath {{
@@ -790,8 +826,49 @@ body {{
   box-shadow: 0 20px 60px -5px var(--accent), 0 0 30px var(--accent2);
   transform: translateY(-6px) scale(1.015);
 }}
-.terminal .cursor {{
-  animation: cursor-blink 0.9s infinite step-end;
+/* Premium UX/UI Custom layouts */
+.accent-bar {{
+  width: 80px; height: 4px; background: var(--accent);
+  border-radius: 2px; margin-top: 16px;
+  box-shadow: 0 0 12px var(--accent);
+}}
+.formula-stack {{
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 32px 0; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+}}
+.formula-pill {{
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px; border-radius: 99px; font-size: 1.2rem;
+  border: 2px solid rgba(255,255,255,0.1);
+  color: var(--text1); text-transform: uppercase;
+}}
+.formula-pill.pink {{ background: rgba(236,72,153,0.15); border-color: rgba(236,72,153,0.4); color: #f472b6; }}
+.formula-pill.yellow {{ background: rgba(253,224,71,0.15); border-color: rgba(253,224,71,0.4); color: #fde047; }}
+.formula-pill.green {{ background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.4); color: #4ade80; }}
+.formula-pill.blue {{ background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.4); color: #38bdf8; }}
+.formula-operator {{
+  font-size: 1.6rem; color: rgba(255,255,255,0.3); padding: 0 4px;
+}}
+.command-pill {{
+  display: flex; align-items: center; gap: 16px;
+  background: rgba(253,224,71,0.06); border: 2px solid rgba(253,224,71,0.25);
+  padding: 18px 32px; border-radius: 16px; font-size: 1.35rem;
+  color: #fde047; font-weight: 600; margin-bottom: 24px; width: 100%;
+}}
+.step-list {{
+  display: flex; flex-direction: column; gap: 16px; width: 100%;
+}}
+.step-item {{
+  display: flex; align-items: flex-start; gap: 20px; font-size: 1.8rem; line-height: 1.6;
+}}
+.step-circle {{
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 800;
+  font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;
+}}
+.bento-3x2 {{
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%;
 }}
 
 /* ── Contrast safety net — override any LLM-generated low-contrast text ── */
@@ -885,9 +962,7 @@ body {{
   text-shadow: 0 0 14px rgba(0, 0, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
@@ -922,7 +997,7 @@ body {{
   text-shadow: 0 0 14px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: nowrap;
+  white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.65));
@@ -1011,12 +1086,57 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
   ✗ Text overlay trực tiếp lên ảnh (caption nằm trong .img-frame thì OK)
 - Mục tiêu: đa dạng layout giữa các scene, không lặp .split 8 lần.
 
+⌨️ HIỆU ỨNG CHỮ HOẠT HÌNH CAO CẤP (PREMIUM GSAP EFFECTS):
+- Hệ thống đã tích hợp hiệu ứng đánh chữ thông minh bằng thuộc tính HTML (bạn KHÔNG cần viết script):
+  • ⌨️ **Typewriter (Đánh chữ từng phím)**: Thêm thuộc tính `data-effect="typewriter"` vào thẻ chữ và chèn ngay sau nó con trỏ `<span class="cursor-blink">|</span>` để nhấp nháy đồng bộ.
+    Ví dụ: `<h1 id="sN-title" class="title-xl grad-text" data-effect="typewriter">Tiêu đề scene</h1><span class="cursor-blink">|</span>`
+  • 🔄 **Word Rotation (Xoay từ khóa)**: Thêm `data-effect="word-rotate"` cùng danh sách từ cách nhau bằng dấu phẩy qua `data-words="từ_1,từ_2,từ_3"`.
+    Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
+  • Cấm tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
+
+⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+- **Cấm đặt Decoratives sai chỗ (Lỗi nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để tránh đè lên các cột chữ chính.
+- **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
+  * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
+  * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
+  * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
+- **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & 4 fix):**
+  * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+  * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
+  * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene (Ví dụ: nếu nói về GSAP thì phải có các thư viện thật như TweenLite, TweenMax, hoặc benchmark thật. Cấm bê nguyên văn placeholder "Benchmark 2024", "cost efficiency" của hệ thống vào).
+- **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
+- **Đảm bảo Tương Phản & Độ Đọc Được của Chữ (Legibility & Contrast):**
+  * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
+  * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
+  * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
+
 🎬 SCENE 1 = OPENING HERO (BẮT BUỘC ấn tượng):
 - Scene #1 PHẢI là class="scene centered" hoặc class="scene hero" — KHÔNG được để trống visual-col chỉ vài chữ.
-- BẮT BUỘC có: title-hero gradient cực to (.title-hero.grad-text), 2-3 badge/status-pill stack ngang, eyebrow .caption, decorative effect (status-pill phía trên + corner-bracket + breath animation).
+- BẮT BUỘC có: title-hero gradient cực to (.title-hero.grad-text) có thể dùng `data-effect="word-rotate"`, 2-3 badge/status-pill stack ngang, eyebrow .caption, decorative effect (status-pill phía trên + corner-bracket + breath animation).
 - Nếu không có ảnh ở scene 1 → dùng VISUAL pattern B14 (tech-card) HOẶC B13 (3-column glass cards) HOẶC B11 (stat-list) ở visual-col để LẤP ĐẦY màn hình. KHÔNG được chỉ hiển thị 1 box logo nhỏ chính giữa.
 
-📐 CHỐNG CONTENT TRÀN KHUNG 1080px (BẮT BUỘC):
+🎨 BẮT BUỘC KHI DÙNG .bento-grid & CÁC KHỐI TRỰC QUAN (Bug3 fix & Tăng Cường Nội Dung):
+- Mỗi .bento-cell PHẢI có ít nhất: <div class="ic">EMOJI</div> + <div class="t">tiêu đề</div> + <div class="d">mô tả ngắn</div>
+- Mỗi cell dùng màu accent KHÁC NHAU qua inline style "border-top-color": cell 1=#eab308, cell 2=#38bdf8, cell 3=#4ade80, cell 4=#f472b6
+- KHÔNG được để cell chỉ có 1 dòng text trần. Tối thiểu icon + tiêu đề + mô tả.
+- Ví dụ đúng: <div class="bento-cell" style="border-top-color:#38bdf8"><div class="ic">⚡</div><div class="t">Tạo nhanh</div><div class="d">Xuất video trong 60 giây</div></div>
+
+📝 THÊM VÍ DỤ NỘI DUNG THỰC TẾ (REAL-WORLD PREVIEWS / CODE / DATA):
+- Để các khối trực quan không bị đơn điệu chỉ có chữ và icon, hãy chèn thêm các khối ví dụ nội dung thực tế (mock previews) bên dưới mô tả để lấp đầy không gian trống cực kỳ cinematic và chân thực:
+  - Nếu nói về Code / Tech Stack: Chèn một khối `<pre style="font-family:'JetBrains Mono';font-size:0.9rem;opacity:0.85;margin-top:10px;">` hoặc `.terminal` có code React/TypeScript/JSON thực tế (ví dụ: code config, function export, dependency tag).
+  - Nếu nói về Community / GitHub: Chèn mockup danh sách commit log mini, contributor list, contributors avatars mockup, pull request status pill hoặc tags `#github #pull-request`.
+  - Nếu nói về Performance / Stats / Features: Chèn thanh tiến trình `<div class="progress-bar" style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:10px;overflow:hidden;"><div class="fill" style="width:85%;height:100%;background:var(--accent2);"></div></div>` hoặc các tag badge mini `<span class="badge-mini" style="font-size:0.8rem;padding:2px 8px;background:rgba(255,255,255,0.06);border-radius:4px;margin-right:6px;">#feature</span>` stack ngang.
+
+🏁 SCENE CUỐI BẮT BUỘC (Bug4 fix):
+- Scene cuối LUÔN dùng layout .scene.centered HOẶC .scene.hero với visual-col đầy đủ.
+- visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG.
+- Ví dụ visual-col scene cuối tối thiểu:
+  <div class="stat-list">
+    <div class="stat-list-card"><div class="ic-wrap">🚀</div><div class="num">10x</div><div class="details"><div class="title">Nhanh hơn</div><div class="desc">So với pipeline cũ</div></div></div>
+    <div class="stat-list-card"><div class="ic-wrap">🌐</div><div class="num">∞</div><div class="details"><div class="title">Khả năng mở rộng</div><div class="desc">Không giới hạn scene</div></div></div>
+  </div>
+
+
 - Toàn bộ nội dung mỗi scene PHẢI vừa trong viewport 1920×1080. KHÔNG được để content dài hơn chiều cao 880px (sau khi trừ padding).
 - Nếu danh sách bullet/feature dài hơn 4 dòng → CẮT GỌN xuống tối đa 4 mục, mỗi mục ngắn gọn.
 - Title trong visual-block không lấy font-size > 2rem; bullet list không > 1.2rem để tránh tràn xuống.
@@ -1153,6 +1273,30 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
   - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
   - Với các con số thống kê hoặc chữ dài, tuyệt đối không lạm dụng các size chữ quá khổng lồ hoặc nhồi nhét quá nhiều chữ trong các khối hẹp để tránh chữ bị đè chèn lấp nhau.
 
+- ⌨️ HIỆU ỨNG CHỮ HOẠT HÌNH CAO CẤP (PREMIUM GSAP EFFECTS):
+  Hệ thống đã tích hợp sẵn hiệu ứng đánh chữ thông minh bằng thuộc tính HTML (bạn KHÔNG cần viết script):
+  • ⌨️ **Typewriter (Đánh chữ từng phím)**: Thêm thuộc tính `data-effect="typewriter"` vào thẻ chữ và chèn ngay sau nó con trỏ `<span class="cursor-blink">|</span>` để nhấp nháy đồng bộ tự động.
+    Ví dụ: `<h1 id="sN-title" class="title-xl grad-text" data-effect="typewriter">Tiêu đề scene</h1><span class="cursor-blink">|</span>`
+  • 🔄 **Word Rotation (Xoay từ khóa)**: Thêm `data-effect="word-rotate"` cùng danh sách từ cách nhau bằng dấu phẩy qua `data-words="từ_1,từ_2,từ_3"`.
+    Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
+  • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
+
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+  • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
+    * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
+    * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
+    * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
+  • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
+    * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
+    * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene (Ví dụ: nếu nói về GSAP thì phải có các thư viện thật như TweenLite, TweenMax, hoặc benchmark thật. Cấm bê nguyên văn placeholder "Benchmark 2024", "cost efficiency" của hệ thống vào).
+  • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
+  • **Đảm bảo Tương Phản & Độ Đọc Được của Chữ (Legibility & Contrast):**
+    * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
+    * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
+    * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
+
 ═══════════════════════════════════════
 QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
 ═══════════════════════════════════════
@@ -1193,13 +1337,18 @@ QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
    - sN-desc = 1 tagline metadata ngắn (vd: "ESP32 · Edge AI · Privacy First"). KHÔNG phải câu mô tả dài.
    - Dồn 100% chi tiết vào VISUAL-COL (feat-grid, stat-list, terminal, chat-box, agent-grid...). Info-col chỉ là TITLE + 2 dòng metadata.
 
-4. LAYOUT FREEDOM (chọn layout phù hợp content, KHÔNG ép split mặc định):
+4. LAYOUT FREEDOM & PREMIUM VISUAL STACKS (chọn layout & khối trình bày phù hợp nội dung):
    - .scene.split    → 2 cột info|visual (dùng khi có ảnh thật assets/sceneN.jpg)
    - .scene.centered → 1 cột center text + mega-num/stat-banner ở giữa
    - .scene.hero     → title cực to căn trái, decoratives full-bleed
    - .scene.magazine → 7:5 asymmetric (text trái, visual phải kéo dài)
    - .scene.data     → info nhỏ + visual lớn (cho data viz/bento)
    - Bạn ĐƯỢC PHÉP tự do chọn layout. Mỗi scene KHÁC NHAU. KHÔNG lặp .split 8 lần liên tiếp.
+   - 🎨 TẬN DỤNG CÁC PHƯƠNG THỨC TRÌNH BÀY SIÊU TRỰC QUAN (B17-B20) tùy theo nội dung phân cảnh để tạo điểm nhấn thị giác đẳng cấp:
+     - Nếu nói về Cấu trúc, Phân đoạn, hoặc Công thức: BẮT BUỘC dùng **B17 (Formula Tag Stack)** kết hợp màu sắc semantic và trích dẫn mã màu ở dưới cực kỳ rõ ràng, dễ hiểu và chuyên nghiệp.
+     - Nếu nói về Quy tắc nghiêm ngặt hoặc Điểm cốt lõi cần nhớ: BẮT BUỘC dùng **B18 (Command Highlight Capsule)** với icon chìa khóa/ngôi sao và màu viền gold sang trọng.
+     - Nếu nói về Quy trình, Các bước hành động: BẮT BUỘC dùng **B19 (Numbered Step List)** có số tròn màu hồng nổi bật.
+     - Nếu nói về Thư viện, Danh sách mẫu, hoặc Showroom 6 khối: BẮT BUỘC dùng **B20 (Bento 3x2 Grid)** để trình bày 6 thẻ cân đối hoàn mỹ.
 
 5. 🎬 SCENE #1 = OPENING HERO CINEMATIC (BẮT BUỘC WOW):
    - Scene đầu PHẢI gây ấn tượng trong 3 giây đầu. CẤM 1 logo box nhỏ giữa màn.
@@ -1448,12 +1597,89 @@ B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KH
      <div class="agent-grid-center-pill">⚡ PHỐI HỢP</div>
    </div>
 
-   KHÔNG ĐƯỢC để visual-col trống.
+    B17 — FORMULA TAG STACK (CẤU TRÚC PHƯƠNG TRÌNH KÈM VÍ DỤ MÃ HÓA MÀU - CỰC KỲ ĐẸP):
+    <div class="visual-block" style="padding:40px;">
+      <div class="formula-stack">
+        <span class="formula-pill pink">🎭 VAI TRÒ</span>
+        <span class="formula-operator">+</span>
+        <span class="formula-pill yellow">🌎 BỐI CẢNH</span>
+        <span class="formula-operator">+</span>
+        <span class="formula-pill green">🎯 NHIỆM VỤ</span>
+        <span class="formula-operator">+</span>
+        <span class="formula-pill blue">📐 ĐỊNH DẠNG</span>
+      </div>
+      <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.06); padding:24px; border-radius:16px; font-family:'Inter', sans-serif; font-size:1.25rem; line-height:1.7; text-align:left;">
+        <span style="color:#f472b6; font-weight:600;">"Đóng vai Chuyên gia UA Mobile Game.</span>
+        <span style="color:#fde047; font-weight:600;"> Chiến dịch US của tôi đang sụt ROAS 20%.</span>
+        <span style="color:#4ade80; font-weight:600;"> Hãy phân tích nguyên nhân và đề xuất 3 hành động.</span>
+        <span style="color:#38bdf8; font-weight:600;"> Trả về Bullet Points, mỗi điểm không quá 2 dòng."</span>
+      </div>
+    </div>
+
+    B18 — COMMAND HIGHLIGHT CAPSULE (HỘP LỆNH CHÚ Ý NỔI BẬT):
+    <div class="command-pill glow-card">
+      <span class="command-icon" style="font-size:2rem; filter:drop-shadow(0 0 8px #fde047);">🔑</span>
+      <div style="text-align:left;">"Tuyệt đối CHỈ sử dụng dữ liệu từ file này. Không tự suy diễn."</div>
+    </div>
+
+    B19 — NUMBERED STEP LIST (DANH SÁCH BƯỚC THỰC HÀNH CÓ SỐ TRÒN NỔI BẬT):
+    <div class="visual-block" style="padding:40px;">
+      <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🎮 THỰC HÀNH TẠI CHỖ</div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-circle">1</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Kéo thả file Data (CSV/Excel) vào khung chat</div>
+        </div>
+        <div class="step-item">
+          <div class="step-circle">2</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Dùng lệnh Trói buộc ở trên</div>
+        </div>
+        <div class="step-item">
+          <div class="step-circle">3</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Hỏi: "Tìm 2 ngày có chỉ số Drop-off cao nhất và nguyên nhân"</div>
+        </div>
+      </div>
+    </div>
+
+    B20 — BENTO 3X2 GRID (LƯỚI THƯ VIỆN BENTO 3 CỘT X 2 HÀNG):
+    <div class="bento-3x2">
+      <div class="bento-cell" style="border-top-color:#eab308; padding:20px;">
+        <div class="ic" style="font-size:2rem; margin-bottom:8px;">📊</div>
+        <div class="t" style="font-size:1.2rem; font-weight:700;">1. PHÂN TÍCH CAMPAIGN</div>
+        <div class="d" style="font-size:0.95rem; font-style:italic; opacity:0.85; line-height:1.4;">"Dựa trên file data, phân tích: Top 3 ROAS cao nhất..."</div>
+      </div>
+      <div class="bento-cell" style="border-top-color:#38bdf8; padding:20px;">
+        <div class="ic" style="font-size:2rem; margin-bottom:8px;">📝</div>
+        <div class="t" style="font-size:1.2rem; font-weight:700;">2. VIẾT AD COPY</div>
+        <div class="d" style="font-size:0.95rem; font-style:italic; opacity:0.85; line-height:1.4;">"Viết 5 Short Description (dưới 80 ký tự) và 5 Long..."</div>
+      </div>
+      <div class="bento-cell" style="border-top-color:#4ade80; padding:20px;">
+        <div class="ic" style="font-size:2rem; margin-bottom:8px;">🔍</div>
+        <div class="t" style="font-size:1.2rem; font-weight:700;">3. RESEARCH ĐỐI THỦ</div>
+        <div class="d" style="font-size:0.95rem; font-style:italic; opacity:0.85; line-height:1.4;">"Phân tích 5 game đối thủ: Core Loop, Monetization..."</div>
+      </div>
+      <div class="bento-cell" style="border-top-color:#f472b6; padding:20px;">
+        <div class="ic" style="font-size:2rem; margin-bottom:8px;">🎬</div>
+        <div class="t" style="font-size:1.2rem; font-weight:700;">4. REVIEW CREATIVE</div>
+        <div class="d" style="font-size:0.95rem; font-style:italic; opacity:0.85; line-height:1.4;">"Chấm điểm video ad (1-10): Hook 3s, Message, CTA..."</div>
+      </div>
+      <div class="bento-cell" style="border-top-color:#f59e0b; padding:20px;">
+        <div class="ic" style="font-size:2rem; margin-bottom:8px;">💡</div>
+        <div class="t" style="font-size:1.2rem; font-weight:700;">5. BRAINSTORM ANGLE</div>
+        <div class="d" style="font-size:0.95rem; font-style:italic; opacity:0.85; line-height:1.4;">"Cho 10 creative angle cho TikTok (15-30s). Mỗi angle..."</div>
+      </div>
+      <div class="bento-cell" style="border-top-color:#10b981; padding:20px;">
+        <div class="ic" style="font-size:2rem; margin-bottom:8px;">📈</div>
+        <div class="t" style="font-size:1.2rem; font-weight:700;">6. BÁO CÁO TUẦN</div>
+        <div class="d" style="font-size:0.95rem; font-style:italic; opacity:0.85; line-height:1.4;">"Viết Weekly UA Performance: Tổng quan, Top/Bottom..."</div>
+      </div>
+    </div>
+
+    KHÔNG ĐƯỢC để visual-col trống.
 
 ═══════════════════════════════════════
 TYPOGRAPHY & GLOWS (DÙNG sẵn):
 ═══════════════════════════════════════
-- .badge, .title-xl, .title-hero, .stat-hero, .grad-text, .glow-border, .glow-text
 
 ═══════════════════════════════════════
 HEAD BOILERPLATE (copy nguyên xi):
@@ -1580,6 +1806,30 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
   - Do có hiệu ứng viền phát sáng (box-shadow neon) rực rỡ, chúng ta đã set `overflow: visible` cho `.visual-block` và `.stat-list-card`. Tuyệt đối KHÔNG override lại thành `overflow: hidden` trên các card này, để ánh sáng viền không bị cắt cụt.
   - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
   - Với các con số thống kê hoặc chữ dài, tuyệt đối không lạm dụng các size chữ quá khổng lồ hoặc nhồi nhét quá nhiều chữ trong các khối hẹp để tránh chữ bị đè chèn lấp nhau.
+
+- ⌨️ HIỆU ỨNG CHỮ HOẠT HÌNH CAO CẤP (PREMIUM GSAP EFFECTS):
+  Hệ thống đã tích hợp sẵn hiệu ứng đánh chữ thông minh bằng thuộc tính HTML (bạn KHÔNG cần viết script):
+  • ⌨️ **Typewriter (Đánh chữ từng phím)**: Thêm thuộc tính `data-effect="typewriter"` vào thẻ chữ và chèn ngay sau nó con trỏ `<span class="cursor-blink">|</span>` để nhấp nháy đồng bộ tự động.
+    Ví dụ: `<h1 id="sN-title" class="title-xl grad-text" data-effect="typewriter">Tiêu đề scene</h1><span class="cursor-blink">|</span>`
+  • 🔄 **Word Rotation (Xoay từ khóa)**: Thêm `data-effect="word-rotate"` cùng danh sách từ cách nhau bằng dấu phẩy qua `data-words="từ_1,từ_2,từ_3"`.
+    Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
+  • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
+
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+  • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
+    * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
+    * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
+    * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
+  • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
+    * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
+    * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene (Ví dụ: nếu nói về GSAP thì phải có các thư viện thật như TweenLite, TweenMax, hoặc benchmark thật. Cấm bê nguyên văn placeholder "Benchmark 2024", "cost efficiency" của hệ thống vào).
+  • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
+  • **Đảm bảo Tương Phản & Độ Đọc Được của Chữ (Legibility & Contrast):**
+    * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
+    * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
+    * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
 
 ═══════ HTML TEMPLATE ═══════
 <!doctype html>
@@ -1901,15 +2151,19 @@ def build_user_prompt(req: CompositionRequest) -> str:
                 "\n  ⚠️ CHỌN 1 trong 4 TEMPLATE A/B/C/D ở system prompt (FULL-BLEED / MEGA-NUM / RETRO / BENTO HERO)."
                 "\n  ⚠️ TUYỆT ĐỐI không dùng .scene.split với info-col + 1 logo box nhỏ — quá đơn điệu, không gây WOW."
                 "\n  ⚠️ BẮT BUỘC kết hợp ÍT NHẤT 3 ambient decoratives: .aurora-glow + .animated-grid (hoặc .retro-grid hoặc .light-rays) + .ghost-text + .float-orb-lg."
+                "\n  ⚠️ CẤM ĐẶT DECORATIVES TRONG .visual-col hoặc .info-col: Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) PHẢI là con trực tiếp của thẻ .scene (ngay trước thẻ đóng </div> của .scene) làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ."
+                "\n  ⚠️ BẮT BUỘC dùng VISUAL pattern B14 (tech-card) HOẶC B13 (3-column glass cards) HOẶC B11 (stat-list) ở .visual-col để LẤP ĐẦY màn hình. CẤM TUYỆT ĐỐI bỏ trống .visual-col hoặc chỉ nhồi nhét badges tự do không theo pattern."
                 "\n  ⚠️ Title PHẢI dùng .title-hero.grad-text hoặc .mega-num cực to."
                 "\n  ⚠️ Có 2-3 .badge dạng tech tags (Edge AI · Privacy First · Real-time...) thay vì viết text dài."
                 "\n  ⚠️ Mục tiêu: 3 giây đầu cinematic AWWWARDS quality — KHÔNG mockup nháp."
             )
         elif not is_first and not s.imageAsset:
             lines.append(
-                "  🌌 SCENE NÀY (không ảnh) — BẮT BUỘC LẤP ĐẦY KHÔNG GIAN:"
+                "  🌌 SCENE NÀY (không ảnh) — BẮT BUỘC LẤP ĐẦY KHÔNG GIAN BẰNG KHỐI TRỰC QUAN:"
+                "\n  ⚠️ CẤM TUYỆT ĐỐI bỏ trống hoặc chỉ đặt ambient decoratives trong .visual-col. Bạn BẮT BUỘC phải chọn 1 visual pattern thực tế (từ B1 đến B15, B17 đến B20) và điền nội dung, số liệu thực tế dựa trên kịch bản (narration / visualDescription) của scene này. Không dùng các từ/số liệu placeholder mặc định không liên quan."
+                "\n  ⚠️ CẤM ĐẶT DECORATIVES TRONG .visual-col hoặc .info-col: Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) PHẢI là con trực tiếp của thẻ .scene (ngay trước thẻ đóng </div> của .scene) làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ."
                 "\n  ⚠️ Background PHẢI có 2-4 ambient decoratives (.float-orb-md/.aurora-glow/.animated-grid/.ghost-text/.particle-field/.y2k-sparkle)."
-                "\n  ⚠️ Visual-col dùng pattern phong phú (B1-B15) phù hợp với nội dung scene."
+                "\n  ⚠️ Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch."
                 "\n  ⚠️ Đa dạng layout — không lặp .split. Cân nhắc .centered/.hero/.magazine/.data tùy nội dung."
             )
 
@@ -1933,7 +2187,9 @@ def build_user_prompt(req: CompositionRequest) -> str:
 
         if is_last:
             lines.append(
-                "  📐 SCENE CUỐI — CHỐNG OVERFLOW BẮT BUỘC:"
+                "  📐 SCENE CUỐI — CHỐNG OVERFLOW & BẮT BUỘC ĐỘC ĐÁO:"
+                "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG. Cấm tuyệt đối chỉ nhồi ambient decoratives hay bỏ trống."
+                "\n  ⚠️ CẤM ĐẶT DECORATIVES TRONG .visual-col hoặc .info-col: Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) PHẢI là con trực tiếp của thẻ .scene (ngay trước thẻ đóng </div> của .scene) làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ."
                 "\n  ⚠️ Toàn bộ content visual-col PHẢI vừa trong khung 1920×1080 (chiều cao usable ~880px sau padding)."
                 "\n  ⚠️ Nếu có danh sách bullet/feature > 4 mục → CẮT XUỐNG tối đa 4 mục."
                 "\n  ⚠️ Padding visual-block ≤ 48px. Title trong card ≤ 2rem. Bullet ≤ 1.2rem."
@@ -1941,7 +2197,11 @@ def build_user_prompt(req: CompositionRequest) -> str:
             )
         cursor += s.duration
     lines.append(
-        f"\nSinh composition HTML hoàn chỉnh dài đúng {cursor} giây với {len(req.scenes)} scene như trên. "
+        f"\n⚠️ ĐẢM BẢO TƯƠNG PHẢN MÀU SẮC & ĐỘ ĐỌC ĐƯỢC CỰC CAO:"
+        f"\n  - Font chữ và phông nền phải tương phản rõ rệt. Chữ chính sử dụng var(--text1), chữ phụ sử dụng var(--text2). CẤM dùng màu chữ tối như đen/xám tối trên nền tối."
+        f"\n  - Nếu text nằm trên bất kỳ gradient hoặc element phát sáng nào, bắt buộc thêm text-shadow: 0 2px 8px rgba(0,0,0,0.9);"
+        f"\n  - Thiết kế xếp các khối ngăn nắp, đồng đều, đối xứng tuyệt đối không bị lệch dòng hay chồng chéo."
+        f"\n\nSinh composition HTML hoàn chỉnh dài đúng {cursor} giây với {len(req.scenes)} scene như trên. "
         f"Áp dụng theme {theme['name']} thật ấn tượng — palette accent={theme['accent']}, "
         f"vibe={theme['vibe']}. Mỗi scene phải có layout/visual khác nhau và animation cinematic."
     )
@@ -2103,7 +2363,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                 # Groq has hard caps:
                 # - llama-3.3-70b-versatile: 12000 TPM (input+output) — keep prompt small
                 # - llama-4-scout-17b: max_tokens ≤ 8192 — cap output
-                max_tok = 7800 if provider_name == "groq-fast" else 8000
+                max_tok = 8192
                 return {
                     "messages": [
                         {"role": "system", "content": sys_groq_premium},

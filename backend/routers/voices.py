@@ -19,6 +19,12 @@ DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
     # Microsoft Edge Premium Voices (Miễn phí & Không giới hạn)
     {"voice_id": "edge-vi-VN-NamMinhNeural", "name": "Nam Minh", "gender": "male", "description": "Giọng Nam Việt AI trầm ấm, tự nhiên — Microsoft Edge (Miễn phí, Không giới hạn)"},
     {"voice_id": "edge-vi-VN-HoaiMyNeural", "name": "Hoài My", "gender": "female", "description": "Giọng Nữ Việt AI mượt mà, truyền cảm — Microsoft Edge (Miễn phí, Không giới hạn)"},
+    # Gemini Premium AI Voices (Pinky API via OpenAI key)
+    {"voice_id": "gemini-2.5-flash-preview-tts:Puck", "name": "Gemini Puck", "gender": "male", "description": "Giọng Nam Premium ấm áp, cực kỳ tự nhiên — Google Gemini"},
+    {"voice_id": "gemini-2.5-flash-preview-tts:Aoede", "name": "Gemini Aoede", "gender": "female", "description": "Giọng Nữ Premium truyền cảm, mượt mà — Google Gemini"},
+    {"voice_id": "gemini-2.5-flash-preview-tts:Charon", "name": "Gemini Charon", "gender": "male", "description": "Giọng Nam Premium trầm sâu, trung thực — Google Gemini"},
+    {"voice_id": "gemini-2.5-flash-preview-tts:Fenrir", "name": "Gemini Fenrir", "gender": "male", "description": "Giọng Nam Premium mạnh mẽ, lôi cuốn — Google Gemini"},
+    {"voice_id": "gemini-2.5-flash-preview-tts:Kore", "name": "Gemini Kore", "gender": "female", "description": "Giọng Nữ Premium thanh thoát, êm dịu — Google Gemini"},
 ]
 
 
