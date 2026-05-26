@@ -221,6 +221,14 @@ def get_audio_duration_s(path: Path) -> float:
 _faster_whisper_model_cache: dict = {}   # module-level model cache (avoid re-downloading)
 
 
+# Rich vocabulary prompt to guide Whisper for technical terms and project names
+WHISPER_PROMPT = (
+    "hyperframes, Heygen, Heygen-com, Claude, Claude Code, Codex, Vite, React, "
+    "npx, skills, add, HTML, CSS, JavaScript, GSAP, keyframe, transition, overlay, "
+    "canvas, scene, narration, karaoke, techbeat"
+)
+
+
 def _transcribe_sync(wav_path: Path) -> list[dict]:
     """Run Whisper synchronously (called via asyncio.to_thread).
     Tries faster-whisper (tiny, auto compute_type) first, then openai-whisper, then [].
@@ -245,7 +253,7 @@ def _transcribe_sync(wav_path: Path) -> list[dict]:
                 raise RuntimeError("faster-whisper: could not load model with any compute_type")
             _faster_whisper_model_cache["model"] = loaded
         model = _faster_whisper_model_cache["model"]
-        segments, _ = model.transcribe(str(wav_path), language="vi", word_timestamps=True)
+        segments, _ = model.transcribe(str(wav_path), language="vi", word_timestamps=True, initial_prompt=WHISPER_PROMPT)
         words = []
         for seg in segments:
             if seg.words:
@@ -266,7 +274,7 @@ def _transcribe_sync(wav_path: Path) -> list[dict]:
     try:
         import whisper  # type: ignore
         model = whisper.load_model("tiny")
-        result = model.transcribe(str(wav_path), language="vi", word_timestamps=True, verbose=False)
+        result = model.transcribe(str(wav_path), language="vi", word_timestamps=True, verbose=False, initial_prompt=WHISPER_PROMPT)
         words = []
         for seg in result.get("segments", []):
             for w in seg.get("words", []):
@@ -306,6 +314,7 @@ async def _transcribe_openai_api(wav_path: Path) -> list[dict]:
             ("response_format",            (None, "verbose_json")),
             ("timestamp_granularities[]",  (None, "word")),
             ("timestamp_granularities[]",  (None, "segment")),
+            ("prompt",                     (None, WHISPER_PROMPT)),
         ]
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
@@ -377,6 +386,7 @@ async def _transcribe_groq_api(wav_path: Path) -> list[dict]:
             ("response_format",            (None, "verbose_json")),
             ("timestamp_granularities[]",  (None, "word")),
             ("timestamp_granularities[]",  (None, "segment")),
+            ("prompt",                     (None, WHISPER_PROMPT)),
         ]
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
