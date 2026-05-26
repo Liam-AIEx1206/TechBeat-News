@@ -10,11 +10,15 @@ from fastapi import APIRouter, HTTPException
 router = APIRouter()
 
 
-# Default ElevenLabs premade voices — accessible to every account, no need to add.
+# Default premade voices (ElevenLabs & Microsoft Edge AI)
 # (voice_id, name, gender, description)
 DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
-    {"voice_id": "pNInz6obpgDQGcFmaJgB", "name": "Adam",   "gender": "male",   "description": "Trầm, rõ, broadcast — multilingual, đọc tiếng Việt OK"},
-    {"voice_id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel", "gender": "female", "description": "Nữ ấm, rõ, nhịp đều — multilingual"},
+    # ElevenLabs Premade Voices
+    {"voice_id": "pNInz6obpgDQGcFmaJgB", "name": "Adam",   "gender": "male",   "description": "Trầm, rõ, broadcast — ElevenLabs, đọc tiếng Việt OK"},
+    {"voice_id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel", "gender": "female", "description": "Nữ ấm, rõ, nhịp đều — ElevenLabs"},
+    # Microsoft Edge Premium Voices (Miễn phí & Không giới hạn)
+    {"voice_id": "edge-vi-VN-NamMinhNeural", "name": "Nam Minh", "gender": "male", "description": "Giọng Nam Việt AI trầm ấm, tự nhiên — Microsoft Edge (Miễn phí, Không giới hạn)"},
+    {"voice_id": "edge-vi-VN-HoaiMyNeural", "name": "Hoài My", "gender": "female", "description": "Giọng Nữ Việt AI mượt mà, truyền cảm — Microsoft Edge (Miễn phí, Không giới hạn)"},
 ]
 
 
@@ -65,11 +69,12 @@ async def list_elevenlabs_voices() -> dict[str, Any]:
         except Exception as e:
             error = f"{type(e).__name__}: {e}"
 
+    # Smart Default Voice: If ElevenLabs key is missing, default to Microsoft Edge's Nam Minh voice.
+    # Otherwise, default to ElevenLabs' Adam voice.
+    resolved_default_voice = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB") if api_key else "edge-vi-VN-NamMinhNeural"
+
     return {
-        "default_voice_id": os.getenv(
-            "ELEVENLABS_VOICE_ID",
-            DEFAULT_PREMADE_VOICES[0]["voice_id"],
-        ),
+        "default_voice_id": resolved_default_voice,
         "premade": DEFAULT_PREMADE_VOICES,
         "custom": custom,
         "has_api_key": bool(api_key),
