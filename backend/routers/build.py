@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import os
 import re
@@ -41,6 +42,59 @@ def reset_elevenlabs_state() -> None:
     permanently disable ElevenLabs for the process."""
     global _elevenlabs_disabled
     _elevenlabs_disabled = False
+
+
+# -------- Microsoft Edge TTS (secondary fallback) --------
+# Default Vietnamese natural voice: vi-VN-NamMinhNeural (Male).
+# Other option: vi-VN-HoaiMyNeural (Female)
+DEFAULT_EDGE_VOICE = "vi-VN-NamMinhNeural"
+
+
+async def _edge_to_wav(text: str, target: Path, voice_name: str | None = None) -> bool:
+    """Try Microsoft Edge TTS → wav. Returns True on success, False to fall back.
+    Unlike ElevenLabs, Edge TTS is 100% free and has no rate limits, so it does
+    not require a global disable state flag.
+    """
+    try:
+        import edge_tts
+        voice = voice_name or os.getenv("EDGE_VOICE", DEFAULT_EDGE_VOICE)
+        
+        # Clean text: remove any HTML/XML tags and strip angle brackets
+        # Microsoft Edge TTS will fail with "No audio was received" if the text contains unescaped < or >
+        clean_text = re.sub(r"<[^>]*>", "", text)
+        clean_text = clean_text.replace("<", "").replace(">", "").strip()
+        
+        if not clean_text:
+            print("[tts] Edge TTS: Cleaned text is empty, skipping")
+            return False
+
+        # We save to a temporary mp3 file first, then convert it to wav via pydub
+        temp_mp3 = target.with_suffix(".mp3.tmp")
+        communicate = edge_tts.Communicate(clean_text, voice)
+        await communicate.save(str(temp_mp3))
+
+        if not temp_mp3.exists():
+            print(f"[tts] Edge TTS failed to save file: {temp_mp3}")
+            return False
+
+        try:
+            from pydub import AudioSegment
+            seg = AudioSegment.from_file(str(temp_mp3), format="mp3")
+            await asyncio.to_thread(seg.export, str(target), format="wav")
+            if temp_mp3.exists():
+                temp_mp3.unlink()
+            return True
+        except Exception as e:
+            print(f"[tts] Edge mp3->wav conversion failed, renaming to wav directly: {e}")
+            if temp_mp3.exists():
+                temp_mp3.rename(target)
+            return True
+
+    except Exception as e:
+        print(f"[tts] Edge TTS request failed: {e}")
+        return False
+
+
 
 
 async def _elevenlabs_to_wav(text: str, target: Path, voice_id: str | None = None) -> bool:
@@ -124,12 +178,31 @@ def _gtts_to_wav_sync(text: str, lang: str, target: Path) -> None:
 async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -> str:
     """
     Synthesize speech for `text` to `target`.
-    Order: ElevenLabs (if ELEVENLABS_API_KEY set) → gTTS fallback.
-    Returns the engine name actually used ('elevenlabs' or 'gtts').
+    Order: If voice_id starts with 'edge-', use Edge TTS directly.
+           Else: ElevenLabs (if ELEVENLABS_API_KEY set) → Edge TTS → gTTS fallback.
+    Returns the engine name actually used ('elevenlabs', 'edge', or 'gtts').
     """
+    # 1. Direct Edge TTS routing if explicitly selected in UI
+    if voice_id and voice_id.startswith("edge-"):
+        edge_voice = voice_id.replace("edge-", "")
+        if await _edge_to_wav(text, target, voice_name=edge_voice):
+            return "edge"
+        # If the specific Edge voice fails, try the default Edge voice
+        if await _edge_to_wav(text, target):
+            return "edge"
+        # If that fails, fallback to gTTS (never fall through to ElevenLabs with an edge voice ID!)
+        lang = os.getenv("TTS_LANG", "vi")
+        await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
+        return "gtts"
+
+    # 2. Standard pipeline (for ElevenLabs or unconfigured builds)
     if await _elevenlabs_to_wav(text, target, voice_id=voice_id):
         return "elevenlabs"
 
+    if await _edge_to_wav(text, target):
+        return "edge"
+
+    # 3. Fallback
     lang = os.getenv("TTS_LANG", "vi")
     await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
     return "gtts"
@@ -146,6 +219,14 @@ def get_audio_duration_s(path: Path) -> float:
 
 
 _faster_whisper_model_cache: dict = {}   # module-level model cache (avoid re-downloading)
+
+
+# Rich vocabulary prompt to guide Whisper for technical terms and project names
+WHISPER_PROMPT = (
+    "hyperframes, Heygen, Heygen-com, Claude, Claude Code, Codex, Vite, React, "
+    "npx, skills, add, HTML, CSS, JavaScript, GSAP, keyframe, transition, overlay, "
+    "canvas, scene, narration, karaoke, techbeat"
+)
 
 
 def _transcribe_sync(wav_path: Path) -> list[dict]:
@@ -172,7 +253,7 @@ def _transcribe_sync(wav_path: Path) -> list[dict]:
                 raise RuntimeError("faster-whisper: could not load model with any compute_type")
             _faster_whisper_model_cache["model"] = loaded
         model = _faster_whisper_model_cache["model"]
-        segments, _ = model.transcribe(str(wav_path), language="vi", word_timestamps=True)
+        segments, _ = model.transcribe(str(wav_path), language="vi", word_timestamps=True, initial_prompt=WHISPER_PROMPT)
         words = []
         for seg in segments:
             if seg.words:
@@ -193,7 +274,7 @@ def _transcribe_sync(wav_path: Path) -> list[dict]:
     try:
         import whisper  # type: ignore
         model = whisper.load_model("tiny")
-        result = model.transcribe(str(wav_path), language="vi", word_timestamps=True, verbose=False)
+        result = model.transcribe(str(wav_path), language="vi", word_timestamps=True, verbose=False, initial_prompt=WHISPER_PROMPT)
         words = []
         for seg in result.get("segments", []):
             for w in seg.get("words", []):
@@ -233,6 +314,7 @@ async def _transcribe_openai_api(wav_path: Path) -> list[dict]:
             ("response_format",            (None, "verbose_json")),
             ("timestamp_granularities[]",  (None, "word")),
             ("timestamp_granularities[]",  (None, "segment")),
+            ("prompt",                     (None, WHISPER_PROMPT)),
         ]
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
@@ -304,6 +386,7 @@ async def _transcribe_groq_api(wav_path: Path) -> list[dict]:
             ("response_format",            (None, "verbose_json")),
             ("timestamp_granularities[]",  (None, "word")),
             ("timestamp_granularities[]",  (None, "segment")),
+            ("prompt",                     (None, WHISPER_PROMPT)),
         ]
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
