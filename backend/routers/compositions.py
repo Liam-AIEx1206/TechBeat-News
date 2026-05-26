@@ -966,7 +966,7 @@ NGÔN NGỮ: tiếng Việt có dấu. Giữ nguyên văn narration/title/visual
 
 ═══════ BẠN CHỈ VIẾT ═══════
 - HTML structure (root, scene, audio).
-- <style> override TỐI ĐA 60 dòng (chỉ scene-specific tweaks).
+- <style> override TỐI ĐA 60 dòng (chỉ scene-specific tweaks & keyframe animations).
 - KHÔNG viết <script> chứa gsap.timeline (sẽ bị strip server-side).
 - KHÔNG redeclare CSS class đã có sẵn.
 
@@ -977,7 +977,7 @@ LAYOUT: .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visu
 TEXT: .badge, .title-xl, .title-hero, .subtitle, .body-text, .caption, .grad-text, .outline-text, .mega-num
 VISUAL BLOCKS: .visual-block, .img-frame, .img-caption, .terminal, .feat-grid, .feat-card, .compare, .tl-list, .tl-item, .quote-block, .quote-text, .stat-list, .stat-list-card, .chat-box, .chat-bubble, .agent-grid, .agent-card, .tech-card, .glass-card, .feat-row, .bento-grid, .bento-cell, .hero-stat-banner
 CHROME: .corner-bracket (tl/tr/bl/br), .top-line, .scene-num, .scanlines, .status-pill
-DECORATIVES (lấp đầy không gian): .float-orb-lg/.float-orb-md/.float-orb-sm, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .marquee-strip, .y2k-sparkle, .glow-orb
+DECORATIVES: .float-orb-lg/.float-orb-md/.float-orb-sm, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .marquee-strip, .y2k-sparkle, .glow-orb
 ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 
 🌌 LẤP ĐẦY KHÔNG GIAN — MỖI scene 2-5 decoratives (position:absolute):
@@ -985,6 +985,13 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
   • 1 .animated-grid/retro-grid/light-rays (texture)
   • 1 .ghost-text với thematic word (depth)
   • 2-3 .y2k-sparkle hoặc .float-orb-sm rải rác
+
+🎨 THẨM MỸ CAO CẤP & HOẠT ẢNH CSS (STYLE LIKE A PRO):
+- Tự do viết thêm các CSS keyframes tinh tế vào thẻ `<style>` để trang hoàng cho các visual block:
+  - `@keyframes pulse-soft {{ 0%, 100% {{ transform: scale(1); filter: drop-shadow(0 0 10px var(--glow)); }} 50% {{ transform: scale(1.03); filter: drop-shadow(0 0 25px var(--accent)); }} }}`
+  - `@keyframes shine-sweep {{ 0% {{ left: -100%; }} 100% {{ left: 100%; }} }}`
+  - Áp dụng các keyframe này qua animation class tùy biến của riêng bạn!
+- TẬN DỤNG hoàn hảo hệ màu CSS variables có sẵn: `var(--bg)`, `var(--bg2)`, `var(--surface)`, `var(--accent)`, `var(--accent2)`, `var(--accent3)`, `var(--text1)`, `var(--text2)`, `var(--glow)`.
 
 🎬 SCENE #1 BẮT BUỘC HERO CINEMATIC (không split logo nhỏ):
   Dùng .scene.hero hoặc .scene.centered + .hero-stat-banner + 3-4 decoratives + .title-hero.grad-text/.mega-num + 2-3 .badge stack.
@@ -1084,13 +1091,13 @@ def build_system_prompt_full(theme: dict, scene_count: int = 0) -> str:
 - Để tránh bị giới hạn 4096-token cắt cụt HTML giữa chừng (khiến hệ thống phải chèn placeholder basic cho các scene cuối 6, 7, 8):
   - Hãy viết mã HTML cực kỳ gọn gàng, súc tích.
   - KHÔNG viết custom CSS dài dòng hay lặp lại trong thẻ <style>. TẬN DỤNG 100% các class CSS tiện ích cực mạnh có sẵn trong framework (như .feat-grid, .terminal, .stat-list, .compare, .tl-list...).
-  - Chỉ viết tối đa 30 dòng CSS override trong <style> cho các hiệu ứng/keyframes thực sự đặc biệt.
+  - Chỉ viết tối đa 35 dòng CSS override trong <style> cho các hiệu ứng/keyframes thực sự đặc biệt.
   - Tránh viết comment code dài dòng hay giải thích bằng văn bản ở đầu/cuối response.
 
 ⚠️ NGÔN NGỮ: TIẾNG VIỆT có dấu đầy đủ. Giữ NGUYÊN VĂN narration/title/visualDescription. Tiếng Anh chỉ cho class CSS / comment / tên biến.
 
 ═══════════════════════════════════════
-🎯 BẠN CHỈ VIẾT: HTML structure + <style> override (≤30 dòng cho scene-specific). KHÔNG VIẾT <script> GSAP timeline.
+🎯 BẠN CHỈ VIẾT: HTML structure + <style> override (≤35 dòng cho scene-specific). KHÔNG VIẾT <script> GSAP timeline.
 ═══════════════════════════════════════
 
 HỆ THỐNG ĐÃ LO SẴN — KHÔNG CẦN BẠN VIẾT LẠI:
@@ -1123,6 +1130,24 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
   - `.shimmer-fast`: Tạo hiệu ứng vệt sáng quét ngang thời thượng trên card (rất hợp với `.stat-list-card`).
   - `.y2k-sparkle`: Chèn ngôi sao lấp lánh vector retro. Ví dụ chèn vào trong visual block: `<span class="y2k-sparkle" style="top: 15%; left: 10%;"></span>`. Lưu ý: Container chứa ngôi sao sparkle phải có `position: relative`!
   - `.terminal .cursor`: Dùng class `cursor` nhấp nháy cho terminal: `<div>$ <span class="cursor"></span></div>`.
+- 🎨 HƯỚNG DẪN VIẾT KEYFRAMES & CUSTOM STYLING (STYLE LIKE A PRO):
+  Để tạo hoạt ảnh và phong cách độc bản Awwwards cực đỉnh mà không cần dùng script, bạn BẮT BUỘC tự viết thêm các keyframe CSS tinh tế trong `<style>`:
+  • 🌟 **Neon Border Glow Sweep (Quét sáng viền neon)**:
+    `@keyframes neon-glow {{ 0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }} 50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }} }}`
+    (Áp dụng cho `.visual-block`, `.tech-card`, `.feat-card`).
+  • 🌊 **Aurora Grid Mesh Drift (Sóng ánh sáng trôi lững lờ)**:
+    `@keyframes aurora-mesh {{ 0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }} 50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }} }}`
+    (Áp dụng cho `.aurora-glow` hoặc các gradient orbs).
+  • 💫 **Y2K Retro Blink Stars (Ngôi sao lấp lánh kiểu Y2K)**:
+    `@keyframes star-blink {{ 0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }} 50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }} }}`
+    (Áp dụng cho `.y2k-sparkle` để tạo nhấp nháy retro).
+  • 🎨 **Kinetic Font Gradient (Chữ chuyển màu sống động)**:
+    `@keyframes grad-shift {{ 0% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} 100% {{ background-position: 0% 50%; }} }}`
+    (Cho chữ gradient có `background-size: 200% auto; animation: grad-shift 6s ease infinite`).
+- 💎 MỸ THUẬT THEME ĐẶC TRƯNG:
+  • *Cyberpunk / Sci-fi (cam, cyan, pulse)*: Dùng viền neon sắc nét, matrix scan lines, ascii elements, chat simulator, terminal code.
+  • *Luxury Magazine (gold-editorial)*: Dùng chữ serif drop-cap thanh lịch, border cực mỏng sang trọng (`1px solid rgba(234,179,8,0.15)`), chữ champagne gold gradient.
+  • *Calm Glassmorphism (aurora-mint, y2k-magenta)*: Dùng card bo tròn mềm mại (`border-radius:32px`), orbs lung linh, `backdrop-filter: blur(20px)`, nhịp thở `.breath` nhẹ nhàng.
 - 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
   - Do có hiệu ứng viền phát sáng (box-shadow neon) rực rỡ, chúng ta đã set `overflow: visible` cho `.visual-block` và `.stat-list-card`. Tuyệt đối KHÔNG override lại thành `overflow: hidden` trên các card này, để ánh sáng viền không bị cắt cụt.
   - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
@@ -1262,32 +1287,32 @@ QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
        <span class="scene-num">01</span>
      </div>
 
-6. 🌌 DECORATIVE DENSITY (CHỐNG SLIDE TRỐNG):
-   - MỖI scene BẮT BUỘC có 2-5 ambient decoratives lấp đầy không gian trống. KHÔNG được để vùng nào của 1920×1080 trống không.
-   - Vocabulary class CÓ SẴN (mix & match, dùng position:absolute):
-     • `.float-orb-lg/.float-orb-md/.float-orb-sm` — colored glow orbs (set top/left/bottom/right + background:var(--accentX))
-     • `.aurora-glow` — soft gradient blob drifting
-     • `.animated-grid` — subtle moving grid pattern
-     • `.retro-grid` — perspective synthwave floor
-     • `.light-rays` — radial beams từ top
-     • `.particle-field` — small stars pattern
-     • `.ghost-text` — large thematic word low opacity
-     • `.marquee-strip` ở bottom với .track > .pill — auto-scroll tags
-     • `.y2k-sparkle` × 4-6 rải rác
-     • `.glow-orb` custom với background:radial-gradient + filter:blur
-   - Quy tắc combine: 1 orb lớn (background presence) + 1 grid/rays (texture) + 1 ghost-text (depth) + 2-3 sparkles/small-orbs (accent details).
-   - TUYỆT ĐỐI không để 1 scene chỉ có nội dung text + 1 box nhỏ. Background phải có chiều sâu.
+ 6. 🌌 DECORATIVE DENSITY (CHỐNG SLIDE TRỐNG):
+    - MỖI scene BẮT BUỘC có 2-5 ambient decoratives lấp đầy không gian trống. KHÔNG được để vùng nào của 1920×1080 trống không.
+    - Vocabulary class CÓ SẴN (mix & match, dùng position:absolute):
+      • `.float-orb-lg/.float-orb-md/.float-orb-sm` — colored glow orbs (set top/left/bottom/right + background:var(--accentX))
+      • `.aurora-glow` — soft gradient blob drifting
+      • `.animated-grid` — subtle moving grid pattern
+      • `.retro-grid` — perspective synthwave floor
+      • `.light-rays` — radial beams từ top
+      • `.particle-field` — small stars pattern
+      • `.ghost-text` — large thematic word low opacity
+      • `.marquee-strip` ở bottom với .track > .pill — auto-scroll tags
+      • `.y2k-sparkle` × 4-6 rải rác
+      • `.glow-orb` custom với background:radial-gradient + filter:blur
+    - Quy tắc combine: 1 orb lớn (background presence) + 1 grid/rays (texture) + 1 ghost-text (depth) + 2-3 sparkles/small-orbs (accent details).
+    - TUYỆT ĐỐI không để 1 scene chỉ có nội dung text + 1 box nhỏ. Background phải có chiều sâu.
 
 7. 📐 CHỐNG CONTENT TRÀN KHUNG 1920×1080:
-   - Mọi content PHẢI vừa trong 880px (1080 - padding 100×2).
-   - Danh sách bullet ≤ 4 mục, 1 dòng/mục.
-   - Font-size trong visual-block: title ≤ 2rem, bullet ≤ 1.2rem.
-   - KHÔNG dùng padding > 60px cho .visual-block content dài.
+    - Mọi content PHẢI vừa trong 880px (1080 - padding 100×2).
+    - Danh sách bullet ≤ 4 mục, 1 dòng/mục.
+    - Font-size trong visual-block: title ≤ 2rem, bullet ≤ 1.2rem.
+    - KHÔNG dùng padding > 60px cho .visual-block content dài.
 
 8. 🎯 TEXT TRONG INFO-COL — CỰC GỌN (vì phụ đề karaoke đã hiển thị narration):
-   - sN-subtitle ≤ 8 chữ (cụm danh từ, KHÔNG phải câu)
-   - sN-desc ≤ 12 chữ (tagline metadata, hoặc badge stack với 3 tag)
-   - TUYỆT ĐỐI KHÔNG copy narration. Dồn chi tiết vào visual-col.
+    - sN-subtitle ≤ 8 chữ (cụm danh từ, KHÔNG phải câu)
+    - sN-desc ≤ 12 chữ (tagline metadata, hoặc badge stack với 3 tag)
+    - TUYỆT ĐỐI KHÔNG copy narration. Dồn chi tiết vào visual-col.
 
 ═══════════════════════════════════════
 🎨 VISUAL-COL — RICHE BẮT BUỘC (AWWWARDS GRADE)
@@ -1299,7 +1324,7 @@ A) NẾU có IllustrationImage (assets/sceneN.jpg):
      <span class="img-caption">{{caption tiếng Việt mô tả ảnh}}</span>
    </div>
 
-B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KHÔNG ĐƯỢC ĐỂ TRỐNG:
+B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KHÔNG ĐƯỢC DE TRỐNG:
 
    B1 — BIG STAT CARD:
    <div class="visual-block" style="text-align:center;padding:50px;">
@@ -1471,7 +1496,7 @@ NHẮC CUỐI:
 - Title quan trọng có .grad-text hoặc .outline-text.
 - KHÔNG dùng Date.now / setTimeout / Math.random / fetch / repeat:-1.
 - TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
-- TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
+- ⚠️ TUYỆT ĐỐI KHÔNG ĐƯỢC định nghĩa lại hoặc override class `.scanlines` trong thẻ `<style>` dưới bất kỳ hình thức nào. Việc tự ý định nghĩa `.scanlines` sẽ tạo ra một lưới caro màu xám đè lên toàn bộ video, gây lỗi "mất nền" / màn hình nhiễu vô cùng xấu xí. Hãy để yên `.scanlines` mặc định của hệ thống.
 - TUYỆT ĐỐI tạo ĐỦ N scene "scene1"…"sceneN". Đếm trước khi output.
 
 ⚠️ QUY TẮC ĐỌC ĐƯỢC (CONTRAST & FONT SIZE) — VI PHẠM = VIDEO THẤT BẠI:
@@ -1533,6 +1558,24 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
   - `.shimmer-fast`: Tạo hiệu ứng vệt sáng quét ngang thời thượng trên card (rất hợp với `.stat-list-card`).
   - `.y2k-sparkle`: Chèn ngôi sao lấp lánh vector retro. Ví dụ chèn vào trong visual block: `<span class="y2k-sparkle" style="top: 15%; left: 10%;"></span>`. Lưu ý: Container chứa ngôi sao sparkle phải có `position: relative`!
   - `.terminal .cursor`: Dùng class `cursor` nhấp nháy cho terminal: `<div>$ <span class="cursor"></span></div>`.
+- 🎨 HƯỚNG DẪN VIẾT KEYFRAMES & CUSTOM STYLING (STYLE LIKE A PRO):
+  Để tạo hoạt ảnh và phong cách độc bản Awwwards cực đỉnh mà không cần dùng script, bạn BẮT BUỘC tự viết thêm các keyframe CSS tinh tế trong `<style>` của bạn:
+  • 🌟 **Neon Border Glow Sweep (Quét sáng viền neon)**:
+    `@keyframes neon-glow {{ 0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }} 50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }} }}`
+    (Áp dụng cho `.visual-block`, `.tech-card`, `.feat-card`).
+  • 🌊 **Aurora Grid Mesh Drift (Sóng ánh sáng trôi lững lờ)**:
+    `@keyframes aurora-mesh {{ 0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }} 50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }} }}`
+    (Áp dụng cho `.aurora-glow` hoặc các gradient orbs).
+  • 💫 **Y2K Retro Blink Stars (Ngôi sao lấp lánh kiểu Y2K)**:
+    `@keyframes star-blink {{ 0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }} 50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }} }}`
+    (Áp dụng cho `.y2k-sparkle` để tạo nhấp nháy retro).
+  • 🎨 **Kinetic Font Gradient (Chữ chuyển màu sống động)**:
+    `@keyframes grad-shift {{ 0% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} 100% {{ background-position: 0% 50%; }} }}`
+    (Cho chữ gradient có `background-size: 200% auto; animation: grad-shift 6s ease infinite`).
+- 💎 MỸ THUẬT THEME ĐẶC TRƯNG:
+  • *Cyberpunk / Sci-fi (cam, cyan, pulse)*: Dùng viền neon sắc nét, matrix scan lines, ascii elements, chat simulator, terminal code.
+  • *Luxury Magazine (gold-editorial)*: Dùng chữ serif drop-cap thanh lịch, border cực mỏng sang trọng (`1px solid rgba(234,179,8,0.15)`), chữ champagne gold gradient.
+  • *Calm Glassmorphism (aurora-mint, y2k-magenta)*: Dùng card bo tròn mềm mại (`border-radius:32px`), orbs lung linh, `backdrop-filter: blur(20px)`, nhịp thở `.breath` nhẹ nhàng.
 - 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
   - Do có hiệu ứng viền phát sáng (box-shadow neon) rực rỡ, chúng ta đã set `overflow: visible` cho `.visual-block` và `.stat-list-card`. Tuyệt đối KHÔNG override lại thành `overflow: hidden` trên các card này, để ánh sáng viền không bị cắt cụt.
   - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
@@ -1749,7 +1792,7 @@ B15 MULTI-AGENT GRID COORDINATOR (LƯỚI 2X2 PHỐI HỢP CÁC AGENT):
 - KHÔNG dùng Date.now / setTimeout / Math.random / fetch.
 - KHÔNG redeclare CSS class đã có sẵn.
 - TUYỆT ĐỐI không dùng repeating-linear-gradient diagonal/angled stripes cho background của .scene, #root, body — chỉ dùng cho decorative nhỏ (border, badge).
-- TUYỆT ĐỐI không override class .scanlines bằng màu sắc rực rỡ có opacity lớn (như var(--accent) 1px, transparent 2px), vì sẽ gây nhòe màn hình, rung giật và Moiré effect. Hãy sử dụng .scanlines mặc định vô cùng tinh tế của hệ thống.
+- ⚠️ TUYỆT ĐỐI KHÔNG ĐƯỢC định nghĩa lại hoặc override class `.scanlines` trong thẻ `<style>` dưới bất kỳ hình thức nào. Việc tự ý định nghĩa `.scanlines` sẽ tạo ra một lưới caro màu xám đè lên toàn bộ video, gây lỗi "mất nền" / màn hình nhiễu vô cùng xấu xí. Hãy để yên `.scanlines` mặc định của hệ thống.
 - OUTPUT: chỉ HTML từ <!doctype html> đến </html>. KHÔNG markdown fence."""
 
 
@@ -1924,6 +1967,12 @@ def inject_base_css(html: str, theme: dict) -> str:
     component classes — those live here. Idempotent: a marker comment guards
     against double-injection if the LLM happens to copy the framework anyway.
     """
+    # ── Neutralize any illegal .scanlines overrides written by the LLM ──
+    def _repl_style(m):
+        sanitized = re.sub(r'\.scanlines\b', '.scanlines-disabled-by-system', m.group(1))
+        return f"<style>{sanitized}</style>"
+    html = re.sub(r'<style\b[^>]*>(.*?)</style>', _repl_style, html, flags=re.DOTALL | re.IGNORECASE)
+
     if _BASE_CSS_MARKER in html:
         return html
     block = f"<style>\n{_BASE_CSS_MARKER}\n{render_base_css(theme)}\n</style>\n"

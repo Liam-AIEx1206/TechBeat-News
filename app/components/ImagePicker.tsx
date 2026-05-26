@@ -86,7 +86,12 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
     }
     setError("");
     const reader = new FileReader();
-    reader.onload = (e) => setUploadPreview(e.target?.result as string);
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setUploadPreview(result);
+      onPick(result);
+      onClose();
+    };
     reader.readAsDataURL(file);
   }
 
@@ -227,7 +232,11 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                     return (
                       <button
                         key={r.image + i}
-                        onClick={() => setSearchSelected(r)}
+                        onClick={() => {
+                          setSearchSelected(r);
+                          onPick(r.image);
+                          onClose();
+                        }}
                         className="group relative aspect-square rounded-xl overflow-hidden transition-all"
                         style={{
                           background: "var(--bg-2)",
