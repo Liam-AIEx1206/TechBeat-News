@@ -5,6 +5,13 @@ import os
 import re
 from pathlib import Path
 
+# Tự động dọn dẹp các biến môi trường proxy lỗi/placeholder để tránh làm hỏng kết nối của các thư viện (httpx, aiohttp, requests)
+for var in ["HTTP_PROXY", "HTTPS_PROXY", "EDGE_TTS_PROXY", "http_proxy", "https_proxy"]:
+    val = os.getenv(var)
+    if val and ("your-proxy-ip" in val or "username:password" in val or not val.strip()):
+        print(f"[system] Phát hiện và dọn dẹp proxy lỗi trong môi trường: {var}={val}")
+        os.environ.pop(var, None)
+
 import httpx
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -229,7 +236,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
         }],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
-            "temperature": 0.0,
+            "temperature": 0.3,
             "speechConfig": {
                 "voiceConfig": {
                     "prebuiltVoiceConfig": {
@@ -256,7 +263,10 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
                     break
             
             if not b64_audio:
-                print("[tts] Gemini TTS: Could not find audio inlineData in response.")
+                candidate = res_json.get("candidates", [{}])[0]
+                finish_reason = candidate.get("finishReason")
+                safety_ratings = candidate.get("safetyRatings", [])
+                print(f"[tts] Gemini TTS: Could not find audio inlineData. finishReason: {finish_reason}, safetyRatings: {safety_ratings}")
                 return False
             
             audio_bytes = base64.b64decode(b64_audio)
