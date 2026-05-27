@@ -45,7 +45,7 @@ export default function Home() {
     setStage(next);
   }
 
-  async function generateScenes(content: ExtractedContent) {
+  async function generateScenes(content: ExtractedContent & { videoDuration?: number | null }) {
     go("generating");
     setError("");
     setStreamBuffer("");
@@ -59,7 +59,11 @@ export default function Home() {
       const res = await fetch(`${API}/generate-scenes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: content.text, title: content.title }),
+        body: JSON.stringify({
+          content: content.text,
+          title: content.title,
+          videoDuration: content.videoDuration,
+        }),
         signal: abort.signal,
       });
       if (!res.ok) {

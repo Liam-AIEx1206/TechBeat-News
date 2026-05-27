@@ -3,7 +3,7 @@
 import { useState, useRef, DragEvent } from "react";
 
 interface Props {
-  onExtracted: (content: { title: string; text: string; source: string }) => void;
+  onExtracted: (content: { title: string; text: string; source: string; videoDuration?: number | null }) => void;
   isLoading: boolean;
   setIsLoading: (v: boolean) => void;
   setError: (v: string) => void;
@@ -13,6 +13,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
   const [url, setUrl]         = useState("");
   const [dragging, setDragging] = useState(false);
   const [focused, setFocused]   = useState(false);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -25,7 +26,8 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
         body: JSON.stringify({ url: url.trim() }),
       });
       if (!res.ok) throw new Error((await res.json()).detail ?? "Trích xuất thất bại");
-      onExtracted(await res.json());
+      const data = await res.json();
+      onExtracted({ ...data, videoDuration });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể trích xuất URL");
     } finally { setIsLoading(false); }
@@ -37,7 +39,8 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
       const form = new FormData(); form.append("file", file);
       const res = await fetch(`${API}/extract/file`, { method: "POST", body: form });
       if (!res.ok) throw new Error((await res.json()).detail ?? "Trích xuất thất bại");
-      onExtracted(await res.json());
+      const data = await res.json();
+      onExtracted({ ...data, videoDuration });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể trích xuất file");
     } finally { setIsLoading(false); }
@@ -51,6 +54,72 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* ── Video Duration Selector — premium design ── */}
+      <div>
+        <div style={{
+          fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
+          textTransform: "uppercase", color: "var(--accent2)",
+          marginBottom: 10, display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <span style={{ width: 20, height: 1, background: "var(--accent)", display: "inline-block" }} />
+          ⏱️ Chọn thời lượng video
+        </div>
+        
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 10,
+          background: "rgba(255,255,255,0.03)",
+          padding: 6,
+          borderRadius: "var(--r-lg)",
+          border: "1px solid var(--gray-3)",
+        }}>
+          {[
+            { label: "Tự động", val: null },
+            { label: "1 Phút", val: 60 },
+            { label: "2 Phút", val: 120 },
+            { label: "3 Phút", val: 180 },
+          ].map((opt) => {
+            const active = videoDuration === opt.val;
+            return (
+              <button
+                key={opt.label}
+                onClick={() => setVideoDuration(opt.val)}
+                disabled={isLoading}
+                style={{
+                  padding: "10px 6px",
+                  borderRadius: "calc(var(--r-lg) - 4px)",
+                  background: active
+                    ? "linear-gradient(135deg, #f97316, #ea580c)"
+                    : "transparent",
+                  color: active ? "#000000" : "var(--gray-5)",
+                  border: "none",
+                  fontSize: 12,
+                  fontWeight: active ? 800 : 600,
+                  cursor: "none",
+                  transition: "all 0.25s var(--ease-out)",
+                  boxShadow: active ? "0 4px 12px rgba(249,115,22,0.2)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active && !isLoading) {
+                    e.currentTarget.style.color = "var(--white)";
+                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.color = "var(--gray-5)";
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── URL input — bright, prominent ── */}
       <div>

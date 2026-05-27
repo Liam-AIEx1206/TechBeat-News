@@ -1046,7 +1046,7 @@ def patch_html_timing(
       }}
       // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
       gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
-      gsap.set(el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .visual-col > *"), {{ opacity: 0 }});
+      gsap.set(el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)"), {{ opacity: 0 }});
       
       // Preset ambient elements to opacity:0 so they fade in cleanly and deterministically
       gsap.set(el.querySelectorAll(".aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .float-orb-lg, .float-orb-md, .float-orb-sm, .y2k-sparkle, .glow-orb, .marquee-strip"), {{ opacity: 0 }});
@@ -1247,11 +1247,10 @@ def patch_html_timing(
           s + 0.18);
       }}
 
-      // 2. Query all visual blocks in document order to animate them dynamically based on speech/subtitles
       var blockSelectors = [
         ".bento-cell", ".feat-card", ".stat-list-card", ".chat-bubble",
         ".tl-item", ".agent-card", ".tech-card", ".compare .col", ".visual-block",
-        ".step-item", ".formula-pill", ".command-pill",
+        ".step-item", ".formula-pill", ".command-pill", ".glass-card",
         ".visual-col > *:not(.stat-list):not(.feat-row):not(.bento-grid):not(.bento-3x2):not(.agent-grid):not(.compare):not(.step-list):not(.formula-stack)"
       ];
       var blocks = [];

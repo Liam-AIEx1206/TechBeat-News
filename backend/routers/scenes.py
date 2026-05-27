@@ -99,18 +99,26 @@ Chỉ trả về JSON hợp lệ, không markdown fence, không giải thích.
 class ScenesRequest(BaseModel):
     content: str
     title: str
+    videoDuration: int | None = None
 
 
 def sse(data: dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-async def stream_scenes(content: str, title: str):
+async def stream_scenes(content: str, title: str, video_duration: int | None = None):
     full_text = ""
     groq_max = int(os.getenv("GROQ_MAX_SCENES", "5"))
 
     try:
         prompt = f"Tạo kế hoạch scene video.\n\nTiêu đề: {title}\n\nNội dung:\n{content}"
+        if video_duration:
+            prompt += (
+                f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT VỀ THỜI LƯỢNG (BẮT BUỘC): "
+                f"Hãy thiết kế kế hoạch video có tổng thời lượng (totalDuration) của tất cả các scene cộng lại khớp với target duration là {video_duration} giây. "
+                f"Phân bổ số lượng scene và thời lượng mỗi scene hợp lý để tổng totalDuration đúng {video_duration} giây. "
+                f"Ví dụ: 1 phút = khoảng 3-4 scene (mỗi scene 15-20s, tổng 60s); 2 phút = khoảng 5-7 scene (tổng 120s); 3 phút = khoảng 8-10 scene (tổng 180s)."
+            )
 
         def _kwargs(provider_name: str) -> dict:
             if provider_name in ("groq", "groq-fast"):
@@ -167,7 +175,7 @@ async def stream_scenes(content: str, title: str):
 @router.post("/generate-scenes")
 async def generate_scenes(body: ScenesRequest):
     return StreamingResponse(
-        stream_scenes(body.content, body.title),
+        stream_scenes(body.content, body.title, body.videoDuration),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
