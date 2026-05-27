@@ -20,6 +20,27 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Trạng thái từng scene trong quá trình gen tuần tự
 type SceneGenStatus = "pending" | "generating" | "done" | "error";
 
+function patchThemeInHtml(html: string, newThemeId: ThemeId): string {
+  const newTheme = getTheme(newThemeId);
+  const rootRegex = /:root\s*\{([^}]*)\}/i;
+  const match = html.match(rootRegex);
+  if (match) {
+    const newRootBlock = `:root {
+  --bg: ${newTheme.bg};
+  --bg2: ${newTheme.bg2};
+  --surface: ${newTheme.surface};
+  --accent: ${newTheme.accent};
+  --accent2: ${newTheme.accent2};
+  --accent3: ${newTheme.accent3};
+  --text1: ${newTheme.text1};
+  --text2: ${newTheme.text2};
+  --glow: ${newTheme.accent}55;
+}`;
+    return html.replace(rootRegex, newRootBlock);
+  }
+  return html;
+}
+
 export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: Props) {
   const themeId: ThemeId = scenePlan.theme ?? DEFAULT_THEME;
   const theme = getTheme(themeId);
@@ -30,10 +51,27 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
   // ── Gen step-by-step state ──────────────────────────────────────────
   // sceneStatuses[i] = trạng thái của scene i (0-based)
   const [sceneStatuses, setSceneStatuses] = useState<SceneGenStatus[]>(() =>
-    scenePlan.scenes.map(() => "pending")
+    scenePlan.scenes.map((_, i) => {
+      const hasScene = scenePlan.compositionHtml && (
+        scenePlan.compositionHtml.includes(`id="scene${i + 1}"`) ||
+        scenePlan.compositionHtml.includes(`id='scene${i + 1}'`) ||
+        scenePlan.compositionHtml.includes(`id=scene${i + 1}`)
+      );
+      return hasScene ? "done" : "pending";
+    })
   );
   // Số scene đã gen xong (để tính tiến độ)
-  const [genedCount, setGenedCount] = useState(0);
+  const [genedCount, setGenedCount] = useState<number>(() => {
+    if (!scenePlan.compositionHtml) return 0;
+    return scenePlan.scenes.filter((_, i) => {
+      const html = scenePlan.compositionHtml;
+      return html && (
+        html.includes(`id="scene${i + 1}"`) ||
+        html.includes(`id='scene${i + 1}'`) ||
+        html.includes(`id=scene${i + 1}`)
+      );
+    }).length;
+  });
   // Đang gen scene nào? null = không gen
   const [genningIdx, setGenningIdx] = useState<number | null>(null);
   // Error message
@@ -78,6 +116,21 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       setIsAutoGen(false);
       autoGenRef.current = false;
       prevContextRef.current = { layout: null, visual_pattern: null, used_layouts: [], used_patterns: [] };
+    } else {
+      setSceneStatuses(prev => {
+        return scenePlan.scenes.map((_, i) => {
+          const hasScene = html.includes(`id="scene${i + 1}"`) ||
+                           html.includes(`id='scene${i + 1}'`) ||
+                           html.includes(`id=scene${i + 1}`);
+          return hasScene ? "done" : prev[i] === "generating" ? "generating" : "pending";
+        });
+      });
+      const count = scenePlan.scenes.filter((_, i) => {
+        return html.includes(`id="scene${i + 1}"`) ||
+               html.includes(`id='scene${i + 1}'`) ||
+               html.includes(`id=scene${i + 1}`);
+      }).length;
+      setGenedCount(count);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [html]);
@@ -240,7 +293,15 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
 
   function changeTheme(id: ThemeId) {
     if (id === scenePlan.theme) return;
-    setScenePlan({ ...scenePlan, theme: id, compositionHtml: undefined, sceneRegenFlags: scenePlan.scenes.map(() => false) });
+    let newHtml = scenePlan.compositionHtml;
+    if (newHtml) {
+      newHtml = patchThemeInHtml(newHtml, id);
+    }
+    setScenePlan({
+      ...scenePlan,
+      theme: id,
+      compositionHtml: newHtml,
+    });
   }
 
   function setScene(idx: number, patch: Partial<Scene>) {
@@ -815,7 +876,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
             <div className="hero-eyebrow" style={{ fontSize: 10, marginBottom: 12 }}>Theme video</div>
             <ThemePicker value={themeId} onChange={changeTheme} />
             <p style={{ fontSize: 10, color: "var(--gray-5)", marginTop: 10 }}>
-              Đổi theme sẽ regen toàn bộ HTML.
+              Đổi theme sẽ cập nhật trực tiếp màu sắc giao diện mà không cần gen lại.
             </p>
           </div>
           <div style={{

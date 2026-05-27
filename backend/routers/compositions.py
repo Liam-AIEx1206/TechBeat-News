@@ -172,7 +172,7 @@ body {{
   position: relative; z-index: 10;
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
-.scene.hero .layout     {{ grid-template-columns: 1fr; justify-items: start; }}
+.scene.hero .layout     {{ grid-template-columns: 1.1fr 0.9fr; }}
 .scene.centered .layout {{ grid-template-columns: 1fr; justify-items: center; text-align: center; }}
 /* Bug2 fix: cascade text-align into info-col and all its direct children so body-text/caption inherit centering */
 .scene.centered .info-col {{ align-items: center; text-align: center; }}
@@ -2282,6 +2282,9 @@ def fallback_scene_html(s: ScenePayload, theme: dict) -> str:
     emojis = ["✨", "⚡", "🚀", "💫", "🎯", "🔥", "💎", "🌟"]
     emoji = emojis[(n - 1) % len(emojis)]
     
+    title_class = "title-hero" if n == 1 else "title-xl"
+    title_style = ' style="font-weight: 900 !important;"' if n == 1 else ""
+
     if s.imageAsset:
         visual_col_content = f'<div class="img-frame"><img src="{s.imageAsset}" alt=""><span class="img-caption">{s.title[:10]}</span></div>'
         layout = "split"
@@ -2296,7 +2299,7 @@ def fallback_scene_html(s: ScenePayload, theme: dict) -> str:
     <div class="layout">
       <div class="info-col">
         <div id="s{n}-badge" class="badge">{emoji} PHẦN {n}</div>
-        <h1 id="s{n}-title" class="title-xl grad-text">{s.title}</h1>
+        <h1 id="s{n}-title" class="{title_class} grad-text"{title_style} data-effect="typewriter">{s.title}</h1><span class="cursor-blink">|</span>
         <p id="s{n}-subtitle" class="subtitle">{s.title[:20]}...</p>
         <p id="s{n}-desc" class="body-text">{s.narration[:100]}...</p>
       </div>
@@ -2312,6 +2315,9 @@ def fallback_scene_html(s: ScenePayload, theme: dict) -> str:
 
 
 def build_system_prompt_single_scene(theme: dict, scene_index: int, total_scenes: int, previous_context: dict) -> str:
+    title_class = "title-hero" if scene_index == 1 else "title-xl"
+    title_style = ' style="font-weight: 900 !important;"' if scene_index == 1 else ""
+
     prev_info = ""
     if scene_index > 1:
         prev_layout = previous_context.get("layout") or "Chưa rõ"
@@ -2323,9 +2329,8 @@ def build_system_prompt_single_scene(theme: dict, scene_index: int, total_scenes
             f"\n  👉 BẮT BUỘC KHÔNG LẶP LẠI: Bạn phải chọn layout và visual pattern KHÁC cho scene này để giữ sự đa dạng."
         )
 
-    return f"""Bạn là chuyên gia thiết kế giao diện UI/UX AWWWARDS PRO MAX — sinh ra HTML slide HyperFrames cực kỳ đẹp và cinematic cho theme **{theme['name']}**.
-
-Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class="scene ...">` cho Scene {scene_index} (trong tổng số {total_scenes} scene).
+    return f"""Bạn là chuyên gia thiết kế giao diện AWWWARDS & UI/UX PRO MAX — sinh ra HTML cinematic, lung linh, gây ấn tượng WOW tuyệt đối.
+Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class="scene ...">` cho Scene {scene_index} (trong tổng số {total_scenes} scene) cho theme **{theme['name']}**.
 
 ⚠️ QUY TẮC PHẢN HỒI (RẤT QUAN TRỌNG):
 - CHỈ trả về duy nhất 1 block HTML bắt đầu bằng `<div class="scene LAYOUT"` và kết thúc bằng `</div>` tương ứng của scene đó.
@@ -2333,6 +2338,9 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
 - Tuyệt đối KHÔNG trả về code Javascript hay script GSAP timeline (như `<script>gsap.timeline...</script>`).
 - Tuyệt đối KHÔNG viết giải thích dài dòng bằng văn bản, chỉ trả về code HTML.
 - KHÔNG dùng markdown code fences (như ```html) nếu có thể, hoặc nếu dùng thì chỉ bọc duy nhất block HTML đó.
+- Bạn có thể viết tối đa 25 dòng CSS override trong thẻ `<style>` đặt NGAY BÊN TRONG thẻ `.scene` để tạo hiệu ứng/keyframes đặc biệt chỉ cho riêng scene này.
+
+⚠️ NGÔN NGỮ: TIẾNG VIỆT có dấu đầy đủ. Giữ NGUYÊN VĂN narration/title/visualDescription. Tiếng Anh chỉ cho class CSS / comment / tên biến.
 
 ⚠️ THÔNG TIN THEME — {theme['name'].upper()}
 - VIBE: {theme['vibe']}
@@ -2341,68 +2349,285 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
   `var(--bg)`, `var(--bg2)`, `var(--surface)`, `var(--accent)`, `var(--accent2)`, `var(--accent3)`, `var(--text1)`, `var(--text2)`, `var(--glow)`
 {prev_info}
 
-⚠️ HƯỚNG DẪN THIẾT KẾ LAYOUT & BỐ CỤC CHUYÊN NGHIỆP:
-- Chọn 1 trong các LAYOUT phù hợp cho slide này:
-  • `.scene.split` (50/50): text trái, visual phải (phù hợp khi có ảnh minh họa).
-  • `.scene.centered` (1 cột): text ở giữa, visual ở dưới (CẤM dùng visual-col và info-col lồng nhau).
-  • `.scene.hero` (tiêu đề siêu to căn trái, hợp với intro/outro).
-  • `.scene.magazine` (7:5): text trái rộng, visual phải hẹp.
-  • `.scene.data` (1:1.4): text hẹp trái, visual rộng phải.
+═══════════════════════════════════════
+✨ HIỆU ỨNG ĐỘNG & BIỆN PHÁP CHỐNG ĐÈ CHỮ / CLIPPING (QUAN TRỌNG):
+═══════════════════════════════════════
+- ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
+  • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
+  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung, CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge hoặc bị cắt xén ở trên.
+  • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
 
-- Cấu trúc chuẩn bên trong `.layout`:
-  ```html
-  <div class="scene LAYOUT" id="scene{scene_index}">
-    <!-- 2-4 background decoratives (aurora-glow, float-orb, grid...) đặt ở đây làm nền -->
-    <div class="layout">
-      <div class="info-col">
-        <div id="s{scene_index}-badge" class="badge">PHẦN {scene_index}</div>
-        <h1 id="s{scene_index}-title" class="title-xl grad-text">{{Tiêu đề}}</h1>
-        <p id="s{scene_index}-subtitle" class="subtitle">{{Phụ đề ngắn ≤ 8 từ}}</p>
-        <p id="s{scene_index}-desc" class="body-text">{{Tagline cực ngắn ≤ 12 từ — KHÔNG copy narration}}</p>
-      </div>
-      <div class="visual-col">
-        <!-- Visual block / content card ở đây -->
-      </div>
-    </div>
-    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-    <div class="top-line"></div>
-    <span class="scene-num">{scene_index:02d}</span>
-  </div>
-  ```
+- Chúng ta sử dụng framework có sẵn các class động cực kỳ lung linh:
+  - `.breath`: Tạo chuyển động bay bổng, nhịp thở êm ái. Hãy áp dụng cho các card như `.visual-block`, `.terminal`, `.feat-card`, `.compare`, `.quote-block` hoặc các ảnh `.img-frame`.
+  - `.glow-card`: Viền neon lung linh tỏa sáng rực rỡ, kèm hiệu ứng 3D co giãn phóng to khi rê chuột cực kỳ mượt mà.
+  - `.shimmer-fast`: Tạo hiệu ứng vệt sáng quét ngang thời thượng trên card (rất hợp với `.stat-list-card`).
+  - `.y2k-sparkle`: Chèn ngôi sao lấp lánh vector retro. Ví dụ chèn vào trong visual block: `<span class="y2k-sparkle" style="top: 15%; left: 10%;"></span>`. Lưu ý: Container chứa ngôi sao sparkle phải có `position: relative`!
+  - `.terminal .cursor`: Dùng class `cursor` nhấp nháy cho terminal: `<div>$ <span class="cursor"></span></div>`.
 
-- ⚠️ QUY TẮC TUYỆT ĐỐI VỀ BACKGROUND DECORATIVES:
-  Tất cả background decoratives (`.float-orb-*`, `.aurora-glow`, `.animated-grid`, `.retro-grid`, `.light-rays`, `.ghost-text`, `.particle-field`) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** là con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, tránh che khuất chữ.
+- 🎨 HƯỚNG DẪN VIẾT KEYFRAMES & CUSTOM STYLING (STYLE LIKE A PRO):
+  Để tạo hoạt ảnh và phong cách độc bản Awwwards cực đỉnh mà không cần dùng script, bạn BẮT BUỘC tự viết thêm các keyframe CSS tinh tế trong `<style>` đặt ngay bên trong thẻ `.scene`:
+  • 🌟 **Neon Border Glow Sweep (Quét sáng viền neon)**:
+    `@keyframes neon-glow {{ 0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }} 50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }} }}`
+    (Áp dụng cho `.visual-block`, `.tech-card`, `.feat-card`).
+  • 🌊 **Aurora Grid Mesh Drift (Sóng ánh sáng trôi lững lờ)**:
+    `@keyframes aurora-mesh {{ 0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }} 50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }} }}`
+    (Áp dụng cho `.aurora-glow` hoặc các gradient orbs).
+  • 💫 **Y2K Retro Blink Stars (Ngôi sao lấp lánh kiểu Y2K)**:
+    `@keyframes star-blink {{ 0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }} 50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }} }}`
+    (Áp dụng cho `.y2k-sparkle` để tạo nhấp nháy retro).
+  • 🎨 **Kinetic Font Gradient (Chữ chuyển màu sống động)**:
+    `@keyframes grad-shift {{ 0% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} 100% {{ background-position: 0% 50%; }} }}`
+    (Cho chữ gradient có `background-size: 200% auto; animation: grad-shift 6s ease infinite`).
 
-- ⚠️ CHỌN VISUAL PATTERN TRỰC QUAN ĐỂ LẤP ĐẦY `.visual-col` (BẮT BUỘC):
-  Nếu scene không có ảnh minh họa, bạn BẮT BUỘC phải điền nội dung thực tế (dựa trên kịch bản) vào `.visual-col` bằng một trong các pattern:
-  • **B1 BIG STAT** (thống kê): `<div class="visual-block drift" style="text-align:center;padding:60px;"><div><span class="stat-hero">90%</span></div><p class="caption">...</p></div>`
-  • **B2 TERMINAL** (code/monospace): `<div class="terminal"><div class="dots"><i></i><i></i><i></i></div>...</div>`
-  • **B3 FEATURE GRID** (2x2 grid): `<div class="feat-grid"><div class="feat-card"><div class="ic">⚡</div><div class="t">...</div><div class="d">...</div></div></div>`
-  • **B4 COMPARE**: `<div class="compare"><div class="col"><h4>Ưu điểm</h4><ul>...</ul></div><div class="col bad"><h4>Nhược điểm</h4><ul>...</ul></div></div>`
-  • **B5 TIMELINE**: `<div class="tl-list"><div class="tl-item"><div class="y">2026</div><div class="t">...</div><div class="d">...</div></div></div>`
-  • **B6 QUOTE**: `<div class="quote-block"><p class="quote-text">...</p><p class="quote-attr">...</p></div>`
-  • **B11 STAT-LIST** (card xếp dọc): `<div class="stat-list"><div class="stat-list-card shimmer-fast glow-card">...</div></div>`
-  • **B12 CHAT DIALOGUE SIMULATOR** (đối thoại): `<div class="chat-box breath"><div class="chat-bubble user">...</div><div class="chat-bubble ai">...</div></div>`
-  • **B13 3-COLUMN GLASS CARD ROW**: `<div class="feat-row"><div class="glass-card breath">...</div></div>`
-  • **B14 TECH-CARD**: `<div class="tech-card">...</div>`
-  • **B19 NUMBERED STEP LIST**: `<div class="visual-block" style="padding:40px;"><div class="step-list"><div class="step-item"><div class="step-circle">1</div><div class="step-text">...</div></div></div></div>`
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
+  • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
+    * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tối đa 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
+  • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
+    * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
+    * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
+    * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
+  • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
+    * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
+    * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene.
+  • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
+  • **Đảm bảo Tương Phản & Độ Đọc Được của Chữ (Legibility & Contrast):**
+    * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
+    * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
+    * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
 
-- ⚠️ QUY TẮC CHO SCENE MỞ ĐẦU (SCENE 1):
-  - BẮT BUỘC dùng Cinematic Hero layout (ví dụ: Template A - Full-bleed Hero).
-  - Có các background decoratives phong phú (`.aurora-glow`, `.animated-grid`, `.particle-field`, `.ghost-text`).
-  - Cấm đặt các khối quá đơn điệu hoặc bỏ trống visual-col.
+- ⌨️ HIỆU ỨNG CHỮ HOẠT HÌNH CAO CẤP:
+  Hệ thống đã tích hợp sẵn hiệu ứng đánh chữ thông minh bằng thuộc tính HTML (bạn KHÔNG cần viết script):
+  • ⌨️ **Typewriter (Đánh chữ từng phím)**: Thêm thuộc tính `data-effect="typewriter"` vào thẻ chữ và chèn ngay sau nó con trỏ `<span class="cursor-blink">|</span>` để nhấp nháy đồng bộ tự động.
+    Ví dụ: `<h1 id="sN-title" class="title-xl grad-text" data-effect="typewriter">Tiêu đề scene</h1><span class="cursor-blink">|</span>`
+  • 🔄 **Word Rotation (Xoay từ khóa)**: Thêm `data-effect="word-rotate"` cùng danh sách từ cách nhau bằng dấu phẩy qua `data-words="từ_1,từ_2,từ_3"`.
+    Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
+  • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-- ⚠️ QUY TẮC CHO SCENE CUỐI (SCENE {total_scenes}):
-  - Visual-col của scene cuối phải có `.quote-block` hoặc `.stat-list` để tạo điểm nhấn kết thúc chuyên nghiệp.
+═══════════════════════════════════════
+QUY TẮC HTML BẮT BUỘC CHO SCENE {scene_index} (QUYẾT ĐỊNH VẺ ĐẸP):
+═══════════════════════════════════════
 
-- ⚠️ QUY TẮC HIỆU ỨNG CHỮ HOẠT HÌNH:
-  - Dùng `data-effect="typewriter"` kèm `<span class="cursor-blink">|</span>` cho tiêu đề để tạo hiệu ứng đánh máy.
-  - Hoặc dùng `data-effect="word-rotate"` cùng `data-words="..."` cho từ khóa nổi bật.
+1. BẮT BUỘC có lớp wrapper đúng định dạng:
+   `<div class="scene LAYOUT" id="scene{scene_index}">`
+   Với LAYOUT là 1 trong: split, centered, hero, magazine, data.
 
-- ⚠️ CHỐNG TRÀN VÀ ĐÈ CHỮ PHỤ ĐỀ:
-  - Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong viewport khả dụng, cách đáy ít nhất 150px (để tránh bị phụ đề karaoke đè lên).
-  - Đảm bảo độ tương phản cao: chữ dùng `var(--text1)` (chính) và `var(--text2)` (phụ) trên nền tối.
+2. Cấu trúc chuẩn bên trong `.layout`:
+   ```html
+   <div class="scene LAYOUT" id="scene{scene_index}">
+     <style>
+       /* Có thể viết tối đa 25 dòng CSS override / custom keyframe tại đây để làm đẹp riêng scene này */
+     </style>
+     <!-- 2-5 ambient decoratives ở đây cho scene này -->
+     <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+     <div class="ghost-text" style="bottom:-5%; right:-5%;">KEYWORD</div>
+     
+     <div class="layout">
+       <div class="info-col">
+         <div id="s{scene_index}-badge" class="badge">PHẦN {scene_index}</div>
+         <h1 id="s{scene_index}-title" class="{title_class} grad-text"{title_style} data-effect="typewriter">{{Tiêu đề}}</h1><span class="cursor-blink">|</span>
+         <p id="s{scene_index}-subtitle" class="subtitle">{{phụ đề CỰC NGẮN ≤ 8 chữ}}</p>
+         <p id="s{scene_index}-desc" class="body-text">{{TỐI ĐA 1 dòng tagline ≤ 12 chữ — KHÔNG copy narration}}</p>
+       </div>
+       <div class="visual-col">
+         <!-- Bắt buộc dùng 1 trong các visual pattern chi tiết B1-B20 dưới đây -->
+       </div>
+     </div>
+     <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+     <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+     <div class="top-line"></div>
+     <span class="scene-num">{scene_index:02d}</span>
+   </div>
+   ```
+
+3. 🎬 NẾU LÀ SCENE MỞ ĐẦU (SCENE 1) - BẮT BUỘC WOW HERO:
+   - Đây là phân cảnh giới thiệu nội dung chính của cả buổi thuyết trình. Tiêu đề chính (Title) của Scene 1 BẮT BUỘC PHẢI cực kỳ lớn, in đậm và nổi bật để tạo tác động mạnh mẽ (WOW effect) ngay lập tức.
+   - BẮT BUỘC dùng class `.title-hero.grad-text` cho thẻ h1 của Scene 1 (không dùng `.title-xl`), và thêm CSS inline style `style="font-weight: 900 !important;"` để in đậm tối đa tiêu đề.
+   - Hãy chọn 1 trong các TEMPLATES sau (tự do, đừng dùng .split):
+   ▸ TEMPLATE A — FULL-BLEED HERO (intro):
+     `<div class="scene hero" id="scene1">` có các background đầy đủ, status-pill, badges, particle-field và tech-card B14 hoặc bento-grid B16 lấp đầy không gian.
+   ▸ TEMPLATE B — MEGA-NUM HERO (intro stats):
+     `<div class="scene centered" id="scene1">` có mega-num cực lớn và hero-stat-banner.
+   ▸ TEMPLATE C — RETRO/SYNTHWAVE HERO (intro theme y2k):
+     `<div class="scene centered" id="scene1">` có retro-grid và outline-text.
+   ▸ TEMPLATE D — BENTO HERO (tech showcase):
+     `<div class="scene" id="scene1" style="padding:80px;">` có bento-grid 4 ô cực đẹp.
+
+4. 🌌 DECORATIVE DENSITY (CHỐNG SLIDE TRỐNG):
+   - MỖI scene BẮT BUỘC có 2-5 ambient decoratives lấp đầy không gian trống:
+     • `.float-orb-lg/.float-orb-md/.float-orb-sm` — colored glow orbs
+     • `.aurora-glow` — soft gradient blob drifting
+     • `.animated-grid` — subtle moving grid pattern
+     • `.retro-grid` — perspective synthwave floor
+     • `.particle-field` — small stars pattern
+     • `.ghost-text` — large thematic word (chỉ 1 từ 3-6 ký tự)
+     • `.y2k-sparkle` × 4-6 rải rác
+   - Quy tắc combine: 1 orb lớn + 1 grid/rays + 1 ghost-text + 2-3 sparkles/small-orbs.
+
+5. 🎯 TEXT TRONG INFO-COL — CỰC GỌN:
+   - sN-subtitle ≤ 8 chữ (cụm danh từ, KHÔNG phải câu)
+   - sN-desc ≤ 12 chữ (tagline metadata)
+   - TUYỆT ĐỐI KHÔNG copy narration. Dồn chi tiết vào visual-col.
+
+═══════════════════════════════════════
+🎨 DỰA TRÊN THÔNG TIN HÌNH ẢNH — CHỌN PHƯƠNG THỨC TRÌNH BÀY PHÙ HỢP:
+═══════════════════════════════════════
+
+A) NẾU scene CÓ ẢNH MINH HỌA (IllustrationImage):
+   Bắt buộc đặt ảnh trong `.img-frame`:
+   ```html
+   <div class="img-frame">
+     <img src="..." alt="">
+     <span class="img-caption">{{caption tiếng Việt mô tả ảnh}}</span>
+   </div>
+   ```
+
+B) NẾU scene KHÔNG CÓ ẢNH MINH HỌA (BẮT BUỘC MOCK VISUAL BẬC THẦY):
+   Hãy chọn 1 trong các visual pattern sau để điền vào `.visual-col`, cấm tuyệt đối để trống:
+
+   ▸ B1 — BIG STAT CARD (Chỉ số lớn):
+     ```html
+     <div class="visual-block" style="text-align:center;padding:50px;">
+       <div><span class="stat-hero">90</span><span class="stat-suffix">%</span></div>
+       <p class="caption" style="margin-top:20px;">{{nhãn}}</p>
+       <p class="body-text" style="margin:12px auto 0;max-width:480px;">{{giải thích}}</p>
+     </div>
+     ```
+
+   ▸ B2 — TERMINAL/CODE (Trình giả lập terminal cực ngầu):
+     ```html
+     <div class="terminal">
+       <div class="dots"><i></i><i></i><i></i></div>
+       <div><span class="c">// {{comment}}</span></div>
+       <div><span class="k">const</span> data = <span class="s">"{{value}}"</span>;</div>
+       <div>$ <span class="cursor"></span></div>
+     </div>
+     ```
+
+   ▸ B4 — COMPARISON (Bảng so sánh):
+     ```html
+     <div class="compare">
+       <div class="col"><h4>{{label tốt}}</h4><ul><li>{{point 1}}</li><li>{{point 2}}</li></ul></div>
+       <div class="col bad"><h4>{{label xấu}}</h4><ul><li>{{point 1}}</li><li>{{point 2}}</li></ul></div>
+     </div>
+     ```
+
+   ▸ B5 — TIMELINE (Trình tự thời gian):
+     ```html
+     <div class="tl-list">
+       <div class="tl-item"><div class="y">{{năm}}</div><div class="t">{{event}}</div><div class="d">{{mô tả}}</div></div>
+     </div>
+     ```
+
+   ▸ B6 — QUOTE (Trích dẫn cao cấp):
+     ```html
+     <div class="quote-block">
+       <p class="quote-text">"{{trích dẫn}}"</p>
+       <p class="quote-attr">{{tác giả · vai trò}}</p>
+     </div>
+     ```
+
+   ▸ B11 — STAT-LIST (Danh sách 3 thẻ card chỉ số quét sáng neon cực sang):
+     ```html
+     <div class="stat-list">
+       <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">⚡</div><div class="num">4x</div><div class="details"><div class="title">{{tiêu đề}}</div><div class="desc">{{mô tả}}</div></div></div>
+       <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">🚀</div><div class="num">12x</div><div class="details"><div class="title">{{tiêu đề 2}}</div><div class="desc">{{mô tả 2}}</div></div></div>
+       <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;"><div class="ic-wrap">💰</div><div class="num">50%</div><div class="details"><div class="title">{{tiêu đề 3}}</div><div class="desc">{{mô tả 3}}</div></div></div>
+     </div>
+     ```
+
+   ▸ B12 — CHAT DIALOGUE SIMULATOR (Mô phỏng hội thoại AI Chat):
+     ```html
+     <div class="chat-box breath">
+       <div class="chat-bubble user"><div class="sender-tag">NGƯỜI DÙNG</div>{{câu hỏi}}</div>
+       <div class="chat-bubble ai"><div class="sender-tag">AI</div>{{câu trả lời}}</div>
+       <div class="chat-footer-pill">{{chú thích}}</div>
+     </div>
+     ```
+
+   ▸ B13 — 3-COLUMN GLASS CARD ROW (Hàng 3 thẻ kính):
+     ```html
+     <div class="feat-row">
+       <div class="glass-card breath"><span class="emoji">🙋‍♂️</span><div class="title">{{t1}}</div><div class="desc">{{d1}}</div></div>
+       <div class="glass-card breath" style="animation-delay: 0.5s;"><span class="emoji">👁️</span><div class="title">{{t2}}</div><div class="desc">{{d2}}</div></div>
+       <div class="glass-card breath" style="animation-delay: 1.0s;"><span class="emoji">🔧</span><div class="title">{{t3}}</div><div class="desc">{{d3}}</div></div>
+     </div>
+     ```
+
+   ▸ B14 — TECH SHOWCASE CARD (Thẻ kỹ thuật Google I/O cực xịn):
+     ```html
+     <div class="tech-card glow-card breath">
+       <div class="brand">{{tên thương hiệu/sự kiện}}</div>
+       <div class="meta">📅 {{ngày tháng · địa điểm}}</div>
+       <div class="bullets"><div>{{dòng 1}}</div><div>{{dòng 2}}</div></div>
+       <div class="tags"><span class="tag">{{tag1}}</span><span class="tag">{{tag2}}</span></div>
+     </div>
+     ```
+
+   ▸ B17 — FORMULA TAG STACK (Phương trình khối màu):
+     ```html
+     <div class="visual-block" style="padding:40px;">
+       <div class="formula-stack">
+         <span class="formula-pill pink">🎭 VAI TRÒ</span><span class="formula-operator">+</span>
+         <span class="formula-pill yellow">🌎 BỐI CẢNH</span><span class="formula-operator">+</span>
+         <span class="formula-pill green">🎯 NHIỆM VỤ</span>
+       </div>
+       <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.06); padding:24px; border-radius:16px; font-size:1.25rem; text-align:left; color:white;">
+         <span style="color:#f472b6; font-weight:600;">{{mã màu 1}}</span>
+         <span style="color:#fde047; font-weight:600;">{{mã màu 2}}</span>
+         <span style="color:#4ade80; font-weight:600;">{{mã màu 3}}</span>
+       </div>
+     </div>
+     ```
+
+   ▸ B18 — COMMAND HIGHLIGHT CAPSULE (Hộp lệnh chú ý):
+     ```html
+     <div class="command-pill glow-card">
+       <span class="command-icon" style="font-size:2rem; filter:drop-shadow(0 0 8px #fde047);">🔑</span>
+       <div style="text-align:left;">"{{Lệnh chú ý quan trọng}}"</div>
+     </div>
+     ```
+
+   ▸ B19 — NUMBERED STEP LIST (Danh sách quy trình các bước có số tròn nổi bật):
+     ```html
+     <div class="visual-block" style="padding:40px;">
+       <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🎮 QUY TRÌNH THỰC HIỆN</div>
+       <div class="step-list">
+         <div class="step-item"><div class="step-circle">1</div><div class="step-text" style="text-align:left; font-weight:500;">{{bước 1}}</div></div>
+         <div class="step-item"><div class="step-circle">2</div><div class="step-text" style="text-align:left; font-weight:500;">{{bước 2}}</div></div>
+         <div class="step-item"><div class="step-circle">3</div><div class="step-text" style="text-align:left; font-weight:500;">{{bước 3}}</div></div>
+       </div>
+     </div>
+     ```
+
+   ▸ B20 — BENTO 3X2 GRID (Lưới Bento 6 ô thư viện đối xứng hoàn mỹ):
+     ```html
+     <div class="bento-3x2">
+       <div class="bento-cell" style="border-top-color:#eab308; padding:20px;">
+         <div class="ic">📊</div><div class="t">1. {{tiêu đề 1}}</div><div class="d">{{mô tả 1}}</div>
+       </div>
+       <div class="bento-cell" style="border-top-color:#38bdf8; padding:20px;">
+         <div class="ic">📝</div><div class="t">2. {{tiêu đề 2}}</div><div class="d">{{mô tả 2}}</div>
+       </div>
+       <div class="bento-cell" style="border-top-color:#4ade80; padding:20px;">
+         <div class="ic">🔍</div><div class="t">3. {{tiêu đề 3}}</div><div class="d">{{mô tả 3}}</div>
+       </div>
+       <div class="bento-cell" style="border-top-color:#f472b6; padding:20px;">
+         <div class="ic">🎬</div><div class="t">4. {{tiêu đề 4}}</div><div class="d">{{mô tả 4}}</div>
+       </div>
+       <div class="bento-cell" style="border-top-color:#f59e0b; padding:20px;">
+         <div class="ic">💡</div><div class="t">5. {{tiêu đề 5}}</div><div class="d">{{mô tả 5}}</div>
+       </div>
+       <div class="bento-cell" style="border-top-color:#10b981; padding:20px;">
+         <div class="ic">📈</div><div class="t">6. {{tiêu đề 6}}</div><div class="d">{{mô tả 6}}</div>
+       </div>
+     </div>
+     ```
+
+- OUTPUT: chỉ trả về mã HTML sạch của khối `<div class="scene ...">` bắt đầu và kết thúc đúng, KHÔNG markdown code blocks bên ngoài, KHÔNG bọc thẻ html/head/body, KHÔNG giải thích.
 """
 
 
@@ -2436,7 +2661,7 @@ def build_user_prompt_single_scene(s: ScenePayload, previous_context: dict, is_f
         lines.append(
             "\n  🎬 SCENE MỞ ĐẦU — BẮT BUỘC CINEMATIC HERO:"
             "\n  ⚠️ Chọn layout .scene.hero hoặc .scene.centered."
-            "\n  ⚠️ Title PHẢI dùng .title-hero.grad-text hoặc .mega-num cực to."
+            "\n  ⚠️ Title BẮT BUỘC PHẢI cực kỳ lớn và in đậm (font-weight: 900). Sử dụng: <h1 id=\"s1-title\" class=\"title-hero grad-text\" style=\"font-weight: 900 !important;\" data-effect=\"typewriter\">[Tên tiêu đề chính]</h1>"
             "\n  ⚠️ BẮT BUỘC có `.status-pill` ở trên cùng và ít nhất 3 ambient decoratives."
         )
     elif is_last:
@@ -2569,7 +2794,7 @@ def inject_missing_scene_placeholders(html: str, scenes: list[ScenePayload], mis
         if narration:
             truncated_narration = narration[:220].replace('"', '&quot;') + ("…" if len(narration) > 220 else "")
             narration_p = f'<p id="s{n}-desc" class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">{truncated_narration}</p>'
-
+        
         ph = (
             f'\n  <!-- SCENE {n} (Fallback) -->'
             f'\n  <div class="scene scene-fallback centered" id="scene{n}" style="position:absolute;inset:0;opacity:0;visibility:hidden;background:linear-gradient(135deg,var(--bg,#08080f),var(--bg2,#0f0f1a));">'
@@ -2813,7 +3038,43 @@ async def save_composition(body: SaveRequest):
     }
 
 
-# ─────────────────────────  REGEN SINGLE SCENE  ─────────────────────────
+def sanitize_scene_wrapper(scene_html: str, idx: int) -> str:
+    """Ensure the root element of the scene always has class="scene LAYOUT" and id="sceneN"."""
+    scene_html = scene_html.strip()
+    if not scene_html.lower().startswith("<div"):
+        m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html, re.IGNORECASE)
+        if m:
+            scene_html = m.group(0)
+        else:
+            return scene_html
+
+    tag_match = re.match(r'^(<div\b[^>]*>)', scene_html, re.IGNORECASE)
+    if not tag_match:
+        return scene_html
+
+    tag = tag_match.group(1)
+
+    # 1. Enforce id="sceneN"
+    if f'id="scene{idx}"' not in tag and f"id='scene{idx}'" not in tag:
+        # Strip any existing id to avoid duplicates
+        tag = re.sub(r'\bid\s*=\s*["\'][^"\']*["\']', '', tag, flags=re.IGNORECASE)
+        tag = tag.rstrip('>').rstrip('/') + f' id="scene{idx}">'
+
+    # 2. Enforce class="scene ..."
+    class_match = re.search(r'\bclass\s*=\s*["\']([^"\']*)["\']', tag, re.IGNORECASE)
+    if class_match:
+        classes = class_match.group(1).split()
+        if "scene" not in classes:
+            classes.insert(0, "scene")
+        tag = re.sub(r'\bclass\s*=\s*["\']([^"\']*)["\']', f'class="{" ".join(classes)}"', tag, flags=re.IGNORECASE)
+    else:
+        tag = tag.rstrip('>').rstrip('/') + ' class="scene">'
+
+    # Make sure we normalize closing bracket
+    if not tag.endswith(">"):
+        tag += ">"
+
+    return tag + scene_html[tag_match.end():]
 
 
 def find_scene_block(html: str, scene_index: int) -> tuple[int, int] | None:
@@ -2886,40 +3147,14 @@ async def regen_scene(body: RegenSceneRequest):
             f"\n  ✗ TUYỆT ĐỐI KHÔNG full-bleed background image, position:absolute trên <img>, hay background-image url(...) lên #root/.scene."
         )
 
-    sys_msg = f"""Bạn re-generate MỘT scene HyperFrames.
-
-Theme: {theme['name']}. CSS framework + GSAP timeline đã inject sẵn — đừng viết <style>/<script> ngoài scene wrapper.
-
-CHỈ TRẢ VỀ 1 block HTML duy nhất, không kèm <html>/<head>/<body>:
-
-<div class="scene LAYOUT" id="scene{body.sceneIndex}">
-  <div class="layout">
-    <div class="info-col">
-      <div id="s{body.sceneIndex}-badge" class="badge">PHẦN {body.sceneIndex}</div>
-      <h1 id="s{body.sceneIndex}-title" class="title-xl">{{tiêu đề}}</h1>
-      <p id="s{body.sceneIndex}-subtitle" class="subtitle">{{phụ đề ngắn}}</p>
-      <p id="s{body.sceneIndex}-desc" class="body-text">{{mô tả}}</p>
-    </div>
-    <div class="visual-col">{{visual content}}</div>
-  </div>
-  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-  <div class="top-line"></div>
-  <span class="scene-num">{body.sceneIndex:02d}</span>
-</div>
-
-LAYOUT: split | centered | hero | magazine | data (chọn 1 phù hợp).
-
-Class có sẵn (dùng, không tự viết): .badge, .title-xl/.title-hero, .subtitle, .body-text, .grad-text, .stat-hero, .visual-block, .img-frame, .img-caption, .terminal, .feat-grid, .feat-card, .compare, .tl-list, .tl-item, .quote-block.
-
-OUTPUT: chỉ HTML thuần của 1 div.scene, KHÔNG markdown fence, KHÔNG giải thích."""
-
-    user_msg = f"""Tiêu đề scene: {body.scene.title}
-Narration: {body.scene.narration}
-Visual: {body.scene.visualDescription}
-Duration: {body.scene.duration}s{image_clause}
-
-Sinh lại block <div class="scene ..." id="scene{body.sceneIndex}"> với nội dung trên."""
+    total_scenes = len(re.findall(r'id=["\']scene\d+["\']', body.fullHtml)) or body.sceneIndex
+    sys_msg = build_system_prompt_single_scene(theme, body.sceneIndex, total_scenes, {})
+    user_msg = build_user_prompt_single_scene(
+        body.scene,
+        {},
+        body.sceneIndex == 1,
+        body.sceneIndex == total_scenes
+    )
 
     try:
         resp, provider, model = await chat_completions_with_fallback(
@@ -2947,6 +3182,10 @@ Sinh lại block <div class="scene ..." id="scene{body.sceneIndex}"> với nội
                 status_code=502,
                 detail="LLM không trả về block <div> hợp lệ.",
             )
+            
+    # Normalize wrapper class and id programmatically before validation
+    new_block = sanitize_scene_wrapper(new_block, body.sceneIndex)
+    
     if f'scene{body.sceneIndex}' not in new_block:
         raise HTTPException(
             status_code=502,
@@ -3114,6 +3353,10 @@ async def gen_scene_one(body: GenSceneOneRequest):
                 scene_html = m.group(0)
             else:
                 scene_html = None
+                
+        # Normalize wrapper class and id programmatically
+        if scene_html:
+            scene_html = sanitize_scene_wrapper(scene_html, idx)
     except Exception as e:
         print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
 
