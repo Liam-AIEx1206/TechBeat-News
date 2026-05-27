@@ -59,10 +59,17 @@ async def _edge_to_wav(text: str, target: Path, voice_name: str | None = None) -
         import edge_tts
         voice = voice_name or os.getenv("EDGE_VOICE", DEFAULT_EDGE_VOICE)
         
-        # Clean text: remove any HTML/XML tags and strip angle brackets
-        # Microsoft Edge TTS will fail with "No audio was received" if the text contains unescaped < or >
-        clean_text = re.sub(r"<[^>]*>", "", text)
-        clean_text = clean_text.replace("<", "").replace(">", "").strip()
+        # Làm sạch & chuẩn hóa text an toàn cho TTS
+        clean_text = text or ""
+        # Chuyển đổi ký tự & để tránh lỗi SSML XML và giúp giọng đọc tự nhiên
+        clean_text = clean_text.replace("&", " và ")
+        # Loại bỏ các thẻ HTML/XML
+        clean_text = re.sub(r"<[^>]*>", "", clean_text)
+        # Loại bỏ các dấu nhọn còn sót lại
+        clean_text = clean_text.replace("<", "").replace(">", "")
+        # Loại bỏ các dấu nháy đơn/nháy kép đặc biệt để tránh hỏng SSML
+        clean_text = clean_text.replace("'", "").replace('"', "").replace("“", "").replace("”", "")
+        clean_text = clean_text.strip()
         
         if not clean_text:
             print("[tts] Edge TTS: Cleaned text is empty, skipping")
@@ -192,9 +199,17 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
 
     voice = voice_name or "Puck"
     
-    # Clean text: remove HTML/XML tags
-    clean_text = re.sub(r"<[^>]*>", "", text)
-    clean_text = clean_text.replace("<", "").replace(">", "").strip()
+    # Làm sạch & chuẩn hóa text an toàn cho TTS
+    clean_text = text or ""
+    # Chuyển đổi ký tự & để tránh lỗi SSML XML và giúp giọng đọc tự nhiên
+    clean_text = clean_text.replace("&", " và ")
+    # Loại bỏ các thẻ HTML/XML
+    clean_text = re.sub(r"<[^>]*>", "", clean_text)
+    # Loại bỏ các dấu nhọn còn sót lại
+    clean_text = clean_text.replace("<", "").replace(">", "")
+    # Loại bỏ các dấu nháy đơn/nháy kép đặc biệt để tránh hỏng SSML
+    clean_text = clean_text.replace("'", "").replace('"', "").replace("“", "").replace("”", "")
+    clean_text = clean_text.strip()
     
     if not clean_text:
         print("[tts] Gemini TTS: Cleaned text is empty, skipping")
@@ -226,7 +241,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
     }
 
     try:
-        async with httpx.AsyncClient(timeout=60, trust_env=False) as client:
+        async with httpx.AsyncClient(timeout=180, trust_env=False) as client:
             resp = await client.post(url, json=payload, headers=headers)
             if resp.status_code != 200:
                 print(f"[tts] Gemini TTS HTTP {resp.status_code}: {resp.text[:300]}")
