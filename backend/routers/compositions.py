@@ -1135,7 +1135,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 
 🏁 SCENE CUỐI BẮT BUỘC (Bug4 fix):
 - Scene cuối LUÔN dùng layout .scene.centered HOẶC .scene.hero với visual-col đầy đủ.
-- visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG.
+- visual-col CỦA SCENE CUỐI PHẢI chọn 1 trong 2 bố cục để tránh tràn dọc: HOẶC là 1 khối .quote-block duy nhất cực kỳ trang trọng, HOẶC là một nhóm card trực quan ngăn nắp (như 1 .stat-list có 2 stat-list-card, hoặc .feat-row có 3 glass-card). CẤM TUYỆT ĐỐI nhồi nhét cả trích dẫn và card tính năng trên cùng slide.
 - Ví dụ visual-col scene cuối tối thiểu:
   <div class="stat-list">
     <div class="stat-list-card"><div class="ic-wrap">🚀</div><div class="num">10x</div><div class="details"><div class="title">Nhanh hơn</div><div class="desc">So với pipeline cũ</div></div></div>

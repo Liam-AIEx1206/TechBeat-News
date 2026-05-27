@@ -71,6 +71,11 @@ async def _edge_to_wav(text: str, target: Path, voice_name: str | None = None) -
         # We save to a temporary mp3 file first, then convert it to wav via pydub
         temp_mp3 = target.with_suffix(".mp3.tmp")
         proxy = os.getenv("EDGE_TTS_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
+        
+        # Defensive programming: auto-bypass invalid placeholder proxies
+        if proxy and ("your-proxy-ip" in proxy or "username:password" in proxy or not proxy.strip()):
+            proxy = None
+            
         communicate = edge_tts.Communicate(clean_text, voice, proxy=proxy)
         await communicate.save(str(temp_mp3))
 
@@ -221,7 +226,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
     }
 
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=60, trust_env=False) as client:
             resp = await client.post(url, json=payload, headers=headers)
             if resp.status_code != 200:
                 print(f"[tts] Gemini TTS HTTP {resp.status_code}: {resp.text[:300]}")
@@ -241,7 +246,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
             
             audio_bytes = base64.b64decode(b64_audio)
     except Exception as e:
-        print(f"[tts] Gemini TTS request failed: {e}")
+        print(f"[tts] Gemini TTS request failed: {type(e).__name__}: {e}")
         return False
 
     # Save and convert raw PCM L16 → wav natively
