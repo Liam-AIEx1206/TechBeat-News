@@ -167,8 +167,8 @@ body {{
 
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {{
-  display: grid; gap: 80px; height: 100%;
-  padding: 100px 120px; align-items: center;
+  display: grid; gap: 60px; height: 100%;
+  padding: 60px 120px 150px; align-items: center;
   position: relative; z-index: 10;
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
@@ -1292,8 +1292,12 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
     Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
   • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
   • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
+    * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tối đa 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
   • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
     * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
     * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
@@ -1831,8 +1835,12 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
     Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
   • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
   • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
+    * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tốiã 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
   • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
     * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
     * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
