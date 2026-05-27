@@ -68,7 +68,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
         
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(5, 1fr)",
           gap: 10,
           background: "rgba(255,255,255,0.03)",
           padding: 6,
@@ -80,6 +80,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
             { label: "1 Phút", val: 60 },
             { label: "2 Phút", val: 120 },
             { label: "3 Phút", val: 180 },
+            { label: "Không tóm tắt", val: -1 },
           ].map((opt) => {
             const active = videoDuration === opt.val;
             return (
@@ -265,7 +266,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           <div key={i} style={{ position: "absolute", width: 16, height: 16, opacity: dragging ? 1 : 0.3, transition: "opacity 0.3s", ...style }} />
         ))}
 
-        <input ref={fileRef} type="file" accept=".pdf,.docx,.pptx,.xlsx,.odt,.odp"
+        <input ref={fileRef} type="file" accept=".pdf,.docx,.pptx,.xlsx,.odt,.odp,.md,.txt"
           style={{ display: "none" }} disabled={isLoading}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) extractFile(f); e.target.value = ""; }} />
 
@@ -275,8 +276,8 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
         <p style={{ fontSize: 14, fontWeight: 700, color: dragging ? "var(--white)" : "rgba(255,255,255,0.7)", marginBottom: 8, transition: "color 0.2s" }}>
           Kéo file vào đây hoặc click để chọn
         </p>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          {["PDF", "DOCX", "PPTX"].map((ext) => (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
+          {["PDF", "DOCX", "PPTX", "MD", "TXT"].map((ext) => (
             <span key={ext} style={{
               fontSize: 10, fontWeight: 800, padding: "3px 10px",
               borderRadius: "var(--r-full)",

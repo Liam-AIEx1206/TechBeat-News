@@ -194,16 +194,39 @@ def _gtts_to_wav_sync(text: str, lang: str, target: Path) -> None:
         # Fallback: keep mp3, just rename — HyperFrames audio tag accepts both
         target.write_bytes(mp3_buf.getvalue())
 
+def _trim_trailing_silence_sync(wav_path: Path, threshold_db: float = -30.0, padding_ms: int = 500) -> None:
+    """Trim trailing silence of a WAV file to prevent Gemini TTS silence loop bug."""
+    try:
+        from pydub import AudioSegment
+        sound = AudioSegment.from_file(str(wav_path), format="wav")
+        duration_ms = len(sound)
+        
+        # Scan from end in 100ms steps
+        step_ms = 100
+        detected_end_ms = 0
+        for pos in range(duration_ms - step_ms, -1, -step_ms):
+            chunk = sound[pos : pos + step_ms]
+            if chunk.dBFS > threshold_db:
+                detected_end_ms = pos + step_ms
+                break
+        
+        if detected_end_ms > 0 and detected_end_ms < duration_ms:
+            padded_end_ms = min(duration_ms, detected_end_ms + padding_ms)
+            if padded_end_ms < duration_ms:
+                trimmed_sound = sound[:padded_end_ms]
+                trimmed_sound.export(str(wav_path), format="wav")
+                print(f"[tts] Programmatic silence trimming: Trimmed {wav_path.name} from {duration_ms/1000:.2f}s to {len(trimmed_sound)/1000:.2f}s (Threshold: {threshold_db} dB, Padding: {padding_ms}ms)")
+    except Exception as e:
+        print(f"[tts] Programmatic silence trimming failed for {wav_path}: {e}")
+
 
 async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None) -> bool:
-    """Try Gemini TTS (via api.pinkyne.com) → wav. Returns True on success, False to fall back.
-    Uses OPENAI_API_KEY from environment.
+    """Try Gemini TTS:
+    1. Direct Google Gemini API using GEMINI_API_KEY if available.
+    2. Fallback to Pinky API proxy (Flash model) using OPENAI_API_KEY.
+    3. Fallback to Pinky API proxy (Pro model) if Flash returns 429.
+    Returns True on success, False to fall back.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("[tts] Gemini TTS: OPENAI_API_KEY not found in environment.")
-        return False
-
     voice = voice_name or "Puck"
     
     # Làm sạch & chuẩn hóa text an toàn cho TTS
@@ -222,12 +245,6 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
         print("[tts] Gemini TTS: Cleaned text is empty, skipping")
         return False
 
-    url = "https://api.pinkyne.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
     payload = {
         "contents": [{
             "parts": [{
@@ -236,7 +253,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
         }],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
-            "temperature": 0.3,
+            "temperature": 0.0,
             "speechConfig": {
                 "voiceConfig": {
                     "prebuiltVoiceConfig": {
@@ -247,13 +264,80 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
         }
     }
 
+    # Xây dựng danh sách các endpoint thử nghiệm (Attempts) với gemini-3.1 làm ưu tiên hàng đầu
+    attempts = []
+    
+    direct_key = os.getenv("GEMINI_API_KEY")
+    pinky_key = os.getenv("OPENAI_API_KEY")
+    
+    # ── Tier 1: Gemini 3.1 (Ưu tiên hàng đầu) ──────────────────
+    if direct_key:
+        direct_url_31 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key={direct_key}"
+        attempts.append(("Direct Google Gemini API (Flash 3.1)", direct_url_31, {"Content-Type": "application/json"}))
+        
+    if pinky_key:
+        pinky_headers = {
+            "Authorization": f"Bearer {pinky_key}",
+            "Content-Type": "application/json"
+        }
+        flash_url_31 = "https://api.pinkyne.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent"
+        attempts.append(("Pinky Proxy (Flash 3.1)", flash_url_31, pinky_headers))
+        
+    # ── Tier 2: Gemini 2.5 Fallbacks ───────────────────────────
+    if direct_key:
+        direct_url_25 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key={direct_key}"
+        attempts.append(("Direct Google Gemini API (Flash 2.5)", direct_url_25, {"Content-Type": "application/json"}))
+        
+    if pinky_key:
+        pinky_headers = {
+            "Authorization": f"Bearer {pinky_key}",
+            "Content-Type": "application/json"
+        }
+        flash_url_25 = "https://api.pinkyne.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent"
+        pro_url_25 = "https://api.pinkyne.com/v1beta/models/gemini-2.5-pro-preview-tts:generateContent"
+        attempts.append(("Pinky Proxy (Flash 2.5)", flash_url_25, pinky_headers))
+        attempts.append(("Pinky Proxy (Pro 2.5)", pro_url_25, pinky_headers))
+
+    if not attempts:
+        print("[tts] Gemini TTS: No API keys found in environment.")
+        return False
+
+    audio_bytes = None
+    max_retries_per_endpoint = 2
+    base_delay = 3
+
     try:
         async with httpx.AsyncClient(timeout=180, trust_env=False) as client:
-            resp = await client.post(url, json=payload, headers=headers)
-            if resp.status_code != 200:
-                print(f"[tts] Gemini TTS HTTP {resp.status_code}: {resp.text[:300]}")
-                return False
+            resp = None
+            success = False
             
+            for idx, (desc, url, headers) in enumerate(attempts):
+                print(f"[tts] Trying Gemini TTS via {desc}...")
+                
+                for attempt in range(max_retries_per_endpoint + 1):
+                    resp = await client.post(url, json=payload, headers=headers)
+                    if resp.status_code == 429:
+                        if attempt < max_retries_per_endpoint:
+                            wait = base_delay * (2 ** attempt)
+                            print(f"[tts] {desc} got HTTP 429 (rate limit). Retry {attempt + 1}/{max_retries_per_endpoint} in {wait}s...")
+                            await asyncio.sleep(wait)
+                            continue
+                        else:
+                            print(f"[tts] {desc} failed with HTTP 429 after {max_retries_per_endpoint} retries.")
+                            break  # Chuyển sang endpoint dự phòng tiếp theo
+                    break  # Nhận 200 hoặc mã lỗi khác không phải 429, thoát khỏi loop retry
+                
+                if resp and resp.status_code == 200:
+                    print(f"[tts] Gemini TTS via {desc} succeeded!")
+                    success = True
+                    break
+                elif resp:
+                    print(f"[tts] {desc} returned HTTP {resp.status_code}: {resp.text[:300]}")
+            
+            if not success or not resp:
+                print("[tts] Gemini TTS: All endpoints failed.")
+                return False
+                
             res_json = resp.json()
             parts = res_json.get("candidates", [{}])[0].get("content", {}).get("parts", [])
             b64_audio = None
@@ -290,6 +374,8 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
                 wav_file.writeframes(audio_bytes)
                 
         await asyncio.to_thread(_write_wav)
+        # Apply programmatic trailing silence trimming to prevent Gemini silence loop bug
+        await asyncio.to_thread(_trim_trailing_silence_sync, target)
         return True
     except Exception as e:
         print(f"[tts] Gemini raw PCM L16 → wav conversion failed: {e}")
@@ -954,9 +1040,9 @@ def patch_html_timing(
         '<div class="top-line"></div>' +
         '<span class="scene-num">' + sceneNumPadded + '</span>' +
         '<div class="layout" style="padding:100px 140px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:36px;">' +
-          '<div class="badge" style="margin:0 auto;">' + emoji + ' &nbsp; PHẦN ' + n + '</div>' +
-          '<h1 class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">' + (title || ("Nội dung phân cảnh " + n)) + '</h1>' +
-          (narration ? ('<p class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">' + narration.slice(0, 220) + (narration.length > 220 ? "…" : "") + '</p>') : '') +
+          '<div id="s' + n + '-badge" class="badge" style="margin:0 auto;">' + emoji + ' &nbsp; PHẦN ' + n + '</div>' +
+          '<h1 id="s' + n + '-title" class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">' + (title || ("Nội dung phân cảnh " + n)) + '</h1>' +
+          (narration ? ('<p id="s' + n + '-desc" class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">' + narration.slice(0, 220) + (narration.length > 220 ? "…" : "") + '</p>') : '') +
           '<div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">' +
             '<div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>' +
             '<div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE ' + sceneNumPadded + '</div>' +

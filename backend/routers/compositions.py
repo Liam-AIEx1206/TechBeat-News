@@ -168,7 +168,7 @@ body {{
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {{
   display: grid; gap: 60px; height: 100%;
-  padding: 60px 120px 150px; align-items: center;
+  padding: 60px 120px 100px; align-items: center;
   position: relative; z-index: 10;
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
@@ -182,11 +182,11 @@ body {{
 
 .info-col   {{
   display: flex; flex-direction: column; justify-content: center; gap: 28px;
-  min-width: 0; max-height: 100%; overflow: hidden;
+  min-width: 0; max-height: 100%; overflow: visible;
 }}
 .visual-col {{
   display: flex; flex-direction: column; justify-content: center; gap: 24px;
-  min-width: 0; max-width: 100%; max-height: 100%; overflow: hidden;
+  min-width: 0; max-width: 100%; max-height: 100%; overflow: visible;
 }}
 
 /* Inner content boxes must stay within their column.
@@ -212,9 +212,9 @@ body {{
 }}
 
 .scene-num {{
-  position: absolute; bottom: 20px; right: 40px;
+  position: absolute; bottom: 24px; right: 40px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9rem; font-weight: 800;
+  font-size: 8rem; font-weight: 800;
   color: var(--accent); opacity: 0.06; line-height: 1;
   pointer-events: none; z-index: 5;
 }}
@@ -395,7 +395,7 @@ body {{
 .tl-item .d {{ color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; }}
 
 /* Quote — for B6 */
-.quote-block {{ position: relative; padding: 80px 60px; width: 100%; }}
+.quote-block {{ position: relative; padding: 40px 60px; width: 100%; }}
 .quote-block::before {{
   content: '"'; position: absolute; left: -20px; top: -60px;
   font-size: 18rem; line-height: 1; color: var(--accent);
@@ -2240,6 +2240,217 @@ def strip_fences(html: str) -> str:
     return html
 
 
+def extract_scene_layout_and_pattern(scene_html: str) -> tuple[str | None, str | None]:
+    layout = None
+    class_match = re.search(r'class\s*=\s*["\']([^"\']+)["\']', scene_html)
+    if class_match:
+        classes = class_match.group(1).split()
+        for l in ["split", "centered", "hero", "magazine", "data"]:
+            if l in classes:
+                layout = l
+                break
+
+    pattern = None
+    if "stat-hero" in scene_html:
+        pattern = "B1 BIG STAT"
+    elif "terminal" in scene_html:
+        pattern = "B2 TERMINAL"
+    elif "feat-grid" in scene_html:
+        pattern = "B3 FEATURE GRID"
+    elif "compare" in scene_html:
+        pattern = "B4 COMPARE"
+    elif "tl-list" in scene_html or "tl-item" in scene_html:
+        pattern = "B5 TIMELINE"
+    elif "quote-block" in scene_html or "quote-text" in scene_html:
+        pattern = "B6 QUOTE"
+    elif "stat-list" in scene_html:
+        pattern = "B11 STAT-LIST"
+    elif "chat-box" in scene_html or "chat-bubble" in scene_html:
+        pattern = "B12 CHAT DIALOGUE"
+    elif "feat-row" in scene_html or "glass-card" in scene_html:
+        pattern = "B13 3-COLUMN GLASS CARD ROW"
+    elif "tech-card" in scene_html:
+        pattern = "B14 TECH-CARD"
+    elif "step-list" in scene_html or "step-item" in scene_html:
+        pattern = "B19 NUMBERED STEP LIST"
+
+    return layout, pattern
+
+
+def fallback_scene_html(s: ScenePayload, theme: dict) -> str:
+    n = s.index + 1
+    emojis = ["✨", "⚡", "🚀", "💫", "🎯", "🔥", "💎", "🌟"]
+    emoji = emojis[(n - 1) % len(emojis)]
+    
+    if s.imageAsset:
+        visual_col_content = f'<div class="img-frame"><img src="{s.imageAsset}" alt=""><span class="img-caption">{s.title[:10]}</span></div>'
+        layout = "split"
+    else:
+        truncated_narration = s.narration[:220].replace('"', '&quot;') + ("…" if len(s.narration) > 220 else "")
+        visual_col_content = f'<div class="visual-block glow-card breath" style="text-align:center;padding:40px;"><p class="body-text" style="font-size:1.5rem;line-height:1.6;color:var(--text2);">{truncated_narration}</p></div>'
+        layout = "centered"
+        
+    return f"""
+  <div class="scene {layout}" id="scene{n}">
+    <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+    <div class="layout">
+      <div class="info-col">
+        <div id="s{n}-badge" class="badge">{emoji} PHẦN {n}</div>
+        <h1 id="s{n}-title" class="title-xl grad-text">{s.title}</h1>
+        <p id="s{n}-subtitle" class="subtitle">{s.title[:20]}...</p>
+        <p id="s{n}-desc" class="body-text">{s.narration[:100]}...</p>
+      </div>
+      <div class="visual-col">
+        {visual_col_content}
+      </div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <div class="top-line"></div>
+    <span class="scene-num">{n:02d}</span>
+  </div>"""
+
+
+def build_system_prompt_single_scene(theme: dict, scene_index: int, total_scenes: int, previous_context: dict) -> str:
+    prev_info = ""
+    if scene_index > 1:
+        prev_layout = previous_context.get("layout") or "Chưa rõ"
+        prev_pattern = previous_context.get("visual_pattern") or "Chưa rõ"
+        prev_info = (
+            f"\n⚠️ THIẾT KẾ CỦA SCENE TRƯỚC (SCENE {scene_index - 1}):"
+            f"\n  - Layout đã dùng: {prev_layout}"
+            f"\n  - Visual pattern đã dùng: {prev_pattern}"
+            f"\n  👉 BẮT BUỘC KHÔNG LẶP LẠI: Bạn phải chọn layout và visual pattern KHÁC cho scene này để giữ sự đa dạng."
+        )
+
+    return f"""Bạn là chuyên gia thiết kế giao diện UI/UX AWWWARDS PRO MAX — sinh ra HTML slide HyperFrames cực kỳ đẹp và cinematic cho theme **{theme['name']}**.
+
+Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class="scene ...">` cho Scene {scene_index} (trong tổng số {total_scenes} scene).
+
+⚠️ QUY TẮC PHẢN HỒI (RẤT QUAN TRỌNG):
+- CHỈ trả về duy nhất 1 block HTML bắt đầu bằng `<div class="scene LAYOUT"` và kết thúc bằng `</div>` tương ứng của scene đó.
+- Tuyệt đối KHÔNG bọc thẻ `<html>`, `<head>`, `<body>` hay `#root` ở ngoài.
+- Tuyệt đối KHÔNG trả về code Javascript hay script GSAP timeline (như `<script>gsap.timeline...</script>`).
+- Tuyệt đối KHÔNG viết giải thích dài dòng bằng văn bản, chỉ trả về code HTML.
+- KHÔNG dùng markdown code fences (như ```html) nếu có thể, hoặc nếu dùng thì chỉ bọc duy nhất block HTML đó.
+
+⚠️ THÔNG TIN THEME — {theme['name'].upper()}
+- VIBE: {theme['vibe']}
+- ƯU TIÊN visual effects: {theme['fx']}
+- Dùng các biến màu CSS có sẵn (KHÔNG hardcode mã màu hex):
+  `var(--bg)`, `var(--bg2)`, `var(--surface)`, `var(--accent)`, `var(--accent2)`, `var(--accent3)`, `var(--text1)`, `var(--text2)`, `var(--glow)`
+{prev_info}
+
+⚠️ HƯỚNG DẪN THIẾT KẾ LAYOUT & BỐ CỤC CHUYÊN NGHIỆP:
+- Chọn 1 trong các LAYOUT phù hợp cho slide này:
+  • `.scene.split` (50/50): text trái, visual phải (phù hợp khi có ảnh minh họa).
+  • `.scene.centered` (1 cột): text ở giữa, visual ở dưới (CẤM dùng visual-col và info-col lồng nhau).
+  • `.scene.hero` (tiêu đề siêu to căn trái, hợp với intro/outro).
+  • `.scene.magazine` (7:5): text trái rộng, visual phải hẹp.
+  • `.scene.data` (1:1.4): text hẹp trái, visual rộng phải.
+
+- Cấu trúc chuẩn bên trong `.layout`:
+  ```html
+  <div class="scene LAYOUT" id="scene{scene_index}">
+    <!-- 2-4 background decoratives (aurora-glow, float-orb, grid...) đặt ở đây làm nền -->
+    <div class="layout">
+      <div class="info-col">
+        <div id="s{scene_index}-badge" class="badge">PHẦN {scene_index}</div>
+        <h1 id="s{scene_index}-title" class="title-xl grad-text">{{Tiêu đề}}</h1>
+        <p id="s{scene_index}-subtitle" class="subtitle">{{Phụ đề ngắn ≤ 8 từ}}</p>
+        <p id="s{scene_index}-desc" class="body-text">{{Tagline cực ngắn ≤ 12 từ — KHÔNG copy narration}}</p>
+      </div>
+      <div class="visual-col">
+        <!-- Visual block / content card ở đây -->
+      </div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <div class="top-line"></div>
+    <span class="scene-num">{scene_index:02d}</span>
+  </div>
+  ```
+
+- ⚠️ QUY TẮC TUYỆT ĐỐI VỀ BACKGROUND DECORATIVES:
+  Tất cả background decoratives (`.float-orb-*`, `.aurora-glow`, `.animated-grid`, `.retro-grid`, `.light-rays`, `.ghost-text`, `.particle-field`) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** là con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, tránh che khuất chữ.
+
+- ⚠️ CHỌN VISUAL PATTERN TRỰC QUAN ĐỂ LẤP ĐẦY `.visual-col` (BẮT BUỘC):
+  Nếu scene không có ảnh minh họa, bạn BẮT BUỘC phải điền nội dung thực tế (dựa trên kịch bản) vào `.visual-col` bằng một trong các pattern:
+  • **B1 BIG STAT** (thống kê): `<div class="visual-block drift" style="text-align:center;padding:60px;"><div><span class="stat-hero">90%</span></div><p class="caption">...</p></div>`
+  • **B2 TERMINAL** (code/monospace): `<div class="terminal"><div class="dots"><i></i><i></i><i></i></div>...</div>`
+  • **B3 FEATURE GRID** (2x2 grid): `<div class="feat-grid"><div class="feat-card"><div class="ic">⚡</div><div class="t">...</div><div class="d">...</div></div></div>`
+  • **B4 COMPARE**: `<div class="compare"><div class="col"><h4>Ưu điểm</h4><ul>...</ul></div><div class="col bad"><h4>Nhược điểm</h4><ul>...</ul></div></div>`
+  • **B5 TIMELINE**: `<div class="tl-list"><div class="tl-item"><div class="y">2026</div><div class="t">...</div><div class="d">...</div></div></div>`
+  • **B6 QUOTE**: `<div class="quote-block"><p class="quote-text">...</p><p class="quote-attr">...</p></div>`
+  • **B11 STAT-LIST** (card xếp dọc): `<div class="stat-list"><div class="stat-list-card shimmer-fast glow-card">...</div></div>`
+  • **B12 CHAT DIALOGUE SIMULATOR** (đối thoại): `<div class="chat-box breath"><div class="chat-bubble user">...</div><div class="chat-bubble ai">...</div></div>`
+  • **B13 3-COLUMN GLASS CARD ROW**: `<div class="feat-row"><div class="glass-card breath">...</div></div>`
+  • **B14 TECH-CARD**: `<div class="tech-card">...</div>`
+  • **B19 NUMBERED STEP LIST**: `<div class="visual-block" style="padding:40px;"><div class="step-list"><div class="step-item"><div class="step-circle">1</div><div class="step-text">...</div></div></div></div>`
+
+- ⚠️ QUY TẮC CHO SCENE MỞ ĐẦU (SCENE 1):
+  - BẮT BUỘC dùng Cinematic Hero layout (ví dụ: Template A - Full-bleed Hero).
+  - Có các background decoratives phong phú (`.aurora-glow`, `.animated-grid`, `.particle-field`, `.ghost-text`).
+  - Cấm đặt các khối quá đơn điệu hoặc bỏ trống visual-col.
+
+- ⚠️ QUY TẮC CHO SCENE CUỐI (SCENE {total_scenes}):
+  - Visual-col của scene cuối phải có `.quote-block` hoặc `.stat-list` để tạo điểm nhấn kết thúc chuyên nghiệp.
+
+- ⚠️ QUY TẮC HIỆU ỨNG CHỮ HOẠT HÌNH:
+  - Dùng `data-effect="typewriter"` kèm `<span class="cursor-blink">|</span>` cho tiêu đề để tạo hiệu ứng đánh máy.
+  - Hoặc dùng `data-effect="word-rotate"` cùng `data-words="..."` cho từ khóa nổi bật.
+
+- ⚠️ CHỐNG TRÀN VÀ ĐÈ CHỮ PHỤ ĐỀ:
+  - Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong viewport khả dụng, cách đáy ít nhất 150px (để tránh bị phụ đề karaoke đè lên).
+  - Đảm bảo độ tương phản cao: chữ dùng `var(--text1)` (chính) và `var(--text2)` (phụ) trên nền tối.
+"""
+
+
+def build_user_prompt_single_scene(s: ScenePayload, previous_context: dict, is_first: bool, is_last: bool) -> str:
+    lines = [
+        f"Tiêu đề scene: {s.title}",
+        f"Narration: {s.narration}",
+        f"Visual Description: {s.visualDescription}",
+        f"Duration: {s.duration} giây",
+        f"Index: {s.index}",
+    ]
+    if s.imageQuery:
+        lines.append(f"ImageQuery: {s.imageQuery}")
+    
+    if s.imageAsset:
+        lines.append(
+            f"IllustrationImage: {s.imageAsset}"
+            f"\n  ⚠️ BẮT BUỘC dùng EXACT HTML này (copy nguyên): <div class=\"img-frame\"><img src=\"{s.imageAsset}\" alt=\"\"><span class=\"img-caption\">[caption tiếng Việt ngắn ≤10 chữ]</span></div>"
+            f"\n  ⚠️ <img> PHẢI nằm BÊN TRONG .img-frame — KHÔNG đặt thẳng dưới .visual-col hay .scene."
+            f"\n  ⚠️ Dùng layout `.scene.split` (50/50 text–ảnh) HOẶC `.scene.magazine` (7:5). KHÔNG dùng .hero, .centered, .data, .bento cho scene có ảnh."
+            f"\n  ⚠️ .img-frame nằm trong .visual-col, KHÔNG được nằm trong .info-col hay tràn ra ngoài."
+        )
+    else:
+        lines.append(
+            f"  ⚠️ CẢNH BÁO: SCENE NÀY TUYỆT ĐỐI KHÔNG CÓ ẢNH MINH HỌA."
+            f"\n  ⚠️ TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame HOẶC BẤT KỲ ĐƯỜNG DẪN ẢNH NÀO."
+            f"\n  ⚠️ BẮT BUỘC DÙNG MOCK VISUAL HTML/CSS (B1-B8, B11-B15, B19, B20) ĐỂ ĐIỀN VÀO .visual-col."
+        )
+        
+    if is_first:
+        lines.append(
+            "\n  🎬 SCENE MỞ ĐẦU — BẮT BUỘC CINEMATIC HERO:"
+            "\n  ⚠️ Chọn layout .scene.hero hoặc .scene.centered."
+            "\n  ⚠️ Title PHẢI dùng .title-hero.grad-text hoặc .mega-num cực to."
+            "\n  ⚠️ BẮT BUỘC có `.status-pill` ở trên cùng và ít nhất 3 ambient decoratives."
+        )
+    elif is_last:
+        lines.append(
+            "\n  📐 SCENE CUỐI — CHỐNG OVERFLOW & BẮT BUỘC ĐỘC ĐÁO:"
+            "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG."
+        )
+        
+    lines.append(
+        f"\nSinh block HTML cho scene {s.index + 1}."
+    )
+    return "\n".join(lines)
+
+
 _BASE_CSS_MARKER = "/* === techbeat:base-css === */"
 
 
@@ -2340,168 +2551,215 @@ async def _materialise_scene_images(scenes: list, project_root: Path) -> list:
     return out
 
 
+def inject_missing_scene_placeholders(html: str, scenes: list[ScenePayload], missing: list[int]) -> str:
+    placeholders = []
+    emojis = ["✨", "⚡", "🚀", "💫", "🎯", "🔥", "💎", "🌟"]
+    for idx in missing:
+        n = idx
+        scene_payload = next((s for s in scenes if s.index == n), None)
+        if not scene_payload and n <= len(scenes):
+            scene_payload = scenes[n - 1]
+            
+        title = scene_payload.title if scene_payload else ""
+        narration = scene_payload.narration if scene_payload else ""
+        scene_num_padded = f"{n:02d}"
+        emoji = emojis[(n - 1) % len(emojis)]
+        
+        narration_p = ""
+        if narration:
+            truncated_narration = narration[:220].replace('"', '&quot;') + ("…" if len(narration) > 220 else "")
+            narration_p = f'<p id="s{n}-desc" class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">{truncated_narration}</p>'
+
+        ph = (
+            f'\n  <!-- SCENE {n} (Fallback) -->'
+            f'\n  <div class="scene scene-fallback centered" id="scene{n}" style="position:absolute;inset:0;opacity:0;visibility:hidden;background:linear-gradient(135deg,var(--bg,#08080f),var(--bg2,#0f0f1a));">'
+            f'\n    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>'
+            f'\n    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>'
+            f'\n    <div class="top-line"></div>'
+            f'\n    <span class="scene-num">{scene_num_padded}</span>'
+            f'\n    <div class="layout" style="padding:100px 140px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:36px;">'
+            f'\n      <div id="s{n}-badge" class="badge" style="margin:0 auto;">{emoji} &nbsp; PHẦN {n}</div>'
+            f'\n      <h1 id="s{n}-title" class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">{title or f"Nội dung phân cảnh {n}"}</h1>'
+            f'\n      {narration_p}'
+            f'\n      <div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">'
+            f'\n        <div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>'
+            f'\n        <div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE {scene_num_padded}</div>'
+            f'\n        <div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; TECHBEAT</div>'
+            f'\n      </div>'
+            f'\n    </div>'
+            f'\n  </div>'
+        )
+        placeholders.append(ph)
+        
+    placeholder_str = "".join(placeholders)
+    
+    # Chèn placeholders vào trước thẻ đóng </div> cuối cùng của #root
+    lower_html = html.lower()
+    body_idx = lower_html.rfind("</body>")
+    if body_idx != -1:
+        div_idx = html[:body_idx].rfind("</div>")
+        if div_idx != -1:
+            return html[:div_idx] + placeholder_str + "\n" + html[div_idx:]
+            
+    return html + placeholder_str
+
+
 async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[dict, None]:
     """Yield raw event dicts: {type:'chunk',text} | {type:'done',html,scenes?} | {type:'error',message}"""
     import os as _os
     theme = get_theme(req.theme)
-    full_text = ""
-    finish_reason: str | None = None
 
     # ── Materialise images FIRST so the LLM gets real file paths ────────
-    # Without this, the LLM is told "scene has no image" for every scene
-    # the user picked, and the generated HTML contains zero <img> tags.
     try:
         materialised = await _materialise_scene_images(req.scenes, get_project_root())
         req = req.model_copy(update={"scenes": materialised})
     except Exception as e:
         print(f"[preview] image materialisation skipped: {e}")
 
-    # Groq free tier struggles with 8 dense scenes — quality drops to bare
-    # cards on empty backgrounds. We merge adjacent scenes into a smaller
-    # set so the LLM has fewer scenes to render but each gets full token
-    # budget. Build pipeline still uses ORIGINAL scenes for TTS — merged
-    # scenes are only the HTML rendering surface.
-    groq_max_scenes = int(_os.getenv("GROQ_MAX_SCENES", "5"))
-    merged_scenes_for_groq = merge_scenes_for_groq(req.scenes, groq_max_scenes) if len(req.scenes) > groq_max_scenes else None
-
     try:
-        # Build TWO user prompts — full (paid) and merged (groq) — picked at
-        # request time by the kwargs factory.
-        prompt_full = build_user_prompt(req)
-        if merged_scenes_for_groq:
-            req_for_groq = req.model_copy(update={
-                "scenes": merged_scenes_for_groq,
-                "totalDuration": sum(s.duration for s in merged_scenes_for_groq),
-            })
-            prompt_groq = build_user_prompt(req_for_groq)
-            groq_scene_count = len(merged_scenes_for_groq)
-        else:
-            prompt_groq = prompt_full
-            groq_scene_count = len(req.scenes)
+        scenes_html = []
+        previous_context = {
+            "layout": None,
+            "visual_pattern": None,
+            "used_layouts": [],
+            "used_patterns": []
+        }
 
-        sys_full           = build_system_prompt_full(theme, len(req.scenes))
-        sys_groq_premium   = build_system_prompt_groq_premium(theme, groq_scene_count)
+        for idx_zero, s in enumerate(req.scenes):
+            idx = idx_zero + 1
+            is_first = (idx == 1)
+            is_last = (idx == len(req.scenes))
 
-        def _kwargs(provider_name: str) -> dict:
-            if provider_name in ("groq", "groq-fast"):
-                # Groq has hard caps:
-                # - llama-3.3-70b-versatile: 12000 TPM (input+output) — keep prompt small
-                # - llama-4-scout-17b: max_tokens ≤ 8192 — cap output
-                max_tok = 8192
+            sys_single = build_system_prompt_single_scene(theme, idx, len(req.scenes), previous_context)
+            prompt_single = build_user_prompt_single_scene(s, previous_context, is_first, is_last)
+
+            def _kwargs(provider_name: str) -> dict:
                 return {
                     "messages": [
-                        {"role": "system", "content": sys_groq_premium},
-                        {"role": "user", "content": prompt_groq},
+                        {"role": "system", "content": sys_single},
+                        {"role": "user", "content": prompt_single},
                     ],
-                    "temperature": 0.75,
-                    "max_tokens": max_tok,
+                    "temperature": 0.7 if provider_name == "primary" else 0.75,
+                    "max_tokens": 4000,
                     "stream": True,
                 }
-            return {
-                "messages": [
-                    {"role": "system", "content": sys_full},
-                    {"role": "user", "content": prompt_full},
-                ],
-                "temperature": 0.7,
-                "max_tokens": 16000,
-                "stream": True,
-            }
 
-        stream, provider, model = await chat_completions_with_fallback(
-            model_kind="composition",
-            kwargs_factory=_kwargs,
-        )
-        # Always surface which model is generating the HTML
-        yield {"type": "model_info", "provider": provider, "model": model}
-        if provider != "primary":
-            extra = ""
-            if provider in ("groq", "groq-fast") and merged_scenes_for_groq:
-                extra = f" Đã gộp {len(req.scenes)} scene → {len(merged_scenes_for_groq)} scene để giữ chất lượng visual."
-            yield {
-                "type": "warning",
-                "message": f"Primary LLM hết quota — đã chuyển sang {provider} ({model}).{extra}",
-            }
-        async for chunk in stream:
-            if not chunk.choices:
-                continue
-            choice = chunk.choices[0]
-            delta = choice.delta
-            text = getattr(delta, "content", None)
-            if text:
-                full_text += text
-                yield {"type": "chunk", "text": text}
-            if getattr(choice, "finish_reason", None):
-                finish_reason = choice.finish_reason
+            try:
+                stream, provider, model = await chat_completions_with_fallback(
+                    model_kind="composition",
+                    kwargs_factory=_kwargs,
+                )
 
-        html = strip_fences(full_text)
-        if "<html" not in html.lower():
-            yield {"type": "error", "message": "Không tìm thấy HTML hợp lệ trong response"}
-            return
+                yield {"type": "model_info", "provider": provider, "model": model}
 
-        # Hard truncation: finish_reason=length means model hit output token cap.
-        # Log it even when the proxy auto-appended </html> to mask the cutoff.
-        if finish_reason == "length":
-            print(f"[composition] ⚠ finish_reason=length — model hit output token cap "
-                  f"(len={len(html)}). HTML có thể thiếu scene cuối.")
+                scene_text = ""
+                async for chunk in stream:
+                    if not chunk.choices:
+                        continue
+                    choice = chunk.choices[0]
+                    delta = choice.delta
+                    text = getattr(delta, "content", None)
+                    if text:
+                        scene_text += text
+                        yield {"type": "chunk", "text": text}
 
-        # Auto-recover truncated output. Provider often drops the closing tags
-        # when it hits max_tokens; the body before the cutoff is usually
-        # complete enough that we can render. We close the document and let
-        # the build pipeline inject placeholder scenes for any missing IDs.
-        lower = html.lower()
-        if "</html>" not in lower:
-            print(f"[composition] HTML truncated (finish_reason={finish_reason}, "
-                  f"len={len(html)}). Auto-closing and continuing.")
+                scene_html = strip_fences(scene_text).strip()
+                if not scene_html.lower().startswith("<div"):
+                    m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html)
+                    if m:
+                        scene_html = m.group(0)
 
-            # Find a safe truncation point — last complete tag — to avoid
-            # leaving a half-written attribute or text node mid-stream.
-            last_close = html.rfind(">")
-            if last_close > 0:
-                html = html[: last_close + 1]
+                layout, pattern = extract_scene_layout_and_pattern(scene_html)
+                previous_context["layout"] = layout
+                previous_context["visual_pattern"] = pattern
+                if layout:
+                    previous_context["used_layouts"].append(layout)
+                if pattern:
+                    previous_context["used_patterns"].append(pattern)
 
-            # Append whatever is missing in the right order.
-            tail = ""
-            if "</body>" not in html.lower():
-                # Make sure root div is closed before </body>
-                if html.count("<div") > html.count("</div"):
-                    tail += "\n" + ("</div>" * (html.count("<div") - html.count("</div")))
-                tail += "\n</body>"
-            if "</html>" not in (html + tail).lower():
-                tail += "\n</html>"
-            html = html + tail
-            yield {
-                "type": "warning",
-                "message": (
-                    f"HTML bị cắt do LLM hết token (finish_reason={finish_reason}). "
-                    f"Đã tự đóng tag và tiếp tục — scene thiếu sẽ được hệ thống điền placeholder."
-                ),
-            }
+                scenes_html.append(scene_html)
+                print(f"[composition] Scene {idx}/{len(req.scenes)} generated: layout={layout}, pattern={pattern} ({provider}/{model})")
 
-        # Inject framework CSS so the LLM's output stays small and consistent.
+            except Exception as e:
+                print(f"[composition] Scene {idx}/{len(req.scenes)} generation failed: {e}. Using fallback.")
+                yield {
+                    "type": "warning",
+                    "message": f"Scene {idx} sinh thất bại ({e}). Đã dùng fallback HTML.",
+                }
+                fb_html = fallback_scene_html(s, theme)
+                scenes_html.append(fb_html)
+
+        # Assemble the full HTML boilerplate
+        scenes_combined = "\n\n  ".join(scenes_html)
+        base_css = render_base_css(theme)
+
+        html = f"""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{req.title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+/* === techbeat:base-css === */
+{base_css}
+
+/* Custom scene-specific animations */
+@keyframes neon-glow {{
+  0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }}
+  50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }}
+}}
+@keyframes aurora-mesh {{
+  0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }}
+  50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }}
+}}
+@keyframes star-blink {{
+  0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }}
+  50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }}
+}}
+@keyframes grad-shift {{
+  0% {{ background-position: 0% 50%; }}
+  50% {{ background-position: 100% 50%; }}
+  100% {{ background-position: 0% 50%; }}
+}}
+
+/* Compact styling for comparison layout to prevent overflow */
+.compare .col {{
+  padding: 24px !important;
+}}
+.compare .col li {{
+  font-size: 1.25rem !important;
+  padding: 6px 0 !important;
+}}
+.compare .col li ul li {{
+  font-size: 1.15rem !important;
+  padding: 4px 0 !important;
+}}
+.compare .col h4 {{
+  margin-bottom: 12px !important;
+}}
+.compare .terminal {{
+  padding: 20px 24px !important;
+  font-size: 1.1rem !important;
+}}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="{req.totalDuration}">
+  <div class="scanlines"></div>
+  
+  {scenes_combined}
+  
+</div>
+</body>
+</html>"""
+
         html = inject_base_css(html, theme)
+        yield {"type": "done", "html": html}
 
-        # When groq merged scenes, the HTML only has the merged count.
-        # Validate against the *actual* scenes the prompt asked for.
-        if provider in ("groq", "groq-fast") and merged_scenes_for_groq:
-            effective_scenes = merged_scenes_for_groq
-        else:
-            effective_scenes = list(req.scenes)
-
-        expected = len(effective_scenes)
-        missing: list[int] = []
-        for i in range(1, expected + 1):
-            if not re.search(rf'id\s*=\s*["\']scene{i}["\']', html):
-                missing.append(i)
-        if missing:
-            print(f"[composition] WARNING: LLM produced HTML missing scenes {missing} of {expected}. "
-                  f"finish_reason={finish_reason}, html_len={len(html)}. "
-                  f"Build pipeline will inject placeholder cards so audio stays in sync.")
-
-        done_event: dict = {"type": "done", "html": html}
-        if provider in ("groq", "groq-fast") and merged_scenes_for_groq:
-            done_event["mergedScenes"] = [s.model_dump() for s in merged_scenes_for_groq]
-            done_event["mergedTotalDuration"] = sum(s.duration for s in merged_scenes_for_groq)
-        yield done_event
     except Exception as e:
         yield {"type": "error", "message": str(e)}
 
@@ -2698,3 +2956,197 @@ Sinh lại block <div class="scene ..." id="scene{body.sceneIndex}"> với nội
     start, end = bounds
     updated = body.fullHtml[:start] + new_block + body.fullHtml[end:]
     return {"html": updated, "provider": provider}
+
+
+# ─────────────────────────  GEN SCENE ONE  ─────────────────────────
+
+
+class GenSceneOneRequest(BaseModel):
+    title: str
+    scenes: list[ScenePayload]
+    totalDuration: float
+    theme: str | None = None
+    sceneIndex: int  # 1-based — scene cần gen lần này
+    existingHtml: str | None = None  # HTML đã có (từ scene 1..N-1), None nếu là scene 1
+    previousContext: dict | None = None  # layout/pattern của scene trước
+
+
+def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css: str) -> str:
+    """Tạo HTML boilerplate rỗng (chưa có scene nào) để append scene vào sau."""
+    return f"""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+/* === techbeat:base-css === */
+{base_css}
+
+/* Custom scene-specific animations */
+@keyframes neon-glow {{
+  0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }}
+  50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }}
+}}
+@keyframes aurora-mesh {{
+  0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }}
+  50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }}
+}}
+@keyframes star-blink {{
+  0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }}
+  50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }}
+}}
+@keyframes grad-shift {{
+  0% {{ background-position: 0% 50%; }}
+  50% {{ background-position: 100% 50%; }}
+  100% {{ background-position: 0% 50%; }}
+}}
+
+/* Compact styling for comparison layout to prevent overflow */
+.compare .col {{
+  padding: 24px !important;
+}}
+.compare .col li {{
+  font-size: 1.25rem !important;
+  padding: 6px 0 !important;
+}}
+.compare .col li ul li {{
+  font-size: 1.15rem !important;
+  padding: 4px 0 !important;
+}}
+.compare .col h4 {{
+  margin-bottom: 12px !important;
+}}
+.compare .terminal {{
+  padding: 20px 24px !important;
+  font-size: 1.1rem !important;
+}}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="{total_duration}">
+  <div class="scanlines"></div>
+
+<!-- __SCENES_PLACEHOLDER__ -->
+
+</div>
+</body>
+</html>"""
+
+
+def _append_scene_to_html(existing_html: str, scene_html: str) -> str:
+    """Append một scene block vào trước <!-- __SCENES_PLACEHOLDER__ --> hoặc trước </div></body>."""
+    placeholder = "<!-- __SCENES_PLACEHOLDER__ -->"
+    if placeholder in existing_html:
+        return existing_html.replace(placeholder, scene_html + "\n\n" + placeholder, 1)
+    # fallback: chèn trước </div> cuối trước </body>
+    body_idx = existing_html.lower().rfind("</body>")
+    if body_idx != -1:
+        div_idx = existing_html[:body_idx].rfind("</div>")
+        if div_idx != -1:
+            return existing_html[:div_idx] + "\n" + scene_html + "\n" + existing_html[div_idx:]
+    return existing_html + "\n" + scene_html
+
+
+@router.post("/gen-scene-one")
+async def gen_scene_one(body: GenSceneOneRequest):
+    """Gen 1 scene duy nhất, trả về HTML cập nhật ngay.
+
+    - sceneIndex=1, existingHtml=None → tạo boilerplate + gen scene 1
+    - sceneIndex>1, existingHtml=... → gen scene mới + append vào existingHtml
+
+    Response: { html, sceneIndex, totalScenes, done, provider, model, layout, visualPattern }
+    """
+    theme = get_theme(body.theme)
+    total = len(body.scenes)
+    idx = body.sceneIndex  # 1-based
+
+    if idx < 1 or idx > total:
+        raise HTTPException(status_code=400, detail=f"sceneIndex={idx} ngoài phạm vi 1..{total}")
+
+    # 0-based index trong mảng scenes
+    s = body.scenes[idx - 1]
+    is_first = idx == 1
+    is_last = idx == total
+
+    # Materialise ảnh cho scene này
+    try:
+        materialised = await _materialise_scene_images([s], get_project_root())
+        s = materialised[0]
+    except Exception as e:
+        print(f"[gen-scene-one] image materialise failed for scene {idx}: {e}")
+
+    # Lấy previous context từ body hoặc mặc định
+    prev_ctx = body.previousContext or {"layout": None, "visual_pattern": None, "used_layouts": [], "used_patterns": []}
+
+    sys_prompt = build_system_prompt_single_scene(theme, idx, total, prev_ctx)
+    user_prompt = build_user_prompt_single_scene(s, prev_ctx, is_first, is_last)
+
+    def _kwargs(provider_name: str) -> dict:
+        return {
+            "messages": [
+                {"role": "system", "content": sys_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.7 if provider_name == "primary" else 0.75,
+            "max_tokens": 4000,
+            "stream": False,
+        }
+
+    scene_html: str | None = None
+    provider = "unknown"
+    model = "unknown"
+
+    try:
+        resp, provider, model = await chat_completions_with_fallback(
+            model_kind="composition",
+            kwargs_factory=_kwargs,
+        )
+        raw = resp.choices[0].message.content or ""
+        scene_html = strip_fences(raw).strip()
+        if not scene_html.lower().startswith("<div"):
+            m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html)
+            if m:
+                scene_html = m.group(0)
+            else:
+                scene_html = None
+    except Exception as e:
+        print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
+
+    # Fallback nếu LLM thất bại
+    if not scene_html:
+        scene_html = fallback_scene_html(s, theme)
+
+    # Trích layout / pattern để trả về cho frontend (dùng làm previousContext lần sau)
+    layout, visual_pattern = extract_scene_layout_and_pattern(scene_html)
+
+    # Ghép HTML
+    if is_first or not body.existingHtml:
+        base_css = render_base_css(theme)
+        html = _build_boilerplate(body.title, body.totalDuration, theme, base_css)
+        html = _append_scene_to_html(html, scene_html)
+    else:
+        html = _append_scene_to_html(body.existingHtml, scene_html)
+
+    print(f"[gen-scene-one] Scene {idx}/{total} done: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
+
+    return {
+        "html": html,
+        "sceneIndex": idx,
+        "totalScenes": total,
+        "done": is_last,
+        "provider": provider,
+        "model": model,
+        "layout": layout,
+        "visualPattern": visual_pattern,
+        "newContext": {
+            "layout": layout,
+            "visual_pattern": visual_pattern,
+            "used_layouts": (prev_ctx.get("used_layouts") or []) + ([layout] if layout else []),
+            "used_patterns": (prev_ctx.get("used_patterns") or []) + ([visual_pattern] if visual_pattern else []),
+        },
+    }

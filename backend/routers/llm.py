@@ -149,18 +149,18 @@ def configured_providers() -> list[Provider]:
 
 def log_provider_status() -> None:
     """Print which providers are active/skipped — call once at startup."""
-    print("[LLM] ══ Provider chain ══")
+    print("[LLM] == Provider chain ==")
     for p in PROVIDER_CHAIN:
         key = _resolve_provider_key(p)
         if key:
             masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "***"
-            print(f"[LLM]   ✓ {p.name:12s} key={masked}  url={p.base_url}")
+            print(f"[LLM]   OK {p.name:12s} key={masked}  url={p.base_url}")
         else:
-            print(f"[LLM]   ✗ {p.name:12s} (key '{p.api_key_env}' chưa set → bỏ qua)")
-    print("[LLM] ══════════════════")
+            print(f"[LLM]   -- {p.name:12s} (key '{p.api_key_env}' chua set -> bo qua)")
+    print("[LLM] ==================")
 
 
-# ─── Quota / billing detection ───────────────────────────────────────────
+# --- Quota / billing detection -------------------------------------------
 
 def _is_quota_or_billing_error(e: Exception) -> bool:
     """Heuristic: does this error mean 'this provider can't fulfil the

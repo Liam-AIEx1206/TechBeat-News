@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Unity AI - Làm việc với AI như một tech lead</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+
+<style>
+/* === premium-presentation:base-css === */
+
+:root {
+  --bg: #0c0a09; /* stone-950 */
+  --bg2: #1c1917; /* stone-900 */
+  --surface: rgba(28, 25, 23, 0.65);
+  --accent: #f97316; /* Orange brand color */
+  --accent2: #fdba74; /* orange-300 */
+  --accent3: #ffedd5; /* orange-100 */
+  --text1: #fafaf9; /* stone-50 */
+  --text2: #d6d3d1; /* stone-300 */
+  --glow: rgba(249, 115, 22, 0.25);
+  --gray-3: rgba(255, 255, 255, 0.08);
+  --r-lg: 24px;
+  --ease-out: cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  color: var(--text1);
+}
+
+/* Presentation Root: 1080p Canvas */
+#root {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 1400px 900px at 20% 50%, rgba(249, 115, 22, 0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 1000px 700px at 80% 20%, rgba(253, 186, 116, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 800px 600px at 60% 80%, rgba(255, 237, 213, 0.04) 0%, transparent 60%),
+    linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  transform-origin: top left;
+  box-shadow: 0 0 100px rgba(0,0,0,0.8);
+}
+
+#root::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(249, 115, 22, 0.15) 1.5px, transparent 1.5px);
+  background-size: 48px 48px; opacity: 0.35;
+  pointer-events: none; z-index: 0;
+  animation: grid-sweep 16s linear infinite;
+}
+
+#root::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 140% 140% at 50% 50%, transparent 40%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none; z-index: 1;
+}
+
+.scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none; z-index: 2;
+}
+
+/* Scene Setup */
+.scene {
+  position: absolute; inset: 0;
+  opacity: 0; visibility: hidden; z-index: 10;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg);
+}
+
+/* Active Scene (fallback) */
+#scene1 {
+  opacity: 1; visibility: visible;
+}
+
+/* Layout System */
+.scene .layout {
+  display: grid; gap: 50px; height: 100%;
+  padding: 80px 100px 100px; align-items: center;
+  position: relative; z-index: 10;
+}
+.scene.split .layout    { grid-template-columns: 1fr 1fr; }
+.scene.hero .layout     { grid-template-columns: 1.1fr 0.9fr; }
+.scene.centered .layout { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.scene.centered .info-col { align-items: center; text-align: center; }
+.scene.centered .info-col > * { text-align: center; }
+.scene.magazine .layout { grid-template-columns: 7fr 5fr; gap: 70px; }
+.scene.data .layout     { grid-template-columns: 0.9fr 1.1fr; }
+
+.info-col   {
+  display: flex; flex-direction: column; justify-content: center; gap: 24px;
+  min-width: 0; max-height: 100%; overflow: visible;
+}
+.visual-col {
+  display: flex; flex-direction: column; justify-content: center; gap: 24px;
+  min-width: 0; max-width: 100%; max-height: 100%; overflow: visible;
+}
+
+/* Brand Chrome */
+.corner-bracket { position: absolute; width: 45px; height: 45px; opacity: 0.35; z-index: 15; }
+.corner-bracket.tl { top: 32px; left: 32px;  border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+.corner-bracket.tr { top: 32px; right: 32px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+.corner-bracket.bl { bottom: 32px; left: 32px;  border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+.corner-bracket.br { bottom: 32px; right: 32px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+
+.top-line {
+  position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 40%, var(--accent2) 60%, transparent 100%);
+  z-index: 20;
+}
+
+.scene-num {
+  position: absolute; bottom: 20px; right: 40px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8rem; font-weight: 800;
+  color: var(--accent); opacity: 0.05; line-height: 1;
+  pointer-events: none; z-index: 5;
+}
+
+/* Header & Footer Brand */
+.header-brand {
+  position: absolute; top: 32px; left: 100px;
+  display: flex; align-items: center; gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.15rem; font-weight: 800; color: var(--accent2);
+  letter-spacing: 0.1em; z-index: 25;
+}
+.header-brand span {
+  width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.footer-brand {
+  position: absolute; bottom: 32px; left: 100px;
+  display: flex; gap: 24px; font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem; color: var(--text2); opacity: 0.65;
+  z-index: 25;
+}
+
+/* Typography elements */
+.badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--accent3); background: rgba(249, 115, 22, 0.12);
+  border: 1.5px solid var(--accent);
+  border-radius: 99px; padding: 8px 20px;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  width: fit-content;
+}
+
+.title-xl {
+  font-size: clamp(3.2rem, 5vw, 5.0rem);
+  font-weight: 900; line-height: 1.25; letter-spacing: -0.03em;
+  color: var(--text1);
+}
+.title-hero {
+  font-size: clamp(4.8rem, 7.5vw, 7.2rem);
+  font-weight: 900; line-height: 1.15; letter-spacing: -0.04em;
+  color: var(--text1);
+}
+.subtitle {
+  font-size: 1.85rem; font-weight: 700;
+  color: var(--accent2); line-height: 1.35;
+}
+.body-text {
+  font-size: 1.45rem; line-height: 1.7;
+  color: var(--text2); max-width: 750px;
+  word-break: break-word;
+}
+
+.grad-text {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 60%, var(--accent3) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  will-change: transform; isolation: isolate; transform: translateZ(0);
+}
+
+/* Glass panel elements */
+.visual-block {
+  background: var(--surface);
+  border: 1.5px solid rgba(249, 115, 22, 0.22);
+  border-radius: 28px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 35px 80px -20px var(--glow), inset 0 0 50px rgba(255,255,255,0.01);
+  position: relative; overflow: visible;
+  padding: 48px;
+  width: 100%;
+}
+.visual-block::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+  opacity: 0.5;
+}
+
+/* Glassy Stat List */
+.stat-list {
+  display: flex; flex-direction: column; gap: 20px; width: 100%;
+}
+.stat-list-card {
+  display: flex; align-items: center; gap: 28px;
+  padding: 24px 32px; border-radius: 24px;
+  background: var(--surface);
+  border: 1px solid rgba(249, 115, 22, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 15px 35px -10px var(--glow);
+  position: relative; overflow: visible;
+}
+.stat-list-card .ic-wrap {
+  display: flex; align-items: center; justify-content: center;
+  width: 64px; height: 64px; border-radius: 16px;
+  background: rgba(249, 115, 22, 0.12); border: 2px solid rgba(249, 115, 22, 0.3);
+  color: var(--accent2); font-size: 1.85rem; flex-shrink: 0;
+}
+.stat-list-card .num {
+  font-size: 3.5rem; font-weight: 900;
+  color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  line-height: 1; min-width: 110px; text-shadow: 0 0 15px var(--glow);
+  flex-shrink: 0;
+}
+.stat-list-card .details {
+  display: flex; flex-direction: column; gap: 4px;
+  min-width: 0; flex: 1;
+}
+.stat-list-card .title {
+  font-size: 1.35rem; font-weight: 700; color: var(--text1); line-height: 1.3;
+}
+.stat-list-card .desc {
+  font-size: 1.15rem; color: var(--text2); opacity: 0.8;
+}
+
+/* Bento Grid */
+.bento-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 20px; width: 100%;
+}
+.bento-cell {
+  background: var(--surface);
+  border: 1px solid rgba(249, 115, 22, 0.18);
+  border-top: 3.5px solid var(--accent);
+  border-radius: 20px; padding: 28px;
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+.bento-cell .ic  { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+.bento-cell .t   { font-size: 1.35rem; font-weight: 700; color: var(--text1); margin-bottom: 6px; }
+.bento-cell .d   { font-size: 1.15rem; color: var(--text2); line-height: 1.45; }
+
+/* Compare Cards */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }
+.compare .col {
+  padding: 32px; border-radius: 24px;
+  border: 1.5px solid rgba(249, 115, 22, 0.18);
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+}
+.compare .col h4 {
+  font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent2); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.compare .col li {
+  list-style: none; padding: 10px 0; color: var(--text2);
+  font-size: 1.25rem; line-height: 1.45;
+}
+.compare .col li::before { content: '✓ '; color: #4ade80; font-weight: 700; }
+.compare .col.bad li::before { content: '✗ '; color: #f87171; }
+
+/* Code Terminal */
+.terminal {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(12, 10, 9, 0.85); border: 1.5px solid rgba(249, 115, 22, 0.28);
+  border-radius: 20px; padding: 32px;
+  font-size: 1.15rem; line-height: 1.6; color: var(--text2);
+  box-shadow: 0 15px 40px -10px var(--glow);
+  width: 100%;
+  text-align: left;
+}
+.terminal .dots { display: flex; gap: 8px; margin-bottom: 16px; }
+.terminal .dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.terminal .dots i:nth-child(1) { background: #ef4444; }
+.terminal .dots i:nth-child(2) { background: #fbbf24; }
+.terminal .dots i:nth-child(3) { background: #22c55e; }
+.terminal .k { color: #f97316; font-weight: 600; } /* keywords */
+.terminal .s { color: #fdba74; } /* strings */
+.terminal .c { color: var(--text2); opacity: 0.55; } /* comments */
+
+/* Stat Card */
+.glass-card {
+  padding: 32px 24px; border-radius: 20px; text-align: center;
+  background: var(--surface);
+  border: 1px solid rgba(249, 115, 22, 0.18);
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+.glass-card .emoji { font-size: 2.8rem; margin-bottom: 14px; display: block; }
+.glass-card .title { font-size: 1.25rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }
+.glass-card .desc { font-size: 1.1rem; color: var(--text2); line-height: 1.4; }
+
+/* 3-Column Feat Row */
+.feat-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%;
+}
+
+/* Feature checklist */
+.feat-list {
+  display: flex; flex-direction: column; gap: 14px; width: 100%;
+}
+.feat-card {
+  display: flex; gap: 18px; align-items: flex-start;
+  padding: 20px 24px; border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.feat-card .num-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent); color: #000; font-weight: 800; font-size: 1.1rem;
+  font-family: 'JetBrains Mono', monospace; flex-shrink: 0;
+}
+.feat-card .details { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.feat-card .t { font-size: 1.25rem; font-weight: 700; color: var(--text1); }
+.feat-card .d { font-size: 1.15rem; color: var(--text2); line-height: 1.4; }
+
+/* Formula visual */
+.formula-stack {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+}
+.formula-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 99px; font-size: 1.0rem;
+  border: 1.5px solid rgba(255,255,255,0.06);
+}
+.formula-pill.pink { background: rgba(236,72,153,0.12); border-color: rgba(236,72,153,0.3); color: #f472b6; }
+.formula-pill.yellow { background: rgba(253,224,71,0.12); border-color: rgba(253,224,71,0.3); color: #fde047; }
+.formula-pill.green { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.3); color: #4ade80; }
+.formula-pill.blue { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.3); color: #38bdf8; }
+.formula-operator { font-size: 1.35rem; color: rgba(255,255,255,0.25); }
+
+/* Ambient graphics */
+.aurora-glow {
+  position: absolute; width: 750px; height: 500px; border-radius: 50%;
+  filter: blur(140px); opacity: 0.35; pointer-events: none; z-index: 0;
+}
+.animated-grid {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(249, 115, 22, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249, 115, 22, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  animation: grid-sweep 20s linear infinite;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 0%, transparent 70%);
+}
+.ghost-text {
+  position: absolute; font-family: 'Inter', system-ui, sans-serif;
+  font-size: 20rem; font-weight: 900;
+  color: var(--accent); opacity: 0.045; line-height: 0.85;
+  letter-spacing: -0.05em; pointer-events: none; user-select: none;
+  z-index: 0; white-space: nowrap;
+}
+
+@keyframes grid-sweep {
+  0% { background-position: 0 0; }
+  100% { background-position: 64px 64px; }
+}
+
+/* Custom micro-animations */
+.breath {
+  animation: floating 8s ease-in-out infinite;
+}
+@keyframes floating {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(0.3deg); }
+}
+
+.y2k-sparkle {
+  position: absolute; width: 24px; height: 24px; background: var(--accent3);
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  animation: sparkle 2.5s infinite ease-in-out;
+  pointer-events: none; z-index: 12;
+}
+@keyframes sparkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 0.85; transform: scale(1.15); }
+}
+
+.highlight-box {
+  background: rgba(249, 115, 22, 0.08);
+  border-left: 4px solid var(--accent);
+  padding: 20px 28px; border-radius: 0 16px 16px 0;
+  font-size: 1.2rem; line-height: 1.5; color: var(--text1);
+}
+
+.giant-text {
+  font-size: clamp(3.0rem, 4.5vw, 4.2rem);
+  font-weight: 900; line-height: 1.2; letter-spacing: -0.02em;
+  color: var(--text1); text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Scene transitions */
+.transition-overlay {
+  position: absolute; inset: 0; background: var(--accent); z-index: 100;
+  transform: scaleY(0); transform-origin: top; pointer-events: none;
+}
+
+</style>
+</head>
+<body>
+
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="105">
+  <div class="scanlines"></div>
+  <div class="transition-overlay" id="wipe"></div>
+
+  <!-- ==================== SCENE 1: Title Slide ==================== -->
+  <div class="scene hero" id="scene1">
+    <div class="aurora-glow" style="top:-10%; left:-10%; background: radial-gradient(circle, rgba(249, 115, 22, 0.2) 0%, transparent 70%);"></div>
+    <div class="aurora-glow" style="bottom:-20%; right:-10%; background: radial-gradient(circle, rgba(253, 186, 116, 0.15) 0%, transparent 70%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="top:5%; left:10%; transform: rotate(-5deg);">TECH LEAD</div>
+    <div class="y2k-sparkle" style="top:250px; right:600px;"></div>
+    <div class="y2k-sparkle" style="bottom:200px; left:400px; animation-delay:1s;"></div>
+    
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s1-info">
+        <div id="s1-badge" class="badge">📡 KHỐI 1 · MỞ ĐẦU</div>
+        <h1 id="s1-title" class="title-hero grad-text">Training Unity AI</h1>
+        <p id="s1-subtitle" class="subtitle">Làm việc với AI như một tech lead</p>
+        <div id="s1-desc" style="display:flex; gap:14px; flex-wrap:wrap; margin-top:8px;">
+          <div class="badge" style="border-color: rgba(255,255,255,0.15); background: rgba(0,0,0,0.35);">🚀 Cursor & Claude</div>
+          <div class="badge" style="border-color: rgba(255,255,255,0.15); background: rgba(0,0,0,0.35);">⚡ Workflow Scale</div>
+        </div>
+      </div>
+      <div class="visual-col" id="s1-visual">
+        <div class="visual-block glow-card breath">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size:1.1rem; color:var(--accent2); margin-bottom:12px; font-weight:800;">📅 THÁNG 5 / 2026</div>
+          <h2 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 20px;">Lớp Học Đặc Biệt</h2>
+          <div style="display:flex; flex-direction:column; gap:12px; font-size:1.25rem; opacity:0.85; line-height:1.6; text-align:left;">
+            <p>• <strong>Thời lượng:</strong> 2 Giờ Thuyết Trình Cô Đọng</p>
+            <p>• <strong>Mindset:</strong> AI là junior dev, bạn là tech lead</p>
+            <p>• <strong>Mục tiêu:</strong> Làm chủ và kiểm soát 100% kết quả AI</p>
+          </div>
+          <div style="margin-top:24px; border-top:1px solid rgba(255,255,255,0.08); padding-top:18px; display:flex; gap:10px;">
+            <span style="font-family:'JetBrains Mono', monospace; font-size:0.9rem; background:rgba(255,255,255,0.04); padding:6px 12px; border-radius:6px; color:var(--text2);">#UnityDev</span>
+            <span style="font-family:'JetBrains Mono', monospace; font-size:0.9rem; background:rgba(255,255,255,0.04); padding:6px 12px; border-radius:6px; color:var(--text2);">#AIWorkflow</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-brand">
+      <div>Slide 1.1 · Title slide</div>
+      <div>|</div>
+      <div>© 2026 XGAME STUDIO. All rights reserved.</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">01</span>
+  </div>
+
+  <!-- ==================== SCENE 2: Nỗi đau thật ==================== -->
+  <div class="scene data" id="scene2">
+    <div class="aurora-glow" style="top:5%; right:10%; background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="bottom:-5%; right:5%; transform: rotate(3deg);">PAIN POINT</div>
+    
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s2-info">
+        <div id="s2-badge" class="badge">💔 KHỐI 1 · THỰC TRẠNG</div>
+        <h1 id="s2-title" class="title-xl grad-text">Đau thật của chúng ta</h1>
+        <p id="s2-subtitle" class="subtitle">AI có năng suất nhưng đi kèm rủi ro lớn</p>
+        <p id="s2-desc" class="body-text">Khi thiếu quy chuẩn, thời gian sửa lỗi do AI tạo ra (AI-generated bugs) có thể vượt quá cả thời gian tự lập trình thủ công.</p>
+      </div>
+      <div class="visual-col" id="s2-visual">
+        <div class="stat-list">
+          <div class="stat-list-card glow-card compare-col-1">
+            <div class="ic-wrap">❌</div>
+            <div class="details">
+              <div class="title" style="color: #f87171;">Bạn nghĩ AI sửa bug, nó sửa...</div>
+              <div class="desc">Thực tế: Nó sửa xong đẻ thêm 2 bug mới ở chỗ khác.</div>
+            </div>
+          </div>
+          <div class="stat-list-card glow-card compare-col-2">
+            <div class="ic-wrap" style="background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.25);">⚠️</div>
+            <div class="details">
+              <div class="title">Bảo AI refactor / tối ưu hoá...</div>
+              <div class="desc">Thực tế: Nó tự động refactor toàn bộ các file không liên quan trong scope.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      <div>Slide 1.3 · Đau thật của chúng ta</div>
+      <div>|</div>
+      <div>Khối 1: Mở đầu</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">02</span>
+  </div>
+
+  <!-- ==================== SCENE 3: 4 Thành phần brief ==================== -->
+  <div class="scene magazine" id="scene3">
+    <div class="aurora-glow" style="top:-10%; left:20%; background: radial-gradient(circle, rgba(253, 186, 116, 0.12) 0%, transparent 70%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="top:5%; right:-5%;">BRIEF</div>
+    <div class="y2k-sparkle" style="top:320px; left:750px;"></div>
+
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s3-info">
+        <div id="s3-badge" class="badge">📝 KHỐI 2 · GIAO VIỆC</div>
+        <h1 id="s3-title" class="title-xl grad-text">4 thành phần của một brief tốt</h1>
+        <p id="s3-subtitle" class="subtitle">Tech lead không "hỏi" AI, họ viết brief</p>
+        <p id="s3-desc" class="body-text">Brief rõ ràng là vũ khí tối thượng giúp junior AI tạo ra mã nguồn chính xác khớp 100% với kiến trúc dự án.</p>
+      </div>
+      <div class="visual-col" id="s3-visual">
+        <div class="bento-grid">
+          <div class="bento-cell">
+            <span class="ic">🎭</span>
+            <div class="t">1. Vai Trò</div>
+            <div class="d">AI là ai? Gameplay dev hay Animator? "Bạn là Unity gameplay engineer..."</div>
+          </div>
+          <div class="bento-cell">
+            <span class="ic">🌎</span>
+            <div class="t">2. Context</div>
+            <div class="d">Kiến thức nền: Unity version, Architecture, Convention, các file liên quan.</div>
+          </div>
+          <div class="bento-cell">
+            <span class="ic">🎯</span>
+            <div class="t">3. Task</div>
+            <div class="d">Chính xác cần làm gì? Một việc, scope hẹp, không mơ hồ "làm cho xong".</div>
+          </div>
+          <div class="bento-cell">
+            <span class="ic">📐</span>
+            <div class="t">4. Output</div>
+            <div class="d">Đầu ra dạng gì? JSON list? Code có XML comment? Chờ duyệt plan trước?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      <div>Slide 2.2 · 4 thành phần của brief</div>
+      <div>|</div>
+      <div>Khối 2: Giao việc đúng</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">03</span>
+  </div>
+
+  <!-- ==================== SCENE 4: Before / After ==================== -->
+  <div class="scene split" id="scene4">
+    <div class="aurora-glow" style="bottom:-20%; left:10%; background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 60%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="bottom:10%; left:-5%; transform: rotate(-3deg);">COMPARE</div>
+
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s4-info" style="grid-column: span 2; text-align: center; align-items: center;">
+        <div id="s4-badge" class="badge">🔥 KHỐI 2 · KHÁC BIỆT</div>
+        <h1 id="s4-title" class="title-xl grad-text" style="font-size: 3.6rem;">Task: Thêm hệ thống Loot Drop khi Enemy chết</h1>
+        <p id="s4-subtitle" class="subtitle">So sánh trực quan hai phong cách giao việc đầu vào</p>
+      </div>
+      <div class="visual-col compare" id="s4-visual" style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        <div class="col bad compare-col-1">
+          <h4 style="color:#ef4444;">❌ PROMPT YẾU (Dev thường hỏi)</h4>
+          <p style="font-size: 1.15rem; font-style:italic; opacity:0.8; margin-bottom: 20px; color:#fca5a5;">"thêm loot drop khi enemy chết"</p>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:1.15rem; line-height:1.5;">
+            <li>AI tự đoán Loot gồm item hay gold và tự spawn bừa bãi</li>
+            <li>Nó tự động sửa lung tung vào Enemy.cs mà bạn không hề biết</li>
+            <li>Nó tự ý kết nối bừa bãi sang InventoryManager hay Database</li>
+            <li>Code "chạy được" nhưng phá hỏng cấu trúc Clean Code của team</li>
+          </div>
+        </div>
+        <div class="col compare-col-2">
+          <h4 style="color:#4ade80;">✅ BRIEF TỐT (Phong cách Tech Lead)</h4>
+          <div style="font-size:1.05rem; line-height:1.5; color:#a3e635; display:flex; flex-direction:column; gap:8px;">
+            <p><strong>[VAI TRÒ]</strong> Unity gameplay engineer làm việc trong codebase này.</p>
+            <p><strong>[CONTEXT]</strong> Unity 6, đã có ScriptableObject ItemData cho item. Enemy.cs đã có event OnDeath. LootTable là field [SerializeField] trên Enemy prefab.</p>
+            <p><strong>[TASK]</strong> Khi OnDeath fire, spawn item theo LootTable tại vị trí enemy. Mỗi entry trong LootTable có dropRate (0-1). KHÔNG sửa InventoryManager.</p>
+            <p><strong>[OUTPUT]</strong> Liệt kê file sẽ tạo/sửa; Code sạch có XML comment; Đợi tôi duyệt.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      <div>Slide 2.3 · Demo before/after</div>
+      <div>|</div>
+      <div>Khối 2: Giao việc đúng</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">04</span>
+  </div>
+
+  <!-- ==================== SCENE 5: Plan trước, Code sau ==================== -->
+  <div class="scene magazine" id="scene5">
+    <div class="aurora-glow" style="top:-10%; right:15%; background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="bottom:10%; right:5%;">CONTROL</div>
+
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s5-info">
+        <div id="s5-badge" class="badge">🚧 KHỐI 3 · SCOPE CONTROL</div>
+        <h1 id="s5-title" class="title-xl grad-text">Plan trước, Code sau</h1>
+        <p id="s5-subtitle" class="subtitle">Kỹ thuật quan trọng nhất để tránh AI phá hỏng dự án</p>
+        <p id="s5-desc" class="body-text">Đừng cho phép AI tự ý gõ code ngay lập tức. Hãy dựng một ranh giới chặt chẽ bắt nó phải lên kế hoạch trước.</p>
+      </div>
+      <div class="visual-col" id="s5-visual">
+        <div class="terminal glow-card">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="c">// Bắt AI dừng lại suy nghĩ và cam kết scope trước khi viết code</div>
+          <div class="k">Yêu cầu:</div>
+          <div class="s">"Trước khi viết bất kỳ dòng code nào, hãy trình bày kế hoạch chi tiết:</div>
+          <div class="s">1. Liệt kê chính xác các file sẽ tạo mới hoặc sửa đổi.</div>
+          <div class="s">2. Mô tả ngắn gọn thay đổi cốt lõi trong từng file đó.</div>
+          <div class="s">3. Đánh giá rủi ro và các module có khả năng bị ảnh hưởng.</div>
+          <div class="s">Đợi tôi approve kế hoạch này trước khi bạn bắt đầu code."</div>
+        </div>
+        <div class="highlight-box" style="margin-top:10px;">
+          <strong>Thần chú scope:</strong> Cấu hình câu lệnh này vào Cursor Rules hoặc paste trực tiếp ở lượt chat đầu tiên.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      <div>Slide 3.3 · Quy tắc 1: Plan trước, Code sau</div>
+      <div>|</div>
+      <div>Khối 3: Kiểm soát scope</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">05</span>
+  </div>
+
+  <!-- ==================== SCENE 6: 5 Dấu hiệu ==================== -->
+  <div class="scene hero" id="scene6">
+    <div class="aurora-glow" style="bottom:-20%; right:10%; background: radial-gradient(circle, rgba(253, 186, 116, 0.15) 0%, transparent 60%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="top:5%; left:10%; transform: rotate(-4deg);">REVIEW</div>
+
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s6-info">
+        <div id="s6-badge" class="badge">🔍 KHỐI 4 · CODE REVIEW</div>
+        <h1 id="s6-title" class="title-xl grad-text">5 dấu hiệu code AI "trông đúng mà sai"</h1>
+        <p id="s6-subtitle" class="subtitle">Đọc code AI nghiêm ngặt hơn cả code đồng nghiệp</p>
+        <p id="s6-desc" class="body-text">Bởi vì AI viết code trông cực kỳ sạch sẽ và hoàn hảo, nhưng các lỗi logic chí mạng thường bị ẩn giấu rất sâu dưới các dòng chú thích đẹp đẽ.</p>
+      </div>
+      <div class="visual-col" id="s6-visual">
+        <div class="feat-list">
+          <div class="feat-card glow-card">
+            <div class="num-badge">1</div>
+            <div class="details">
+              <div class="t">Tên hàm đúng nhưng logic thiếu</div>
+              <div class="d">Hàm ghi CalculateDamage nhưng bên trong quên nhân với giáp (Armor) của mục tiêu.</div>
+            </div>
+          </div>
+          <div class="feat-card glow-card">
+            <div class="num-badge">2</div>
+            <div class="details">
+              <div class="t">Ảo giác API (API Hallucination)</div>
+              <div class="d">Nó tự chế ra các hàm UnityEngine.X.Y() không hề tồn tại trong phiên bản Unity hiện tại.</div>
+            </div>
+          </div>
+          <div class="feat-card glow-card">
+            <div class="num-badge">3</div>
+            <div class="details">
+              <div class="t">Ngược dấu logic so sánh</div>
+              <div class="d">Rất hay nhầm lẫn toán tử: if (hp > 0) chết thay vì if (hp <= 0).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      <div>Slide 4.2 · 5 Dấu hiệu code AI trông đúng mà sai</div>
+      <div>|</div>
+      <div>Khối 4: Verify & scale</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">06</span>
+  </div>
+
+  <!-- ==================== SCENE 7: 3 Quy tắc cuối ==================== -->
+  <div class="scene centered" id="scene7">
+    <div class="aurora-glow" style="top:-10%; left:50%; transform:translateX(-50%); width:900px; background: radial-gradient(circle, rgba(249, 115, 22, 0.25) 0%, transparent 70%);"></div>
+    <div class="animated-grid"></div>
+    <div class="ghost-text" style="top:30%; left:50%; transform: translate(-50%, -50%); opacity: 0.035;">TECH LEAD</div>
+
+    <div class="header-brand">
+      <span></span> XGAME STUDIO · TRAINING CENTER
+    </div>
+
+    <div class="layout">
+      <div class="info-col" id="s7-info">
+        <div id="s7-badge" class="badge" style="margin: 0 auto 10px;">🏆 TỔNG KẾT</div>
+        <h1 id="s7-title" class="title-hero grad-text">3 Quy Tắc Cốt Lõi Mang Về</h1>
+        <p id="s7-subtitle" class="subtitle" style="margin-bottom:30px;">Hành trang để trở thành một Tech Lead dẫn dắt AI thực thụ</p>
+      </div>
+      <div class="visual-col feat-row" id="s7-visual">
+        <div class="glass-card glow-card shimmer-fast">
+          <div class="emoji">📝</div>
+          <div class="title" style="font-size:1.8rem; font-weight:900; margin-bottom:12px; color:var(--accent);">1. Brief, không hỏi</div>
+          <div class="desc" style="font-size:1.25rem;">Junior cần biết rõ: Bạn là ai, đang ở đâu, cần làm gì và đầu ra dạng gì.</div>
+        </div>
+        <div class="glass-card glow-card shimmer-fast" style="animation-delay: 0.2s;">
+          <div class="emoji">🚧</div>
+          <div class="title" style="font-size:1.8rem; font-weight:900; margin-bottom:12px; color:var(--accent2);">2. Plan trước, code sau</div>
+          <div class="desc" style="font-size:1.25rem;">Vẽ ranh giới nghiêm ngặt, bắt AI khai báo danh sách file và phương án trước.</div>
+        </div>
+        <div class="glass-card glow-card shimmer-fast" style="animation-delay: 0.4s;">
+          <div class="emoji">🔎</div>
+          <div class="title" style="font-size:1.8rem; font-weight:900; margin-bottom:12px; color:var(--accent3);">3. Đọc từng dòng AI viết</div>
+          <div class="desc" style="font-size:1.25rem;">Tuyệt đối nghi ngờ các đoạn code trông sạch sẽ, bắt AI tự giải thích tường tận.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      <div>Slide 5.2 · 3 Quy tắc cuối cùng</div>
+      <div>|</div>
+      <div>Khối 5: Tổng kết</div>
+    </div>
+    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+    <span class="scene-num">07</span>
+  </div>
+
+</div>
+
+<!-- GSAP Timeline & Presentation Logic -->
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  if (!window.gsap) return;
+
+  var tl = gsap.timeline({ paused: true });
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+
+  // Preset initial states
+  gsap.set(".scene", { opacity: 0, visibility: "hidden" });
+  gsap.set("#scene1", { opacity: 1, visibility: "visible" });
+
+  // Preset children to opacity:0 for perfect GSAP from transitions
+  gsap.utils.toArray(".scene").forEach(function(el, idx) {
+    if (idx > 0) {
+      gsap.set(el.querySelectorAll(".badge, .title-xl, .title-hero, .subtitle, .body-text, .visual-block, .stat-list-card, .bento-cell, .col, .terminal, .feat-card, .glass-card, .highlight-box"), { opacity: 0 });
+    }
+  });
+
+  // --- SCENE 1: 0s to 15s ---
+  // Entrances
+  tl.from("#s1-badge", { y: -25, opacity: 0, duration: 0.65, ease: "power3.out" }, 0.2);
+  tl.from("#s1-title", { y: 40, opacity: 0, duration: 0.85, ease: "power4.out" }, 0.4);
+  tl.from("#s1-subtitle", { y: 30, opacity: 0, duration: 0.65, ease: "power2.out" }, 0.6);
+  tl.from("#s1-desc", { y: 20, opacity: 0, duration: 0.55, ease: "power2.out" }, 0.8);
+  tl.from("#s1-visual", { scale: 0.92, opacity: 0, duration: 0.85, ease: "back.out(1.3)" }, 0.5);
+
+  // --- TRANSITION 1 -> 2 at 15s (Snappy push wipe) ---
+  tl.to("#wipe", { scaleY: 1, duration: 0.35, ease: "power3.in" }, 14.65);
+  tl.set("#scene1", { opacity: 0, visibility: "hidden" }, 15);
+  tl.set("#scene2", { opacity: 1, visibility: "visible" }, 15);
+  tl.to("#wipe", { scaleY: 0, transformOrigin: "bottom", duration: 0.35, ease: "power3.out" }, 15.0);
+
+  // --- SCENE 2: 15s to 30s ---
+  // Entrances
+  tl.fromTo("#s2-badge", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 15.2);
+  tl.fromTo("#s2-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: "power4.out" }, 15.4);
+  tl.fromTo("#s2-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out" }, 15.6);
+  tl.fromTo("#s2-desc", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 15.8);
+  tl.fromTo("#s2-visual .compare-col-1", { x: -50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.75, ease: "power3.out" }, 15.5);
+  tl.fromTo("#s2-visual .compare-col-2", { x: 50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.75, ease: "power3.out" }, 15.75);
+
+  // --- TRANSITION 2 -> 3 at 30s (Snappy push wipe) ---
+  tl.to("#wipe", { scaleY: 1, transformOrigin: "top", duration: 0.35, ease: "power3.in" }, 29.65);
+  tl.set("#scene2", { opacity: 0, visibility: "hidden" }, 30);
+  tl.set("#scene3", { opacity: 1, visibility: "visible" }, 30);
+  tl.to("#wipe", { scaleY: 0, transformOrigin: "bottom", duration: 0.35, ease: "power3.out" }, 30.0);
+
+  // --- SCENE 3: 30s to 45s ---
+  // Entrances
+  tl.fromTo("#s3-badge", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 30.2);
+  tl.fromTo("#s3-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: "power4.out" }, 30.4);
+  tl.fromTo("#s3-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out" }, 30.6);
+  tl.fromTo("#s3-desc", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 30.8);
+  tl.fromTo("#s3-visual .bento-cell", { scale: 0.88, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.45)", stagger: 0.12 }, 30.45);
+
+  // --- TRANSITION 3 -> 4 at 45s (Snappy push wipe) ---
+  tl.to("#wipe", { scaleY: 1, transformOrigin: "top", duration: 0.35, ease: "power3.in" }, 44.65);
+  tl.set("#scene3", { opacity: 0, visibility: "hidden" }, 45);
+  tl.set("#scene4", { opacity: 1, visibility: "visible" }, 45);
+  tl.to("#wipe", { scaleY: 0, transformOrigin: "bottom", duration: 0.35, ease: "power3.out" }, 45.0);
+
+  // --- SCENE 4: 45s to 60s ---
+  // Entrances
+  tl.fromTo("#s4-badge", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 45.2);
+  tl.fromTo("#s4-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: "power4.out" }, 45.4);
+  tl.fromTo("#s4-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out" }, 45.6);
+  tl.fromTo("#s4-visual .compare-col-1", { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.8, ease: "power3.out" }, 45.5);
+  tl.fromTo("#s4-visual .compare-col-2", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.8, ease: "power3.out" }, 45.75);
+
+  // --- TRANSITION 4 -> 5 at 60s (Snappy push wipe) ---
+  tl.to("#wipe", { scaleY: 1, transformOrigin: "top", duration: 0.35, ease: "power3.in" }, 59.65);
+  tl.set("#scene4", { opacity: 0, visibility: "hidden" }, 60);
+  tl.set("#scene5", { opacity: 1, visibility: "visible" }, 60);
+  tl.to("#wipe", { scaleY: 0, transformOrigin: "bottom", duration: 0.35, ease: "power3.out" }, 60.0);
+
+  // --- SCENE 5: 60s to 75s ---
+  // Entrances
+  tl.fromTo("#s5-badge", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 60.2);
+  tl.fromTo("#s5-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: "power4.out" }, 60.4);
+  tl.fromTo("#s5-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out" }, 60.6);
+  tl.fromTo("#s5-desc", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 60.8);
+  tl.fromTo("#s5-visual .terminal", { scale: 0.93, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.75, ease: "power3.out" }, 60.5);
+  tl.fromTo("#s5-visual .highlight-box", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: "power2.out" }, 60.8);
+
+  // --- TRANSITION 5 -> 6 at 75s (Snappy push wipe) ---
+  tl.to("#wipe", { scaleY: 1, transformOrigin: "top", duration: 0.35, ease: "power3.in" }, 74.65);
+  tl.set("#scene5", { opacity: 0, visibility: "hidden" }, 75);
+  tl.set("#scene6", { opacity: 1, visibility: "visible" }, 75);
+  tl.to("#wipe", { scaleY: 0, transformOrigin: "bottom", duration: 0.35, ease: "power3.out" }, 75.0);
+
+  // --- SCENE 6: 75s to 90s ---
+  // Entrances
+  tl.fromTo("#s6-badge", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 75.2);
+  tl.fromTo("#s6-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: "power4.out" }, 75.4);
+  tl.fromTo("#s6-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out" }, 75.6);
+  tl.fromTo("#s6-desc", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 75.8);
+  tl.fromTo("#s6-visual .feat-card", { y: 35, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out", stagger: 0.12 }, 75.5);
+
+  // --- TRANSITION 6 -> 7 at 90s (Snappy push wipe) ---
+  tl.to("#wipe", { scaleY: 1, transformOrigin: "top", duration: 0.35, ease: "power3.in" }, 89.65);
+  tl.set("#scene6", { opacity: 0, visibility: "hidden" }, 90);
+  tl.set("#scene7", { opacity: 1, visibility: "visible" }, 90);
+  tl.to("#wipe", { scaleY: 0, transformOrigin: "bottom", duration: 0.35, ease: "power3.out" }, 90.0);
+
+  // --- SCENE 7: 90s to 105s ---
+  // Entrances
+  tl.fromTo("#s7-badge", { y: -25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 90.2);
+  tl.fromTo("#s7-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.85, ease: "power4.out" }, 90.4);
+  tl.fromTo("#s7-subtitle", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out" }, 90.6);
+  tl.fromTo("#s7-visual .glass-card", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: "back.out(1.5)", stagger: 0.18 }, 90.5);
+
+  // --- Final Fade out at 105s ---
+  tl.to("#scene7", { opacity: 0, duration: 0.8, ease: "power2.in" }, 104.2);
+  tl.set("#scene7", { visibility: "hidden" }, 105);
+
+});
+</script>
+</body>
+</html>

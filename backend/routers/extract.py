@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from extractors.url import extract_from_url
 from extractors.pdf import extract_from_pdf
 from extractors.office import extract_from_docx, extract_from_pptx
+from extractors.text import extract_from_text
 
 router = APIRouter()
 
@@ -12,6 +13,8 @@ SUPPORTED_EXTENSIONS = {
     "pdf": extract_from_pdf,
     "docx": extract_from_docx,
     "pptx": extract_from_pptx,
+    "md": extract_from_text,
+    "txt": extract_from_text,
 }
 
 

@@ -1,19 +1,25 @@
 <!doctype html>
 <html lang="vi">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Unity AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
-/* === techbeat:base-css === */
 
 :root {
-  --bg: #0d0410;
-  --bg2: #1a0825;
-  --surface: #27123a;
-  --accent: #ec4899;
-  --accent2: #f472b6;
-  --accent3: #fde047;
-  --text1: #fdf4ff;
-  --text2: #f9a8d4;
-  --glow: #ec489955;
+  --bg: #08080f;
+  --bg2: #0f0f1a;
+  --surface: #141420;
+  --accent: #f97316;
+  --accent2: #fb923c;
+  --accent3: #fbbf24;
+  --text1: #f5f3ff;
+  --text2: #a09db8;
+  --glow: #f9731655;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,16 +40,16 @@ body {
   height: 1080px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 1400px 900px at 20% 50%, #ec489914 0%, transparent 70%),
-    radial-gradient(ellipse 1000px 700px at 80% 20%, #f472b610 0%, transparent 60%),
-    radial-gradient(ellipse 800px 600px at 60% 80%, #fde0470a 0%, transparent 60%),
+    radial-gradient(ellipse 1400px 900px at 20% 50%, #f9731614 0%, transparent 70%),
+    radial-gradient(ellipse 1000px 700px at 80% 20%, #fb923c10 0%, transparent 60%),
+    radial-gradient(ellipse 800px 600px at 60% 80%, #fbbf240a 0%, transparent 60%),
     linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
   transform-origin: top left;
 }
 
 #root::before {
   content: ''; position: absolute; inset: 0;
-  background-image: radial-gradient(circle, #ec489924 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, #f9731624 1.5px, transparent 1.5px);
   background-size: 48px 48px; opacity: 0.32;
   pointer-events: none; z-index: 0;
   animation: grid-sweep 12s linear infinite;
@@ -74,23 +80,26 @@ body {
 
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {
-  display: grid; gap: 80px; height: 100%;
-  padding: 100px 120px; align-items: center;
+  display: grid; gap: 60px; height: 100%;
+  padding: 60px 120px 100px; align-items: center;
   position: relative; z-index: 10;
 }
 .scene.split .layout    { grid-template-columns: 1fr 1fr; }
 .scene.hero .layout     { grid-template-columns: 1fr; justify-items: start; }
 .scene.centered .layout { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+/* Bug2 fix: cascade text-align into info-col and all its direct children so body-text/caption inherit centering */
+.scene.centered .info-col { align-items: center; text-align: center; }
+.scene.centered .info-col > * { text-align: center; }
 .scene.magazine .layout { grid-template-columns: 7fr 5fr; gap: 80px; }
 .scene.data .layout     { grid-template-columns: 1fr 1.4fr; }
 
 .info-col   {
   display: flex; flex-direction: column; justify-content: center; gap: 28px;
-  min-width: 0; max-height: 100%; overflow: hidden;
+  min-width: 0; max-height: 100%; overflow: visible;
 }
 .visual-col {
   display: flex; flex-direction: column; justify-content: center; gap: 24px;
-  min-width: 0; max-width: 100%; max-height: 100%; overflow: hidden;
+  min-width: 0; max-width: 100%; max-height: 100%; overflow: visible;
 }
 
 /* Inner content boxes must stay within their column.
@@ -116,9 +125,9 @@ body {
 }
 
 .scene-num {
-  position: absolute; bottom: 20px; right: 40px;
+  position: absolute; bottom: 24px; right: 40px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9rem; font-weight: 800;
+  font-size: 8rem; font-weight: 800;
   color: var(--accent); opacity: 0.06; line-height: 1;
   pointer-events: none; z-index: 5;
 }
@@ -127,8 +136,8 @@ body {
   position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.0rem; font-weight: 700;
-  color: var(--accent3); background: #fde0471a;
-  border: 2px solid #fde0474d;
+  color: var(--accent3); background: #fbbf241a;
+  border: 2px solid #fbbf244d;
   border-radius: 99px; padding: 8px 24px;
   letter-spacing: 0.18em; text-transform: uppercase; z-index: 20;
 }
@@ -147,12 +156,12 @@ body {
 
 .title-xl {
   font-size: clamp(4.0rem, 6.5vw, 6.5rem);
-  font-weight: 900; line-height: 1.1; letter-spacing: -0.04em;
+  font-weight: 900; line-height: 1.25; letter-spacing: -0.04em;
   color: var(--text1);
 }
 .title-hero {
   font-size: clamp(5.5rem, 8.5vw, 8.5rem);
-  font-weight: 900; line-height: 1.0; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.2; letter-spacing: -0.05em;
   color: var(--text1);
 }
 .subtitle {
@@ -174,19 +183,24 @@ body {
   background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
+  /* Bug1 fix: force independent GPU layer to prevent parent blur bleeding into text rasterisation */
+  will-change: transform; isolation: isolate; transform: translateZ(0);
+  padding-bottom: 0.18em; margin-bottom: -0.18em;
 }
 .outline-text {
   -webkit-text-stroke: 2px var(--accent); color: transparent;
+  padding-bottom: 0.18em; margin-bottom: -0.18em;
 }
 
 /* Hero stat — for B1 BIG STAT pattern */
 .stat-hero {
   font-size: clamp(6.5rem, 9vw, 9.5rem);
-  font-weight: 900; line-height: 1.1; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.25; letter-spacing: -0.05em;
   font-feature-settings: 'tnum';
   background: linear-gradient(135deg, var(--accent), var(--accent3));
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
+  padding-bottom: 0.18em; margin-bottom: -0.18em;
 }
 .stat-suffix {
   font-size: 3.0rem; font-weight: 700; color: var(--text2);
@@ -195,8 +209,8 @@ body {
 
 /* Visual block — generic glass card wrapper */
 .visual-block {
-  background: linear-gradient(135deg, var(--surface), #27123ab3);
-  border: 2px solid #ec489933;
+  background: linear-gradient(135deg, var(--surface), #141420b3);
+  border: 2px solid #f9731633;
   border-radius: 32px;
   backdrop-filter: blur(12px);
   box-shadow: 0 40px 100px -20px var(--glow), inset 0 0 80px rgba(255,255,255,0.02);
@@ -215,7 +229,7 @@ body {
   position: relative; border-radius: 24px;
   overflow: hidden; isolation: isolate;
   width: 100%; aspect-ratio: 16 / 10; max-height: 760px;
-  box-shadow: 0 0 0 1px #ec489955, 0 30px 80px -20px var(--accent), 0 0 100px -30px var(--accent);
+  box-shadow: 0 0 0 1px #f9731655, 0 30px 80px -20px var(--accent), 0 0 100px -30px var(--accent);
 }
 .img-frame img {
   width: 100%; height: 100%;
@@ -235,14 +249,14 @@ body {
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.1rem; color: var(--text1);
   background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
-  border: 1px solid #ec489955;
+  border: 1px solid #f9731655;
   padding: 10px 20px; border-radius: 99px; z-index: 2;
 }
 
 /* Terminal block — for B2 CODE pattern */
 .terminal {
   font-family: 'JetBrains Mono', monospace;
-  background: rgba(0,0,0,0.65); border: 2px solid #ec489944;
+  background: rgba(0,0,0,0.65); border: 2px solid #f9731644;
   border-radius: 24px; padding: 40px 48px;
   font-size: 1.35rem; line-height: 1.8; color: var(--text2);
   box-shadow: 0 20px 50px -10px var(--glow);
@@ -262,8 +276,8 @@ body {
 .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }
 .feat-card {
   padding: 32px; border-radius: 24px;
-  background: linear-gradient(135deg, var(--surface), #27123a80);
-  border: 1px solid #ec489933;
+  background: linear-gradient(135deg, var(--surface), #14142080);
+  border: 1px solid #f9731633;
   transition: all 0.3s ease;
 }
 .feat-card:hover {
@@ -273,28 +287,28 @@ body {
 }
 .feat-card .ic { font-size: 3rem; margin-bottom: 16px; }
 .feat-card .t  { font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.5rem; }
-.feat-card .d  { font-size: 1.15rem; color: var(--text2); line-height: 1.6; word-break: break-word; }
+.feat-card .d  { font-size: 1.5rem; color: var(--text2); line-height: 1.6; word-break: break-word; }
 
 /* Comparison — for B4 */
 .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; min-height: 0; width: 100%; }
-.compare .col { padding: 40px; border-radius: 28px; border: 2px solid #ec489933; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }
+.compare .col { padding: 40px; border-radius: 28px; border: 2px solid #f9731633; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }
 .compare .col:hover { border-color: var(--accent2); transform: scale(1.02); }
 .compare .col h4 { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 24px; }
-.compare .col li { list-style: none; padding: 12px 0; color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }
+.compare .col li { list-style: none; padding: 12px 0; color: var(--text2); font-size: 1.6rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }
 .compare .col li::before { content: '✓ '; color: var(--accent3); font-weight: 700; }
 .compare .col.bad li::before { content: '✗ '; color: #ef4444; }
 
 /* Timeline — for B5 */
 .tl-list { position: relative; padding-left: 48px; width: 100%; }
-.tl-list::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), #ec489933); }
+.tl-list::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), #f9731633); }
 .tl-item { position: relative; padding: 16px 0 28px; }
-.tl-item::before { content: ''; position: absolute; left: -43px; top: 20px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 6px #ec489933; }
+.tl-item::before { content: ''; position: absolute; left: -43px; top: 20px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 6px #f9731633; }
 .tl-item .y { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--accent2); letter-spacing: 0.1em; }
 .tl-item .t { font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 8px 0; }
 .tl-item .d { color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; }
 
 /* Quote — for B6 */
-.quote-block { position: relative; padding: 80px 60px; width: 100%; }
+.quote-block { position: relative; padding: 40px 60px; width: 100%; }
 .quote-block::before {
   content: '"'; position: absolute; left: -20px; top: -60px;
   font-size: 18rem; line-height: 1; color: var(--accent);
@@ -311,8 +325,8 @@ body {
 .stat-list-card {
   display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
   padding: 32px 36px; border-radius: 28px;
-  background: linear-gradient(135deg, #27123aa3, #27123a66);
-  border: 1px solid #ec489933;
+  background: linear-gradient(135deg, #141420a3, #14142066);
+  border: 1px solid #f9731633;
   backdrop-filter: blur(12px);
   box-shadow: 0 15px 45px -10px var(--glow), inset 0 0 40px rgba(255,255,255,0.01);
   position: relative; overflow: visible;
@@ -331,7 +345,7 @@ body {
 .stat-list-card .ic-wrap {
   display: flex; align-items: center; justify-content: center;
   width: 76px; height: 76px; border-radius: 18px;
-  background: #ec48991c; border: 2px solid #ec48994d;
+  background: #f973161c; border: 2px solid #f973164d;
   color: var(--accent2); font-size: 2.2rem; flex-shrink: 0;
 }
 .stat-list-card .num {
@@ -348,7 +362,7 @@ body {
   font-size: 1.6rem; font-weight: 700; color: var(--text1); line-height: 1.3;
 }
 .stat-list-card .desc {
-  font-size: 1.2rem; color: var(--text2); opacity: 0.85;
+  font-size: 1.5rem; color: var(--text2); opacity: 0.85;
 }
 
 /* ───────────────── PREMIUM COMPONENT EXTENSIONS (FROM IMAGE REFERENCE) ───────────────── */
@@ -370,7 +384,7 @@ body {
 .chat-bubble.ai {
   align-self: flex-start;
   background: linear-gradient(135deg, var(--surface), rgba(0,0,0,0.45));
-  border-color: #ec48994d;
+  border-color: #f973164d;
 }
 .chat-bubble .sender-tag {
   font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
@@ -391,8 +405,8 @@ body {
 }
 .glass-card {
   padding: 40px 32px; border-radius: 28px; text-align: center;
-  background: linear-gradient(135deg, var(--surface), #27123a66);
-  border: 1px solid #ec489922; backdrop-filter: blur(16px);
+  background: linear-gradient(135deg, var(--surface), #14142066);
+  border: 1px solid #f9731622; backdrop-filter: blur(16px);
   transition: all 0.3s ease; position: relative; overflow: visible;
 }
 .glass-card:hover {
@@ -401,12 +415,12 @@ body {
 }
 .glass-card .emoji { font-size: 3.5rem; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }
 .glass-card .title { font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }
-.glass-card .desc { font-size: 1.2rem; color: var(--text2); line-height: 1.6; }
+.glass-card .desc { font-size: 1.5rem; color: var(--text2); line-height: 1.6; }
 
 /* Google I/O tech card (Scene 3) */
 .tech-card {
   background: linear-gradient(135deg, rgba(15,10,25,0.85), rgba(5,3,10,0.95));
-  border: 2px solid #ec48994d; border-radius: 32px; padding: 48px;
+  border: 2px solid #f973164d; border-radius: 32px; padding: 48px;
   box-shadow: 0 40px 100px -15px var(--glow); position: relative; width: 100%;
 }
 .tech-card .brand {
@@ -438,8 +452,8 @@ body {
 }
 .agent-card {
   padding: 32px; border-radius: 24px;
-  background: linear-gradient(135deg, var(--surface), #27123a66);
-  border: 1px solid #ec489933; position: relative; text-align: left;
+  background: linear-gradient(135deg, var(--surface), #14142066);
+  border: 1px solid #f9731633; position: relative; text-align: left;
 }
 .agent-card .header-wrap {
   display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
@@ -577,7 +591,7 @@ body {
   font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--accent2); background: rgba(255,255,255,0.04);
-  border: 1px solid #ec489933; border-radius: 99px;
+  border: 1px solid #f9731633; border-radius: 99px;
   padding: 10px 22px;
 }
 .marquee-strip .pill::before {
@@ -625,16 +639,25 @@ body {
   gap: 24px; width: 100%;
 }
 .bento-cell {
-  background: linear-gradient(135deg, var(--surface), #27123a80);
-  border: 1px solid #ec489933;
+  background: linear-gradient(135deg, var(--surface), #14142080);
+  border: 1px solid #f9731633;
+  border-top: 3px solid #f97316;
   border-radius: 28px; padding: 32px;
   position: relative; overflow: hidden;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+/* Bug3 fix: distinct accent colors per cell position + icon/title/desc sub-selectors */
+.bento-cell:nth-child(2) { border-top-color: var(--accent2); }
+.bento-cell:nth-child(3) { border-top-color: #38bdf8; }
+.bento-cell:nth-child(4) { border-top-color: #4ade80; }
+.bento-cell:nth-child(5) { border-top-color: #f472b6; }
+.bento-cell .ic  { font-size: 3.2rem; margin-bottom: 14px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }
+.bento-cell .t   { font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }
+.bento-cell .d   { font-size: 1.5rem; color: var(--text2); line-height: 1.5; }
 .bento-cell.wide { grid-column: span 2; }
 .bento-cell.tall { grid-row: span 2; }
-.bento-cell.hero { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), #ec48991a); border-color: #ec489966; }
-.bento-cell:hover { transform: translateY(-4px); border-color: var(--accent2); }
+.bento-cell.hero { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), #f973161a); border-color: #f9731666; border-top-color: #f97316; }
+.bento-cell:hover { transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 20px 50px -10px var(--glow); }
 
 /* Premium UI/UX Pro Max Animations & Shimmers */
 @keyframes floating {
@@ -656,6 +679,25 @@ body {
 @keyframes cursor-blink {
   0%, 100% { opacity: 0; }
   50% { opacity: 1; }
+}
+.cursor-blink {
+  animation: cursor-blink 0.8s step-end infinite;
+  color: var(--accent);
+  margin-left: 4px;
+  display: inline-block;
+}
+.cursor-solid {
+  animation: none;
+  opacity: 1;
+  color: var(--accent);
+  margin-left: 4px;
+  display: inline-block;
+}
+.cursor-hide {
+  animation: none;
+  opacity: 0;
+  margin-left: 4px;
+  display: inline-block;
 }
 
 .breath {
@@ -688,7 +730,7 @@ body {
   z-index: 10;
 }
 .glow-card {
-  border: 1px solid #ec489933;
+  border: 1px solid #f9731633;
   box-shadow: 0 10px 40px 0 var(--glow);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -697,8 +739,50 @@ body {
   box-shadow: 0 20px 60px -5px var(--accent), 0 0 30px var(--accent2);
   transform: translateY(-6px) scale(1.015);
 }
-.terminal .cursor {
-  animation: cursor-blink 0.9s infinite step-end;
+/* Premium UX/UI Custom layouts */
+.accent-bar {
+  width: 80px; height: 4px; background: var(--accent);
+  border-radius: 2px; margin-top: 16px;
+  box-shadow: 0 0 12px var(--accent);
+}
+.formula-stack {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 32px 0; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+}
+.formula-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px; border-radius: 99px; font-size: 1.2rem;
+  border: 2px solid rgba(255,255,255,0.1);
+  color: var(--text1); text-transform: uppercase;
+}
+.formula-pill.pink { background: rgba(236,72,153,0.15); border-color: rgba(236,72,153,0.4); color: #f472b6; }
+.formula-pill.yellow { background: rgba(253,224,71,0.15); border-color: rgba(253,224,71,0.4); color: #fde047; }
+.formula-pill.green { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.4); color: #4ade80; }
+.formula-pill.blue { background: rgba(56,189,248,0.15); border-color: rgba(56,189,248,0.4); color: #38bdf8; }
+.formula-operator {
+  font-size: 1.6rem; color: rgba(255,255,255,0.3); padding: 0 4px;
+}
+.command-pill {
+  display: flex; align-items: center; gap: 16px;
+  background: rgba(253,224,71,0.06); border: 2px solid rgba(253,224,71,0.25);
+  padding: 18px 32px; border-radius: 16px; font-size: 1.35rem;
+  color: #fde047; font-weight: 600; margin-bottom: 24px; width: 100%;
+}
+.step-list {
+  display: flex; flex-direction: column; gap: 16px; width: 100%;
+}
+.step-item {
+  display: flex; align-items: flex-start; gap: 20px; font-size: 1.8rem; line-height: 1.6;
+  color: var(--text1, #e8e8f0);
+}
+.step-circle {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 800;
+  font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;
+}
+.bento-3x2 {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%;
 }
 
 /* ── Contrast safety net — override any LLM-generated low-contrast text ── */
@@ -719,6 +803,11 @@ body {
 .scene .stat-list-card div:not(.stat-hero):not(.stat-suffix),
 .scene .bento-cell p,
 .scene .bento-cell div,
+.scene .step-item,
+.scene .step-item div,
+.scene .step-list,
+.scene .command-pill,
+.scene .formula-pill,
 .scene p,
 .scene li,
 .scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix) {
@@ -792,9 +881,7 @@ body {
   text-shadow: 0 0 14px rgba(0, 0, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
@@ -829,7 +916,7 @@ body {
   text-shadow: 0 0 14px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: nowrap;
+  white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.65));
@@ -854,227 +941,897 @@ body {
   transition: none;
 }
 
-</style>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitHub - heygen-com/hyperframes: Viết HTML. Render video. Dành cho các tác nhân.</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-<style>
-/* Override styles cho hiệu ứng đặc biệt */
-@keyframes sparkle {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.3); }
+/* Custom scene-specific animations */
+@keyframes neon-glow {
+  0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+  50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
 }
-.y2k-sparkle { animation: sparkle 2s infinite; }
+@keyframes aurora-mesh {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
+}
+@keyframes star-blink {
+  0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+}
+@keyframes grad-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Compact styling for comparison layout to prevent overflow */
+.compare .col {
+  padding: 24px !important;
+}
+.compare .col li {
+  font-size: 1.25rem !important;
+  padding: 6px 0 !important;
+}
+.compare .col li ul li {
+  font-size: 1.15rem !important;
+  padding: 4px 0 !important;
+}
+.compare .col h4 {
+  margin-bottom: 12px !important;
+}
+.compare .terminal {
+  padding: 20px 24px !important;
+  font-size: 1.1rem !important;
+}
 </style>
 </head>
 <body>
-<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="121">
-  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="26" data-volume="1" data-title="Giới thiệu về Hyperframes"></audio>
-  <audio id="v2" src="assets/p2.wav" data-start="26" data-duration="21" data-volume="1" data-title="Cách cài đặt và sử dụng Hyperframes"></audio>
-  <audio id="v3" src="assets/p3.wav" data-start="47" data-duration="20" data-volume="1" data-title="Tính năng nổi bật của Hyperframes"></audio>
-  <audio id="v4" src="assets/p4.wav" data-start="67" data-duration="19" data-volume="1" data-title="So sánh với các công cụ khác"></audio>
-  <audio id="v5" src="assets/p5.wav" data-start="86" data-duration="17" data-volume="1" data-title="Ứng dụng thực tế của Hyperframes"></audio>
-  <audio id="v6" src="assets/p6.wav" data-start="103" data-duration="18" data-volume="1" data-title="Tương lai của Hyperframes"></audio>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="253">
+  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="11" data-volume="1" data-title="Hook"></audio>
+  <audio id="v2" src="assets/p2.wav" data-start="11" data-duration="11" data-volume="1" data-title="Pain point hook"></audio>
+  <audio id="v3" src="assets/p3.wav" data-start="22" data-duration="11" data-volume="1" data-title="Đau thật"></audio>
+  <audio id="v4" src="assets/p4.wav" data-start="33" data-duration="11" data-volume="1" data-title="Sự thật khó nghe"></audio>
+  <audio id="v5" src="assets/p5.wav" data-start="44" data-duration="11" data-volume="1" data-title="Spine"></audio>
+  <audio id="v6" src="assets/p6.wav" data-start="55" data-duration="11" data-volume="1" data-title="Chuyển section: Phần 1"></audio>
+  <audio id="v7" src="assets/p7.wav" data-start="66" data-duration="11" data-volume="1" data-title="Brief vs Hỏi"></audio>
+  <audio id="v8" src="assets/p8.wav" data-start="77" data-duration="11" data-volume="1" data-title="4 thành phần brief"></audio>
+  <audio id="v9" src="assets/p9.wav" data-start="88" data-duration="11" data-volume="1" data-title="Demo before/after"></audio>
+  <audio id="v10" src="assets/p10.wav" data-start="99" data-duration="11" data-volume="1" data-title="3 lỗi prompt phổ biến"></audio>
+  <audio id="v11" src="assets/p11.wav" data-start="110" data-duration="11" data-volume="1" data-title="Chuyển section: Phần 2"></audio>
+  <audio id="v12" src="assets/p12.wav" data-start="121" data-duration="11" data-volume="1" data-title="Câu chuyện thật về scope"></audio>
+  <audio id="v13" src="assets/p13.wav" data-start="132" data-duration="11" data-volume="1" data-title="Tại sao scope mất kiểm soát"></audio>
+  <audio id="v14" src="assets/p14.wav" data-start="143" data-duration="11" data-volume="1" data-title="Quy tắc 1: Plan trước, Code sau"></audio>
+  <audio id="v15" src="assets/p15.wav" data-start="154" data-duration="11" data-volume="1" data-title="Quy tắc 2: Chat vs Agent"></audio>
+  <audio id="v16" src="assets/p16.wav" data-start="165" data-duration="11" data-volume="1" data-title="Quy tắc 3: Một task, một chat"></audio>
+  <audio id="v17" src="assets/p17.wav" data-start="176" data-duration="11" data-volume="1" data-title="Chuyển section: Phần 3"></audio>
+  <audio id="v18" src="assets/p18.wav" data-start="187" data-duration="11" data-volume="1" data-title="Sự thật về code AI"></audio>
+  <audio id="v19" src="assets/p19.wav" data-start="198" data-duration="11" data-volume="1" data-title="5 dấu hiệu code AI sai"></audio>
+  <audio id="v20" src="assets/p20.wav" data-start="209" data-duration="11" data-volume="1" data-title="Kỹ thuật: bắt AI tự giải thích"></audio>
+  <audio id="v21" src="assets/p21.wav" data-start="220" data-duration="11" data-volume="1" data-title="Tổng kết"></audio>
+  <audio id="v22" src="assets/p22.wav" data-start="231" data-duration="11" data-volume="1" data-title="3 quy tắc cuối cùng"></audio>
+  <audio id="v23" src="assets/p23.wav" data-start="242" data-duration="11" data-volume="1" data-title="Kết & call to action"></audio>
 
   <div class="scanlines"></div>
-
-  <!-- Scene 1 -->
-  <div class="scene hero" id="scene1">
-    <div class="aurora-glow" style="top:-10%; left:-15%; background:radial-gradient(circle, var(--accent), transparent); animation: aurora-mesh 8s infinite;"></div>
-    <div class="aurora-glow" style="bottom:-15%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
-    <div class="animated-grid"></div>
-    <div class="ghost-text" style="top:5%; left:5%;">HYPERFRAMES</div>
-    <div class="layout">
-      <div class="info-col">
-        <div id="s1-badge" class="badge">📡 PHẦN 1 · INTRO</div>
-        <h1 id="s1-title" class="title-hero grad-text">Giới thiệu về Hyperframes</h1>
-        <p id="s1-subtitle" class="subtitle">Framework video HTML</p>
-        <div id="s1-desc" style="display:flex; gap:14px; flex-wrap:wrap; margin-top:8px;">
-          <div class="badge">🚀 Edge AI</div>
-          <div class="badge">🔒 Privacy First</div>
-          <div class="badge">⚡ Real-time</div>
-        </div>
-      </div>
-      <div class="visual-col">
-        <div class="tech-card glow-card breath">
-          <div class="brand">Hyperframes</div>
-          <div class="meta">📦 Mã nguồn mở</div>
-          <div class="bullets">
-            <div>Dễ sử dụng</div>
-            <div>Render nhanh</div>
-            <div>HTML-driven</div>
-          </div>
-          <div class="tags">
-            <span class="tag">#AI</span>
-            <span class="tag">#Video</span>
-            <span class="tag">#HTML</span>
-          </div>
-        </div>
-      </div>
+  
+  <div class="scene centered" id="scene1">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s1-badge" class="badge">PHẦN 1</div>
+      <h1 id="s1-title" class="title-xl grad-text">Hook</h1>
+      <p id="s1-subtitle" class="subtitle">Training Unity AI</p>
+      <p id="s1-desc" class="body-text">Làm việc với AI như một tech lead</p>
     </div>
-    <span class="scene-num">01</span>
   </div>
-
-  <!-- Scene 2 -->
-  <div class="scene centered" id="scene2">
-    <div class="aurora-glow" style="top:-10%; left:10%;"></div>
-    <div class="float-orb-lg" style="bottom:10%; right:10%; background:var(--accent2);"></div>
-    <div class="particle-field"></div>
-    <div class="ghost-text" style="bottom:-5%; right:5%;">INSTALL</div>
-    <div class="layout">
-      <div class="info-col">
-        <div id="s2-badge" class="badge">💻 PHẦN 2</div>
-        <h1 id="s2-title" class="title-xl grad-text">Cách cài đặt và sử dụng</h1>
-        <p id="s2-subtitle" class="subtitle">npx skills add</p>
-        <p id="s2-desc" class="body-text">Tạo video dễ dàng với HTML</p>
-      </div>
-      <div class="visual-col">
-        <div class="terminal">
-          <div class="dots"><i></i><i></i><i></i></div>
-          <div><span class="c">// Cài đặt Hyperframes</span></div>
-          <div><span class="k">npx</span> skills add <span class="s">"heygen-com/hyperframes"</span></div>
-          <div>$ <span class="cursor"></span></div>
-        </div>
-      </div>
-    </div>
-    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-    <span class="scene-num">02</span>
-  </div>
-
-  <!-- Scene 3 -->
-  <div class="scene magazine" id="scene3">
-    <div class="animated-grid"></div>
-    <div class="aurora-glow" style="top:5%; right:5%;"></div>
-    <div class="ghost-text" style="top:-10%; left:-10%;">FEATURES</div>
-    <div class="layout">
-      <div class="info-col">
-        <div id="s3-badge" class="badge">🌟 PHẦN 3</div>
-        <h1 id="s3-title" class="title-xl grad-text">Tính năng nổi bật</h1>
-        <p id="s3-subtitle" class="subtitle">Tích hợp công nghệ</p>
-        <p id="s3-desc" class="body-text">GSAP · Tailwind · Video</p>
-      </div>
-      <div class="visual-col">
-        <div class="stat-list">
-          <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">🎥</div><div class="num">4K</div><div class="details"><div class="title">Chất lượng video</div><div class="desc">Hỗ trợ độ phân giải cao</div></div></div>
-          <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">⚡</div><div class="num">HTML</div><div class="details"><div class="title">Nội dung động</div><div class="desc">Tùy chỉnh theo ý muốn</div></div></div>
-          <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;"><div class="ic-wrap">💡</div><div class="num">GSAP</div><div class="details"><div class="title">Hiệu ứng phức tạp</div><div class="desc">Hoạt ảnh mượt mà</div></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-    <span class="scene-num">03</span>
-  </div>
-
-  <!-- Scene 4 -->
-  <div class="scene data" id="scene4">
-    <div class="aurora-glow" style="top:-10%; left:5%;"></div>
-    <div class="float-orb-md" style="bottom:-10%; right:5%; background:var(--accent3);"></div>
-    <div class="particle-field"></div>
-    <div class="ghost-text" style="top:10%; left:-5%;">COMPARE</div>
-    <div class="layout">
-      <div class="info-col">
-        <div id="s4-badge" class="badge">⚖️ PHẦN 4</div>
-        <h1 id="s4-title" class="title-xl grad-text">So sánh với công cụ khác</h1>
-        <p id="s4-subtitle" class="subtitle">HTML vs React</p>
-        <p id="s4-desc" class="body-text">Không cần bundler</p>
-      </div>
-      <div class="visual-col">
-        <div class="compare">
-          <div class="col"><h4>Hyperframes</h4><ul><li>Dựa trên HTML</li><li>Dễ dùng</li></ul></div>
-          <div class="col bad"><h4>Remotion</h4><ul><li>Dựa trên React</li><li>Phức tạp</li></ul></div>
-        </div>
-      </div>
-    </div>
-    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-    <span class="scene-num">04</span>
-  </div>
-
-  <!-- Scene 5 -->
-  <div class="scene magazine" id="scene5">
-    <div class="light-rays"></div>
-    <div class="float-orb-md" style="top:-10%; left:10%; background:var(--accent);"></div>
-    <div class="aurora-glow" style="bottom:5%; right:-5%;"></div>
-    <div class="ghost-text" style="top:-5%; right:10%;">REAL-WORLD</div>
-    <div class="layout">
-      <div class="info-col">
-        <div id="s5-badge" class="badge shimmer-fast">🌍 PHẦN 5</div>
-        <h1 id="s5-title" class="title-xl grad-text">Ứng dụng thực tế</h1>
-        <p id="s5-subtitle" class="subtitle">Quảng cáo · Giáo dục</p>
-        <p id="s5-desc" class="body-text">Nhiều lĩnh vực</p>
-      </div>
-      <div class="visual-col">
-        <div class="feat-row">
-          <div class="glass-card breath">
-            <span class="emoji">📈</span>
-            <div class="title">Quảng cáo</div>
-            <div class="desc">Thu hút người xem</div>
-          </div>
-          <div class="glass-card breath" style="animation-delay: 0.5s;">
-            <span class="emoji">🎓</span>
-            <div class="title">Giáo dục</div>
-            <div class="desc">Tương tác cao</div>
-          </div>
-          <div class="glass-card breath" style="animation-delay: 1.0s;">
-            <span class="emoji">🎭</span>
-            <div class="title">Giải trí</div>
-            <div class="desc">Sáng tạo nội dung</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-    <span class="scene-num">05</span>
-  </div>
-
-  <!-- Scene 6 -->
-  <div class="scene centered" id="scene6">
-    <div class="retro-grid"></div>
-    <div class="float-orb-lg" style="top:-5%; left:50%; transform:translateX(-50%); background:var(--accent3);"></div>
-    <div class="aurora-glow" style="bottom:-10%; right:5%;"></div>
-    <div class="ghost-text" style="top:10%; left:-5%;">FUTURE</div>
-    <div class="layout">
-      <div class="info-col">
-        <div id="s6-badge" class="badge">🚀 PHẦN 6</div>
-        <h1 id="s6-title" class="title-xl grad-text">Tương lai của Hyperframes</h1>
-        <p id="s6-subtitle" class="subtitle">Công nghệ AI</p>
-        <p id="s6-desc" class="body-text">Tiềm năng vô hạn</p>
-      </div>
-      <div class="visual-col">
-        <div class="quote-block">
-          <p class="quote-text">"Hyperframes sẽ dẫn đầu trong ngành công nghiệp video AI."</p>
-          <p class="quote-attr">TechBeat · 2026</p>
-        </div>
-      </div>
-    </div>
-    <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-    <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-    <span class="scene-num">06</span>
-  </div>
-
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">01</span>
+  <div class="ghost-text">XGAME</div>
 </div>
 
+  <div class="scene centered" id="scene2">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s2-badge" class="badge">PHẦN 2</div>
+      <h1 id="s2-title" class="title-xl grad-text">Pain point hook</h1>
+      <p id="s2-subtitle" class="subtitle">Tuần vừa rồi...</p>
+      <p id="s2-desc" class="body-text">Bạn mất bao lâu để fix bug do AI tạo ra?</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="text-align:center;padding:40px;">
+        <div class="on-screen-text">
+          <p class="line">Tuần vừa rồi,</p>
+          <p class="line">bạn mất bao lâu để fix bug</p>
+          <p class="line">do AI tạo ra?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ghost-text">FIX</div>
+  <div class="top-line"></div>
+  <span class="scene-num">02</span>
+</div>
+
+  <div class="scene split" id="scene3">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s3-badge" class="badge">PHẦN 3</div>
+      <h1 id="s3-title" class="title-xl grad-text">Đau thật</h1>
+      <p id="s3-subtitle" class="subtitle">Cái bạn nghĩ và thực tế</p>
+      <p id="s3-desc" class="body-text">Khám phá sự khác biệt đầy bất ngờ.</p>
+    </div>
+    <div class="visual-col">
+      <div class="compare">
+        <div class="col">
+          <h4>Cái bạn nghĩ AI sẽ làm</h4>
+          <ul>
+            <li>Viết bài hoàn hảo</li>
+            <li>Hiểu cảm xúc con người</li>
+            <li>Giải mọi bài toán</li>
+          </ul>
+        </div>
+        <div class="col bad">
+          <h4>Cái thực sự xảy ra</h4>
+          <ul>
+            <li>Viết bài với lỗi logic</li>
+            <li>Phớt lờ ngữ cảnh</li>
+            <li>Đưa ra giải pháp không thực tế</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">03</span>
+</div>
+
+  <div class="scene hero" id="scene4">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s4-badge" class="badge">PHẦN 4</div>
+      <h1 id="s4-title" class="title-xl grad-text">Sự thật khó nghe</h1>
+      <p id="s4-desc" class="body-text">Vấn đề không nằm ở AI, mà ở cách chúng ta sử dụng nó.</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="text-align:center;padding:40px;">
+        <p class="quote-text" style="font-size:3rem;line-height:1.4;color:var(--text1);">
+          Vấn đề không phải AI dở.
+        </p>
+        <p class="quote-text" style="font-size:3rem;line-height:1.4;color:var(--text1);margin-top:20px;">
+          Vấn đề là chúng ta <span style="color:var(--highlight-orange);">giao việc cho AI sai cách</span>.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="ghost-text">THẬT</div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">04</span>
+</div>
+
+  <div class="scene split" id="scene5">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s5-badge" class="badge">PHẦN 5</div>
+      <h1 id="s5-title" class="title-xl grad-text">Spine</h1>
+      <p id="s5-subtitle" class="subtitle">AI là junior dev rất giỏi.<br>Bạn là tech lead.</p>
+      <p id="s5-desc" class="body-text">Hãy hiểu cách hợp tác hiệu quả.</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="padding:40px;">
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-circle">👍</div>
+            <div class="step-text"><b>Junior giỏi</b>: code nhanh, biết nhiều thứ, không mệt</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">🤔</div>
+            <div class="step-text"><b>Junior dở</b>: không biết project, không biết phải hỏi gì</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">🎯</div>
+            <div class="step-text"><b>Tech lead</b>: brief rõ → review chặt → kiểm soát scope</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">05</span>
+</div>
+
+  <div class="scene hero" id="scene6">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s6-badge" class="badge">PHẦN 1</div>
+      <h1 id="s6-title" class="title-xl grad-text">Chuyển section: Phần 1</h1>
+      <p id="s6-subtitle" class="subtitle">Brief, không hỏi</p>
+      <p id="s6-desc" class="body-text"></p>
+    </div>
+  </div>
+  <div class="ghost-text" style="font-size:20vw;opacity:0.05;">PHẦN</div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">06</span>
+</div>
+
+  <div class="scene centered" id="scene7">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s7-badge" class="badge">PHẦN 7</div>
+      <h1 id="s7-title" class="title-xl grad-text">Brief vs Hỏi</h1>
+      <p id="s7-subtitle" class="subtitle">So sánh cách giao tiếp hiệu quả</p>
+      <p id="s7-desc" class="body-text">Làm rõ yêu cầu để tiết kiệm thời gian và công sức.</p>
+    </div>
+    <div class="visual-col">
+      <div class="compare">
+        <div class="col bad" style="border: 2px solid rgba(255, 80, 80, 0.5);">
+          <h4>❌ Câu hỏi</h4>
+          <div class="terminal">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <pre><code>Làm cho tao cái health system với</code></pre>
+          </div>
+        </div>
+        <div class="col" style="border: 2px solid rgba(255, 165, 0, 0.7);">
+          <h4>✅ Brief</h4>
+          <div class="terminal">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <pre><code>Làm health system cho enemy.
+Project Unity 6, đã có State Machine.
+Yêu cầu:
+- Máu dạng float
+- Hiệu ứng nhấp nháy khi bị đánh
+- Chết thì play animation rồi destroy sau 2s
+
+Trước khi code, liệt kê các class sẽ tạo.</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">07</span>
+</div>
+
+  <div class="scene data" id="scene8">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s8-badge" class="badge">PHẦN 8</div>
+      <h1 id="s8-title" class="title-xl grad-text">4 thành phần brief</h1>
+      <p id="s8-subtitle" class="subtitle">Một brief tốt cần có gì?</p>
+      <p id="s8-desc" class="body-text">Tập trung vào bốn yếu tố cốt lõi để đảm bảo rõ ràng và hiệu quả.</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="padding:40px;">
+        <div class="step-list">
+          <div class="step-item shimmer-fast">
+            <div class="step-circle">1</div>
+            <div class="step-text"><strong>VAI TRÒ</strong> → AI đóng vai gì?</div>
+          </div>
+          <div class="step-item shimmer-fast">
+            <div class="step-circle">2</div>
+            <div class="step-text"><strong>CONTEXT</strong> → Project, version, file liên quan</div>
+          </div>
+          <div class="step-item shimmer-fast">
+            <div class="step-circle">3</div>
+            <div class="step-text"><strong>TASK</strong> → Một việc, scope rõ</div>
+          </div>
+          <div class="step-item shimmer-fast">
+            <div class="step-circle">4</div>
+            <div class="step-text"><strong>OUTPUT</strong> → Plan? Code? File nào?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">08</span>
+</div>
+
+  <div class="scene split" id="scene9">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s9-badge" class="badge">PHẦN 9</div>
+      <h1 id="s9-title" class="title-xl grad-text">Demo before/after</h1>
+      <p id="s9-subtitle" class="subtitle">So sánh prompt yếu và brief tốt</p>
+      <p id="s9-desc" class="body-text">Nắm bắt sự khác biệt để tối ưu task hiệu quả</p>
+    </div>
+    <div class="visual-col">
+      <div class="compare">
+        <div class="col bad">
+          <h4>❌ Prompt yếu:</h4>
+          <ul>
+            <li>Task: Thêm loot drop khi enemy chết</li>
+            <li>"thêm loot drop khi enemy chết"</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h4>✅ Brief tốt:</h4>
+          <ul>
+            <li><strong>[VAI TRÒ]</strong> Unity gameplay engineer làm với codebase này.</li>
+            <li><strong>[CONTEXT]</strong>
+              <ul>
+                <li>Unity 6, có ScriptableObject ItemData</li>
+                <li>Enemy.cs có event OnDeath</li>
+                <li>LootTable là field [SerializeField] trên Enemy</li>
+              </ul>
+            </li>
+            <li><strong>[TASK]</strong> Khi OnDeath fire, spawn item theo LootTable. Mỗi entry có dropRate (0-1). KHÔNG sửa InventoryManager hay ItemData.</li>
+            <li><strong>[OUTPUT]</strong>
+              <ul>
+                <li>Liệt kê file sẽ tạo/sửa</li>
+                <li>Code sạch, XML comment cho public method</li>
+                <li>Chờ tôi confirm trước khi sửa file</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <div class="ghost-text">Demo</div>
+  <span class="scene-num">09</span>
+</div>
+
+  <div class="scene split" id="scene10">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s10-badge" class="badge">PHẦN 10</div>
+      <h1 id="s10-title" class="title-xl grad-text">3 lỗi prompt phổ biến</h1>
+      <p id="s10-subtitle" class="subtitle">Tránh ngay để tối ưu hóa prompt của bạn</p>
+      <p id="s10-desc" class="body-text">Học cách viết prompt đúng và hiệu quả</p>
+    </div>
+    <div class="visual-col">
+      <div class="stat-list">
+        <div class="stat-list-card shimmer-fast glow-card">
+          <p class="stat-title">Lỗi 1: Đại từ mơ hồ</p>
+          <p class="stat-desc"><span class="bad">❌ "tối ưu cái này"</span><br><span class="good">✅ "tối ưu hàm CalculateDamage ở CombatSystem.cs"</span></p>
+        </div>
+        <div class="stat-list-card shimmer-fast glow-card">
+          <p class="stat-title">Lỗi 2: Không nói scope</p>
+          <p class="stat-desc"><span class="bad">❌ "thêm tính năng X"</span><br><span class="good">✅ "thêm X. Chỉ sửa file Y, Z. Không đụng A, B."</span></p>
+        </div>
+        <div class="stat-list-card shimmer-fast glow-card">
+          <p class="stat-title">Lỗi 3: Code ngay, không suy nghĩ</p>
+          <p class="stat-desc"><span class="bad">❌ "code cho tao"</span><br><span class="good">✅ "phân tích, đề xuất 2 cách, đợi tao chọn rồi code"</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">10</span>
+</div>
+
+  <div class="scene centered" id="scene11">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s11-badge" class="badge">PHẦN 11</div>
+      <h1 id="s11-title" class="title-xl grad-text">Chuyển section: Phần 2</h1>
+      <p id="s11-desc" class="body-text">Kiểm soát scope</p>
+    </div>
+    <div class="visual-col">
+      <div class="glass-card breath" style="background:var(--cyber-orange);color:white;padding:40px;text-align:center;">
+        <h2>PHẦN 2</h2>
+        <p>Kiểm soát scope</p>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">11</span>
+</div>
+
+  <div class="scene hero" id="scene12">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s12-badge" class="badge">PHẦN 12</div>
+      <h1 id="s12-title" class="title-xl grad-text">Câu chuyện thật về scope</h1>
+      <p id="s12-desc" class="body-text">Bạn đã từng gặp tình huống này chưa?</p>
+    </div>
+    <div class="visual-col">
+      <div class="terminal">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="code">
+          <div class="line">Bạn bảo AI:</div>
+          <div class="line"><span class="highlight">"fix bug ở UI button click"</span></div>
+          <div class="line spacer"></div>
+          <div class="line">5 phút sau:</div>
+          <div class="line"><span class="highlight zoom">→ 8 file đã sửa</span></div>
+          <div class="line"><span class="highlight zoom">→ 3 namespace đã đổi</span></div>
+          <div class="line"><span class="highlight zoom">→ 1 design pattern mới được thêm</span></div>
+          <div class="line spacer"></div>
+          <div class="line">Quen không?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ghost-text">SCOPE</div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">12</span>
+</div>
+
+  <div class="scene split" id="scene13">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s13-badge" class="badge">PHẦN 13</div>
+      <h1 id="s13-title" class="title-xl grad-text">Tại sao scope mất kiểm soát</h1>
+      <p id="s13-subtitle" class="subtitle">AI không biết "đủ rồi". Bạn phải nói.</p>
+      <p id="s13-desc" class="body-text">Hiểu rõ tác động khi không kiểm soát phạm vi.</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="padding:40px;">
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Thấy code "không đẹp" → muốn sửa</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Thấy chỗ refactor được → tự refactor</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">Không biết file nào không được động → động hết</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">13</span>
+</div>
+
+  <div class="scene hero" id="scene14">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s14-badge" class="badge">PHẦN 14</div>
+      <h1 id="s14-title" class="title-xl grad-text">Quy tắc 1: Plan trước, Code sau</h1>
+      <p id="s14-desc" class="body-text">Trước khi AI sửa file nào, yêu cầu:</p>
+      <ul class="body-list">
+        <li>Liệt kê file sẽ sửa</li>
+        <li>Mô tả thay đổi cho từng file</li>
+        <li>Liệt kê rủi ro</li>
+        <li>Chờ bạn duyệt</li>
+      </ul>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="padding:40px;">
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Liệt kê file sẽ sửa</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Mô tả thay đổi cho từng file</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">Liệt kê rủi ro</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">4</div>
+            <div class="step-text">Chờ bạn duyệt</div>
+          </div>
+        </div>
+        <div class="quote-block glow-card" style="margin-top:20px;padding:30px;background-color:var(--orange-light);border:2px solid var(--orange-dark);">
+          <p class="quote-text">🎯 Câu thần chú:</p>
+          <p class="quote-text">"Trước khi code, hãy trình bày kế hoạch. Liệt kê file ảnh hưởng. Đợi tôi duyệt."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">14</span>
+</div>
+
+  <div class="scene split" id="scene15">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s15-badge" class="badge">PHẦN 15</div>
+      <h1 id="s15-title" class="title-xl grad-text">Quy tắc 2: Chat vs Agent</h1>
+      <p id="s15-subtitle" class="subtitle">QUY TẮC 2</p>
+      <p id="s15-desc" class="body-text">Chat mode vs Agent mode</p>
+    </div>
+    <div class="visual-col">
+      <div class="compare">
+        <div class="col">
+          <h4>Chat mode (Ctrl+L)</h4>
+          <ul>
+            <li>Giao tiếp tự nhiên</li>
+            <li>Định hướng qua hội thoại</li>
+            <li>Thân thiện và dễ sử dụng</li>
+          </ul>
+        </div>
+        <div class="col bad">
+          <h4>Agent mode (Ctrl+I)</h4>
+          <ul>
+            <li>Chuyên sâu</li>
+            <li>Tập trung vào tác vụ cụ thể</li>
+            <li>Đòi hỏi thao tác chính xác</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">15</span>
+</div>
+
+  <div class="scene split" id="scene16">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s16-badge" class="badge">PHẦN 16</div>
+      <h1 id="s16-title" class="title-xl grad-text">Quy tắc 3: Một task, một chat</h1>
+      <p id="s16-subtitle" class="subtitle">Khi nào mở chat mới?</p>
+      <p id="s16-desc" class="body-text">Task mới, AI "lú", hoặc cần đổi chiến lược.</p>
+    </div>
+    <div class="visual-col">
+      <div class="compare">
+        <div class="col">
+          <h4>Khi nào mở chat mới?</h4>
+          <ul>
+            <li>Task mới, không liên quan</li>
+            <li>AI bắt đầu "lú"</li>
+            <li>Chat dài quá (&gt;30 lượt)</li>
+            <li>Đổi chiến lược lớn</li>
+          </ul>
+        </div>
+        <div class="col bad">
+          <h4>Dấu hiệu AI "lú":</h4>
+          <ul>
+            <li>Hỏi lại thứ bạn đã nói</li>
+            <li>"Xin lỗi, bạn nói đúng" liên tục</li>
+            <li>Đề xuất lại giải pháp bạn vừa reject</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">16</span>
+</div>
+
+  <div class="scene split" id="scene17">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s17-badge" class="badge">PHẦN 17</div>
+      <h1 id="s17-title" class="title-xl grad-text">Chuyển section: Phần 3</h1>
+      <p id="s17-subtitle" class="subtitle">Verify code AI</p>
+      <p id="s17-desc" class="body-text">Card cam</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="padding:40px;">
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Nhập mã xác thực</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Kiểm tra mã với AI</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">Xác nhận hoàn tất</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">17</span>
+</div>
+
+  <div class="scene hero" id="scene18">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s18-badge" class="badge">PHẦN 18</div>
+      <h1 id="s18-title" class="title-xl grad-text">Sự thật về code AI</h1>
+      <p id="s18-desc" class="body-text">Code AI luôn trông đúng. Đó là vấn đề.</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block drift" style="text-align:center;padding:60px;">
+        <p class="stat-hero" style="font-size:36px;">Code AI</p>
+        <div style="font-size:22px; margin-top:20px; line-height:1.8;">
+          <span>Junior viết sai → trông sai → bạn review → fix</span><br>
+          <span>AI viết sai → trông <span style="color:var(--highlight);font-weight:bold;">ĐÚNG</span> → bạn tin → merge → bug production</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">18</span>
+</div>
+
+  <div class="scene split" id="scene19">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s19-badge" class="badge">PHẦN 19</div>
+      <h1 id="s19-title" class="title-xl grad-text">5 dấu hiệu code AI sai</h1>
+      <p id="s19-subtitle" class="subtitle">Những lỗi thường gặp khi lập trình AI</p>
+      <p id="s19-desc" class="body-text">Code "trông đúng mà sai" là một nguy cơ lớn.</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="padding:40px;">
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Method tên đúng, nội dung không khớp<br><span>→ CalculateDamage không nhân với armor</span></div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Dùng API không tồn tại<br><span>→ UnityEngine.X.Y() mà Unity không có</span></div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">Logic ngược dấu<br><span>→ if (hp > 0) thay vì if (hp <= 0)</span></div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">4</div>
+            <div class="step-text">Edge case bị bỏ qua<br><span>→ null check, mảng rỗng, divide by zero</span></div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">5</div>
+            <div class="step-text">"Quá hoàn hảo"<br><span>→ Code dài, comment đẹp, không khớp pattern dự án</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">19</span>
+</div>
+
+  <div class="scene split" id="scene20">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s20-badge" class="badge">PHẦN 20</div>
+      <h1 id="s20-title" class="title-xl grad-text">Kỹ thuật: bắt AI tự giải thích</h1>
+      <p id="s20-subtitle" class="subtitle">Kỹ thuật miễn phí giúp bạn kiểm tra và hiểu code AI viết</p>
+      <p id="s20-desc" class="body-text">Hiểu sâu — Kiểm tra chặt — Quyết định đúng</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="text-align:left;padding:40px;">
+        <div class="quote-block" style="border: 2px solid var(--accent); border-radius: 8px; padding: 20px; background: rgba(255, 136, 0, 0.1);">
+          <p class="quote-text" style="font-weight: bold; font-size: 1.2rem;">"Giải thích từng dòng cho tôi.<br>Tại sao chọn cách này thay vì cách khác?<br>Code này sẽ fail trong trường hợp nào?"</p>
+          <p class="quote-attr" style="margin-top: 10px; font-size: 0.9rem; opacity: 0.75;">🎯 Câu thần chú</p>
+        </div>
+        <div class="stat-list" style="margin-top: 20px;">
+          <div class="stat-list-card shimmer-fast glow-card" style="padding: 15px; background: rgba(255, 136, 0, 0.15);">
+            <p>→ AI buộc phải "nghĩ lại" — tự phát hiện lỗi của nó</p>
+          </div>
+          <div class="stat-list-card shimmer-fast glow-card" style="padding: 15px; background: rgba(255, 136, 0, 0.15);">
+            <p>→ Bạn hiểu code → review thật</p>
+          </div>
+          <div class="stat-list-card shimmer-fast glow-card" style="padding: 15px; background: rgba(255, 136, 0, 0.15);">
+            <p>→ AI không giải thích được → đừng dùng code đó</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">20</span>
+</div>
+
+  <div class="scene split" id="scene21">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s21-badge" class="badge">PHẦN 21</div>
+      <h1 id="s21-title" class="title-xl grad-text">Tổng kết</h1>
+      <p id="s21-subtitle" class="subtitle">AI là junior dev. Bạn là tech lead.</p>
+      <p id="s21-desc" class="body-text">Vai trò tech lead | Kỹ thuật</p>
+    </div>
+    <div class="visual-col">
+      <div class="compare">
+        <div class="col">
+          <h4>Vai trò Tech Lead</h4>
+          <ul>
+            <li>Định hướng dự án</li>
+            <li>Code review</li>
+            <li>Giải quyết vấn đề phức tạp</li>
+          </ul>
+        </div>
+        <div class="col bad">
+          <h4>Kỹ thuật AI</h4>
+          <ul>
+            <li>Học từ dữ liệu</li>
+            <li>Thực hiện nhiệm vụ đơn giản</li>
+            <li>Không quyết định chiến lược</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">21</span>
+</div>
+
+  <div class="scene centered" id="scene22">
+  <div class="layout">
+    <div class="info-col">
+      <div id="s22-badge" class="badge">PHẦN 22</div>
+      <h1 id="s22-title" class="title-xl grad-text">3 quy tắc cuối cùng</h1>
+      <p id="s22-subtitle" class="subtitle">Nếu chỉ nhớ 3 thứ:</p>
+    </div>
+    <div class="visual-col">
+      <div class="visual-block" style="text-align:center;padding:40px;">
+        <p class="title-xl grad-text" style="font-size: 3rem; margin-bottom: 24px;">1. Brief, không hỏi.</p>
+        <p class="title-xl grad-text" style="font-size: 3rem; margin-bottom: 24px; animation-delay: 0.5s;">2. Plan trước, code sau.</p>
+        <p class="title-xl grad-text" style="font-size: 3rem; animation-delay: 1.0s;">3. Đọc từng dòng AI viết.</p>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">22</span>
+</div>
+
+  <div class="scene centered" id="scene23">
+  <div class="layout">
+    <div id="s23-badge" class="badge">PHẦN 23</div>
+    <h1 id="s23-title" class="title-xl grad-text">Kết &amp; call to action</h1>
+    <p id="s23-desc" class="body-text">Buổi training tuần này chúng ta sẽ đào sâu. Hẹn gặp lại.</p>
+    <p id="s23-subtitle" class="subtitle">— XGAME STUDIO —</p>
+  </div>
+  <div class="ghost-text">KẾT</div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">23</span>
+</div>
+  
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js"></script>
 <script>
 // Sole timeline injected by TechBeat build pipeline.
 // The LLM's original timeline script has been stripped server-side so this
 // is the ONLY timeline registered on window.__timelines["main"].
 (function() {
-  var starts    = [0, 26, 47, 67, 86, 103];
-  var durs      = [26, 21, 20, 19, 17, 18];
-  var actualDurs= [24.288, 19.728, 18.672, 17.880, 15.792, 16.992];
-  var narrations= ["Hyperframes là một framework mã nguồn mở cho phép bạn tạo, xem trước và render các video dựa trên HTML một cách dễ dàng. Điều này đặc biệt quan trọng trong bối cảnh công nghệ ngày càng phát triển, khi các tác nhân AI như Claude Code và Codex cần có khả năng tạo ra nội dung video một cách nhanh chóng và hiệu quả. Với Hyperframes, bạn chỉ cần mô tả video bạn muốn và framework sẽ tự động xử lý.", "Để bắt đầu sử dụng Hyperframes, bạn chỉ cần cài đặt các kỹ năng bằng lệnh 'npx skills add heygen-com/hyperframes'. Sau khi cài đặt, bạn có thể dễ dàng sử dụng các lệnh như '/hyperframes' để tạo nội dung video. Framework này cho phép bạn tạo ra các video chất lượng cao mà không cần phải viết mã phức tạp.", "Một trong những điểm nổi bật của Hyperframes là khả năng tích hợp với nhiều công nghệ khác nhau như GSAP cho hoạt ảnh, Tailwind cho thiết kế, và hỗ trợ nhiều định dạng video. Bạn có thể tạo ra các video có hiệu ứng phức tạp chỉ với vài dòng mã HTML, điều này giúp tiết kiệm thời gian và công sức cho các nhà phát triển.", "So với các công cụ khác như Remotion, Hyperframes nổi bật với việc sử dụng HTML thay vì React, giúp cho quá trình tạo video trở nên đơn giản hơn. Điều này cũng đồng nghĩa với việc bạn không cần phải sử dụng bundler, mà có thể chạy video trực tiếp từ tệp index.html.", "Hyperframes đã được sử dụng để tạo ra nhiều video hấp dẫn và chất lượng cao trong các lĩnh vực như quảng cáo, giáo dục và giải trí. Với khả năng tạo ra video nhanh chóng và dễ dàng, Hyperframes đang trở thành lựa chọn phổ biến cho các nhà sáng tạo nội dung trên toàn cầu.", "Với sự phát triển không ngừng của công nghệ AI và nhu cầu ngày càng tăng về nội dung video chất lượng, Hyperframes có tiềm năng lớn trong việc trở thành một công cụ chủ đạo trong ngành công nghiệp này. Sự tích hợp sâu sắc với các tác nhân AI sẽ mở ra nhiều cơ hội mới cho các nhà phát triển và người sáng tạo nội dung."];
-  var total     = 121;
+  var starts    = [0, 11, 22, 33, 44, 55, 66, 77, 88, 99, 110, 121, 132, 143, 154, 165, 176, 187, 198, 209, 220, 231, 242];
+  var durs      = [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11];
+  var actualDurs= [10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000];
+  var narrations= ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+  var total     = 253;
   // Word-level Whisper data. Each entry: [{word,start,end},...] or []
-  var wordData  = [[{"word":"Hippoframe","start":0.000,"end":0.760},{"word":"là","start":0.760,"end":1.020},{"word":"một","start":1.020,"end":1.240},{"word":"framework","start":1.240,"end":1.640},{"word":"mã","start":1.640,"end":1.980},{"word":"nguồn","start":1.980,"end":2.140},{"word":"mở","start":2.140,"end":2.320},{"word":"cho","start":2.320,"end":2.520},{"word":"phép","start":2.520,"end":2.680},{"word":"bạn","start":2.680,"end":2.920},{"word":"tạo","start":2.920,"end":3.160},{"word":"xem","start":3.740,"end":3.740},{"word":"trước","start":3.740,"end":3.940},{"word":"và","start":3.940,"end":4.160},{"word":"render","start":4.160,"end":4.520},{"word":"các","start":4.520,"end":4.780},{"word":"video","start":4.780,"end":5.200},{"word":"dựa","start":5.200,"end":5.560},{"word":"trên","start":5.560,"end":5.680},{"word":"HTML","start":5.680,"end":6.300},{"word":"một","start":6.300,"end":6.760},{"word":"cách","start":6.760,"end":6.860},{"word":"dễ","start":6.860,"end":7.100},{"word":"dàng","start":7.100,"end":7.360},{"word":"Điều","start":8.420,"end":8.420},{"word":"này","start":8.420,"end":8.640},{"word":"đặc","start":8.640,"end":8.780},{"word":"biệt","start":8.780,"end":8.940},{"word":"quan","start":8.940,"end":9.160},{"word":"trọng","start":9.160,"end":9.340},{"word":"trong","start":9.340,"end":9.540},{"word":"bối","start":9.540,"end":9.740},{"word":"cảnh","start":9.740,"end":9.900},{"word":"công","start":9.900,"end":10.120},{"word":"nghệ","start":10.120,"end":10.260},{"word":"ngày","start":10.260,"end":10.520},{"word":"càng","start":10.520,"end":10.680},{"word":"phát","start":10.680,"end":10.860},{"word":"triển","start":10.860,"end":11.140},{"word":"khi","start":11.540,"end":11.620},{"word":"các","start":11.620,"end":11.800},{"word":"tác","start":11.800,"end":11.960},{"word":"nhân","start":11.960,"end":12.100},{"word":"AI","start":12.100,"end":12.440},{"word":"như","start":12.440,"end":12.680},{"word":"CloudCod","start":12.680,"end":13.180},{"word":"và","start":13.180,"end":13.440},{"word":"Codec","start":13.440,"end":13.820},{"word":"cần","start":13.820,"end":14.000},{"word":"có","start":14.000,"end":14.260},{"word":"khả","start":14.260,"end":14.400},{"word":"năng","start":14.400,"end":14.540},{"word":"tạo","start":14.540,"end":14.760},{"word":"ra","start":14.760,"end":15.040},{"word":"nội","start":15.040,"end":15.180},{"word":"dung","start":15.180,"end":15.300},{"word":"video","start":15.300,"end":15.800},{"word":"một","start":15.800,"end":16.080},{"word":"cách","start":16.080,"end":16.240},{"word":"nhanh","start":16.240,"end":16.420},{"word":"chóng","start":16.420,"end":16.640},{"word":"và","start":16.640,"end":16.940},{"word":"hiệu","start":16.940,"end":17.120},{"word":"quả","start":17.120,"end":18.200},{"word":"Với","start":18.600,"end":19.040},{"word":"Hippoframe","start":19.040,"end":19.480},{"word":"bạn","start":19.620,"end":19.700},{"word":"chỉ","start":19.700,"end":19.940},{"word":"cần","start":19.940,"end":20.120},{"word":"mô","start":20.120,"end":20.300},{"word":"tả","start":20.300,"end":20.460},{"word":"video","start":20.460,"end":20.980},{"word":"bạn","start":20.980,"end":21.240},{"word":"muốn","start":21.240,"end":21.460},{"word":"và","start":21.460,"end":21.760},{"word":"framework","start":21.760,"end":22.280},{"word":"sẽ","start":22.280,"end":22.560},{"word":"tự","start":22.560,"end":22.780},{"word":"động","start":22.780,"end":22.980},{"word":"xử","start":22.980,"end":23.240},{"word":"lý","start":23.240,"end":23.380}],[{"word":"Để","start":0.000,"end":0.360},{"word":"bắt","start":0.360,"end":0.580},{"word":"đầu","start":0.580,"end":0.740},{"word":"sử","start":0.740,"end":0.960},{"word":"dụng","start":0.960,"end":1.160},{"word":"Hippoframe","start":1.160,"end":1.800},{"word":"bạn","start":2.300,"end":2.320},{"word":"chỉ","start":2.320,"end":2.600},{"word":"cần","start":2.600,"end":2.820},{"word":"cài","start":2.820,"end":2.920},{"word":"đặt","start":2.920,"end":3.060},{"word":"các","start":3.060,"end":3.360},{"word":"kỹ","start":3.360,"end":3.460},{"word":"năng","start":3.460,"end":3.640},{"word":"bằng","start":3.640,"end":3.900},{"word":"lệnh","start":3.900,"end":4.060},{"word":"NURBS","start":4.060,"end":4.600},{"word":"KINAC","start":4.720,"end":5.120},{"word":"hay","start":5.120,"end":5.360},{"word":"GENCOM","start":5.360,"end":5.800},{"word":"Hippoframe","start":6.140,"end":6.740},{"word":"Sau","start":8.060,"end":8.060},{"word":"khi","start":8.060,"end":8.280},{"word":"cài","start":8.280,"end":8.440},{"word":"đặt","start":8.440,"end":8.640},{"word":"bạn","start":9.080,"end":9.120},{"word":"có","start":9.120,"end":9.320},{"word":"thể","start":9.320,"end":9.480},{"word":"dễ","start":9.480,"end":9.640},{"word":"dàng","start":9.640,"end":9.860},{"word":"sử","start":9.860,"end":10.040},{"word":"dụng","start":10.040,"end":10.220},{"word":"các","start":10.220,"end":10.540},{"word":"lệnh","start":10.540,"end":10.600},{"word":"như","start":10.600,"end":10.960},{"word":"Hippoframe","start":10.960,"end":11.860},{"word":"để","start":11.860,"end":12.140},{"word":"tạo","start":12.140,"end":12.340},{"word":"nội","start":12.340,"end":12.580},{"word":"dung","start":12.580,"end":12.720},{"word":"video","start":12.720,"end":13.260},{"word":"TarmacWatch","start":14.320,"end":14.660},{"word":"này","start":14.660,"end":14.940},{"word":"cho","start":14.940,"end":15.100},{"word":"phép","start":15.100,"end":15.220},{"word":"bạn","start":15.220,"end":15.480},{"word":"tạo","start":15.480,"end":15.660},{"word":"ra","start":15.660,"end":15.940},{"word":"các","start":15.940,"end":16.140},{"word":"video","start":16.140,"end":16.540},{"word":"chất","start":16.540,"end":16.780},{"word":"lượng","start":16.780,"end":16.940},{"word":"cao","start":16.940,"end":17.260},{"word":"mà","start":17.260,"end":17.500},{"word":"không","start":17.500,"end":17.680},{"word":"cần","start":17.680,"end":17.880},{"word":"phải","start":17.880,"end":18.160},{"word":"viết","start":18.160,"end":18.260},{"word":"mã","start":18.260,"end":18.440},{"word":"phức","start":18.440,"end":18.740},{"word":"tạp","start":18.740,"end":18.860}],[{"word":"Một","start":0.000,"end":0.360},{"word":"trong","start":0.360,"end":0.540},{"word":"những","start":0.540,"end":0.700},{"word":"điểm","start":0.700,"end":0.860},{"word":"nổi","start":0.860,"end":1.020},{"word":"bật","start":1.020,"end":1.180},{"word":"của","start":1.180,"end":1.400},{"word":"Hiperfame","start":1.400,"end":1.960},{"word":"là","start":1.960,"end":2.220},{"word":"khả","start":2.220,"end":2.380},{"word":"năng","start":2.380,"end":2.520},{"word":"tích","start":2.520,"end":2.780},{"word":"hợp","start":2.780,"end":2.940},{"word":"với","start":2.940,"end":3.180},{"word":"nhiều","start":3.180,"end":3.380},{"word":"công","start":3.380,"end":3.520},{"word":"nghệ","start":3.520,"end":3.660},{"word":"khác","start":3.660,"end":3.920},{"word":"nhau","start":3.920,"end":4.180},{"word":"như","start":4.180,"end":4.380},{"word":"GFAP","start":4.380,"end":5.060},{"word":"cho","start":5.060,"end":5.280},{"word":"hoạt","start":5.280,"end":5.520},{"word":"ảnh","start":5.520,"end":6.000},{"word":"Tiling","start":6.220,"end":6.400},{"word":"cho","start":6.400,"end":6.680},{"word":"thiết","start":6.680,"end":6.840},{"word":"kế","start":6.840,"end":7.120},{"word":"và","start":7.440,"end":7.740},{"word":"hỗ","start":7.740,"end":7.800},{"word":"trợ","start":7.800,"end":7.920},{"word":"nhiều","start":7.920,"end":8.160},{"word":"định","start":8.160,"end":8.340},{"word":"dạng","start":8.340,"end":8.560},{"word":"video","start":8.560,"end":9.060},{"word":"Bạn","start":10.200,"end":10.200},{"word":"có","start":10.200,"end":10.380},{"word":"thể","start":10.380,"end":10.540},{"word":"tạo","start":10.540,"end":10.720},{"word":"ra","start":10.720,"end":10.980},{"word":"các","start":10.980,"end":11.160},{"word":"video","start":11.160,"end":11.560},{"word":"có","start":11.560,"end":11.820},{"word":"hiệu","start":11.820,"end":12.020},{"word":"ứng","start":12.020,"end":12.180},{"word":"phức","start":12.180,"end":12.400},{"word":"tạp","start":12.400,"end":12.580},{"word":"chỉ","start":12.580,"end":12.820},{"word":"với","start":12.820,"end":13.020},{"word":"vài","start":13.020,"end":13.320},{"word":"dòng","start":13.320,"end":13.380},{"word":"mã","start":13.380,"end":13.560},{"word":"HTML","start":13.560,"end":14.200},{"word":"Điều","start":14.980,"end":14.980},{"word":"này","start":14.980,"end":15.120},{"word":"giúp","start":15.120,"end":15.320},{"word":"tiết","start":15.320,"end":15.500},{"word":"kiệm","start":15.500,"end":15.720},{"word":"thời","start":15.720,"end":15.900},{"word":"gian","start":15.900,"end":16.100},{"word":"và","start":16.100,"end":16.400},{"word":"công","start":16.400,"end":16.580},{"word":"sức","start":16.580,"end":16.700},{"word":"cho","start":16.700,"end":16.960},{"word":"các","start":16.960,"end":17.140},{"word":"nhà","start":17.140,"end":17.360},{"word":"phát","start":17.360,"end":17.540},{"word":"triển","start":17.540,"end":17.760}],[{"word":"So","start":0.000,"end":0.380},{"word":"với","start":0.380,"end":0.580},{"word":"các","start":0.580,"end":0.920},{"word":"công","start":0.920,"end":1.020},{"word":"cụ","start":1.020,"end":1.100},{"word":"khác","start":1.100,"end":1.440},{"word":"như","start":1.440,"end":1.640},{"word":"Remotinon","start":1.640,"end":2.380},{"word":"Hiperfame","start":2.880,"end":3.300},{"word":"nổi","start":3.300,"end":3.500},{"word":"bật","start":3.500,"end":3.660},{"word":"với","start":3.660,"end":3.920},{"word":"việc","start":3.920,"end":4.140},{"word":"sử","start":4.140,"end":4.300},{"word":"dụng","start":4.300,"end":4.500},{"word":"HTML","start":4.500,"end":5.080},{"word":"thay","start":5.080,"end":5.440},{"word":"vì","start":5.440,"end":5.760},{"word":"Grid","start":5.760,"end":5.920},{"word":"giúp","start":6.380,"end":6.380},{"word":"cho","start":6.380,"end":6.680},{"word":"quá","start":6.680,"end":6.700},{"word":"trình","start":6.700,"end":6.880},{"word":"tạo","start":6.880,"end":7.060},{"word":"video","start":7.060,"end":7.560},{"word":"trở","start":7.560,"end":7.860},{"word":"nên","start":7.860,"end":8.000},{"word":"đơn","start":8.000,"end":8.240},{"word":"giản","start":8.240,"end":8.420},{"word":"hơn","start":8.420,"end":8.660},{"word":"Điều","start":9.780,"end":9.780},{"word":"này","start":9.780,"end":10.000},{"word":"cũng","start":10.000,"end":10.200},{"word":"đồng","start":10.200,"end":10.380},{"word":"nghĩa","start":10.380,"end":10.660},{"word":"với","start":10.660,"end":10.800},{"word":"việc","start":10.800,"end":11.000},{"word":"bạn","start":11.000,"end":11.200},{"word":"không","start":11.200,"end":11.420},{"word":"cần","start":11.420,"end":11.620},{"word":"phải","start":11.620,"end":11.980},{"word":"sử","start":11.980,"end":12.000},{"word":"dụng","start":12.000,"end":12.180},{"word":"Bunder","start":12.180,"end":12.620},{"word":"mà","start":13.100,"end":13.180},{"word":"có","start":13.180,"end":13.360},{"word":"thể","start":13.360,"end":13.520},{"word":"chạy","start":13.520,"end":13.700},{"word":"video","start":13.700,"end":14.200},{"word":"trực","start":14.200,"end":14.460},{"word":"tiếp","start":14.460,"end":14.600},{"word":"từ","start":14.600,"end":14.880},{"word":"tệp","start":14.880,"end":15.080},{"word":"index","start":15.080,"end":15.500},{"word":"html","start":15.500,"end":16.660}],[{"word":"Hippoframe","start":0.000,"end":0.760},{"word":"đã","start":0.760,"end":0.920},{"word":"được","start":0.920,"end":1.160},{"word":"sử","start":1.160,"end":1.300},{"word":"dụng","start":1.300,"end":1.500},{"word":"để","start":1.500,"end":1.740},{"word":"tạo","start":1.740,"end":1.880},{"word":"ra","start":1.880,"end":2.160},{"word":"nhiều","start":2.160,"end":2.340},{"word":"video","start":2.340,"end":2.780},{"word":"hấp","start":2.780,"end":3.000},{"word":"dẫn","start":3.000,"end":3.240},{"word":"và","start":3.240,"end":3.580},{"word":"chất","start":3.580,"end":3.740},{"word":"lượng","start":3.740,"end":3.920},{"word":"cao","start":3.920,"end":4.220},{"word":"trong","start":4.220,"end":4.360},{"word":"các","start":4.360,"end":4.620},{"word":"lĩnh","start":4.620,"end":4.740},{"word":"vực","start":4.740,"end":4.880},{"word":"như","start":4.880,"end":5.160},{"word":"quảng","start":5.160,"end":5.340},{"word":"cáo","start":5.340,"end":5.660},{"word":"giáo","start":6.120,"end":6.140},{"word":"dục","start":6.140,"end":6.300},{"word":"và","start":6.300,"end":6.620},{"word":"giải","start":6.620,"end":6.820},{"word":"trí","start":6.820,"end":7.080},{"word":"Với","start":8.180,"end":8.180},{"word":"khả","start":8.180,"end":8.360},{"word":"năng","start":8.360,"end":8.540},{"word":"tạo","start":8.540,"end":8.780},{"word":"ra","start":8.780,"end":9.060},{"word":"video","start":9.060,"end":9.400},{"word":"nhanh","start":9.400,"end":9.660},{"word":"chóng","start":9.660,"end":9.880},{"word":"và","start":9.880,"end":10.180},{"word":"dễ","start":10.180,"end":10.340},{"word":"dàng","start":10.340,"end":10.580},{"word":"Hippoframe","start":11.100,"end":11.520},{"word":"đang","start":11.520,"end":11.760},{"word":"trở","start":11.760,"end":11.900},{"word":"thành","start":11.900,"end":12.100},{"word":"lựa","start":12.100,"end":12.300},{"word":"chọn","start":12.300,"end":12.440},{"word":"phổ","start":12.440,"end":12.700},{"word":"biến","start":12.700,"end":12.880},{"word":"cho","start":12.880,"end":13.140},{"word":"các","start":13.140,"end":13.300},{"word":"nhà","start":13.300,"end":13.500},{"word":"sáng","start":13.500,"end":13.660},{"word":"tạo","start":13.660,"end":13.860},{"word":"nội","start":13.860,"end":14.080},{"word":"dung","start":14.080,"end":14.220},{"word":"trên","start":14.220,"end":14.520},{"word":"toàn","start":14.520,"end":14.700},{"word":"cầu","start":14.700,"end":14.880}],[{"word":"Với","start":0.000,"end":0.360},{"word":"sự","start":0.360,"end":0.640},{"word":"phát","start":0.640,"end":0.760},{"word":"triển","start":0.760,"end":0.940},{"word":"không","start":0.940,"end":1.140},{"word":"ngừng","start":1.140,"end":1.300},{"word":"của","start":1.300,"end":1.560},{"word":"công","start":1.560,"end":1.700},{"word":"nghệ","start":1.700,"end":1.840},{"word":"AI","start":1.840,"end":2.300},{"word":"và","start":2.300,"end":2.560},{"word":"nhu","start":2.560,"end":2.720},{"word":"cầu","start":2.720,"end":2.860},{"word":"ngày","start":2.860,"end":3.100},{"word":"càng","start":3.100,"end":3.280},{"word":"tăng","start":3.280,"end":3.440},{"word":"về","start":3.440,"end":3.720},{"word":"nội","start":3.720,"end":3.900},{"word":"dung","start":3.900,"end":4.020},{"word":"video","start":4.020,"end":4.520},{"word":"chất","start":4.520,"end":4.740},{"word":"lượng","start":4.740,"end":5.200},{"word":"Hippoframe","start":5.460,"end":5.840},{"word":"có","start":5.840,"end":6.060},{"word":"tiềm","start":6.060,"end":6.220},{"word":"năng","start":6.220,"end":6.360},{"word":"lớn","start":6.360,"end":6.680},{"word":"trong","start":6.680,"end":6.840},{"word":"việc","start":6.840,"end":7.020},{"word":"trở","start":7.020,"end":7.160},{"word":"thành","start":7.160,"end":7.320},{"word":"một","start":7.320,"end":7.600},{"word":"công","start":7.600,"end":7.680},{"word":"cụ","start":7.680,"end":7.820},{"word":"chủ","start":7.820,"end":8.040},{"word":"đạo","start":8.040,"end":8.280},{"word":"trong","start":8.280,"end":8.480},{"word":"ngành","start":8.480,"end":8.620},{"word":"công","start":8.620,"end":8.820},{"word":"nghiệp","start":8.820,"end":8.980},{"word":"này","start":8.980,"end":9.320},{"word":"Sự","start":10.340,"end":10.340},{"word":"tích","start":10.340,"end":10.520},{"word":"hợp","start":10.520,"end":10.720},{"word":"sâu","start":10.720,"end":10.900},{"word":"sắc","start":10.900,"end":11.120},{"word":"với","start":11.120,"end":11.360},{"word":"các","start":11.360,"end":11.540},{"word":"tác","start":11.540,"end":11.700},{"word":"nhân","start":11.700,"end":11.840},{"word":"AI","start":11.840,"end":12.260},{"word":"sẽ","start":12.260,"end":12.560},{"word":"mở","start":12.560,"end":12.660},{"word":"ra","start":12.660,"end":12.940},{"word":"nhiều","start":12.940,"end":13.120},{"word":"cơ","start":13.120,"end":13.300},{"word":"hội","start":13.300,"end":13.440},{"word":"mới","start":13.440,"end":13.760},{"word":"cho","start":13.760,"end":13.940},{"word":"các","start":13.940,"end":14.140},{"word":"nhà","start":14.140,"end":14.360},{"word":"phát","start":14.360,"end":14.500},{"word":"triển","start":14.500,"end":14.740},{"word":"và","start":14.740,"end":15.040},{"word":"người","start":15.040,"end":15.260},{"word":"sáng","start":15.260,"end":15.460},{"word":"tạo","start":15.460,"end":15.680},{"word":"nội","start":15.680,"end":15.940},{"word":"dung","start":15.940,"end":16.080}]];
+  var wordData  = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
   var WLINE     = 7; // words per subtitle line
+
+  function backspaceWord(tl, el, word, startTime, cps) {
+    var interval = 1 / cps;
+    for (var k = word.length - 1; k >= 0; k--) {
+      (function(index) {
+        tl.call(function() {
+          el.textContent = word.slice(0, index);
+        }, [], startTime + (word.length - index) * interval);
+      })(k);
+    }
+    return word.length * interval;
+  }
+
+  function compileTextEffects(sceneId, sceneStart) {
+    var scEl = document.querySelector(sceneId);
+    if (!scEl) return;
+
+    // A. Typewriter effect
+    var typewriters = scEl.querySelectorAll("[data-effect='typewriter']");
+    typewriters.forEach(function(el) {
+      var text = el.textContent.trim();
+      if (!text) return;
+
+      var cursor = el.nextElementSibling;
+      var hasCursor = cursor && (cursor.className.indexOf("cursor") !== -1);
+
+      var cps = 12; // conversational speed
+      var dur = text.length / cps;
+      var startOffset = sceneStart + 0.3; // wait briefly for badge entrance
+
+      // Deterministically clear the element at the beginning of its typing
+      tl.set(el, { text: "" }, startOffset);
+
+      if (hasCursor) {
+        tl.call(function() { cursor.className = "cursor-solid"; }, [], startOffset);
+      }
+      tl.to(el, { text: { value: text }, duration: dur, ease: "none" }, startOffset);
+      if (hasCursor) {
+        tl.call(function() { cursor.className = "cursor-blink"; }, [], startOffset + dur);
+      }
+    });
+
+    // B. Word Rotations
+    var rotators = scEl.querySelectorAll("[data-effect='word-rotate']");
+    rotators.forEach(function(el) {
+      var wordsStr = el.getAttribute("data-words");
+      if (!wordsStr) return;
+      var words = wordsStr.split(",").map(function(w) { return w.trim(); });
+      if (words.length === 0) return;
+
+      var cursor = el.nextElementSibling;
+      var hasCursor = cursor && (cursor.className.indexOf("cursor") !== -1);
+
+      var offset = sceneStart + 0.4;
+      
+      // Deterministically clear the element at the beginning of its rotation
+      tl.set(el, { text: "" }, offset);
+
+      words.forEach(function(word, i) {
+        var typeDur = word.length / 10;
+
+        // Type word
+        if (hasCursor) {
+          tl.call(function() { cursor.className = "cursor-solid"; }, [], offset);
+        }
+        tl.to(el, { text: { value: word }, duration: typeDur, ease: "none" }, offset);
+        if (hasCursor) {
+          tl.call(function() { cursor.className = "cursor-blink"; }, [], offset + typeDur);
+        }
+
+        offset += typeDur + 1.2; // hold word
+
+        // Backspace if not the last word
+        if (i < words.length - 1) {
+          if (hasCursor) {
+            tl.call(function() { cursor.className = "cursor-solid"; }, [], offset);
+          }
+          var clearDur = backspaceWord(tl, el, word, offset, 16);
+          if (hasCursor) {
+            tl.call(function() { cursor.className = "cursor-blink"; }, [], offset + clearDur);
+          }
+          offset += clearDur + 0.2; // brief pause before next word
+        }
+      });
+    });
+  }
 
   function groupLines(ws) {
     var r = [], i = 0;
@@ -1104,9 +1861,9 @@ body {
         '<div class="top-line"></div>' +
         '<span class="scene-num">' + sceneNumPadded + '</span>' +
         '<div class="layout" style="padding:100px 140px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:36px;">' +
-          '<div class="badge" style="margin:0 auto;">' + emoji + ' &nbsp; PHẦN ' + n + '</div>' +
-          '<h1 class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">' + (title || ("Nội dung phân cảnh " + n)) + '</h1>' +
-          (narration ? ('<p class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">' + narration.slice(0, 220) + (narration.length > 220 ? "…" : "") + '</p>') : '') +
+          '<div id="s' + n + '-badge" class="badge" style="margin:0 auto;">' + emoji + ' &nbsp; PHẦN ' + n + '</div>' +
+          '<h1 id="s' + n + '-title" class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">' + (title || ("Nội dung phân cảnh " + n)) + '</h1>' +
+          (narration ? ('<p id="s' + n + '-desc" class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">' + narration.slice(0, 220) + (narration.length > 220 ? "…" : "") + '</p>') : '') +
           '<div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">' +
             '<div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>' +
             '<div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE ' + sceneNumPadded + '</div>' +
@@ -1180,21 +1937,67 @@ body {
 
   function buildTimeline() {
     if (!window.gsap) return;
+    if (window.TextPlugin) gsap.registerPlugin(TextPlugin);
     ensureScenes();
     ensureSubtitles();
 
-    gsap.set(".scene *", { clearProps: "all", opacity: 1 });
-    gsap.utils.toArray(".scene").forEach(function(el, idx) {
-      if (idx === 0) return;
-      gsap.set(el, { opacity: 0, visibility: "hidden", position: "absolute", inset: 0 });
+    // Bug5 fix: do NOT clearProps on ".scene *" — that forces opacity:1 on all children before
+    // gsap.from() tweens run, making every block appear simultaneously.
+    // Instead: explicitly preset children of non-first scenes to opacity:0 so from() has a valid start state.
+    // Store natural opacities before presetting them to 0
+    function getNaturalOpacity(target) {
+      if (target.classList.contains("ghost-text")) return 0.085;
+      if (target.classList.contains("aurora-glow") || target.classList.contains("glow-orb")) return 0.48;
+      if (target.classList.contains("animated-grid")) return 0.55;
+      if (target.classList.contains("retro-grid")) return 0.45;
+      if (target.classList.contains("light-rays")) return 0.35;
+      if (target.classList.contains("particle-field")) return 0.5;
+      if (target.classList.contains("float-orb-lg")) return 0.48;
+      if (target.classList.contains("float-orb-md")) return 0.38;
+      if (target.classList.contains("float-orb-sm")) return 0.32;
+      
+      var computed = window.getComputedStyle(target).opacity;
+      if (computed && computed !== "1" && computed !== "0") {
+        return parseFloat(computed);
+      }
+      return 1;
+    }
+
+    gsap.utils.toArray(".scene").forEach(function(el) {
+      var ambientSelectors = [
+        ".aurora-glow", ".animated-grid", ".retro-grid", ".light-rays",
+        ".particle-field", ".ghost-text", ".float-orb-lg", ".float-orb-md",
+        ".float-orb-sm", ".y2k-sparkle", ".glow-orb", ".marquee-strip"
+      ];
+      ambientSelectors.forEach(function(sel) {
+        el.querySelectorAll(sel).forEach(function(target) {
+          target._naturalOpacity = getNaturalOpacity(target);
+        });
+      });
     });
-    gsap.set("#scene1", { position: "absolute", inset: 0 });
+
+    gsap.utils.toArray(".scene").forEach(function(el, idx) {
+      if (idx === 0) {
+        gsap.set(el, { opacity: 1, visibility: "visible", position: "absolute", inset: 0 });
+      } else {
+        gsap.set(el, { opacity: 0, visibility: "hidden", position: "absolute", inset: 0 });
+      }
+      // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
+      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), { opacity: 0 });
+      gsap.set(el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)"), { opacity: 0 });
+      
+      // Preset ambient elements to opacity:0 so they fade in cleanly and deterministically
+      gsap.set(el.querySelectorAll(".aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .float-orb-lg, .float-orb-md, .float-orb-sm, .y2k-sparkle, .glow-orb, .marquee-strip"), { opacity: 0 });
+    });
 
     var tl = gsap.timeline({ paused: true });
     var lastIdx = starts.length - 1;
 
-    function safeFrom(sel, vars, at) {
-      if (document.querySelector(sel)) tl.from(sel, vars, at);
+    function safeFromTo(sel, fromVars, toVars, at) {
+      if (document.querySelector(sel)) {
+        toVars.immediateRender = false;
+        tl.fromTo(sel, fromVars, toVars, at);
+      }
     }
 
     for (var i = 0; i < starts.length; i++) {
@@ -1205,12 +2008,44 @@ body {
       if (!document.querySelector(sceneId)) continue;
       var isLast = (i === lastIdx);
 
+      // 1. Gather all subtitle times (chunk starts) for the current scene to sync visual block entrances
+      var subtitleTimes = [];
+      var scWd = wordData[i];
+      if (scWd && scWd.length > 0) {
+        var lines = groupLines(scWd);
+        for (var li = 0; li < lines.length; li++) {
+          subtitleTimes.push(s + lines[li][0].start);
+        }
+      } else {
+        var chunks = chunkText(narrations[i] || "");
+        if (chunks.length > 0) {
+          var totalAudioTime = actualDurs[i] || d;
+          var AUDIO_LEAD = 0.15;
+          var speechDur = (totalAudioTime - AUDIO_LEAD) * 0.93;
+          var chunkLens = [], totalLen = 0;
+          chunks.forEach(function(c) {
+            var l = c.length || 1;
+            chunkLens.push(l); totalLen += l;
+          });
+          var elapsed = 0;
+          chunks.forEach(function(c, ci) {
+            var chunkStart = s + AUDIO_LEAD + elapsed;
+            subtitleTimes.push(chunkStart);
+            var chunkDur_c = (chunkLens[ci] / totalLen) * speechDur;
+            elapsed += chunkDur_c;
+          });
+        }
+      }
+
       if (i === 0) {
         tl.set(sceneId, { opacity: 1, visibility: "visible" }, s);
       } else {
         tl.set(sceneId, { opacity: 0, visibility: "visible" }, s);
         tl.to(sceneId,  { opacity: 1, duration: 0.6, ease: "power3.out" }, s);
       }
+
+      // Compile declarative typewriter & word rotation effects
+      compileTextEffects(sceneId, s);
 
       // ── SUBTITLE TIMING ────────────────────────────────────────────────
       var subSceneEl = document.getElementById("sub-scene" + n);
@@ -1307,32 +2142,82 @@ body {
       ];
       ambientSelectors.forEach(function(sel) {
         if (document.querySelector(sceneId + " " + sel)) {
-          tl.from(sceneId + " " + sel, {
-            scale: 0.7, opacity: 0, duration: 0.7, stagger: 0.06, ease: "power2.out"
-          }, s);
+          tl.fromTo(sceneId + " " + sel,
+            { scale: 0.7, opacity: 0 },
+            { 
+              scale: 1, 
+              opacity: function(i, target) { return target._naturalOpacity || 1; }, 
+              duration: 0.7, 
+              stagger: 0.06, 
+              ease: "power2.out", 
+              immediateRender: false 
+            },
+            s);
         }
       });
 
       // Decorative chrome (corner brackets + top-line + scene-num) entrance
-      tl.from(sceneId + " .corner-bracket, " + sceneId + " .top-line, " + sceneId + " .scene-num",
-        { opacity: 0, duration: 0.4, stagger: 0.05, ease: "power1.out" }, s);
+      var chromeClasses = [".corner-bracket", ".top-line", ".scene-num"];
+      var existingChrome = [];
+      chromeClasses.forEach(function(sel) {
+        var fullSel = sceneId + " " + sel;
+        if (document.querySelector(fullSel)) {
+          existingChrome.push(fullSel);
+        }
+      });
+      if (existingChrome.length > 0) {
+        tl.fromTo(existingChrome.join(", "),
+          { opacity: 0 },
+          { opacity: 1, duration: 0.4, stagger: 0.05, ease: "power1.out", immediateRender: false }, s);
+      }
 
       // Content entry — start IMMEDIATELY at t=s, tight stagger so the first
       // 0.5s is filled with motion instead of an empty stationary frame.
-      safeFrom(sceneId + " [id$='-badge']",    { y: -20, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }, s);
-      safeFrom(sceneId + " [id$='-title']",    { y: 40,  opacity: 0, duration: 0.7, ease: "power4.out"   }, s + 0.12);
-      safeFrom(sceneId + " [id$='-subtitle']", { y: 30,  opacity: 0, duration: 0.6, ease: "power3.out"   }, s + 0.25);
-      safeFrom(sceneId + " [id$='-desc']",     { y: 20,  opacity: 0, duration: 0.5, ease: "power2.out"   }, s + 0.38);
-      if (document.querySelector(sceneId + " .visual-col > *")) {
-        tl.from(sceneId + " .visual-col > *",
-          { scale: 0.88, opacity: 0, duration: 0.7, stagger: 0.12, ease: "back.out(1.6)" },
+      safeFromTo(sceneId + " [id$='-badge']",    { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }, s);
+      safeFromTo(sceneId + " [id$='-title']",    { y: 40,  opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power4.out"   }, s + 0.12);
+      safeFromTo(sceneId + " [id$='-subtitle']", { y: 30,  opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out"   }, s + 0.25);
+      safeFromTo(sceneId + " [id$='-desc']",     { y: 20,  opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out"   }, s + 0.38);
+      var containerExclude = ":not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)";
+      if (document.querySelector(sceneId + " .visual-col > *" + containerExclude)) {
+        tl.fromTo(sceneId + " .visual-col > *" + containerExclude,
+          { scale: 0.88, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.7, stagger: 0.12, ease: "back.out(1.6)", immediateRender: false },
           s + 0.18);
       }
-      // Bento / hero-stat banner inner items (when not using visual-col wrapper)
-      if (document.querySelector(sceneId + " .bento-cell, " + sceneId + " .hero-stat-banner > *")) {
-        tl.from(sceneId + " .bento-cell, " + sceneId + " .hero-stat-banner > *",
-          { y: 24, opacity: 0, duration: 0.55, stagger: 0.08, ease: "power3.out" },
-          s + 0.15);
+
+      var blockSelectors = [
+        ".bento-cell", ".feat-card", ".stat-list-card", ".chat-bubble",
+        ".tl-item", ".agent-card", ".tech-card", ".compare .col", ".visual-block",
+        ".step-item", ".formula-pill", ".command-pill", ".glass-card",
+        ".visual-col > *:not(.stat-list):not(.feat-row):not(.bento-grid):not(.bento-3x2):not(.agent-grid):not(.compare):not(.step-list):not(.formula-stack)"
+      ];
+      var blocks = [];
+      blockSelectors.forEach(function(sel) {
+        var els = document.querySelectorAll(sceneId + " " + sel);
+        els.forEach(function(el) {
+          if (blocks.indexOf(el) === -1) blocks.push(el);
+        });
+      });
+
+      // 3. Animate each block at its corresponding subtitle start timestamp!
+      if (blocks.length > 0) {
+        blocks.forEach(function(blockEl, bi) {
+          var blockStart;
+          if (subtitleTimes.length > 0) {
+            // Map block index to subtitle time index proportionally
+            var subIdx = Math.floor((bi / blocks.length) * subtitleTimes.length);
+            blockStart = subtitleTimes[subIdx];
+          } else {
+            // Fallback stagger if no subtitles exist
+            blockStart = s + 0.2 + (bi * 0.45);
+          }
+          
+          // Animate the block dynamically at the exact timestamp!
+          tl.fromTo(blockEl,
+            { y: 28, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.65, ease: "back.out(1.4)", immediateRender: false },
+            blockStart);
+        });
       }
 
       // Last scene stays visible until total — visuals never go black before audio ends.
@@ -1346,12 +2231,12 @@ body {
     // intended initial state instead of post-set hidden state.
     tl.progress(0).pause();
 
-    // Register under every plausible key — HyperFrames doc says key matches
-    // composition-id, but real-world runs vary. Cover "main" (our id) and
-    // "root" (the doc default) to be safe.
+    // Register the timeline dynamically under the exact data-composition-id
+    // of the root element (fallback to "main"). Avoid extra keys to prevent timeline_id_mismatch.
     window.__timelines = window.__timelines || {};
-    window.__timelines["main"] = tl;
-    window.__timelines["root"] = tl;
+    var rootEl = document.getElementById("root");
+    var compId = rootEl ? (rootEl.getAttribute("data-composition-id") || "main") : "main";
+    window.__timelines[compId] = tl;
   }
 
   if (document.readyState === "loading") {
