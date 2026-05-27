@@ -243,27 +243,22 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
         print(f"[tts] Gemini TTS request failed: {e}")
         return False
 
-    # Save and convert raw PCM L16 (big-endian) → wav
+    # Save and convert raw PCM L16 → wav natively
     try:
-        from pydub import AudioSegment
-        from io import BytesIO
-        import array
-        import sys
+        import wave
         
-        a = array.array('h')
-        a.frombytes(audio_bytes)
-        if sys.byteorder == 'little':
-            a.byteswap()
-        audio_bytes_le = a.tobytes()
-        
-        seg = AudioSegment.from_file(
-            BytesIO(audio_bytes_le),
-            format="raw",
-            sample_width=2,
-            channels=1,
-            frame_rate=24000
-        )
-        await asyncio.to_thread(seg.export, str(target), format="wav")
+        # Ensure length is a multiple of 2 (16-bit samples)
+        if len(audio_bytes) % 2 != 0:
+            audio_bytes = audio_bytes[:(len(audio_bytes) // 2) * 2]
+            
+        def _write_wav():
+            with wave.open(str(target), 'wb') as wav_file:
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(24000)
+                wav_file.writeframes(audio_bytes)
+                
+        await asyncio.to_thread(_write_wav)
         return True
     except Exception as e:
         print(f"[tts] Gemini raw PCM L16 → wav conversion failed: {e}")
@@ -324,6 +319,17 @@ async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -
 
 def get_audio_duration_s(path: Path) -> float:
     """Return duration in seconds of a wav/mp3 file. Falls back to 0 on error."""
+    try:
+        if path.suffix.lower() == '.wav':
+            import wave
+            with wave.open(str(path), 'rb') as r:
+                frames = r.getnframes()
+                rate = r.getframerate()
+                if rate > 0:
+                    return frames / float(rate)
+    except Exception:
+        pass
+
     try:
         from pydub import AudioSegment
         seg = AudioSegment.from_file(str(path))

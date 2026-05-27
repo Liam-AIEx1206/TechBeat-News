@@ -860,6 +860,7 @@ body {{
 }}
 .step-item {{
   display: flex; align-items: flex-start; gap: 20px; font-size: 1.8rem; line-height: 1.6;
+  color: var(--text1, #e8e8f0);
 }}
 .step-circle {{
   display: flex; align-items: center; justify-content: center;
@@ -889,6 +890,11 @@ body {{
 .scene .stat-list-card div:not(.stat-hero):not(.stat-suffix),
 .scene .bento-cell p,
 .scene .bento-cell div,
+.scene .step-item,
+.scene .step-item div,
+.scene .step-list,
+.scene .command-pill,
+.scene .formula-pill,
 .scene p,
 .scene li,
 .scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix) {{
@@ -1241,6 +1247,11 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
 ═══════════════════════════════════════
 ✨ HIỆU ỨNG ĐỘNG & BIỆN PHÁP CHỐNG ĐÈ CHỮ / CLIPPING (QUAN TRỌNG):
 ═══════════════════════════════════════
+- ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
+  • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
+  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung (ví dụ các card tính năng "Tạm dừng cập nhật", "Chọn ngày cập nhật", "Giảm thiểu lỗi cập nhật" ở Scene 2), CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge "Phần 2" hoặc bị cắt xén ở trên.
+  • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
+
 - ⚠️ QUY TẮC TUYỆT ĐỐI CHỐNG THIẾU ẢNH (BẮT BUỘC):
   - TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame NẾU TRONG PROMPT NGƯỜI DÙNG KHÔNG CÓ DÒNG `IllustrationImage: assets/...`.
   - Nếu không có dòng `IllustrationImage: assets/...`, cấm tuyệt đối việc tự tạo đường dẫn ảnh giả. Bắt buộc dùng mock visual phong phú hoàn toàn bằng HTML/CSS (B1-B8, B11-B15) để lấp đầy .visual-col. Việc để xuất hiện khung đen trống hoặc icon ảnh lỗi là cấm kỵ.
@@ -1775,6 +1786,11 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 ═══════════════════════════════════════
 ✨ HIỆU ỨNG ĐỘNG & BIỆN PHÁP CHỐNG ĐÈ CHỮ / CLIPPING (QUAN TRỌNG):
 ═══════════════════════════════════════
+- ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
+  • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
+  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung (ví dụ các card tính năng "Tạm dừng cập nhật", "Chọn ngày cập nhật", "Giảm thiểu lỗi cập nhật" ở Scene 2), CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge "Phần 2" hoặc bị cắt xén ở trên.
+  • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
+
 - ⚠️ QUY TẮC TUYỆT ĐỐI CHỐNG THIẾU ẢNH (BẮT BUỘC):
   - TUYỆT ĐỐI KHÔNG DÙNG THẺ <img> HOẶC CLASS .img-frame NẾU TRONG PROMPT NGƯỜI DÙNG KHÔNG CÓ DÒNG `IllustrationImage: assets/...`.
   - Nếu không có dòng `IllustrationImage: assets/...`, cấm tuyệt đối việc tự tạo đường dẫn ảnh giả. Bắt buộc dùng mock visual phong phú hoàn toàn bằng HTML/CSS (B1-B8, B11-B15) để lấp đầy .visual-col. Việc để xuất hiện khung đen trống hoặc icon ảnh lỗi là cấm kỵ.
