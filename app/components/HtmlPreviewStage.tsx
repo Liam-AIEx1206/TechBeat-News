@@ -27,6 +27,8 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
   const [genLog, setGenLog]         = useState("");
   const [genError, setGenError]     = useState<string | null>(null);
   const [regenScene, setRegenScene] = useState<number | null>(null); // 1-based
+  // Subtitle toggle — derived from scenePlan; defaults to true (on)
+  const showSubtitles = scenePlan.subtitlesEnabled !== false;
   const abortRef = useRef<AbortController | null>(null);
   // Always points to the latest scenePlan so async functions avoid stale closures.
   const scenePlanRef = useRef(scenePlan);
@@ -336,11 +338,58 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
               <div className="hero-eyebrow" style={{ fontSize: 10, marginBottom: 0 }}>
                 Scene preview · 1920×1080
               </div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--gray-5)" }}>
-                {(activeIdx + 1).toString().padStart(2, "0")} / {total.toString().padStart(2, "0")}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* Subtitle toggle */}
+                <button
+                  id="subtitle-toggle-btn"
+                  onClick={() => setScenePlan({ ...scenePlan, subtitlesEnabled: !showSubtitles })}
+                  title={showSubtitles ? "Ẩn phụ đề" : "Hiện phụ đề"}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "5px 10px",
+                    borderRadius: "var(--r-full)",
+                    border: `1px solid ${showSubtitles ? "rgba(249,115,22,0.5)" : "rgba(255,255,255,0.12)"}`,
+                    background: showSubtitles ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  {/* Pill switch */}
+                  <span style={{
+                    display: "inline-flex",
+                    width: 28, height: 16,
+                    borderRadius: 99,
+                    background: showSubtitles ? theme.accent : "rgba(255,255,255,0.15)",
+                    position: "relative",
+                    transition: "background 0.2s ease",
+                    flexShrink: 0,
+                  }}>
+                    <span style={{
+                      position: "absolute",
+                      top: 2, left: showSubtitles ? 14 : 2,
+                      width: 12, height: 12,
+                      borderRadius: "50%",
+                      background: "#fff",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                      transition: "left 0.2s ease",
+                    }} />
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700,
+                    color: showSubtitles ? theme.accent : "var(--gray-5)",
+                    letterSpacing: "0.04em",
+                    transition: "color 0.2s ease",
+                  }}>
+                    {showSubtitles ? "CC ON" : "CC OFF"}
+                  </span>
+                </button>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--gray-5)" }}>
+                  {(activeIdx + 1).toString().padStart(2, "0")} / {total.toString().padStart(2, "0")}
+                </div>
               </div>
             </div>
-            <ScenePreviewIframe fullHtml={html} sceneIndex={activeIdx + 1} />
+            <ScenePreviewIframe fullHtml={html} sceneIndex={activeIdx + 1} showSubtitles={showSubtitles} />
             <div style={{ marginTop: 8, fontSize: 11, color: "var(--gray-5)" }}>
               {active?.duration}s · {active?.title}
             </div>

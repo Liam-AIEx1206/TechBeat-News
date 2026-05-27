@@ -25,6 +25,9 @@ export interface ScenePlan {
   /** Per-scene flag — true when narration/title/image was edited after the
    *  last successful HTML generation, so the user knows to regen that scene. */
   sceneRegenFlags?: boolean[];
+  /** Subtitle toggle — when false, the backend injects CSS to hide .techbeat-subtitles
+   *  in the rendered video. Defaults to true (subtitles visible). */
+  subtitlesEnabled?: boolean;
 }
 
 export interface ExtractedContent {

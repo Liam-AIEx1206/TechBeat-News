@@ -10,6 +10,8 @@ interface Props {
   /** Optional aspect-ratio width/height for the rendered viewport (defaults 1920×1080). */
   width?: number;
   height?: number;
+  /** When false, injects CSS to hide .techbeat-subtitles in the preview. Default true. */
+  showSubtitles?: boolean;
 }
 
 /** Carve scene #N out of the full composition, isolate it inside its own
@@ -17,7 +19,7 @@ interface Props {
  *  show that scene visible at frame 0 (no GSAP timeline running). The
  *  document is sized 1920×1080 and we apply a CSS transform on the iframe
  *  to fit it into the parent container. */
-function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string): string {
+function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string, showSubtitles: boolean): string {
   let doc = fullHtml;
 
   // Strip ALL <script> tags — GSAP timeline must not run in preview mode.
@@ -38,6 +40,7 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string):
 
   // Hide all scenes, show only the target. Using both CSS and inline-style
   // removal (via the script below) to handle any leftover inline styles.
+  const subtitleHide = showSubtitles ? "" : "\n  .techbeat-subtitles { display: none !important; }";
   const overrideCss = `
 <style>
   /* preview-mode: ensure root fills the iframe viewport */
@@ -47,7 +50,7 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string):
   .scene { opacity: 0 !important; visibility: hidden !important; display: none !important; }
   #scene${sceneIndex} { opacity: 1 !important; visibility: visible !important; display: block !important; }
   audio { display: none !important; }
-  *, *::before, *::after { animation-play-state: paused !important; transition: none !important; }
+  *, *::before, *::after { animation-play-state: paused !important; transition: none !important; }${subtitleHide}
 </style>`;
 
   // Inject base tag right AFTER <head ...> so it precedes anything else,
@@ -57,7 +60,7 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string):
   return doc;
 }
 
-export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height = 1080 }: Props) {
+export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height = 1080, showSubtitles = true }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -74,7 +77,7 @@ export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height 
     return () => ro.disconnect();
   }, [width]);
 
-  const doc = buildIsolatedDoc(fullHtml, sceneIndex, API);
+  const doc = buildIsolatedDoc(fullHtml, sceneIndex, API, showSubtitles);
 
   return (
     <div

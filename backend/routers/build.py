@@ -209,6 +209,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
         }],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
+            "temperature": 0.0,
             "speechConfig": {
                 "voiceConfig": {
                     "prebuiltVoiceConfig": {
