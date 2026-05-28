@@ -1739,7 +1739,7 @@ Trước khi code, liệt kê các class sẽ tạo.</code></pre>
     return word.length * interval;
   }
 
-  function compileTextEffects(sceneId, sceneStart) {
+  function compileTextEffects(sceneId, sceneStart, tl) {
     var scEl = document.querySelector(sceneId);
     if (!scEl) return;
 
@@ -2025,7 +2025,7 @@ Trước khi code, liệt kê các class sẽ tạo.</code></pre>
       }
 
       // Compile declarative typewriter & word rotation effects
-      compileTextEffects(sceneId, s);
+      compileTextEffects(sceneId, s, tl);
 
       // ── SUBTITLE TIMING ────────────────────────────────────────────────
       var subSceneEl = document.getElementById("sub-scene" + n);

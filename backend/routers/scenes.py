@@ -51,12 +51,12 @@ def build_system_prompt_full(video_duration: int | None = None) -> str:
             total_duration_val = video_duration
     elif video_duration == -1:
         n_scenes = "as many scenes (phân cảnh) as needed to fully cover the content of the article detailedly without any summarization or omissions"
-        words_per_scene = "60-90 từ"
-        secs_per_scene = "20-30 giây"
+        words_per_scene = "60-90 từ (ngoại trừ Scene 1)"
+        secs_per_scene = "20-30 giây (ngoại trừ Scene 1)"
         total_duration_desc = "tổng thời lượng thực tế dựa trên độ dài văn bản gốc (Không tóm tắt / Không giới hạn)"
         rule_scenes = (
-            "- Tạo số lượng scene tự do, không bị giới hạn, đảm bảo chuyển tải chi tiết 100% nội dung bài viết gốc.\n"
-            "- Mỗi scene diễn đạt trọn vẹn một phần nội dung thông tin tự nhiên, KHÔNG tóm tắt hay cắt xén chi tiết."
+            "- BẮT BUỘC tạo Phân cảnh 1 (Scene 1) là Phân cảnh Intro (Giới thiệu/Khái quát) dài khoảng 1-2 phút (150-250 từ narration) khái quát toàn bộ nội dung chính sẽ nói trong video được sinh ra từ tư liệu người dùng. Kịch bản phần intro này do AI tự thiết kế, viết một cách lôi cuốn, sinh động nhất.\n"
+            "- Từ Phân cảnh 2 trở đi, tạo số lượng phân cảnh tự do, không bị giới hạn, đảm bảo chuyển tải chi tiết 100% nội dung bài viết gốc, mỗi scene diễn đạt trọn vẹn một phần nội dung thông tin tự nhiên, KHÔNG tóm tắt hay cắt xén chi tiết."
         )
         narration_ex = "60-90 từ tiếng Việt giải thích đầy đủ: thông tin, bối cảnh, số liệu chi tiết tương ứng"
         total_duration_val = 240
@@ -118,7 +118,15 @@ Chỉ trả về JSON hợp lệ, KHÔNG markdown fence, KHÔNG giải thích ng
 
 def build_system_prompt_groq(max_scenes: int, video_duration: int | None = None) -> str:
     if video_duration is not None:
-        if video_duration <= 60:
+        if video_duration == -1:
+            target_scenes = max_scenes
+            words = "60-90 (ngoại trừ Scene 1 dài 150-250 từ)"
+            duration_desc = "thời lượng không giới hạn"
+            scene_structure = (
+                "- BẮT BUỘC tạo Phân cảnh 1 (Scene 1) là Phân cảnh Intro (Giới thiệu/Khái quát) dài khoảng 1-2 phút (150-250 từ narration) khái quát toàn bộ nội dung chính sẽ nói trong video được sinh ra từ tư liệu người dùng. Kịch bản phần intro này do AI tự thiết kế, viết một cách lôi cuốn, sinh động nhất.\n"
+                "- Từ Phân cảnh 2 trở đi, tạo số lượng phân cảnh tự do để truyền tải chi tiết 100% nội dung gốc, mỗi scene diễn đạt trọn vẹn một phần nội dung thông tin tự nhiên, KHÔNG tóm tắt hay cắt xén chi tiết."
+            )
+        elif video_duration <= 60:
             target_scenes = 4
             words = "45-55"
             duration_desc = f"tổng {video_duration} giây"
@@ -209,7 +217,6 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
     try:
         prompt = f"Tạo kế hoạch scene video.\n\nTiêu đề: {title}\n\nNội dung:\n{content}"
         if video_duration and video_duration > 0:
-            # Vietnamese TTS ≈ 2.5 - 3.1 words/second → calculate appropriate narration length
             if video_duration <= 60:
                 n_scenes = "exactly 4"
                 words_per_scene = "45-55"
@@ -228,12 +235,13 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
                 f"Tạo đúng {n_scenes} scene, mỗi scene {secs_per_scene}s, tổng totalDuration = {video_duration}. "
                 f"QUAN TRỌNG NHẤT: Mỗi narration BẮT BUỘC phải dài {words_per_scene} từ tiếng Việt (tương đương {secs_per_scene} giây đọc). "
                 f"Narration súc tích nhưng đầy đủ thông tin, KHÔNG lan man, viết vừa đủ dài để đạt đúng thời lượng yêu cầu. "
-                f"Nếu viết quá ngắn, video sẽ bị thiếu thời lượng trầm trọng (ví dụ 1 phút nhưng chỉ có 35s). Đây là yêu cầu TUYỆT ĐỐI."
+                f"Nếu viết quá ngắn, video sẽ bị thiếu thời lượng trầm trọng (ví dụ 1 phút but chỉ có 35s). Đây là yêu cầu TUYỆT ĐỐI."
             )
         elif video_duration == -1:
             prompt += (
                 f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT (KHÔNG TÓM TẮT - KHÔNG GIỚI HẠN THỜI LƯỢNG):\n"
-                f"- Hãy chia kịch bản thành số lượng scene tự do (không giới hạn) để diễn đạt đầy đủ, chi tiết 100% nội dung bài viết gốc.\n"
+                f"- BẮT BUỘC tạo Phân cảnh 1 (Scene 1) là Phân cảnh Intro (Giới thiệu/Khái quát) dài khoảng 1-2 phút (từ 150 đến 250 từ narration) khái quát toàn bộ nội dung chính sẽ nói trong video được sinh ra từ tư liệu người dùng. Kịch bản phần intro này do AI tự thiết kế, viết một cách lôi cuốn, sinh động nhất.\n"
+                f"- Từ Phân cảnh 2 trở đi, hãy chia kịch bản thành số lượng scene tự do (không giới hạn) để diễn đạt đầy đủ, chi tiết 100% nội dung bài viết gốc.\n"
                 f"- Tuyệt đối KHÔNG tóm tắt sơ sài, KHÔNG lược bỏ các thông số, mốc thời gian, tên gọi hoặc số liệu quan trọng.\n"
                 f"- Mỗi scene viết narration dài khoảng 60-90 từ tiếng Việt (đọc trong khoảng 20-30 giây)."
             )

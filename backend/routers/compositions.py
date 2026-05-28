@@ -2299,7 +2299,7 @@ def fallback_scene_html(s: ScenePayload, theme: dict) -> str:
     <div class="layout">
       <div class="info-col">
         <div id="s{n}-badge" class="badge">{emoji} PHẦN {n}</div>
-        <h1 id="s{n}-title" class="{title_class} grad-text"{title_style} data-effect="typewriter">{s.title}</h1><span class="cursor-blink">|</span>
+        <h1 id="s{n}-title" class="{title_class} grad-text"{title_style}>{s.title}</h1>
         <p id="s{n}-subtitle" class="subtitle">{s.title[:20]}...</p>
         <p id="s{n}-desc" class="body-text">{s.narration[:100]}...</p>
       </div>
@@ -2322,11 +2322,19 @@ def build_system_prompt_single_scene(theme: dict, scene_index: int, total_scenes
     if scene_index > 1:
         prev_layout = previous_context.get("layout") or "Chưa rõ"
         prev_pattern = previous_context.get("visual_pattern") or "Chưa rõ"
+        used_layouts = previous_context.get("used_layouts") or []
+        used_patterns = previous_context.get("used_patterns") or []
+        
+        used_layouts_str = ", ".join(set(filter(None, used_layouts))) if used_layouts else "Chưa có"
+        used_patterns_str = ", ".join(set(filter(None, used_patterns))) if used_patterns else "Chưa có"
+        
         prev_info = (
-            f"\n⚠️ THIẾT KẾ CỦA SCENE TRƯỚC (SCENE {scene_index - 1}):"
-            f"\n  - Layout đã dùng: {prev_layout}"
-            f"\n  - Visual pattern đã dùng: {prev_pattern}"
-            f"\n  👉 BẮT BUỘC KHÔNG LẶP LẠI: Bạn phải chọn layout và visual pattern KHÁC cho scene này để giữ sự đa dạng."
+            f"\n⚠️ LỊCH SỬ THIẾT KẾ CÁC SCENE TRƯỚC VÀ TRÁNH TRÙNG LẶP:"
+            f"\n  - Scene ngay trước ({scene_index - 1}) dùng LAYOUT: {prev_layout} | PATTERN: {prev_pattern}"
+            f"\n  - Danh sách LAYOUT đã dùng trong toàn bộ video: [{used_layouts_str}]"
+            f"\n  - Danh sách PATTERN đã dùng trong toàn bộ video: [{used_patterns_str}]"
+            f"\n  👉 BẮT BUỘC KHÔNG LẶP LẠI LAYOUT VÀ PATTERN CỦA SCENE NGAY TRƯỚC."
+            f"\n  👉 BẮT BUỘC CHỌN LAYOUT KHÁC để giữ sự đa dạng cho toàn bộ video (Ví dụ: nếu trước dùng .split, lần này hãy dùng .magazine hoặc .centered hoặc .data)."
         )
 
     return f"""Bạn là chuyên gia thiết kế giao diện AWWWARDS & UI/UX PRO MAX — sinh ra HTML cinematic, lung linh, gây ấn tượng WOW tuyệt đối.
@@ -2350,12 +2358,24 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
 {prev_info}
 
 ═══════════════════════════════════════
+💎 MỸ THUẬT THEME ĐẶC TRƯNG:
+═══════════════════════════════════════
+- *Cyberpunk / Sci-fi (cam, cyan, pulse)*: Dùng viền neon sắc nét, matrix scan lines, ascii elements, chat simulator, terminal code.
+- *Luxury Magazine (gold-editorial)*: Dùng chữ serif drop-cap thanh lịch, border cực mỏng sang trọng (`1px solid rgba(234,179,8,0.15)`), chữ champagne gold gradient.
+- *Calm Glassmorphism (aurora-mint, y2k-magenta)*: Dùng card bo tròn mềm mại (`border-radius:32px`), orbs lung linh, `backdrop-filter: blur(20px)`, nhịp thở `.breath` nhẹ nhàng.
+
+═══════════════════════════════════════
 ✨ HIỆU ỨNG ĐỘNG & BIỆN PHÁP CHỐNG ĐÈ CHỮ / CLIPPING (QUAN TRỌNG):
 ═══════════════════════════════════════
 - ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
   • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
   • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung, CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge hoặc bị cắt xén ở trên.
   • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
+
+- 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
+  - Do có hiệu ứng viền phát sáng (box-shadow neon) rực rỡ, chúng ta đã set `overflow: visible` cho `.visual-block` và `.stat-list-card`. Tuyệt đối KHÔNG override lại thành `overflow: hidden` trên các card này, để ánh sáng viền không bị cắt cụt.
+  - Hãy căn chỉnh khoảng cách, padding hợp lý để các card không nằm quá sát lề màn hình hoặc đè lên nhau.
+  - Với các con số thống kê hoặc chữ dài, tuyệt đối không lạm dụng các size chữ quá khổng lồ hoặc nhồi nhét quá nhiều chữ trong các khối hẹp để tránh chữ bị đè chèn lấp nhau.
 
 - Chúng ta sử dụng framework có sẵn các class động cực kỳ lung linh:
   - `.breath`: Tạo chuyển động bay bổng, nhịp thở êm ái. Hãy áp dụng cho các card như `.visual-block`, `.terminal`, `.feat-card`, `.compare`, `.quote-block` hoặc các ảnh `.img-frame`.
@@ -2428,7 +2448,7 @@ QUY TẮC HTML BẮT BUỘC CHO SCENE {scene_index} (QUYẾT ĐỊNH VẺ ĐẸP
      <div class="layout">
        <div class="info-col">
          <div id="s{scene_index}-badge" class="badge">PHẦN {scene_index}</div>
-         <h1 id="s{scene_index}-title" class="{title_class} grad-text"{title_style} data-effect="typewriter">{{Tiêu đề}}</h1><span class="cursor-blink">|</span>
+         <h1 id="s{scene_index}-title" class="{title_class} grad-text"{title_style}>{{Tiêu đề}}</h1>
          <p id="s{scene_index}-subtitle" class="subtitle">{{phụ đề CỰC NGẮN ≤ 8 chữ}}</p>
          <p id="s{scene_index}-desc" class="body-text">{{TỐI ĐA 1 dòng tagline ≤ 12 chữ — KHÔNG copy narration}}</p>
        </div>
@@ -2661,7 +2681,7 @@ def build_user_prompt_single_scene(s: ScenePayload, previous_context: dict, is_f
         lines.append(
             "\n  🎬 SCENE MỞ ĐẦU — BẮT BUỘC CINEMATIC HERO:"
             "\n  ⚠️ Chọn layout .scene.hero hoặc .scene.centered."
-            "\n  ⚠️ Title BẮT BUỘC PHẢI cực kỳ lớn và in đậm (font-weight: 900). Sử dụng: <h1 id=\"s1-title\" class=\"title-hero grad-text\" style=\"font-weight: 900 !important;\" data-effect=\"typewriter\">[Tên tiêu đề chính]</h1>"
+            "\n  ⚠️ Title BẮT BUỘC PHẢI cực kỳ lớn và in đậm (font-weight: 900). Sử dụng: <h1 id=\"s1-title\" class=\"title-hero grad-text\" style=\"font-weight: 900 !important;\">[Tên tiêu đề chính]</h1>"
             "\n  ⚠️ BẮT BUỘC có `.status-pill` ở trên cùng và ít nhất 3 ambient decoratives."
         )
     elif is_last:

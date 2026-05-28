@@ -48,6 +48,71 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
   const [activeIdx, setActiveIdx]   = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  // ── 5s Voice Preview state ──────────────────────────────────────────
+  const [playingPreview, setPlayingPreview] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
+
+  // Cleanup preview audio on unmount or change
+  useEffect(() => {
+    return () => {
+      if (previewAudio) {
+        previewAudio.pause();
+      }
+    };
+  }, [previewAudio]);
+
+  // Stop current preview if voiceId changes
+  useEffect(() => {
+    if (previewAudio) {
+      previewAudio.pause();
+      setPlayingPreview(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenePlan.voiceId]);
+
+  const handlePlay5sPreview = async () => {
+    if (playingPreview) {
+      if (previewAudio) {
+        previewAudio.pause();
+        setPlayingPreview(false);
+      }
+      return;
+    }
+
+    setPreviewLoading(true);
+    try {
+      const firstSceneText = scenePlan.scenes[0]?.narration ?? "";
+      const currentVoiceId = scenePlan.voiceId ?? "edge-vi-VN-NamMinhNeural";
+      
+      const res = await fetch(`${API}/voices/preview-5s`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          voice_id: currentVoiceId,
+          text: firstSceneText,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Synthesis failed");
+      const resData = await res.json();
+      const audioUrl = `${API}${resData.url}`;
+      
+      const audio = new Audio(audioUrl);
+      setPreviewAudio(audio);
+      setPlayingPreview(true);
+      audio.play();
+      audio.onended = () => {
+        setPlayingPreview(false);
+      };
+    } catch (e) {
+      console.error("Failed to play 5s preview", e);
+      alert("Không thể sinh thử âm thanh kịch bản. Vui lòng kiểm tra lại kết nối hoặc giọng đọc!");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
   // ── Gen step-by-step state ──────────────────────────────────────────
   // sceneStatuses[i] = trạng thái của scene i (0-based)
   const [sceneStatuses, setSceneStatuses] = useState<SceneGenStatus[]>(() =>
@@ -884,6 +949,72 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
             borderRadius: "var(--r-xl)", padding: 20,
           }}>
             <div className="hero-eyebrow" style={{ fontSize: 10, marginBottom: 12 }}>Giọng đọc TTS</div>
+
+            {/* Premium 5-second Scenario Audio Preview */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "space-between", 
+              marginBottom: 16,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: "rgba(0,0,0,0.15)",
+              border: "1px solid rgba(255,255,255,0.06)"
+            }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--white)", marginBottom: 2 }}>
+                  🔊 Nghe thử 5s giọng đọc kịch bản
+                </div>
+                <div style={{ fontSize: 9, color: "var(--gray-6)" }}>
+                  Nghe thử giọng đọc thực tế của Phân cảnh 1
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handlePlay5sPreview}
+                disabled={previewLoading || scenePlan.scenes.length === 0}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 20,
+                  background: playingPreview ? "var(--accent)" : "rgba(249,115,22,0.1)",
+                  border: `1px solid ${playingPreview ? "var(--accent)" : "rgba(249,115,22,0.3)"}`,
+                  color: playingPreview ? "#000" : "var(--accent)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  transition: "all 0.2s ease",
+                  boxShadow: playingPreview ? "0 0 12px var(--accent)" : "none",
+                }}
+              >
+                {previewLoading ? (
+                  <span style={{
+                    width: 10, height: 10,
+                    border: "2px solid currentColor",
+                    borderTopColor: "transparent",
+                    borderRadius: "50%",
+                    animation: "spin 0.8s linear infinite",
+                  }} />
+                ) : playingPreview ? (
+                  <>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                    <span>Dừng</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <span>Nghe thử 5s</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             <VoicePicker
               value={scenePlan.voiceId}
               onChange={(id) => setScenePlan({ ...scenePlan, voiceId: id })}

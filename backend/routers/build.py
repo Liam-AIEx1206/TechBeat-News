@@ -220,6 +220,75 @@ def _trim_trailing_silence_sync(wav_path: Path, threshold_db: float = -30.0, pad
         print(f"[tts] Programmatic silence trimming failed for {wav_path}: {e}")
 
 
+async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") -> bool:
+    """Synthesize speech using OpenAI-compatible TTS (tts-1) via Pinkyne API.
+    Returns True on success, False to fallback.
+    """
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.pinkyne.com/v1").rstrip("/")
+    if not api_key:
+        api_key = "sk-ASUYq9R108cJ2M0B6Rb5xqNCk9lqdrsUpqXVoVDwd5dG77Yq"
+        
+    try:
+        clean_text = text or ""
+        clean_text = clean_text.replace("&", " và ")
+        clean_text = re.sub(r"<[^>]*>", "", clean_text)
+        clean_text = clean_text.replace("<", "").replace(">", "")
+        clean_text = clean_text.replace("'", "").replace('"', "").replace("“", "").replace("”", "")
+        clean_text = clean_text.strip()
+        
+        if not clean_text:
+            print("[tts/openai] Cleaned text is empty, skipping")
+            return False
+            
+        payload = {
+            "model": "tts-1",
+            "input": clean_text,
+            "voice": voice_name,
+            "response_format": "mp3",
+            "speed": 1.0
+        }
+        
+        temp_mp3 = target.with_suffix(".mp3.tmp")
+        
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                f"{base_url}/audio/speech",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json=payload
+            )
+            
+        if resp.status_code != 200:
+            print(f"[tts/openai] HTTP {resp.status_code}: {resp.text[:200]}")
+            return False
+            
+        temp_mp3.write_bytes(resp.content)
+        
+        if not temp_mp3.exists():
+            print(f"[tts/openai] failed to save file: {temp_mp3}")
+            return False
+            
+        try:
+            from pydub import AudioSegment
+            seg = AudioSegment.from_file(str(temp_mp3), format="mp3")
+            await asyncio.to_thread(seg.export, str(target), format="wav")
+            if temp_mp3.exists():
+                temp_mp3.unlink()
+            return True
+        except Exception as e:
+            print(f"[tts/openai] mp3->wav conversion failed, renaming directly: {e}")
+            if temp_mp3.exists():
+                temp_mp3.rename(target)
+            return True
+            
+    except Exception as e:
+        print(f"[tts/openai] request failed: {e}")
+        return False
+
+
 async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None) -> bool:
     """Try Gemini TTS:
     1. Direct Google Gemini API using GEMINI_API_KEY if available.
@@ -385,11 +454,23 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
 async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -> str:
     """
     Synthesize speech for `text` to `target`.
-    Order: If voice_id starts with 'gemini-', use Gemini TTS.
+    Order: If voice_id starts with 'openai-', use OpenAI TTS via Pinky.
+           If voice_id starts with 'gemini-', use Gemini TTS.
            If voice_id starts with 'edge-', use Edge TTS directly.
            Else: ElevenLabs (if ELEVENLABS_API_KEY set) → Edge TTS → gTTS fallback.
-    Returns the engine name actually used ('gemini', 'elevenlabs', 'edge', or 'gtts').
+    Returns the engine name actually used ('openai', 'gemini', 'elevenlabs', 'edge', or 'gtts').
     """
+    # 0. Direct OpenAI TTS routing if explicitly selected in UI
+    if voice_id and voice_id.startswith("openai-"):
+        openai_voice = voice_id.replace("openai-", "")
+        if await _openai_tts_to_wav(text, target, voice_name=openai_voice):
+            return "openai"
+        if await _edge_to_wav(text, target):
+            return "edge"
+        lang = os.getenv("TTS_LANG", "vi")
+        await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
+        return "gtts"
+
     # 1. Direct Gemini TTS routing if explicitly selected in UI
     if voice_id and voice_id.startswith("gemini-"):
         voice_name = "Puck"
@@ -741,12 +822,102 @@ async def _transcribe_groq_api(wav_path: Path) -> list[dict]:
         return []
 
 
+async def _transcribe_pinkyne_api(wav_path: Path) -> list[dict]:
+    """Use Pinkyne Whisper API (https://api.pinkyne.com/v1/audio/transcriptions) for transcription with word timestamps.
+    Returns [] on any failure to fallback to other Whisper engines.
+    """
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    base_url = "https://api.pinkyne.com/v1"
+    if not api_key:
+        api_key = "sk-ASUYq9R108cJ2M0B6Rb5xqNCk9lqdrsUpqXVoVDwd5dG77Yq"
+    try:
+        file_bytes = wav_path.read_bytes()
+        if len(file_bytes) > 24 * 1024 * 1024:
+            print(f"[whisper/pinkyne] {wav_path.name} too large — skipping")
+            return []
+        
+        multipart = [
+            ("file",                       (wav_path.name, file_bytes, "audio/wav")),
+            ("model",                      (None, "whisper-1")),
+            ("language",                   (None, "vi")),
+            ("response_format",            (None, "verbose_json")),
+            ("timestamp_granularities[]",  (None, "word")),
+            ("timestamp_granularities[]",  (None, "segment")),
+            ("prompt",                     (None, WHISPER_PROMPT)),
+        ]
+        
+        import asyncio
+        max_retries = 5
+        backoff = 30.0
+        
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    resp = await client.post(
+                        f"{base_url}/audio/transcriptions",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        files=multipart,
+                    )
+                if resp.status_code == 429:
+                    print(f"[whisper/pinkyne] Rate limit (429) on attempt {attempt+1}/{max_retries}. Backing off for {backoff}s...")
+                    await asyncio.sleep(backoff)
+                    backoff *= 2.0
+                    continue
+                if resp.status_code != 200:
+                    print(f"[whisper/pinkyne] HTTP {resp.status_code}: {resp.text[:200]}")
+                    return []
+                break
+            except Exception as ex:
+                if attempt == max_retries - 1:
+                    raise ex
+                print(f"[whisper/pinkyne] Request exception: {ex}. Retrying...")
+                await asyncio.sleep(5.0)
+        
+        data = resp.json()
+        words: list[dict] = []
+
+        if data.get("words"):
+            for w in data["words"]:
+                text = str(w.get("word", "")).strip()
+                if text:
+                    words.append({
+                        "word":  text,
+                        "start": round(float(w.get("start", 0)), 3),
+                        "end":   round(float(w.get("end",   0)), 3),
+                    })
+
+        if not words and data.get("segments"):
+            for seg in data["segments"]:
+                ws = [t for t in str(seg.get("text", "")).split() if t]
+                if not ws:
+                    continue
+                t0   = float(seg.get("start", 0))
+                t1   = float(seg.get("end", t0 + 1))
+                step = (t1 - t0) / len(ws)
+                for k, w in enumerate(ws):
+                    words.append({
+                        "word":  w,
+                        "start": round(t0 + k * step,       3),
+                        "end":   round(t0 + (k + 1) * step, 3),
+                    })
+
+        print(f"[whisper/pinkyne] {wav_path.name}: {len(words)} words")
+        return words
+    except Exception as e:
+        print(f"[whisper/pinkyne] error: {e}")
+        return []
+
+
 async def transcribe_audio_whisper(wav_path: Path) -> tuple[list[dict], str]:
     """Transcribe audio → (word_list, engine_name).
-    Priority: OpenAI API → Groq API → WhisperX local (Wav2Vec aligned) → faster-whisper local → chunk fallback.
-    engine_name: 'openai-whisper-1' | 'groq-whisper-v3-turbo' | 'whisperx-tiny' | 'faster-whisper-tiny' | 'chunk-fallback'
+    Priority: Pinkyne API → OpenAI API → Groq API → WhisperX local (Wav2Vec aligned) → faster-whisper local → chunk fallback.
+    engine_name: 'pinkyne-whisper-1' | 'openai-whisper-1' | 'groq-whisper-v3-turbo' | 'whisperx-tiny' | 'faster-whisper-tiny' | 'chunk-fallback'
     """
-    # 1. OpenAI Whisper API (whisper-1)
+    # 1. Pinkyne Whisper API (whisper-1 with 429 backoff)
+    words = await _transcribe_pinkyne_api(wav_path)
+    if words:
+        return words, "pinkyne-whisper-1"
+    # 2. OpenAI Whisper API (whisper-1)
     words = await _transcribe_openai_api(wav_path)
     if words:
         return words, "openai-whisper-1"
@@ -805,6 +976,15 @@ def patch_html_timing(
     Each scene gets ceil(audio_duration) seconds + 1s tail for breathing room.
     """
     import math
+
+    # Automatically add data-layout-ignore to decorative elements (ghost-text, float-orb, retro-grid, etc.)
+    # to prevent layout overflow errors during hyperframes inspect
+    html = re.sub(
+        r'class="([^"]*(?:ghost-text|float-orb|glow-orb|retro-grid|animated-grid)[^"]*)"(?!\\s+data-layout-ignore)',
+        r'class="\\1" data-layout-ignore',
+        html,
+        flags=re.IGNORECASE
+    )
 
     int_durs = [max(1, math.ceil(d) + 1) for d in durations]  # +1s buffer per scene
     starts: list[int] = []
@@ -938,7 +1118,7 @@ def patch_html_timing(
     return word.length * interval;
   }}
 
-  function compileTextEffects(sceneId, sceneStart) {{
+  function compileTextEffects(sceneId, sceneStart, tl) {{
     var scEl = document.querySelector(sceneId);
     if (!scEl) return;
 
@@ -1224,7 +1404,7 @@ def patch_html_timing(
       }}
 
       // Compile declarative typewriter & word rotation effects
-      compileTextEffects(sceneId, s);
+      compileTextEffects(sceneId, s, tl);
 
       // ── SUBTITLE TIMING ────────────────────────────────────────────────
       var subSceneEl = document.getElementById("sub-scene" + n);
@@ -1415,14 +1595,25 @@ def patch_html_timing(
     window.__timelines = window.__timelines || {{}};
     var rootEl = document.getElementById("root");
     var compId = rootEl ? (rootEl.getAttribute("data-composition-id") || "main") : "main";
+    
+    console.log("[buildTimeline] Registering timeline under keys: " + compId + ", main");
     window.__timelines[compId] = tl;
+    window.__timelines["main"] = tl;
+    console.log("[buildTimeline] Timeline registered successfully!");
   }}
 
-  if (document.readyState === "loading") {{
-    document.addEventListener("DOMContentLoaded", buildTimeline);
-  }} else {{
-    buildTimeline();
+  function initTimeline() {{
+    var root = document.getElementById("root");
+    console.log("[buildTimeline] initTimeline. root element exists: " + (!!root) + ", readyState: " + document.readyState);
+    if (!root) {{
+      console.log("[buildTimeline] root element not found, waiting for DOMContentLoaded");
+      document.addEventListener("DOMContentLoaded", buildTimeline);
+    }} else {{
+      buildTimeline();
+    }}
   }}
+
+  initTimeline();
 }})();
 </script>
 """
