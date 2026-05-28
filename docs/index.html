@@ -6,7 +6,7 @@
 <title>Training Unity AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 
@@ -30,7 +30,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
 
@@ -70,7 +70,7 @@ body {
 .scene {
   position: absolute; inset: 0;
   opacity: 0; visibility: hidden; z-index: 10;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Frame-0 fallback */
@@ -81,7 +81,7 @@ body {
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {
   display: grid; gap: 60px; height: 100%;
-  padding: 60px 120px 100px; align-items: center;
+  padding: 60px 120px 180px; align-items: center;
   position: relative; z-index: 10;
 }
 .scene.split .layout    { grid-template-columns: 1fr 1fr; }
@@ -156,12 +156,12 @@ body {
 
 .title-xl {
   font-size: clamp(4.0rem, 6.5vw, 6.5rem);
-  font-weight: 900; line-height: 1.25; letter-spacing: -0.04em;
+  font-weight: 900; line-height: 1.32; letter-spacing: -0.04em;
   color: var(--text1);
 }
 .title-hero {
   font-size: clamp(5.5rem, 8.5vw, 8.5rem);
-  font-weight: 900; line-height: 1.2; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.32; letter-spacing: -0.05em;
   color: var(--text1);
 }
 .subtitle {
@@ -317,6 +317,26 @@ body {
 .quote-text { font-size: 2.5rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }
 .quote-attr { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 32px; letter-spacing: 0.1em; }
 .quote-attr::before { content: '— '; }
+
+.scene.centered .quote-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.scene.centered .quote-text {
+  margin: 0 auto;
+  text-align: center;
+}
+.scene.centered .quote-attr {
+  text-align: center;
+}
+.scene.centered .quote-block::before {
+  left: 50%;
+  transform: translateX(-50%);
+  top: -80px;
+}
 
 /* Glass stat-list (horizontal stack cards like 4x, 12x, 50% column) */
 .stat-list {
@@ -562,7 +582,7 @@ body {
 
 /* Ghost text — large thematic word at very low opacity */
 .ghost-text {
-  position: absolute; font-family: 'Inter', system-ui, sans-serif;
+  position: absolute; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(18rem, 28vw, 32rem); font-weight: 900;
   color: var(--accent); opacity: 0.085; line-height: 0.85;
   letter-spacing: -0.05em; pointer-events: none; user-select: none;
@@ -600,7 +620,7 @@ body {
 
 /* Big number callout — for hero scene with stat focus */
 .mega-num {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(10rem, 18vw, 18rem);
   font-weight: 900; line-height: 0.9; letter-spacing: -0.06em;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 40%, var(--accent3) 100%);
@@ -874,7 +894,7 @@ body {
   display: none;
   opacity: 0;
   position: relative;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: #ffffff;
@@ -884,11 +904,11 @@ body {
   white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
   max-width: 1400px;
 }
 /* Active chunk: accent underline shimmer */
@@ -909,7 +929,7 @@ body {
   display: none;
   opacity: 0;
   position: relative;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
@@ -919,11 +939,11 @@ body {
   white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.65));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 .sub-line::before {
   content: "";

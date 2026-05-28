@@ -117,7 +117,7 @@ body {{
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }}
 
@@ -157,7 +157,7 @@ body {{
 .scene {{
   position: absolute; inset: 0;
   opacity: 0; visibility: hidden; z-index: 10;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }}
 
 /* Frame-0 fallback */
@@ -168,7 +168,7 @@ body {{
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {{
   display: grid; gap: 60px; height: 100%;
-  padding: 60px 120px 100px; align-items: center;
+  padding: 60px 120px 180px; align-items: center;
   position: relative; z-index: 10;
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
@@ -243,12 +243,12 @@ body {{
 
 .title-xl {{
   font-size: clamp(4.0rem, 6.5vw, 6.5rem);
-  font-weight: 900; line-height: 1.25; letter-spacing: -0.04em;
+  font-weight: 900; line-height: 1.32; letter-spacing: -0.04em;
   color: var(--text1);
 }}
 .title-hero {{
   font-size: clamp(5.5rem, 8.5vw, 8.5rem);
-  font-weight: 900; line-height: 1.2; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.32; letter-spacing: -0.05em;
   color: var(--text1);
 }}
 .subtitle {{
@@ -404,6 +404,26 @@ body {{
 .quote-text {{ font-size: 2.5rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }}
 .quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 32px; letter-spacing: 0.1em; }}
 .quote-attr::before {{ content: '— '; }}
+
+.scene.centered .quote-block {{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}}
+.scene.centered .quote-text {{
+  margin: 0 auto;
+  text-align: center;
+}}
+.scene.centered .quote-attr {{
+  text-align: center;
+}}
+.scene.centered .quote-block::before {{
+  left: 50%;
+  transform: translateX(-50%);
+  top: -80px;
+}}
 
 /* Glass stat-list (horizontal stack cards like 4x, 12x, 50% column) */
 .stat-list {{
@@ -649,7 +669,7 @@ body {{
 
 /* Ghost text — large thematic word at very low opacity */
 .ghost-text {{
-  position: absolute; font-family: 'Inter', system-ui, sans-serif;
+  position: absolute; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(18rem, 28vw, 32rem); font-weight: 900;
   color: var(--accent); opacity: 0.085; line-height: 0.85;
   letter-spacing: -0.05em; pointer-events: none; user-select: none;
@@ -687,7 +707,7 @@ body {{
 
 /* Big number callout — for hero scene with stat focus */
 .mega-num {{
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(10rem, 18vw, 18rem);
   font-weight: 900; line-height: 0.9; letter-spacing: -0.06em;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 40%, var(--accent3) 100%);
@@ -961,7 +981,7 @@ body {{
   display: none;
   opacity: 0;
   position: relative;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: #ffffff;
@@ -971,11 +991,11 @@ body {{
   white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
   max-width: 1400px;
 }}
 /* Active chunk: accent underline shimmer */
@@ -996,7 +1016,7 @@ body {{
   display: none;
   opacity: 0;
   position: relative;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
@@ -1006,11 +1026,11 @@ body {{
   white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.65));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }}
 .sub-line::before {{
   content: "";
@@ -1115,6 +1135,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
   * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
   * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
   * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
+  * **Quy định trích dẫn (.quote-block):** TUYỆT ĐỐI KHÔNG tự bịa ra tên tác giả, vai trò hoặc ghi "Chuyên gia AI", "Nguyễn Văn A" trong thẻ `<p class="quote-attr">`. Chỉ hiển thị thẻ `<p class="quote-attr">` nếu kịch bản/văn bản đầu vào nêu rõ tên của người phát biểu. Nếu không có thông tin này, hãy loại bỏ hoàn toàn thẻ `<p class="quote-attr">` khỏi `.quote-block` (chỉ giữ lại `.quote-text`).
 
 🎬 SCENE 1 = OPENING HERO (BẮT BUỘC ấn tượng):
 - Scene #1 PHẢI là class="scene centered" hoặc class="scene hero" — KHÔNG được để trống visual-col chỉ vài chữ.
@@ -1155,7 +1176,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 <title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>/* override tối đa 60 dòng */</style>
 </head><body>
@@ -1304,7 +1325,7 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
     * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
   • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
     * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
-    * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
+    * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch. Đặc biệt đối với step-list (B19), bắt buộc chèn thêm các emoji tương ứng trước nội dung text của từng bước (ví dụ: "📂 Liệt kê file", "📝 Mô tả thay đổi") để tạo điểm nhấn thị giác sống động và tránh đơn điệu.
     * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene (Ví dụ: nếu nói về GSAP thì phải có các thư viện thật như TweenLite, TweenMax, hoặc benchmark thật. Cấm bê nguyên văn placeholder "Benchmark 2024", "cost efficiency" của hệ thống vào).
   • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
   • **Đảm bảo Tương Phản & Độ Đọc Được của Chữ (Legibility & Contrast):**
@@ -1519,6 +1540,7 @@ B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KH
    B6 — QUOTE:
    <div class="quote-block">
      <p class="quote-text">"{{trích dẫn}}"</p>
+     <!-- Chỉ chèn quote-attr bên dưới nếu văn bản gốc có nêu RÕ RÀNG tên người phát biểu, tuyệt đối không tự bịa -->
      <p class="quote-attr">{{tác giả · vai trò}}</p>
    </div>
 
@@ -1623,7 +1645,7 @@ B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KH
         <span class="formula-operator">+</span>
         <span class="formula-pill blue">📐 ĐỊNH DẠNG</span>
       </div>
-      <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.06); padding:24px; border-radius:16px; font-family:'Inter', sans-serif; font-size:1.25rem; line-height:1.7; text-align:left;">
+      <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.06); padding:24px; border-radius:16px; font-family:'Be Vietnam Pro', 'Segoe UI', sans-serif; font-size:1.25rem; line-height:1.7; text-align:left;">
         <span style="color:#f472b6; font-weight:600;">"Đóng vai Chuyên gia UA Mobile Game.</span>
         <span style="color:#fde047; font-weight:600;"> Chiến dịch US của tôi đang sụt ROAS 20%.</span>
         <span style="color:#4ade80; font-weight:600;"> Hãy phân tích nguyên nhân và đề xuất 3 hành động.</span>
@@ -1643,15 +1665,15 @@ B) NẾU KHÔNG có ảnh — CHỌN 1 PATTERN, ĐA DẠNG GIỮA CÁC SCENE, KH
       <div class="step-list">
         <div class="step-item">
           <div class="step-circle">1</div>
-          <div class="step-text" style="text-align:left; font-weight:500;">Kéo thả file Data (CSV/Excel) vào khung chat</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">📂 Kéo thả file Data (CSV/Excel) vào khung chat</div>
         </div>
         <div class="step-item">
           <div class="step-circle">2</div>
-          <div class="step-text" style="text-align:left; font-weight:500;">Dùng lệnh Trói buộc ở trên</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">⚙️ Dùng lệnh Trói buộc ở trên</div>
         </div>
         <div class="step-item">
           <div class="step-circle">3</div>
-          <div class="step-text" style="text-align:left; font-weight:500;">Hỏi: "Tìm 2 ngày có chỉ số Drop-off cao nhất và nguyên nhân"</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">💬 Hỏi: "Tìm 2 ngày có chỉ số Drop-off cao nhất"</div>
         </div>
       </div>
     </div>
@@ -1708,7 +1730,7 @@ HEAD BOILERPLATE (copy nguyên xi):
 <title>{{title video}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* CHỈ override scene-specific. KHÔNG redeclare class đã sẵn.
@@ -1854,6 +1876,7 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
     * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
     * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
     * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
+    * **Quy định trích dẫn (.quote-block):** TUYỆT ĐỐI KHÔNG tự bịa ra tên tác giả, vai trò hoặc ghi "Chuyên gia AI", "Nguyễn Văn A" trong thẻ `<p class="quote-attr">`. Chỉ hiển thị thẻ `<p class="quote-attr">` nếu kịch bản/văn bản đầu vào nêu rõ tên của người phát biểu. Nếu không có thông tin này, hãy loại bỏ hoàn toàn thẻ `<p class="quote-attr">` khỏi `.quote-block` (chỉ giữ lại `.quote-text`).
 
 ═══════ HTML TEMPLATE ═══════
 <!doctype html>
@@ -1862,7 +1885,7 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 <title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* Override scene-specific (≤80 dòng): keyframes shimmer/pulse cho visual,
@@ -1946,6 +1969,7 @@ B5 TIMELINE (4-5 mốc):
 B6 QUOTE:
 <div class="quote-block">
   <p class="quote-text">"{{trích dẫn}}"</p>
+  <!-- Chỉ chèn quote-attr bên dưới nếu văn bản gốc có nêu RÕ RÀNG tên người phát biểu, tuyệt đối không tự bịa -->
   <p class="quote-attr">{{tác giả · vai trò}}</p>
 </div>
 
@@ -2418,6 +2442,7 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
     * Tất cả text chính dùng `var(--text1)`, phụ dùng `var(--text2)`.
     * Cấm tuyệt đối dùng màu chữ tối (màu xám tối `#333`, màu đen, hay opacity quá thấp < 0.5) trên nền tối.
     * Nếu text nằm trên bất kỳ gradient hoặc background sáng nào, bắt buộc thêm `text-shadow: 0 2px 8px rgba(0,0,0,0.9);` để đảm bảo người xem đọc được rõ nét từng chữ.
+    * **Quy định trích dẫn (.quote-block):** TUYỆT ĐỐI KHÔNG tự bịa ra tên tác giả, vai trò hoặc ghi "Chuyên gia AI", "Nguyễn Văn A" trong thẻ `<p class="quote-attr">`. Chỉ hiển thị thẻ `<p class="quote-attr">` nếu kịch bản/văn bản đầu vào nêu rõ tên của người phát biểu. Nếu không có thông tin này, hãy loại bỏ hoàn toàn thẻ `<p class="quote-attr">` khỏi `.quote-block` (chỉ giữ lại `.quote-text`).
 
 - ⌨️ HIỆU ỨNG CHỮ HOẠT HÌNH CAO CẤP:
   Hệ thống đã tích hợp sẵn hiệu ứng đánh chữ thông minh bằng thuộc tính HTML (bạn KHÔNG cần viết script):
@@ -2546,6 +2571,7 @@ B) NẾU scene KHÔNG CÓ ẢNH MINH HỌA (BẮT BUỘC MOCK VISUAL BẬC THẦ
      ```html
      <div class="quote-block">
        <p class="quote-text">"{{trích dẫn}}"</p>
+       <!-- Chỉ chèn quote-attr bên dưới nếu văn bản gốc có nêu RÕ RÀNG tên người phát biểu, tuyệt đối không tự bịa -->
        <p class="quote-attr">{{tác giả · vai trò}}</p>
      </div>
      ```
@@ -2946,7 +2972,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
 <title>{req.title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */
@@ -3240,7 +3266,7 @@ def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css:
 <title>{title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */

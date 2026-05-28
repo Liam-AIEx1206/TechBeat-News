@@ -942,6 +942,107 @@ async def transcribe_audio_whisper(wav_path: Path) -> tuple[list[dict], str]:
     return [], "chunk-fallback"
 
 
+def align_script_with_whisper(script: str, whisper_words: list[dict], audio_duration: float) -> list[dict]:
+    """Align the original script narration text with the Whisper word-level timestamps,
+    copying matched timings and interpolating unmatched timings.
+    This guarantees that the exact script text (punctuation, casing) is shown in subtitles,
+    but dynamically synchronized to the voice audio.
+    """
+    import difflib
+    import re
+    
+    if not script:
+        return []
+    
+    script_words = script.split()
+    if not script_words:
+        return []
+        
+    if not whisper_words:
+        # Fallback: uniform linear interpolation over the entire audio duration
+        n = len(script_words)
+        step = audio_duration / n
+        return [
+            {
+                "word": w,
+                "start": round(i * step, 3),
+                "end": round((i + 1) * step, 3)
+            }
+            for i, w in enumerate(script_words)
+        ]
+        
+    def _clean_word(w: str) -> str:
+        return re.sub(r'[^\w\s]', '', w.lower())
+        
+    clean_script = [_clean_word(w) for w in script_words]
+    clean_whisper = [_clean_word(w.get("word", "")) for w in whisper_words]
+    
+    # 1. Match script words to whisper words using difflib.SequenceMatcher
+    matcher = difflib.SequenceMatcher(None, clean_script, clean_whisper)
+    matching_blocks = matcher.get_matching_blocks()
+    
+    matched_whisper_idx = [None] * len(script_words)
+    for a, b, size in matching_blocks:
+        for offset in range(size):
+            if a + offset < len(script_words) and b + offset < len(whisper_words):
+                matched_whisper_idx[a + offset] = b + offset
+                
+    # 2. Reconstruct script words with copied/interpolated timestamps
+    aligned_words = []
+    n_script = len(script_words)
+    
+    for i in range(n_script):
+        w = script_words[i]
+        j = matched_whisper_idx[i]
+        if j is not None:
+            aligned_words.append({
+                "word": w,
+                "start": float(whisper_words[j].get("start", 0.0)),
+                "end": float(whisper_words[j].get("end", 0.0))
+            })
+        else:
+            # Interpolate unmatched gap
+            prev_end = 0.0
+            for pi in range(i - 1, -1, -1):
+                pj = matched_whisper_idx[pi]
+                if pj is not None:
+                    prev_end = float(whisper_words[pj].get("end", 0.0))
+                    break
+                    
+            next_start = audio_duration
+            for ni in range(i + 1, n_script):
+                nj = matched_whisper_idx[ni]
+                if nj is not None:
+                    next_start = float(whisper_words[nj].get("start", 0.0))
+                    break
+                    
+            # Find boundary of this unmatched run
+            block_start_i = i
+            while block_start_i > 0 and matched_whisper_idx[block_start_i - 1] is None:
+                block_start_i -= 1
+                
+            block_end_i = i
+            while block_end_i < n_script - 1 and matched_whisper_idx[block_end_i + 1] is None:
+                block_end_i += 1
+                
+            block_len = block_end_i - block_start_i + 1
+            idx_in_block = i - block_start_i
+            
+            time_range = max(0.0, next_start - prev_end)
+            step = time_range / block_len
+            
+            w_start = prev_end + idx_in_block * step
+            w_end = prev_end + (idx_in_block + 1) * step
+            
+            aligned_words.append({
+                "word": w,
+                "start": round(w_start, 3),
+                "end": round(w_end, 3)
+            })
+            
+    return aligned_words
+
+
 def _word_data_to_js(word_data: list[list[dict]], n_scenes: int) -> str:
     """Serialize word_data to a JS array literal safe to embed in a <script>."""
     parts = []
@@ -1343,7 +1444,15 @@ def patch_html_timing(
       }}
       // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
       gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
-      gsap.set(el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)"), {{ opacity: 0 }});
+      var presetEls = [];
+      el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)").forEach(function(item) {{
+        if (item.classList.contains("visual-block")) {{
+          var hasSubBlocks = item.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card");
+          if (hasSubBlocks) return;
+        }}
+        presetEls.push(item);
+      }});
+      gsap.set(presetEls, {{ opacity: 0 }});
       
       // Preset ambient elements to opacity:0 so they fade in cleanly and deterministically
       gsap.set(el.querySelectorAll(".aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .float-orb-lg, .float-orb-md, .float-orb-sm, .y2k-sparkle, .glow-orb, .marquee-strip"), {{ opacity: 0 }});
@@ -1554,7 +1663,13 @@ def patch_html_timing(
       blockSelectors.forEach(function(sel) {{
         var els = document.querySelectorAll(sceneId + " " + sel);
         els.forEach(function(el) {{
-          if (blocks.indexOf(el) === -1) blocks.push(el);
+          if (blocks.indexOf(el) === -1) {{
+            if (el.classList.contains("visual-block")) {{
+              var hasSubBlocks = el.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card");
+              if (hasSubBlocks) return;
+            }}
+            blocks.push(el);
+          }}
         }});
       }});
 
@@ -1861,7 +1976,10 @@ async def build_pipeline(req: BuildRequest):
             yield sse({"type": "stage", "stage": "whisper", "status": "progress",
                        "scene": idx + 1, "of": len(wav_paths)})
             words, w_engine = await transcribe_audio_whisper(p)
-            word_data.append(words)
+            
+            # Keep original script text (case & punctuation), align using Whisper timestamps
+            aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
+            word_data.append(aligned_words)
             whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
         whisper_ok = sum(1 for w in word_data if w)
         whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())

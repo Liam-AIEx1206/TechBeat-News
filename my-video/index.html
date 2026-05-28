@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tổng kết buổi training Unity AI</title>
+<title>Tổng kết Training Unity AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */
@@ -31,7 +31,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
 
@@ -71,7 +71,7 @@ body {
 .scene {
   position: absolute; inset: 0;
   opacity: 0; visibility: hidden; z-index: 10;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Frame-0 fallback */
@@ -82,7 +82,7 @@ body {
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {
   display: grid; gap: 60px; height: 100%;
-  padding: 60px 120px 100px; align-items: center;
+  padding: 60px 120px 180px; align-items: center;
   position: relative; z-index: 10;
 }
 .scene.split .layout    { grid-template-columns: 1fr 1fr; }
@@ -157,12 +157,12 @@ body {
 
 .title-xl {
   font-size: clamp(4.0rem, 6.5vw, 6.5rem);
-  font-weight: 900; line-height: 1.25; letter-spacing: -0.04em;
+  font-weight: 900; line-height: 1.32; letter-spacing: -0.04em;
   color: var(--text1);
 }
 .title-hero {
   font-size: clamp(5.5rem, 8.5vw, 8.5rem);
-  font-weight: 900; line-height: 1.2; letter-spacing: -0.05em;
+  font-weight: 900; line-height: 1.32; letter-spacing: -0.05em;
   color: var(--text1);
 }
 .subtitle {
@@ -318,6 +318,26 @@ body {
 .quote-text { font-size: 2.5rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }
 .quote-attr { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 32px; letter-spacing: 0.1em; }
 .quote-attr::before { content: '— '; }
+
+.scene.centered .quote-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.scene.centered .quote-text {
+  margin: 0 auto;
+  text-align: center;
+}
+.scene.centered .quote-attr {
+  text-align: center;
+}
+.scene.centered .quote-block::before {
+  left: 50%;
+  transform: translateX(-50%);
+  top: -80px;
+}
 
 /* Glass stat-list (horizontal stack cards like 4x, 12x, 50% column) */
 .stat-list {
@@ -563,7 +583,7 @@ body {
 
 /* Ghost text — large thematic word at very low opacity */
 .ghost-text {
-  position: absolute; font-family: 'Inter', system-ui, sans-serif;
+  position: absolute; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(18rem, 28vw, 32rem); font-weight: 900;
   color: var(--accent); opacity: 0.085; line-height: 0.85;
   letter-spacing: -0.05em; pointer-events: none; user-select: none;
@@ -601,7 +621,7 @@ body {
 
 /* Big number callout — for hero scene with stat focus */
 .mega-num {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   font-size: clamp(10rem, 18vw, 18rem);
   font-weight: 900; line-height: 0.9; letter-spacing: -0.06em;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 40%, var(--accent3) 100%);
@@ -875,7 +895,7 @@ body {
   display: none;
   opacity: 0;
   position: relative;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: #ffffff;
@@ -885,11 +905,11 @@ body {
   white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
   max-width: 1400px;
 }
 /* Active chunk: accent underline shimmer */
@@ -910,7 +930,7 @@ body {
   display: none;
   opacity: 0;
   position: relative;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
@@ -920,11 +940,11 @@ body {
   white-space: normal;
   padding: 14px 36px;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.65));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 .sub-line::before {
   content: "";
@@ -984,7 +1004,22 @@ body {
 </style>
 </head>
 <body>
-<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="455.0">
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="249">
+  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="19" data-volume="1" data-title="Tổng kết buổi training"></audio>
+  <audio id="v2" src="assets/p2.wav" data-start="19" data-duration="28" data-volume="1" data-title="Vấn đề đầu buổi"></audio>
+  <audio id="v3" src="assets/p3.wav" data-start="47" data-duration="21" data-volume="1" data-title="Giao task rõ ràng cho AI"></audio>
+  <audio id="v4" src="assets/p4.wav" data-start="68" data-duration="20" data-volume="1" data-title="Kiểm soát AI sửa code"></audio>
+  <audio id="v5" src="assets/p5.wav" data-start="88" data-duration="18" data-volume="1" data-title="Quản lý project lớn với AI"></audio>
+  <audio id="v6" src="assets/p6.wav" data-start="106" data-duration="19" data-volume="1" data-title="Xác thực code AI"></audio>
+  <audio id="v7" src="assets/p7.wav" data-start="125" data-duration="20" data-volume="1" data-title="Tư duy cốt lõi"></audio>
+  <audio id="v8" src="assets/p8.wav" data-start="145" data-duration="14" data-volume="1" data-title="Ba cấp độ sử dụng AI"></audio>
+  <audio id="v9" src="assets/p9.wav" data-start="159" data-duration="13" data-volume="1" data-title="Ba quy tắc ghi nhớ"></audio>
+  <audio id="v10" src="assets/p10.wav" data-start="172" data-duration="18" data-volume="1" data-title="Bước tiếp theo thực tiễn"></audio>
+  <audio id="v11" src="assets/p11.wav" data-start="190" data-duration="13" data-volume="1" data-title="Bước tiếp theo cho các feature lớn"></audio>
+  <audio id="v12" src="assets/p12.wav" data-start="203" data-duration="15" data-volume="1" data-title="Trả lời câu hỏi mở đầu"></audio>
+  <audio id="v13" src="assets/p13.wav" data-start="218" data-duration="15" data-volume="1" data-title="Thông điệp cuối cùng"></audio>
+  <audio id="v14" src="assets/p14.wav" data-start="233" data-duration="16" data-volume="1" data-title="Chuyển sang Q&A"></audio>
+
   <div class="scanlines"></div>
 
 <div class="scene hero" id="scene1">
@@ -1003,30 +1038,23 @@ body {
     }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">TRAIN</div>
-  <span class="y2k-sparkle" style="top: 20%; left: 15%; animation: star-blink 3s ease infinite;"></span>
-  <span class="y2k-sparkle" style="bottom: 25%; right: 20%; animation: star-blink 3s ease infinite;"></span>
-  <span class="y2k-sparkle" style="top: 50%; left: 50%; animation: star-blink 2.5s ease infinite;"></span>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">AI</div>
+  <span class="y2k-sparkle" style="top: 10%; left: 15%;"></span>
+  <span class="y2k-sparkle" style="top: 40%; left: 80%;"></span>
+  <span class="y2k-sparkle" style="bottom: 20%; right: 25%;"></span>
   
   <div class="layout">
     <div class="info-col">
-      <div id="s1-badge" class="badge">PHẦN 1</div>
+      <div class="status-pill">PHẦN 1</div>
       <h1 id="s1-title" class="title-hero grad-text" style="font-weight: 900 !important;">Tổng kết buổi training</h1>
-      <p id="s1-subtitle" class="subtitle">Từ dùng AI cảm tính đến làm việc với AI có kiểm soát</p>
-      <p id="s1-desc" class="body-text">Hợp tác & công nghệ</p>
+      <p id="s1-subtitle" class="subtitle">Những điều quan trọng</p>
+      <p id="s1-desc" class="body-text">Kiểm soát việc sử dụng AI</p>
     </div>
     <div class="visual-col">
-      <div class="tech-card glow-card breath">
-        <div class="brand">AI Training</div>
-        <div class="meta">📅 2023 · Online</div>
-        <div class="bullets">
-          <div>Làm việc với AI có kiểm soát</div>
-          <div>Hợp tác công nghệ và con người</div>
-        </div>
-        <div class="tags">
-          <span class="tag">#AI</span>
-          <span class="tag">#Tech</span>
-        </div>
+      <div class="stat-list">
+        <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">🤖</div><div class="num">80%</div><div class="details"><div class="title">Hiện diện AI</div><div class="desc">Trong công việc hàng ngày</div></div></div>
+        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">⚡</div><div class="num">90%</div><div class="details"><div class="title">Tốc độ xử lý</div><div class="desc">Nhanh hơn gấp nhiều lần</div></div></div>
+        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;"><div class="ic-wrap">🔒</div><div class="num">60%</div><div class="details"><div class="title">Kiểm soát</div><div class="desc">Đảm bảo an toàn dữ liệu</div></div></div>
       </div>
     </div>
   </div>
@@ -1036,45 +1064,54 @@ body {
   <span class="scene-num">01</span>
 </div>
 
-<div class="scene centered" id="scene2">
+<div class="scene data" id="scene2">
   <style>
-    @keyframes step-flow {
-      0% { transform: translateX(-100%); opacity: 0; }
-      50% { transform: translateX(0); opacity: 1; }
-      100% { transform: translateX(0); opacity: 1; }
+    @keyframes pulse-cycle {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 1; }
     }
-    .step-item {
-      animation: step-flow 1.2s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    @keyframes neon-glow {
+      0%, 100% { box-shadow: 0 0 15px var(--accent2); }
+      50% { box-shadow: 0 0 35px var(--glow); }
     }
-    .step-item:nth-child(2) { animation-delay: 0.4s; }
-    .step-item:nth-child(3) { animation-delay: 0.8s; }
+    .visual-block .stat-hero {
+      animation: pulse-cycle 2s infinite;
+    }
+    .bento-cell .ic {
+      animation: neon-glow 3s infinite;
+    }
   </style>
-  <div class="aurora-glow" style="top: -15%; left: -10%;"></div>
-  <div class="ghost-text" style="bottom: -5%; right: -5%;">LOOP</div>
+  <div class="aurora-glow" style="top:-25%; left:-15%;"></div>
+  <div class="particle-field"></div>
+  <div class="\1" data-layout-ignore style="top:-10%; right:-5%;">LOOP</div>
   
   <div class="layout">
     <div class="info-col">
       <div id="s2-badge" class="badge">PHẦN 2</div>
-      <h1 id="s2-title" class="title-xl grad-text">Vấn đề đầu buổi</h1>
-      <p id="s2-subtitle" class="subtitle">Khi prompt quá ngắn</p>
-      <p id="s2-desc" class="body-text">Bug xuất hiện, tốn thời gian sửa</p>
+      <h1 id="s2-title" class="title-xl grad-text" data-effect="typewriter">Vấn đề đầu buổi</h1>
+      <span class="cursor-blink">|</span>
+      <p id="s2-subtitle" class="subtitle">Vòng lặp quen thuộc</p>
+      <p id="s2-desc" class="body-text">Prompt mơ hồ → Bug lan rộng</p>
     </div>
     <div class="visual-col">
-      <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">📉 QUY TRÌNH</div>
-        <div class="step-list">
-          <div class="step-item">
-            <div class="step-circle">1</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Prompt mơ hồ</div>
-          </div>
-          <div class="step-item">
-            <div class="step-circle">2</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">AI đoán</div>
-          </div>
-          <div class="step-item">
-            <div class="step-circle">3</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Code sai</div>
-          </div>
+      <div class="bento-3x2">
+        <div class="bento-cell" style="border-top-color:var(--accent2); padding:20px;">
+          <div class="ic">⚠️</div><div class="t">1. Prompt mơ hồ</div><div class="d">AI thiếu dữ liệu</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--accent); padding:20px;">
+          <div class="ic">🤖</div><div class="t">2. AI tự đoán</div><div class="d">Code sinh ra sai</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--accent3); padding:20px;">
+          <div class="ic">🐞</div><div class="t">3. Bug xuất hiện</div><div class="d">Khó sửa toàn diện</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--surface); padding:20px;">
+          <div class="ic">🔄</div><div class="t">4. Vòng lặp fix</div><div class="d">Tốn thời gian hơn</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--accent2); padding:20px;">
+          <div class="ic">⏱️</div><div class="t">5. Thời gian mất</div><div class="d">Hiệu suất giảm</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--accent3); padding:20px;">
+          <div class="ic">💻</div><div class="t">6. Kết quả</div><div class="d">Lâu hơn tự code</div>
         </div>
       </div>
     </div>
@@ -1091,52 +1128,45 @@ body {
       0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
       50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.8; }
+    @keyframes grad-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes aurora-mesh {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
     }
   </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%; animation: aurora-mesh 12s infinite;"></div>
-  <div class="ghost-text" style="bottom:-5%; left:-5%;">PROMPT</div>
-
+  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">TASK</div>
+  
   <div class="layout">
     <div class="info-col">
       <div id="s3-badge" class="badge">PHẦN 3</div>
-      <h1 id="s3-title" class="title-xl grad-text">Câu hỏi 1: Giao task rõ ràng</h1>
-      <p id="s3-subtitle" class="subtitle">Tiêu chí prompt tốt</p>
-      <p id="s3-desc" class="body-text">Rõ ràng · Đủ ngữ cảnh · Cụ thể</p>
+      <h1 id="s3-title" class="title-xl grad-text" data-effect="typewriter">Giao task rõ ràng cho AI</h1>
+      <p id="s3-subtitle" class="subtitle">Prompt chất lượng</p>
+      <p id="s3-desc" class="body-text">Rõ mục tiêu, rõ output</p>
     </div>
     <div class="visual-col">
       <div class="bento-3x2">
-        <div class="bento-cell" style="border-top-color:var(--accent); padding:20px;">
-          <div class="ic">🎯</div>
-          <div class="t">1. Mục tiêu rõ</div>
-          <div class="d">Định nghĩa chính xác mục đích</div>
+        <div class="bento-cell" style="border-top-color:#4ade80; padding:20px;">
+          <div class="ic">🎯</div><div class="t">1. Mục tiêu</div><div class="d">Xác định rõ kết quả cần đạt</div>
         </div>
-        <div class="bento-cell" style="border-top-color:var(--accent2); padding:20px;">
-          <div class="ic">📚</div>
-          <div class="t">2. Context đủ</div>
-          <div class="d">Cung cấp đầy đủ thông tin cần thiết</div>
+        <div class="bento-cell" style="border-top-color:#38bdf8; padding:20px;">
+          <div class="ic">🌎</div><div class="t">2. Context</div><div class="d">Cung cấp thông tin nền tảng</div>
         </div>
-        <div class="bento-cell" style="border-top-color:var(--accent3); padding:20px;">
-          <div class="ic">🔒</div>
-          <div class="t">3. Ràng buộc cụ thể</div>
-          <div class="d">Xác định rõ giới hạn và yêu cầu</div>
+        <div class="bento-cell" style="border-top-color:#f472b6; padding:20px;">
+          <div class="ic">🔧</div><div class="t">3. Task</div><div class="d">Chi tiết công việc cần làm</div>
         </div>
-        <div class="bento-cell" style="border-top-color:var(--accent); padding:20px;">
-          <div class="ic">📤</div>
-          <div class="t">4. Output rõ ràng</div>
-          <div class="d">Mô tả chính xác kết quả mong muốn</div>
+        <div class="bento-cell" style="border-top-color:#fde047; padding:20px;">
+          <div class="ic">📦</div><div class="t">4. Output</div><div class="d">Mô tả kết quả mong muốn</div>
         </div>
-        <div class="bento-cell" style="border-top-color:var(--accent2); padding:20px;">
-          <div class="ic">💡</div>
-          <div class="t">5. Không mơ hồ</div>
-          <div class="d">Tránh những yêu cầu chung chung</div>
+        <div class="bento-cell" style="border-top-color:#eab308; padding:20px;">
+          <div class="ic">📋</div><div class="t">5. Ràng buộc</div><div class="d">Nêu rõ yêu cầu và giới hạn</div>
         </div>
-        <div class="bento-cell" style="border-top-color:var(--accent3); padding:20px;">
-          <div class="ic">🛠️</div>
-          <div class="t">6. Thực tế</div>
-          <div class="d">Định nghĩa khả thi và hữu ích</div>
+        <div class="bento-cell" style="border-top-color:#f59e0b; padding:20px;">
+          <div class="ic">🤖</div><div class="t">6. AI không đọc suy nghĩ</div><div class="d">Phải giao đúng và đủ thông tin</div>
         </div>
       </div>
     </div>
@@ -1147,41 +1177,34 @@ body {
   <span class="scene-num">03</span>
 </div>
 
-<div class="scene magazine" id="scene4">
+<div class="scene centered" id="scene4">
   <style>
     @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 0 15px var(--glow); }
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
       50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes aurora-mesh {
-      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
-    }
-    @keyframes grad-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    .quote-block { animation: neon-glow 3s ease-in-out infinite; }
+    .feat-row .glass-card { animation: neon-glow 4s ease-in-out infinite; }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">PLAN</div>
+  <div class="particle-field"></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">PLAN</div>
   
   <div class="layout">
     <div class="info-col">
       <div id="s4-badge" class="badge">PHẦN 4</div>
-      <h1 id="s4-title" class="title-xl grad-text" data-effect="typewriter">Câu hỏi 2: Kiểm soát sửa code</h1>
-      <span class="cursor-blink">|</span>
-      <p id="s4-subtitle" class="subtitle">Kế hoạch sửa code</p>
-      <p id="s4-desc" class="body-text">Plan trước, Code sau</p>
+      <h1 id="s4-title" class="title-xl grad-text">Kiểm soát AI sửa code</h1>
+      <p id="s4-subtitle" class="subtitle">Plan trước, Code sau</p>
+      <p id="s4-desc" class="body-text">Yêu cầu AI trình bày kế hoạch</p>
     </div>
     <div class="visual-col">
-      <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🎮 QUY TRÌNH THỰC HIỆN</div>
-        <div class="step-list">
-          <div class="step-item"><div class="step-circle">1</div><div class="step-text" style="text-align:left; font-weight:500;">Yêu cầu AI trình bày kế hoạch</div></div>
-          <div class="step-item"><div class="step-circle">2</div><div class="step-text" style="text-align:left; font-weight:500;">Liệt kê file sẽ tạo hoặc sửa</div></div>
-          <div class="step-item"><div class="step-circle">3</div><div class="step-text" style="text-align:left; font-weight:500;">Mô tả chi tiết thay đổi cho từng file</div></div>
-        </div>
+      <div class="quote-block">
+        <p class="quote-text">"Khi AI sửa code, mình có biết nó sửa gì và vì sao không?"</p>
+      </div>
+      <div class="feat-row">
+        <div class="glass-card breath"><span class="emoji">📝</span><div class="title">Kế hoạch</div><div class="desc">Liệt kê file sẽ tạo hoặc sửa</div></div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;"><span class="emoji">⚠️</span><div class="title">Rủi ro</div><div class="desc">Mô tả các rủi ro tiềm ẩn</div></div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;"><span class="emoji">🚀</span><div class="title">Thực hiện</div><div class="desc">Chỉ bắt đầu khi đã rõ ràng</div></div>
       </div>
     </div>
   </div>
@@ -1194,101 +1217,100 @@ body {
 <div class="scene centered" id="scene5">
   <style>
     @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
-      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
+      0%, 100% { box-shadow: 0 0 15px var(--glow); }
+      50% { box-shadow: 0 0 35px var(--accent); }
     }
     @keyframes step-highlight {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.1); }
     }
+    .step-circle {
+      animation: neon-glow 2s infinite, step-highlight 1.5s ease-in-out infinite;
+    }
   </style>
-  <div class="aurora-glow" style="top:-10%; left:-15%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">STEPS</div>
-
+  <div class="aurora-glow" style="top: -15%; left: -10%;"></div>
+  <div class="\1" data-layout-ignore style="bottom: -5%; right: -5%;">TASK</div>
+  
   <div class="layout">
     <div class="info-col">
       <div id="s5-badge" class="badge">PHẦN 5</div>
-      <h1 id="s5-title" class="title-xl grad-text" data-effect="typewriter">Câu hỏi 3: Quản lý feature lớn</h1><span class="cursor-blink">|</span>
-      <p id="s5-subtitle" class="subtitle">Chia nhỏ task</p>
-      <p id="s5-desc" class="body-text">Plan · Phase · Task · Verify</p>
+      <h1 id="s5-title" class="title-xl grad-text">Quản lý project lớn với AI</h1>
+      <p id="s5-subtitle" class="subtitle">Chia nhỏ công việc</p>
+      <p id="s5-desc" class="body-text">Giảm rủi ro bằng 4 bước</p>
     </div>
     <div class="visual-col">
       <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🌟 QUY TRÌNH CHIA NHỎ</div>
+        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">📋 Quy trình chia nhỏ</div>
         <div class="step-list">
-          <div class="step-item" style="animation: step-highlight 2s ease infinite;">
+          <div class="step-item">
             <div class="step-circle">1</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Plan: Xác định mục tiêu</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Plan: Lập kế hoạch cụ thể</div>
           </div>
-          <div class="step-item" style="animation: step-highlight 2s ease infinite; animation-delay: 0.5s;">
+          <div class="step-item">
             <div class="step-circle">2</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Phase: Chia thành giai đoạn</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Phase: Phân chia giai đoạn</div>
           </div>
-          <div class="step-item" style="animation: step-highlight 2s ease infinite; animation-delay: 1s;">
+          <div class="step-item">
             <div class="step-circle">3</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Task: Phân việc cụ thể</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Task: Tạo các nhiệm vụ nhỏ</div>
           </div>
-          <div class="step-item" style="animation: step-highlight 2s ease infinite; animation-delay: 1.5s;">
+          <div class="step-item">
             <div class="step-circle">4</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Verify: Kiểm tra kết quả</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Verify: Kiểm tra và tối ưu</div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <div class="corner-bracket tl"></div>
-  <div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div>
-  <div class="corner-bracket br"></div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">05</span>
 </div>
 
-<div class="scene centered" id="scene6">
+<div class="scene magazine" id="scene6">
   <style>
     @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      0%, 100% { border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 0 15px var(--glow); }
       50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes step-highlight {
-      0%, 100% { transform: scale(1); background-color: var(--bg2); }
-      50% { transform: scale(1.05); background-color: var(--accent2); }
-    }
-    .step-item:hover {
-      animation: step-highlight 0.6s ease-in-out infinite;
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
   </style>
+  <div class="\1" data-layout-ignore></div>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">VERIFY</div>
-  
+  <div class="\1" data-layout-ignore style="top:-10%; right:-5%;">VERIFY</div>
+
   <div class="layout">
     <div class="info-col">
-      <div id="s6-badge" class="badge">PHẦN 6</div>
-      <h1 id="s6-title" class="title-xl grad-text">Câu hỏi 4: Kiểm tra code AI</h1>
-      <p id="s6-subtitle" class="subtitle">Bẫy lớn khi review</p>
-      <p id="s6-desc" class="body-text">Test không chỉ là đọc code</p>
+      <div id="s6-badge" class="badge">CÂU HỎI 4</div>
+      <h1 id="s6-title" class="title-xl grad-text">Xác thực code AI</h1>
+      <p id="s6-subtitle" class="subtitle">Đọc đẹp chưa đủ</p>
+      <p id="s6-desc" class="body-text">Kiểm thử hành vi + edge case</p>
     </div>
     <div class="visual-col">
       <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🎮 CÁC BƯỚC VERIFY</div>
+        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🧠 CÁC BƯỚC VERIFY</div>
         <div class="step-list">
           <div class="step-item">
             <div class="step-circle">1</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Đọc từng dòng</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Đọc từng dòng quan trọng</div>
           </div>
           <div class="step-item">
             <div class="step-circle">2</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Chạy thử hành vi</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Chạy thử hành vi thực</div>
           </div>
           <div class="step-item">
             <div class="step-circle">3</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Test edge case</div>
+            <div class="step-text" style="text-align:left; font-weight:500;">Test các edge case</div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
@@ -1301,37 +1323,32 @@ body {
       0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
       50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes aurora-mesh {
-      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
+    @keyframes grad-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
+    .quote-block { animation: neon-glow 3s infinite; }
+    .title-xl { background-size: 200% auto; animation: grad-shift 6s ease infinite; }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="top:-10%; right:-5%;">AI</div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">MINDSET</div>
   
   <div class="layout">
     <div class="info-col">
       <div id="s7-badge" class="badge">PHẦN 7</div>
-      <h1 id="s7-title" class="title-xl grad-text">Tâm lý sau buổi training</h1>
-      <p id="s7-subtitle" class="subtitle">Vai trò của bạn</p>
-      <p id="s7-desc" class="body-text">AI là công cụ, bạn là người dẫn dắt.</p>
+      <h1 id="s7-title" class="title-xl grad-text">Tư duy cốt lõi</h1>
+      <p id="s7-subtitle" class="subtitle">Mindset quan trọng</p>
+      <p id="s7-desc" class="body-text">AI là junior dev rất nhanh</p>
     </div>
     <div class="visual-col">
-      <div class="compare">
-        <div class="col">
-          <h4>AI (Junior Dev)</h4>
-          <ul>
-            <li>Code rất nhanh</li>
-            <li>Hỗ trợ tài liệu</li>
-          </ul>
-        </div>
-        <div class="col bad">
-          <h4>Tech Lead (Bạn)</h4>
-          <ul>
-            <li>Ra quyết định</li>
-            <li>Chịu trách nhiệm</li>
-          </ul>
-        </div>
+      <div class="quote-block">
+        <p class="quote-text">"Mindset sau buổi training: AI là junior dev rất nhanh. Bạn là tech lead."</p>
+      </div>
+      <div class="feat-row">
+        <div class="glass-card breath"><span class="emoji">🤖</span><div class="title">AI</div><div class="desc">Hoàn thành task nhanh</div></div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;"><span class="emoji">👨‍💻</span><div class="title">Dev Lead</div><div class="desc">Hiểu rõ toàn bộ project</div></div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;"><span class="emoji">✅</span><div class="title">Trách nhiệm</div><div class="desc">Thuộc về developer</div></div>
       </div>
     </div>
   </div>
@@ -1343,50 +1360,57 @@ body {
 
 <div class="scene centered" id="scene8">
   <style>
-    @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
-      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
+    @keyframes neon-pulse {
+      0%, 100% { box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent2); }
+      50% { box-shadow: 0 0 30px var(--accent2), 0 0 60px var(--accent3); }
     }
-    @keyframes aurora-mesh {
-      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
+    .quote-block {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      animation: neon-pulse 3s infinite ease-in-out;
+    }
+    .feat-row .glass-card {
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      animation: neon-pulse 3s infinite ease-in-out;
     }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">AI</div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">AI</div>
   
   <div class="layout">
     <div class="info-col">
       <div id="s8-badge" class="badge">PHẦN 8</div>
-      <h1 id="s8-title" class="title-xl grad-text">Ba cấp độ sử dụng AI</h1>
-      <p id="s8-subtitle" class="subtitle">Từng bước tối ưu</p>
-      <p id="s8-desc" class="body-text">Phân cấp vai trò AI</p>
+      <h1 id="s8-title" class="title-xl grad-text" data-effect="typewriter">Ba cấp độ sử dụng AI</h1>
+      <span class="cursor-blink">|</span>
+      <p id="s8-subtitle" class="subtitle">Tối ưu hóa quy trình</p>
+      <p id="s8-desc" class="body-text">Prompt, Workflow, Skill</p>
     </div>
     <div class="visual-col">
-      <div class="stat-list">
-        <div class="stat-list-card shimmer-fast glow-card">
-          <div class="ic-wrap">🎯</div>
-          <div class="num">1</div>
-          <div class="details">
-            <div class="title">Prompt</div>
-            <div class="desc">Tác vụ nhỏ</div>
-          </div>
+      <div class="quote-block">
+        <p class="quote-text">"Ba cấp độ sử dụng AI: Prompt, Workflow, Skill"</p>
+      </div>
+      <div class="feat-row" style="margin-top: 40px;">
+        <div class="glass-card breath">
+          <span class="emoji">💡</span>
+          <div class="title">1. Prompt</div>
+          <div class="desc">Tạo câu lệnh AI hiệu quả</div>
         </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">🚀</div>
-          <div class="num">2</div>
-          <div class="details">
-            <div class="title">Workflow</div>
-            <div class="desc">Tính năng lớn</div>
-          </div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;">
+          <span class="emoji">⚙️</span>
+          <div class="title">2. Workflow</div>
+          <div class="desc">Tích hợp AI vào quy trình</div>
         </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;">
-          <div class="ic-wrap">💼</div>
-          <div class="num">3</div>
-          <div class="details">
-            <div class="title">Skill</div>
-            <div class="desc">Quy trình lặp lại</div>
-          </div>
+        <div class="glass-card breath" style="animation-delay: 1s;">
+          <span class="emoji">🚀</span>
+          <div class="title">3. Skill</div>
+          <div class="desc">Nâng cao kỹ năng AI</div>
         </div>
       </div>
     </div>
@@ -1399,41 +1423,37 @@ body {
 
 <div class="scene centered" id="scene9">
   <style>
-    @keyframes neon-pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 15px var(--glow); }
-      50% { transform: scale(1.05); box-shadow: 0 0 30px var(--accent); }
+    @keyframes neon-glow {
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    .step-circle {
-      animation: neon-pulse 2s infinite;
+    @keyframes aurora-mesh {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
+    }
+    @keyframes star-blink {
+      0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
     }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">TEAM</div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">RULES</div>
   
   <div class="layout">
     <div class="info-col">
       <div id="s9-badge" class="badge">PHẦN 9</div>
-      <h1 id="s9-title" class="title-xl grad-text">Ba điều cần nhớ</h1>
-      <p id="s9-subtitle" class="subtitle">Giảm thiểu bug AI</p>
-      <p id="s9-desc" class="body-text">3 nguyên tắc chính yếu</p>
+      <h1 id="s9-title" class="title-xl grad-text" data-effect="typewriter">Ba quy tắc ghi nhớ</h1><span class="cursor-blink">|</span>
+      <p id="s9-subtitle" class="subtitle">Ba điều quan trọng</p>
+      <p id="s9-desc" class="body-text">Giảm bug từ AI hiệu quả</p>
     </div>
     <div class="visual-col">
-      <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🎯 NGUYÊN TẮC</div>
-        <div class="step-list">
-          <div class="step-item">
-            <div class="step-circle">1</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Brief rõ ràng, đừng hỏi mơ hồ</div>
-          </div>
-          <div class="step-item">
-            <div class="step-circle">2</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Plan trước, code sau</div>
-          </div>
-          <div class="step-item">
-            <div class="step-circle">3</div>
-            <div class="step-text" style="text-align:left; font-weight:500;">Verify hành vi thật</div>
-          </div>
-        </div>
+      <div class="quote-block">
+        <p class="quote-text">"Nếu sau buổi này chỉ nhớ ba điều, hãy nhớ ba điều này."</p>
+      </div>
+      <div class="feat-row">
+        <div class="glass-card breath"><span class="emoji">📜</span><div class="title">Brief rõ</div><div class="desc">Đừng hỏi mơ hồ</div></div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;"><span class="emoji">🛠️</span><div class="title">Plan trước</div><div class="desc">Code sau</div></div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;"><span class="emoji">✔️</span><div class="title">Verify</div><div class="desc">Hành vi thật</div></div>
       </div>
     </div>
   </div>
@@ -1443,73 +1463,96 @@ body {
   <span class="scene-num">09</span>
 </div>
 
-<div class="scene data" id="scene10">
+<div class="scene centered" id="scene10">
   <style>
-    @keyframes checkmark-pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.2); opacity: 0.7; }
+    @keyframes neon-glow {
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    .task-list {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      padding: 40px;
+    @keyframes aurora-mesh {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(20px, -15px) scale(1.05); }
     }
-    .task-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      box-shadow: 0 0 10px var(--glow);
-      animation: neon-glow 3s infinite;
-    }
-    .task-check {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--glow);
-      border-radius: 50%;
-      color: var(--accent2);
-      font-size: 1.2rem;
-      animation: checkmark-pulse 2s infinite;
-    }
-    .task-text {
-      font-size: 1.25rem;
-      color: var(--text1);
-    }
-    .task-text .highlight {
-      color: var(--accent);
-      font-weight: bold;
+    @keyframes star-blink {
+      0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
     }
   </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-10%; left:-5%;">TASKS</div>
-  
+  <div class="aurora-glow" style="top:-15%; left:-10%; animation: aurora-mesh 8s infinite;"></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">ACTION</div>
+  <span class="y2k-sparkle" style="top: 15%; left: 10%; animation: star-blink 3s infinite;"></span>
+  <span class="y2k-sparkle" style="top: 45%; right: 10%; animation: star-blink 3s infinite;"></span>
+  <span class="y2k-sparkle" style="bottom: 20%; left: 40%; animation: star-blink 3s infinite;"></span>
+
   <div class="layout">
     <div class="info-col">
       <div id="s10-badge" class="badge">PHẦN 10</div>
-      <h1 id="s10-title" class="title-xl grad-text">Bước tiếp theo trong tuần</h1>
-      <p id="s10-subtitle" class="subtitle">Danh sách công việc</p>
-      <p id="s10-desc" class="body-text">Áp dụng ngay tuần này</p>
+      <h1 id="s10-title" class="title-xl grad-text" data-effect="typewriter">Bước tiếp theo thực tiễn</h1>
+      <span class="cursor-blink">|</span>
+      <p id="s10-subtitle" class="subtitle">Việc cần làm ngay</p>
+      <p id="s10-desc" class="body-text">Thay đổi workflow tuần này</p>
     </div>
     <div class="visual-col">
-      <div class="task-list">
-        <div class="task-item shimmer-fast">
-          <div class="task-check">✔</div>
-          <div class="task-text">Viết <span class="highlight">prompt rõ ràng</span> và cụ thể</div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-circle">✓</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Dùng Plan trước Code</div>
         </div>
-        <div class="task-item shimmer-fast" style="animation-delay: 0.3s;">
-          <div class="task-check">✔</div>
-          <div class="task-text">Yêu cầu <span class="highlight">kế hoạch trước khi code</span></div>
+        <div class="step-item">
+          <div class="step-circle">✓</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Viết prompt theo khung rõ ràng</div>
         </div>
-        <div class="task-item shimmer-fast" style="animation-delay: 0.6s;">
-          <div class="task-check">✔</div>
-          <div class="task-text">Xác minh <span class="highlight">hành vi thật của code AI</span></div>
+        <div class="step-item">
+          <div class="step-circle">✓</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Verify bằng chạy thử + test edge case</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">10</span>
+</div>
+
+<div class="scene centered" id="scene11">
+  <style>
+    @keyframes glow-sweep {
+      0%, 100% { box-shadow: 0 0 20px var(--accent2), 0 0 40px var(--accent2); }
+      50% { box-shadow: 0 0 35px var(--accent), 0 0 70px var(--accent); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  </style>
+  
+  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">TASK</div>
+  <div class="layout">
+    <div class="info-col">
+      <div id="s11-badge" class="badge">PHẦN 11</div>
+      <h1 id="s11-title" class="title-xl grad-text">Bước tiếp theo cho các feature lớn</h1>
+      <p id="s11-subtitle" class="subtitle">Chia nhỏ quy trình</p>
+      <p id="s11-desc" class="body-text">Overview → Phase → Task → Verify</p>
+    </div>
+    <div class="visual-col">
+      <div class="step-list">
+        <div class="step-item" style="animation: pulse 2s infinite;">
+          <div class="step-circle">1</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Tạo overview tổng quát</div>
+        </div>
+        <div class="step-item" style="animation: pulse 2s infinite; animation-delay: 0.2s;">
+          <div class="step-circle">2</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Chia thành các phase</div>
+        </div>
+        <div class="step-item" style="animation: pulse 2s infinite; animation-delay: 0.4s;">
+          <div class="step-circle">3</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Phân nhỏ thành task</div>
+        </div>
+        <div class="step-item" style="animation: pulse 2s infinite; animation-delay: 0.6s;">
+          <div class="step-circle">4</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Review và verify</div>
         </div>
       </div>
     </div>
@@ -1519,207 +1562,130 @@ body {
   <div class="corner-bracket bl"></div>
   <div class="corner-bracket br"></div>
   <div class="top-line"></div>
-  <span class="scene-num">10</span>
-</div>
-
-<div class="scene split" id="scene11">
-  <style>
-    @keyframes step-highlight {
-      0%, 100% { background-color: rgba(0,0,0,0.5); }
-      50% { background-color: var(--accent); }
-    }
-    .step-circle {
-      animation: step-highlight 3s infinite ease-in-out;
-    }
-  </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">STEPS</div>
-  
-  <div class="layout">
-    <div class="info-col">
-      <div id="s11-badge" class="badge">PHẦN 11</div>
-      <h1 id="s11-title" class="title-xl grad-text" data-effect="typewriter">Bước tiếp theo cho feature lớn</h1>
-      <span class="cursor-blink">|</span>
-      <p id="s11-subtitle" class="subtitle">Quy trình phân chia</p>
-      <p id="s11-desc" class="body-text">Chia nhỏ để dễ quản lý</p>
-    </div>
-    <div class="visual-col">
-      <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">📋 QUY TRÌNH FEATURE</div>
-        <div class="step-list">
-          <div class="step-item"><div class="step-circle">1</div><div class="step-text" style="text-align:left; font-weight:500;">Overview</div></div>
-          <div class="step-item"><div class="step-circle">2</div><div class="step-text" style="text-align:left; font-weight:500;">Phase</div></div>
-          <div class="step-item"><div class="step-circle">3</div><div class="step-text" style="text-align:left; font-weight:500;">Task</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-  <div class="top-line"></div>
   <span class="scene-num">11</span>
 </div>
 
-<div class="scene centered" id="scene12">
+<div class="scene magazine" id="scene12">
   <style>
-    @keyframes fade-in {
-      0% { opacity: 0; transform: translateY(10px); }
-      100% { opacity: 1; transform: translateY(0); }
+    @keyframes neon-glow {
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    .step-list { margin-top: 30px; }
-    .step-item { display: flex; align-items: center; margin-bottom: 20px; animation: fade-in 1s ease forwards; }
-    .step-circle {
-      width: 50px; height: 50px; border-radius: 50%; background: var(--accent2);
-      display: flex; justify-content: center; align-items: center; color: var(--text1);
-      font-size: 1.5rem; font-weight: bold; margin-right: 20px; box-shadow: 0 0 15px var(--accent2);
+    @keyframes aurora-mesh {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
     }
-    .step-text { color: var(--text1); font-size: 1.25rem; line-height: 1.5; }
-    .step-item:nth-child(1) { animation-delay: 0.2s; }
-    .step-item:nth-child(2) { animation-delay: 0.4s; }
-    .step-item:nth-child(3) { animation-delay: 0.6s; }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-5%; right:-5%;">TASK</div>
-
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">AI</div>
+  
   <div class="layout">
     <div class="info-col">
       <div id="s12-badge" class="badge">PHẦN 12</div>
       <h1 id="s12-title" class="title-xl grad-text">Trả lời câu hỏi mở đầu</h1>
-      <p id="s12-subtitle" class="subtitle">Ba câu hỏi quan trọng</p>
-      <p id="s12-desc" class="body-text">Task, scope và verify</p>
+      <p id="s12-subtitle" class="subtitle">Câu hỏi quan trọng</p>
+      <p id="s12-desc" class="body-text">Kết quả buổi thảo luận</p>
     </div>
     <div class="visual-col">
-      <div class="visual-block" style="padding:40px;">
-        <div class="caption" style="color:var(--accent2); font-weight:700; margin-bottom:20px; text-transform:uppercase; text-align:left;">🎯 CÂU HỎI & CÂU TRẢ LỜI</div>
-        <div class="step-list">
-          <div class="step-item">
-            <div class="step-circle">1</div>
-            <div class="step-text">AI sẽ làm gì? <br> Task và output phải rõ ràng.</div>
-          </div>
-          <div class="step-item">
-            <div class="step-circle">2</div>
-            <div class="step-text">AI được phép sửa gì? <br> Scope và file ảnh hưởng phải rõ ràng.</div>
-          </div>
-          <div class="step-item">
-            <div class="step-circle">3</div>
-            <div class="step-text">Làm sao biết output đúng? <br> Phải có verify và test.</div>
-          </div>
-        </div>
+      <div class="feat-row">
+        <div class="glass-card breath"><span class="emoji">🤖</span><div class="title">AI sẽ làm gì?</div><div class="desc">Xác định vai trò và nhiệm vụ</div></div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;"><span class="emoji">✍️</span><div class="title">AI được phép sửa gì?</div><div class="desc">Định rõ phạm vi sửa đổi</div></div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;"><span class="emoji">✅</span><div class="title">Làm sao biết đúng?</div><div class="desc">Xây acceptance criteria</div></div>
       </div>
     </div>
   </div>
-
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">12</span>
 </div>
 
-<div class="scene magazine" id="scene13">
+<div class="scene centered" id="scene13">
   <style>
     @keyframes neon-glow {
       0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
       50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes text-pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    @keyframes grad-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    @keyframes grid-fade {
-      0%, 100% { opacity: 0.1; transform: translateY(0); }
-      50% { opacity: 0.3; transform: translateY(-10px); }
+    .quote-block {
+      font-size: 1.5rem;
+      text-align: center;
+      padding: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      animation: neon-glow 6s ease infinite;
     }
-    .animated-grid {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: repeating-linear-gradient(0deg, var(--accent2) 0, transparent 2px, transparent 20px), 
-                  repeating-linear-gradient(90deg, var(--accent2) 0, transparent 2px, transparent 20px);
-      animation: grid-fade 6s infinite;
-      pointer-events: none;
+    .quote-text {
+      color: var(--text1);
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: grad-shift 8s ease infinite;
     }
   </style>
-  <div class="animated-grid"></div>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="ghost-text" style="bottom:-10%; right:-8%;">VERIFY</div>
-
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">AI</div>
+  
   <div class="layout">
     <div class="info-col">
       <div id="s13-badge" class="badge">PHẦN 13</div>
-      <h1 id="s13-title" class="title-xl grad-text" style="animation: text-pulse 3s infinite;">Thông điệp cuối cùng</h1>
-      <p id="s13-subtitle" class="subtitle">AI là công cụ, không phải giải pháp</p>
-      <p id="s13-desc" class="body-text">Giao việc, thảo luận, kiểm soát, verify</p>
+      <h1 id="s13-title" class="title-xl grad-text">Thông điệp cuối cùng</h1>
+      <p id="s13-subtitle" class="subtitle">AI không phải để tin</p>
+      <p id="s13-desc" class="body-text">Giao việc, thảo luận, kiểm soát</p>
     </div>
     <div class="visual-col">
-      <div class="quote-block glow-card breath">
-        <p class="quote-text">"AI giúp chúng ta làm việc hiệu quả hơn khi sử dụng đúng cách."</p>
-        <p class="quote-attr">Tư duy đúng · Thành công lớn</p>
+      <div class="quote-block">
+        <p class="quote-text">"AI không phải để tin tuyệt đối. AI là để: giao việc, thảo luận, kiểm soát, và verify."</p>
       </div>
     </div>
   </div>
-
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">13</span>
 </div>
 
-<div class="scene centered" id="scene14">
+<div class="scene magazine" id="scene14">
   <style>
-    @keyframes neon-pulse {
-      0%, 100% { box-shadow: 0 0 15px var(--accent2), 0 0 35px var(--glow); }
-      50% { box-shadow: 0 0 25px var(--accent3), 0 0 50px var(--accent); }
+    @keyframes neon-glow {
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes sparkle-blink {
-      0%, 100% { opacity: 0.3; transform: scale(0.8); }
-      50% { opacity: 1; transform: scale(1.2); }
+    @keyframes star-blink {
+      0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
     }
   </style>
-  
-  <div class="aurora-glow" style="top: -15%; left: -10%;"></div>
-  <div class="ghost-text" style="top: -10%; right: -5%;">Q&A</div>
-  <div class="y2k-sparkle" style="top: 20%; left: 15%; animation: sparkle-blink 2s ease infinite;"></div>
-  <div class="y2k-sparkle" style="top: 50%; right: 20%; animation: sparkle-blink 2.2s ease infinite;"></div>
-  <div class="y2k-sparkle" style="bottom: 10%; left: 30%; animation: sparkle-blink 2.4s ease infinite;"></div>
-  
+  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+  <div class="particle-field"></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">Q&A</div>
+
   <div class="layout">
     <div class="info-col">
       <div id="s14-badge" class="badge">PHẦN 14</div>
-      <h1 id="s14-title" class="title-xl grad-text">Chuyển sang phần Q&A</h1>
-      <p id="s14-subtitle" class="subtitle">Hãy đặt câu hỏi</p>
-      <p id="s14-desc" class="body-text">AI đang giúp bạn hay tạo thêm việc?</p>
+      <h1 id="s14-title" class="title-xl grad-text">Chuyển sang Q&A</h1>
+      <p id="s14-subtitle" class="subtitle">Câu hỏi mở</p>
+      <p id="s14-desc" class="body-text">AI giúp tiết kiệm thời gian?</p>
     </div>
     <div class="visual-col">
       <div class="quote-block">
-        <p class="quote-text">"AI có đang thực sự tiết kiệm thời gian cho bạn?"</p>
-        <p class="quote-attr">— Người dẫn chương trình</p>
+        <p class="quote-text">"Trong workflow hiện tại của team, AI đang giúp tiết kiệm thời gian hay đang tạo thêm việc?"</p>
       </div>
       <div class="stat-list">
-        <div class="stat-list-card shimmer-fast glow-card">
-          <div class="ic-wrap">❓</div>
-          <div class="num">78%</div>
-          <div class="details">
-            <div class="title">Tin rằng AI giúp ích</div>
-            <div class="desc">Phần lớn người dùng thấy AI cải thiện workflow.</div>
-          </div>
-        </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">🤔</div>
-          <div class="num">22%</div>
-          <div class="details">
-            <div class="title">Còn nghi ngờ</div>
-            <div class="desc">Một số người cho rằng AI chưa đủ tối ưu.</div>
-          </div>
-        </div>
+        <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">🤔</div><div class="num">75%</div><div class="details"><div class="title">Team cho rằng</div><div class="desc">AI giúp tiết kiệm thời gian</div></div></div>
+        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">🔄</div><div class="num">25%</div><div class="details"><div class="title">Khác</div><div class="desc">Cần cải thiện workflow</div></div></div>
       </div>
     </div>
   </div>
-  <div class="corner-bracket tl"></div>
-  <div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div>
-  <div class="corner-bracket br"></div>
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">14</span>
 </div>
@@ -1727,5 +1693,545 @@ body {
 <!-- __SCENES_PLACEHOLDER__ -->
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js"></script>
+<script>
+// Sole timeline injected by TechBeat build pipeline.
+// The LLM's original timeline script has been stripped server-side so this
+// is the ONLY timeline registered on window.__timelines["main"].
+(function() {
+  var starts    = [0, 19, 47, 68, 88, 106, 125, 145, 159, 172, 190, 203, 218, 233];
+  var durs      = [19, 28, 21, 20, 18, 19, 20, 14, 13, 18, 13, 15, 15, 16];
+  var actualDurs= [17.784, 26.376, 19.704, 18.048, 16.464, 17.376, 18.264, 12.264, 11.064, 16.296, 11.592, 13.296, 13.536, 14.232];
+  var narrations= ["Chúng ta đã đi qua toàn bộ nội dung chính của buổi training. Bây giờ, hãy quay lại câu hỏi ban đầu. AI đã là tool mặc định trong công việc hằng ngày. Nhưng điều quan trọng không phải là có dùng AI hay không. Điều quan trọng là: Chúng ta có đang dùng AI một cách có kiểm soát không?", "Đầu buổi, chúng ta nói về một vòng lặp rất quen thuộc. Mình prompt AI quá ngắn. AI thiếu context. AI tự đoán. Code sinh ra nhìn có vẻ đúng. Nhưng khi đưa vào project thật, bug bắt đầu xuất hiện. Sau đó mình lại prompt tiếp để AI fix bug. AI sửa thêm file. Bug lan rộng hơn. Và cuối cùng, việc đáng lẽ giúp tiết kiệm thời gian lại trở thành việc tốn thời gian hơn tự code. Đó là vấn đề buổi hôm nay cần giải quyết.", "Câu hỏi đầu tiên là: Khi prompt AI, mình đang giao task rõ ràng chưa? Sau buổi hôm nay, câu trả lời không còn là cảm tính nữa. Một prompt tốt cần có mục tiêu rõ. Cần có context của project. Cần nói rõ task phải làm. Cần có ràng buộc. Và cần nói rõ output mình muốn nhận. AI không thể đọc suy nghĩ của mình.", "Câu hỏi thứ hai là: Khi AI sửa code, mình có biết nó sửa gì và vì sao không? Nếu câu trả lời là không, thì mình đang mất kiểm soát. Cách giải quyết là: Plan trước, Code sau. Hãy yêu cầu AI trình bày kế hoạch, liệt kê các file sẽ tạo hoặc sửa, và mô tả rủi ro trước khi để AI thực hiện.", "Câu hỏi thứ ba là: Với feature lớn, mình có đang bắt AI làm quá nhiều trong một lần không? Đừng dùng một prompt dài cho cả feature lớn. Chúng ta cần chia việc thành bốn bước: Plan, Phase, Task, Verify. Điều này giúp AI làm việc an toàn hơn và giảm thiểu rủi ro.", "Câu hỏi thứ tư là: Khi review code AI, mình có verify thật không? Hay chỉ đọc code, thấy sạch, thấy comment đẹp, rồi tin? Đây là cái bẫy lớn nhất. Verify phải gồm ba việc: đọc từng dòng quan trọng, chạy thử hành vi thật, và test edge case. Nếu không chạy thử, đó chưa phải verify.", "Nếu phải gom cả buổi hôm nay thành một mindset, thì đó là câu này. AI là một junior dev rất nhanh. Nhưng bạn là tech lead. AI có thể code nhanh, nhưng không hiểu toàn bộ project như bạn. Người chịu trách nhiệm cuối cùng vẫn là developer. Đừng dùng AI như một người quyết định thay mình.", "Sau buổi hôm nay, chúng ta có ba cấp độ để áp dụng: Prompt, Workflow, Skill. Mỗi cấp độ có vai trò riêng trong việc tối ưu hóa quy trình làm việc với AI và giúp cả team sử dụng AI thống nhất hơn.", "Nếu sau buổi này chỉ nhớ ba điều, hãy nhớ ba điều này: Brief rõ, đừng hỏi mơ hồ. Plan trước, Code sau. Verify hành vi thật. Ba điều này đủ để giảm rất nhiều bug do AI tạo ra.", "Sau buổi training, điều quan trọng nhất là áp dụng ngay vào công việc tuần này. Hãy viết prompt rõ hơn, yêu cầu Plan trước Code và kiểm tra hành vi thật của code AI. Làm được ba việc này trong tuần này, workflow làm việc với AI của team đã tốt hơn rất nhiều.", "Với feature lớn, đừng prompt một lần rồi giao hết cho AI. Hãy bắt đầu bằng overview, rồi chia thành phase và task. Khi task đủ nhỏ, AI mới có thể hỗ trợ tốt và mình mới có thể review thật.", "Bây giờ quay lại ba câu hỏi quan trọng nhất đầu buổi. AI sẽ làm gì? Task phải rõ. Output phải rõ. AI được phép sửa gì? Scope phải rõ. Làm sao biết output của AI là đúng? Phải có acceptance criteria và verify.", "Thông điệp cuối cùng của buổi hôm nay là: AI không phải để tin tuyệt đối. AI là để giao việc, thảo luận, kiểm soát và verify. Khi dùng đúng, AI giúp chúng ta làm nhanh hơn. Khi dùng sai, AI tạo thêm việc cho chúng ta.", "Bây giờ chúng ta chuyển sang phần Q and A. Trước khi hỏi, mọi người có thể tự nghĩ một câu. Trong workflow hiện tại của team mình, AI đang thật sự giúp tiết kiệm thời gian? Hay đôi khi, AI đang tạo thêm việc để mình phải sửa lại?"];
+  var total     = 249;
+  // Word-level Whisper data. Each entry: [{word,start,end},...] or []
+  var wordData  = [[{"word":"Chúng","start":0.000,"end":0.240},{"word":"ta","start":0.240,"end":0.360},{"word":"đã","start":0.360,"end":0.500},{"word":"đi","start":0.500,"end":0.720},{"word":"qua","start":0.720,"end":0.840},{"word":"toàn","start":0.840,"end":1.060},{"word":"bộ","start":1.060,"end":1.240},{"word":"nội","start":1.240,"end":1.420},{"word":"dung","start":1.420,"end":1.540},{"word":"chính","start":1.540,"end":1.860},{"word":"của","start":1.860,"end":2.060},{"word":"buổi","start":2.060,"end":2.220},{"word":"training.","start":2.220,"end":2.620},{"word":"Bây","start":3.360,"end":3.380},{"word":"giờ,","start":3.380,"end":3.500},{"word":"hãy","start":3.640,"end":3.760},{"word":"quay","start":3.760,"end":3.920},{"word":"lại","start":3.920,"end":4.100},{"word":"câu","start":4.100,"end":4.280},{"word":"hỏi","start":4.280,"end":4.420},{"word":"ban","start":4.420,"end":4.700},{"word":"đầu.","start":4.700,"end":4.820},{"word":"AI","start":6.260,"end":6.440},{"word":"đã","start":6.440,"end":6.600},{"word":"là","start":6.600,"end":6.780},{"word":"tool","start":6.780,"end":7.020},{"word":"mặc","start":7.020,"end":7.280},{"word":"định","start":7.280,"end":7.440},{"word":"trong","start":7.440,"end":7.800},{"word":"công","start":7.800,"end":7.980},{"word":"việc","start":7.980,"end":8.160},{"word":"hằng","start":8.160,"end":8.400},{"word":"ngày.","start":8.400,"end":8.620},{"word":"Nhưng","start":9.800,"end":9.880},{"word":"điều","start":9.880,"end":10.080},{"word":"quan","start":10.080,"end":10.280},{"word":"trọng","start":10.280,"end":10.480},{"word":"không","start":10.480,"end":10.720},{"word":"phải","start":10.720,"end":10.960},{"word":"là","start":10.960,"end":11.240},{"word":"có","start":11.240,"end":11.420},{"word":"dùng","start":11.420,"end":11.600},{"word":"AI","start":11.600,"end":11.980},{"word":"hay","start":11.980,"end":12.200},{"word":"không.","start":12.200,"end":12.440},{"word":"Điều","start":13.380,"end":13.400},{"word":"quan","start":13.400,"end":13.600},{"word":"trọng","start":13.600,"end":13.780},{"word":"là:","start":13.780,"end":14.080},{"word":"Chúng","start":14.080,"end":14.540},{"word":"ta","start":14.540,"end":14.660},{"word":"có","start":14.660,"end":14.800},{"word":"đang","start":14.800,"end":15.000},{"word":"dùng","start":15.000,"end":15.160},{"word":"AI","start":15.160,"end":15.540},{"word":"một","start":15.540,"end":15.800},{"word":"cách","start":15.800,"end":15.920},{"word":"có","start":15.920,"end":16.280},{"word":"kiểm","start":16.280,"end":16.460},{"word":"soát","start":16.460,"end":16.700},{"word":"không?","start":16.700,"end":16.940}],[{"word":"Đầu","start":0.000,"end":0.240},{"word":"buổi,","start":0.240,"end":0.480},{"word":"chúng","start":0.720,"end":0.760},{"word":"ta","start":0.760,"end":0.900},{"word":"nói","start":0.900,"end":1.120},{"word":"về","start":1.120,"end":1.340},{"word":"một","start":1.340,"end":1.520},{"word":"vòng","start":1.520,"end":1.640},{"word":"lặp","start":1.640,"end":1.840},{"word":"rất","start":1.840,"end":2.100},{"word":"quen","start":2.100,"end":2.240},{"word":"thuộc.","start":2.240,"end":2.500},{"word":"Mình","start":3.340,"end":3.340},{"word":"prompt","start":3.340,"end":3.660},{"word":"AI","start":3.660,"end":4.040},{"word":"quá","start":4.040,"end":4.300},{"word":"ngắn.","start":4.300,"end":4.500},{"word":"AI","start":5.100,"end":5.340},{"word":"thiếu","start":5.340,"end":5.500},{"word":"context.","start":5.500,"end":6.120},{"word":"AI","start":6.580,"end":6.820},{"word":"tự","start":6.820,"end":7.000},{"word":"đoán.","start":7.000,"end":7.300},{"word":"Code","start":8.020,"end":8.060},{"word":"sinh","start":8.060,"end":8.300},{"word":"ra","start":8.300,"end":8.500},{"word":"nhìn","start":8.500,"end":8.680},{"word":"có","start":8.680,"end":9.000},{"word":"vẻ","start":9.000,"end":9.000},{"word":"đúng.","start":9.000,"end":9.280},{"word":"Nhưng","start":10.000,"end":10.160},{"word":"khi","start":10.160,"end":10.320},{"word":"đưa","start":10.320,"end":10.500},{"word":"vào","start":10.500,"end":10.640},{"word":"project","start":10.640,"end":11.100},{"word":"thật,","start":11.100,"end":11.340},{"word":"bug","start":11.800,"end":11.800},{"word":"bắt","start":11.800,"end":11.980},{"word":"đầu","start":11.980,"end":12.120},{"word":"xuất","start":12.120,"end":12.340},{"word":"hiện.","start":12.340,"end":12.540},{"word":"Sau","start":13.240,"end":13.240},{"word":"đó","start":13.240,"end":13.420},{"word":"mình","start":13.420,"end":13.620},{"word":"lại","start":13.620,"end":13.880},{"word":"prompt","start":13.880,"end":14.120},{"word":"tiếp","start":14.120,"end":14.380},{"word":"để","start":14.380,"end":14.560},{"word":"AI","start":14.560,"end":14.880},{"word":"fix","start":14.880,"end":15.180},{"word":"bug.","start":15.180,"end":15.440},{"word":"AI","start":16.080,"end":16.340},{"word":"sửa","start":16.340,"end":16.540},{"word":"thêm","start":16.540,"end":16.680},{"word":"file.","start":16.680,"end":17.120},{"word":"Bug","start":17.800,"end":17.940},{"word":"lan","start":17.940,"end":18.160},{"word":"rộng","start":18.160,"end":18.380},{"word":"hơn.","start":18.380,"end":18.640},{"word":"Và","start":18.960,"end":19.120},{"word":"cuối","start":19.120,"end":19.320},{"word":"cùng,","start":19.320,"end":19.540},{"word":"việc","start":19.920,"end":19.980},{"word":"đáng","start":19.980,"end":20.220},{"word":"lẽ","start":20.220,"end":20.400},{"word":"giúp","start":20.400,"end":20.640},{"word":"tiết","start":20.640,"end":20.820},{"word":"kiệm","start":20.820,"end":21.000},{"word":"thời","start":21.000,"end":21.180},{"word":"gian","start":21.180,"end":21.440},{"word":"lại","start":21.440,"end":21.820},{"word":"trở","start":21.820,"end":21.960},{"word":"thành","start":21.960,"end":22.080},{"word":"việc","start":22.080,"end":22.360},{"word":"tốn","start":22.360,"end":22.540},{"word":"thời","start":22.540,"end":22.820},{"word":"gian","start":22.820,"end":22.940},{"word":"hơn","start":22.940,"end":23.180},{"word":"tự","start":23.180,"end":23.440},{"word":"code.","start":23.440,"end":23.720},{"word":"Đó","start":24.600,"end":24.660},{"word":"là","start":24.660,"end":24.880},{"word":"vấn","start":24.880,"end":24.920},{"word":"đề","start":24.920,"end":25.040},{"word":"buổi","start":25.040,"end":25.300},{"word":"hôm","start":25.300,"end":25.440},{"word":"nay","start":25.440,"end":25.620},{"word":"cần","start":25.620,"end":25.840},{"word":"giải","start":25.840,"end":26.060},{"word":"quyết.","start":26.060,"end":26.260}],[{"word":"Câu","start":0.000,"end":0.180},{"word":"hỏi","start":0.180,"end":0.280},{"word":"đầu","start":0.280,"end":0.480},{"word":"tiên","start":0.480,"end":0.640},{"word":"là:","start":0.640,"end":0.940},{"word":"Khi","start":1.720,"end":1.820},{"word":"prompt","start":1.820,"end":2.120},{"word":"AI,","start":2.120,"end":2.500},{"word":"mình","start":2.860,"end":2.860},{"word":"đang","start":2.860,"end":3.040},{"word":"giao","start":3.040,"end":3.220},{"word":"task","start":3.220,"end":3.520},{"word":"rõ","start":3.520,"end":3.700},{"word":"ràng","start":3.700,"end":3.920},{"word":"chưa?","start":3.920,"end":4.200},{"word":"Sau","start":5.280,"end":5.320},{"word":"buổi","start":5.320,"end":5.460},{"word":"hôm","start":5.460,"end":5.580},{"word":"nay,","start":5.580,"end":5.880},{"word":"câu","start":6.180,"end":6.220},{"word":"trả","start":6.220,"end":6.400},{"word":"lời","start":6.400,"end":6.540},{"word":"không","start":6.540,"end":6.860},{"word":"còn","start":6.860,"end":7.040},{"word":"là","start":7.040,"end":7.220},{"word":"cảm","start":7.220,"end":7.480},{"word":"tính","start":7.480,"end":7.580},{"word":"nữa.","start":7.580,"end":7.860},{"word":"Một","start":8.800,"end":8.800},{"word":"prompt","start":8.800,"end":9.000},{"word":"tốt","start":9.000,"end":9.240},{"word":"cần","start":9.240,"end":9.400},{"word":"có","start":9.400,"end":9.660},{"word":"mục","start":9.660,"end":9.760},{"word":"tiêu","start":9.760,"end":9.960},{"word":"rõ.","start":9.960,"end":10.220},{"word":"Cần","start":10.920,"end":10.920},{"word":"có","start":10.920,"end":11.080},{"word":"context","start":11.080,"end":11.540},{"word":"của","start":11.540,"end":11.700},{"word":"project.","start":11.700,"end":12.260},{"word":"Cần","start":12.760,"end":12.800},{"word":"nói","start":12.800,"end":13.000},{"word":"rõ","start":13.000,"end":13.120},{"word":"task","start":13.120,"end":13.560},{"word":"phải","start":13.560,"end":13.720},{"word":"làm.","start":13.720,"end":14.020},{"word":"Cần","start":14.440,"end":14.440},{"word":"có","start":14.440,"end":14.620},{"word":"ràng","start":14.620,"end":14.820},{"word":"buộc.","start":14.820,"end":15.140},{"word":"Và","start":15.320,"end":15.520},{"word":"cần","start":15.520,"end":15.640},{"word":"nói","start":15.640,"end":15.800},{"word":"rõ","start":15.800,"end":15.980},{"word":"output","start":15.980,"end":16.540},{"word":"mình","start":16.540,"end":16.800},{"word":"muốn","start":16.800,"end":16.960},{"word":"nhận.","start":16.960,"end":17.840},{"word":"AI","start":18.040,"end":18.240},{"word":"không","start":18.240,"end":18.440},{"word":"thể","start":18.440,"end":18.620},{"word":"đọc","start":18.620,"end":18.760},{"word":"suy","start":18.760,"end":19.000},{"word":"nghĩ","start":19.000,"end":19.120},{"word":"của","start":19.120,"end":19.360},{"word":"mình.","start":19.360,"end":19.480}],[{"word":"Câu","start":0.000,"end":0.220},{"word":"hỏi","start":0.220,"end":0.300},{"word":"thứ","start":0.300,"end":0.540},{"word":"hai","start":0.540,"end":0.680},{"word":"là:","start":0.680,"end":0.960},{"word":"Khi","start":1.620,"end":1.760},{"word":"AI","start":1.760,"end":2.100},{"word":"sửa","start":2.100,"end":2.400},{"word":"code,","start":2.400,"end":2.640},{"word":"mình","start":2.900,"end":2.980},{"word":"có","start":2.980,"end":3.200},{"word":"biết","start":3.200,"end":3.300},{"word":"nó","start":3.300,"end":3.480},{"word":"sửa","start":3.480,"end":3.720},{"word":"gì","start":3.720,"end":3.920},{"word":"và","start":3.920,"end":4.080},{"word":"vì","start":4.080,"end":4.240},{"word":"sao","start":4.240,"end":4.440},{"word":"không?","start":4.440,"end":4.680},{"word":"Nếu","start":5.460,"end":5.600},{"word":"câu","start":5.600,"end":5.760},{"word":"trả","start":5.760,"end":5.940},{"word":"lời","start":5.940,"end":6.020},{"word":"là","start":6.020,"end":6.220},{"word":"không,","start":6.220,"end":6.480},{"word":"thì","start":6.700,"end":6.800},{"word":"mình","start":6.800,"end":6.920},{"word":"đang","start":6.920,"end":7.100},{"word":"mất","start":7.100,"end":7.220},{"word":"kiểm","start":7.220,"end":7.440},{"word":"soát.","start":7.440,"end":7.980},{"word":"Cách","start":8.260,"end":8.260},{"word":"giải","start":8.260,"end":8.420},{"word":"quyết","start":8.420,"end":8.580},{"word":"là:","start":8.580,"end":8.920},{"word":"Plan","start":9.440,"end":9.440},{"word":"trước,","start":9.440,"end":9.700},{"word":"Code","start":10.320,"end":10.460},{"word":"sau.","start":10.460,"end":10.680},{"word":"Hãy","start":11.740,"end":11.740},{"word":"yêu","start":11.740,"end":11.780},{"word":"cầu","start":11.780,"end":11.940},{"word":"AI","start":11.940,"end":12.360},{"word":"trình","start":12.360,"end":12.580},{"word":"bày","start":12.580,"end":12.720},{"word":"kế","start":12.720,"end":12.960},{"word":"hoạch,","start":12.960,"end":13.180},{"word":"liệt","start":13.660,"end":13.680},{"word":"kê","start":13.680,"end":13.820},{"word":"các","start":13.820,"end":14.020},{"word":"file","start":14.020,"end":14.220},{"word":"sẽ","start":14.220,"end":14.440},{"word":"tạo","start":14.440,"end":14.640},{"word":"hoặc","start":14.640,"end":14.900},{"word":"sửa,","start":14.900,"end":15.260},{"word":"và","start":15.480,"end":15.620},{"word":"mô","start":15.620,"end":15.780},{"word":"tả","start":15.780,"end":15.940},{"word":"rủi","start":15.940,"end":16.280},{"word":"ro","start":16.280,"end":16.400},{"word":"trước","start":16.400,"end":16.640},{"word":"khi","start":16.640,"end":16.840},{"word":"để","start":16.840,"end":17.080},{"word":"AI","start":17.080,"end":17.340},{"word":"thực","start":17.340,"end":17.560},{"word":"hiện.","start":17.560,"end":17.740}],[{"word":"Câu","start":0.000,"end":0.200},{"word":"hỏi","start":0.200,"end":0.300},{"word":"thứ","start":0.300,"end":0.500},{"word":"ba","start":0.500,"end":0.640},{"word":"là:","start":0.640,"end":0.920},{"word":"Với","start":1.100,"end":1.160},{"word":"feature","start":1.160,"end":1.480},{"word":"lớn,","start":1.480,"end":1.780},{"word":"mình","start":2.020,"end":2.140},{"word":"có","start":2.140,"end":2.280},{"word":"đang","start":2.280,"end":2.500},{"word":"bắt","start":2.500,"end":2.580},{"word":"AI","start":2.580,"end":2.860},{"word":"làm","start":2.860,"end":3.060},{"word":"quá","start":3.060,"end":3.280},{"word":"nhiều","start":3.280,"end":3.480},{"word":"trong","start":3.480,"end":3.660},{"word":"một","start":3.660,"end":3.820},{"word":"lần","start":3.820,"end":3.960},{"word":"không?","start":3.960,"end":4.180},{"word":"Đừng","start":4.840,"end":4.860},{"word":"dùng","start":4.860,"end":5.040},{"word":"một","start":5.040,"end":5.280},{"word":"prompt","start":5.280,"end":5.520},{"word":"dài","start":5.520,"end":5.800},{"word":"cho","start":5.800,"end":6.120},{"word":"cả","start":6.120,"end":6.300},{"word":"feature","start":6.300,"end":6.600},{"word":"lớn.","start":6.600,"end":7.160},{"word":"Chúng","start":8.120,"end":8.120},{"word":"ta","start":8.120,"end":8.280},{"word":"cần","start":8.280,"end":8.420},{"word":"chia","start":8.420,"end":8.580},{"word":"việc","start":8.580,"end":8.740},{"word":"thành","start":8.740,"end":8.920},{"word":"bốn","start":8.920,"end":9.120},{"word":"bước:","start":9.120,"end":9.360},{"word":"Plan,","start":10.180,"end":10.180},{"word":"Phase,","start":10.180,"end":11.460},{"word":"Task,","start":11.460,"end":11.880},{"word":"Verify.","start":12.200,"end":12.640},{"word":"Điều","start":13.400,"end":13.400},{"word":"này","start":13.400,"end":13.560},{"word":"giúp","start":13.560,"end":13.700},{"word":"AI","start":13.700,"end":14.040},{"word":"làm","start":14.040,"end":14.220},{"word":"việc","start":14.220,"end":14.400},{"word":"an","start":14.400,"end":14.600},{"word":"toàn","start":14.600,"end":14.780},{"word":"hơn","start":14.780,"end":15.100},{"word":"và","start":15.100,"end":15.480},{"word":"giảm","start":15.480,"end":15.660},{"word":"thiểu","start":15.660,"end":15.820},{"word":"rủi","start":15.820,"end":16.160},{"word":"ro.","start":16.160,"end":16.220}],[{"word":"Câu","start":0.000,"end":0.220},{"word":"hỏi","start":0.220,"end":0.300},{"word":"thứ","start":0.300,"end":0.500},{"word":"tư","start":0.500,"end":0.600},{"word":"là:","start":0.600,"end":0.980},{"word":"Khi","start":1.380,"end":1.380},{"word":"review","start":1.380,"end":1.700},{"word":"code","start":1.700,"end":1.980},{"word":"AI,","start":1.980,"end":2.420},{"word":"mình","start":2.880,"end":3.000},{"word":"có","start":3.000,"end":3.200},{"word":"verify","start":3.200,"end":3.560},{"word":"thật","start":3.560,"end":3.780},{"word":"không?","start":3.780,"end":4.040},{"word":"Hay","start":4.640,"end":4.720},{"word":"chỉ","start":4.720,"end":4.960},{"word":"đọc","start":4.960,"end":5.040},{"word":"code,","start":5.040,"end":5.420},{"word":"thấy","start":5.560,"end":5.660},{"word":"sạch,","start":5.660,"end":6.060},{"word":"thấy","start":6.060,"end":6.140},{"word":"comment","start":6.140,"end":6.380},{"word":"đẹp,","start":6.380,"end":6.660},{"word":"rồi","start":6.700,"end":6.860},{"word":"tin?","start":6.860,"end":7.080},{"word":"Đây","start":7.740,"end":7.860},{"word":"là","start":7.860,"end":7.980},{"word":"cái","start":7.980,"end":8.200},{"word":"bẫy","start":8.200,"end":8.200},{"word":"lớn","start":8.200,"end":8.440},{"word":"nhất.","start":8.440,"end":8.640},{"word":"Verify","start":9.100,"end":9.360},{"word":"phải","start":9.360,"end":9.520},{"word":"gồm","start":9.520,"end":9.640},{"word":"ba","start":9.640,"end":9.900},{"word":"việc:","start":9.900,"end":10.100},{"word":"đọc","start":10.900,"end":10.900},{"word":"từng","start":10.900,"end":11.220},{"word":"dòng","start":11.220,"end":11.220},{"word":"quan","start":11.220,"end":11.460},{"word":"trọng,","start":11.460,"end":11.700},{"word":"chạy","start":12.140,"end":12.140},{"word":"thử","start":12.140,"end":12.260},{"word":"hành","start":12.260,"end":12.460},{"word":"vi","start":12.460,"end":12.600},{"word":"thật,","start":12.600,"end":12.840},{"word":"và","start":13.060,"end":13.340},{"word":"test","start":13.340,"end":13.580},{"word":"edge","start":13.580,"end":13.960},{"word":"case.","start":13.960,"end":14.260},{"word":"Nếu","start":15.160,"end":15.180},{"word":"không","start":15.180,"end":15.400},{"word":"chạy","start":15.400,"end":15.580},{"word":"thử,","start":15.580,"end":15.800},{"word":"đó","start":16.220,"end":16.440},{"word":"chưa","start":16.440,"end":16.600},{"word":"phải","start":16.600,"end":16.760},{"word":"verify.","start":16.760,"end":17.280}],[{"word":"Nếu","start":0.000,"end":0.200},{"word":"phải","start":0.200,"end":0.360},{"word":"gom","start":0.360,"end":0.580},{"word":"cả","start":0.580,"end":0.760},{"word":"buổi","start":0.760,"end":0.920},{"word":"hôm","start":0.920,"end":1.100},{"word":"nay","start":1.100,"end":1.280},{"word":"thành","start":1.280,"end":1.480},{"word":"một","start":1.480,"end":1.680},{"word":"mindset,","start":1.680,"end":2.220},{"word":"thì","start":2.400,"end":2.560},{"word":"đó","start":2.560,"end":2.680},{"word":"là","start":2.680,"end":2.880},{"word":"câu","start":2.880,"end":2.940},{"word":"này.","start":2.940,"end":3.200},{"word":"AI","start":4.080,"end":4.200},{"word":"là","start":4.200,"end":4.340},{"word":"một","start":4.340,"end":4.540},{"word":"junior","start":4.540,"end":4.820},{"word":"dev","start":4.820,"end":5.040},{"word":"rất","start":5.040,"end":5.280},{"word":"nhanh.","start":5.280,"end":5.920},{"word":"Nhưng","start":6.080,"end":6.200},{"word":"bạn","start":6.200,"end":6.340},{"word":"là","start":6.340,"end":6.500},{"word":"tech","start":6.500,"end":6.780},{"word":"lead.","start":6.780,"end":7.000},{"word":"AI","start":8.060,"end":8.240},{"word":"có","start":8.240,"end":8.400},{"word":"thể","start":8.400,"end":8.500},{"word":"code","start":8.500,"end":8.820},{"word":"nhanh,","start":8.820,"end":9.100},{"word":"nhưng","start":9.440,"end":9.620},{"word":"không","start":9.620,"end":9.820},{"word":"hiểu","start":9.820,"end":10.020},{"word":"toàn","start":10.020,"end":10.240},{"word":"bộ","start":10.240,"end":10.360},{"word":"project","start":10.360,"end":10.840},{"word":"như","start":10.840,"end":11.020},{"word":"bạn.","start":11.020,"end":11.200},{"word":"Người","start":12.280,"end":12.280},{"word":"chịu","start":12.280,"end":12.520},{"word":"trách","start":12.520,"end":12.640},{"word":"nhiệm","start":12.640,"end":12.860},{"word":"cuối","start":12.860,"end":13.120},{"word":"cùng","start":13.120,"end":13.300},{"word":"vẫn","start":13.300,"end":13.560},{"word":"là","start":13.560,"end":13.800},{"word":"developer.","start":13.800,"end":14.360},{"word":"Đừng","start":15.700,"end":15.700},{"word":"dùng","start":15.700,"end":15.960},{"word":"AI","start":15.960,"end":16.620},{"word":"như","start":16.620,"end":16.960},{"word":"một","start":16.960,"end":17.140},{"word":"người","start":17.140,"end":17.320},{"word":"quyết","start":17.320,"end":17.520},{"word":"định","start":17.520,"end":17.640},{"word":"thay","start":17.640,"end":17.880},{"word":"mình.","start":17.880,"end":18.080}],[{"word":"Sau","start":0.000,"end":0.240},{"word":"buổi","start":0.240,"end":0.400},{"word":"hôm","start":0.400,"end":0.520},{"word":"nay,","start":0.520,"end":0.780},{"word":"chúng","start":1.240,"end":1.260},{"word":"ta","start":1.260,"end":1.380},{"word":"có","start":1.380,"end":1.500},{"word":"ba","start":1.500,"end":1.740},{"word":"cấp","start":1.740,"end":1.880},{"word":"độ","start":1.880,"end":2.060},{"word":"để","start":2.060,"end":2.260},{"word":"áp","start":2.260,"end":2.400},{"word":"dụng:","start":2.400,"end":2.620},{"word":"Prompt,","start":3.460,"end":3.500},{"word":"Workflow,","start":3.900,"end":4.340},{"word":"Skill.","start":5.120,"end":5.520},{"word":"Mỗi","start":6.420,"end":6.420},{"word":"cấp","start":6.420,"end":6.560},{"word":"độ","start":6.560,"end":6.760},{"word":"có","start":6.760,"end":6.920},{"word":"vai","start":6.920,"end":7.080},{"word":"trò","start":7.080,"end":7.220},{"word":"riêng","start":7.220,"end":7.540},{"word":"trong","start":7.540,"end":7.740},{"word":"việc","start":7.740,"end":7.960},{"word":"tối","start":7.960,"end":8.120},{"word":"ưu","start":8.120,"end":8.340},{"word":"hóa","start":8.340,"end":8.480},{"word":"quy","start":8.480,"end":8.640},{"word":"trình","start":8.640,"end":8.760},{"word":"làm","start":8.760,"end":8.960},{"word":"việc","start":8.960,"end":9.160},{"word":"với","start":9.160,"end":9.400},{"word":"AI","start":9.400,"end":9.820},{"word":"và","start":9.820,"end":10.160},{"word":"giúp","start":10.160,"end":10.280},{"word":"cả","start":10.280,"end":10.480},{"word":"team","start":10.480,"end":10.700},{"word":"sử","start":10.700,"end":10.900},{"word":"dụng","start":10.900,"end":11.020},{"word":"AI","start":11.020,"end":11.420},{"word":"thống","start":11.420,"end":11.660},{"word":"nhất","start":11.660,"end":11.880},{"word":"hơn.","start":11.880,"end":12.040}],[{"word":"Nếu","start":0.000,"end":0.200},{"word":"sau","start":0.200,"end":0.400},{"word":"buổi","start":0.400,"end":0.520},{"word":"này","start":0.520,"end":0.680},{"word":"chỉ","start":0.680,"end":0.860},{"word":"nhớ","start":0.860,"end":0.940},{"word":"ba","start":0.940,"end":1.160},{"word":"điều,","start":1.160,"end":1.340},{"word":"hãy","start":1.800,"end":1.880},{"word":"nhớ","start":1.880,"end":1.960},{"word":"ba","start":1.960,"end":2.160},{"word":"điều","start":2.160,"end":2.240},{"word":"này:","start":2.240,"end":2.540},{"word":"Brief","start":3.160,"end":3.260},{"word":"rõ,","start":3.260,"end":3.500},{"word":"đừng","start":3.960,"end":3.960},{"word":"hỏi","start":3.960,"end":4.100},{"word":"mơ","start":4.100,"end":4.360},{"word":"hồ.","start":4.360,"end":4.500},{"word":"Plan","start":5.100,"end":5.140},{"word":"trước,","start":5.140,"end":5.440},{"word":"Code","start":5.780,"end":5.900},{"word":"sau.","start":5.900,"end":6.160},{"word":"Verify","start":7.020,"end":7.020},{"word":"hành","start":7.020,"end":7.260},{"word":"vi","start":7.260,"end":7.380},{"word":"thật.","start":7.380,"end":7.680},{"word":"Ba","start":8.440,"end":8.440},{"word":"điều","start":8.440,"end":8.520},{"word":"này","start":8.520,"end":8.780},{"word":"đủ","start":8.780,"end":8.900},{"word":"để","start":8.900,"end":9.220},{"word":"giảm","start":9.220,"end":9.360},{"word":"rất","start":9.360,"end":9.520},{"word":"nhiều","start":9.520,"end":9.640},{"word":"bug","start":9.640,"end":9.920},{"word":"do","start":9.920,"end":10.080},{"word":"AI","start":10.080,"end":10.320},{"word":"tạo","start":10.320,"end":10.540},{"word":"ra.","start":10.540,"end":10.800}],[{"word":"Sau","start":0.000,"end":0.300},{"word":"buổi","start":0.300,"end":0.440},{"word":"training,","start":0.440,"end":0.840},{"word":"điều","start":1.200,"end":1.200},{"word":"quan","start":1.200,"end":1.420},{"word":"trọng","start":1.420,"end":1.560},{"word":"nhất","start":1.560,"end":1.780},{"word":"là","start":1.780,"end":2.000},{"word":"áp","start":2.000,"end":2.160},{"word":"dụng","start":2.160,"end":2.360},{"word":"ngay","start":2.360,"end":2.580},{"word":"vào","start":2.580,"end":2.820},{"word":"công","start":2.820,"end":2.960},{"word":"việc","start":2.960,"end":3.100},{"word":"tuần","start":3.100,"end":3.300},{"word":"này.","start":3.300,"end":3.580},{"word":"Hãy","start":4.660,"end":4.660},{"word":"viết","start":4.660,"end":4.760},{"word":"prompt","start":4.760,"end":5.200},{"word":"rõ","start":5.200,"end":5.520},{"word":"hơn,","start":5.520,"end":5.780},{"word":"yêu","start":6.340,"end":6.340},{"word":"cầu","start":6.340,"end":6.420},{"word":"Plan","start":6.420,"end":6.800},{"word":"trước","start":6.800,"end":6.960},{"word":"Code","start":6.960,"end":7.320},{"word":"và","start":7.780,"end":7.960},{"word":"kiểm","start":7.960,"end":8.160},{"word":"tra","start":8.160,"end":8.300},{"word":"hành","start":8.300,"end":8.520},{"word":"vi","start":8.520,"end":8.720},{"word":"thật","start":8.720,"end":9.140},{"word":"của","start":9.140,"end":9.320},{"word":"code","start":9.320,"end":9.640},{"word":"AI.","start":9.640,"end":10.020},{"word":"Làm","start":11.560,"end":11.600},{"word":"được","start":11.600,"end":11.720},{"word":"ba","start":11.720,"end":11.900},{"word":"việc","start":11.900,"end":12.060},{"word":"này","start":12.060,"end":12.440},{"word":"trong","start":12.440,"end":12.600},{"word":"tuần","start":12.600,"end":12.720},{"word":"này,","start":12.720,"end":13.000},{"word":"workflow","start":13.480,"end":13.780},{"word":"làm","start":13.780,"end":14.020},{"word":"việc","start":14.020,"end":14.220},{"word":"với","start":14.220,"end":14.400},{"word":"AI","start":14.400,"end":14.700},{"word":"của","start":14.700,"end":14.860},{"word":"team","start":14.860,"end":15.100},{"word":"đã","start":15.100,"end":15.320},{"word":"tốt","start":15.320,"end":15.480},{"word":"hơn","start":15.480,"end":15.680},{"word":"rất","start":15.680,"end":15.860},{"word":"nhiều.","start":15.860,"end":16.080}],[{"word":"Với","start":0.000,"end":0.180},{"word":"feature","start":0.180,"end":0.520},{"word":"lớn,","start":0.520,"end":0.860},{"word":"đừng","start":1.140,"end":1.140},{"word":"prompt","start":1.140,"end":1.460},{"word":"một","start":1.460,"end":1.680},{"word":"lần","start":1.680,"end":1.800},{"word":"rồi","start":1.800,"end":2.060},{"word":"giao","start":2.060,"end":2.240},{"word":"hết","start":2.240,"end":2.460},{"word":"cho","start":2.460,"end":2.640},{"word":"AI.","start":2.640,"end":3.000},{"word":"Hãy","start":3.680,"end":3.700},{"word":"bắt","start":3.700,"end":3.860},{"word":"đầu","start":3.860,"end":4.040},{"word":"bằng","start":4.040,"end":4.200},{"word":"overview,","start":4.200,"end":4.780},{"word":"rồi","start":5.220,"end":5.420},{"word":"chia","start":5.420,"end":5.600},{"word":"thành","start":5.600,"end":5.820},{"word":"phase","start":5.820,"end":6.280},{"word":"và","start":6.280,"end":6.520},{"word":"task.","start":6.520,"end":6.940},{"word":"Khi","start":7.900,"end":7.900},{"word":"task","start":7.900,"end":8.200},{"word":"đủ","start":8.200,"end":8.360},{"word":"nhỏ,","start":8.360,"end":8.660},{"word":"AI","start":9.000,"end":9.120},{"word":"mới","start":9.120,"end":9.280},{"word":"có","start":9.280,"end":9.540},{"word":"thể","start":9.540,"end":9.540},{"word":"hỗ","start":9.540,"end":9.700},{"word":"trợ","start":9.700,"end":9.840},{"word":"tốt","start":9.840,"end":10.140},{"word":"và","start":10.140,"end":10.400},{"word":"mình","start":10.400,"end":10.540},{"word":"mới","start":10.540,"end":10.700},{"word":"có","start":10.700,"end":10.840},{"word":"thể","start":10.840,"end":10.960},{"word":"review","start":10.960,"end":11.300},{"word":"thật.","start":11.300,"end":11.500}],[{"word":"Bây","start":0.000,"end":0.220},{"word":"giờ","start":0.220,"end":0.280},{"word":"quay","start":0.280,"end":0.460},{"word":"lại","start":0.460,"end":0.580},{"word":"ba","start":0.580,"end":0.740},{"word":"câu","start":0.740,"end":0.900},{"word":"hỏi","start":0.900,"end":1.040},{"word":"quan","start":1.040,"end":1.300},{"word":"trọng","start":1.300,"end":1.400},{"word":"nhất","start":1.400,"end":1.640},{"word":"đầu","start":1.640,"end":1.780},{"word":"buổi.","start":1.780,"end":2.000},{"word":"AI","start":2.560,"end":2.680},{"word":"sẽ","start":2.680,"end":2.840},{"word":"làm","start":2.840,"end":3.000},{"word":"gì?","start":3.000,"end":3.240},{"word":"Task","start":4.100,"end":4.100},{"word":"phải","start":4.100,"end":4.240},{"word":"rõ.","start":4.240,"end":4.460},{"word":"Output","start":5.220,"end":5.220},{"word":"phải","start":5.220,"end":5.440},{"word":"rõ.","start":5.440,"end":6.000},{"word":"AI","start":6.300,"end":6.420},{"word":"được","start":6.420,"end":6.580},{"word":"phép","start":6.580,"end":6.740},{"word":"sửa","start":6.740,"end":7.040},{"word":"gì?","start":7.040,"end":7.240},{"word":"Scope","start":8.140,"end":8.140},{"word":"phải","start":8.140,"end":8.320},{"word":"rõ.","start":8.320,"end":8.580},{"word":"Làm","start":9.080,"end":9.140},{"word":"sao","start":9.140,"end":9.220},{"word":"biết","start":9.220,"end":9.420},{"word":"output","start":9.420,"end":9.860},{"word":"của","start":9.860,"end":10.040},{"word":"AI","start":10.040,"end":10.240},{"word":"là","start":10.240,"end":10.560},{"word":"đúng?","start":10.560,"end":10.640},{"word":"Phải","start":11.080,"end":11.080},{"word":"có","start":11.080,"end":11.220},{"word":"acceptance","start":11.220,"end":11.860},{"word":"criteria","start":11.860,"end":12.360},{"word":"và","start":12.360,"end":12.520},{"word":"verify.","start":12.520,"end":13.080}],[{"word":"Thông","start":0.000,"end":0.200},{"word":"điệp","start":0.200,"end":0.340},{"word":"cuối","start":0.340,"end":0.560},{"word":"cùng","start":0.560,"end":0.740},{"word":"của","start":0.740,"end":0.900},{"word":"buổi","start":0.900,"end":1.040},{"word":"hôm","start":1.040,"end":1.160},{"word":"nay","start":1.160,"end":1.360},{"word":"là:","start":1.360,"end":1.640},{"word":"AI","start":2.140,"end":2.400},{"word":"không","start":2.400,"end":2.700},{"word":"phải","start":2.700,"end":2.900},{"word":"để","start":2.900,"end":3.040},{"word":"tin","start":3.040,"end":3.280},{"word":"tuyệt","start":3.280,"end":3.480},{"word":"đối.","start":3.480,"end":3.740},{"word":"AI","start":4.740,"end":4.940},{"word":"là","start":4.940,"end":5.060},{"word":"để","start":5.060,"end":5.220},{"word":"giao","start":5.220,"end":5.440},{"word":"việc,","start":5.440,"end":5.680},{"word":"thảo","start":6.160,"end":6.160},{"word":"luận,","start":6.160,"end":6.340},{"word":"kiểm","start":6.700,"end":6.720},{"word":"soát","start":6.720,"end":7.000},{"word":"và","start":7.000,"end":7.200},{"word":"verify.","start":7.200,"end":7.840},{"word":"Khi","start":8.440,"end":8.460},{"word":"dùng","start":8.460,"end":8.600},{"word":"đúng,","start":8.600,"end":8.860},{"word":"AI","start":9.120,"end":9.340},{"word":"giúp","start":9.340,"end":9.540},{"word":"chúng","start":9.540,"end":9.760},{"word":"ta","start":9.760,"end":9.940},{"word":"làm","start":9.940,"end":10.060},{"word":"nhanh","start":10.060,"end":10.300},{"word":"hơn.","start":10.300,"end":10.480},{"word":"Khi","start":11.160,"end":11.160},{"word":"dùng","start":11.160,"end":11.400},{"word":"sai,","start":11.400,"end":11.700},{"word":"AI","start":11.980,"end":12.120},{"word":"tạo","start":12.120,"end":12.380},{"word":"thêm","start":12.380,"end":12.620},{"word":"việc","start":12.620,"end":12.780},{"word":"cho","start":12.780,"end":12.940},{"word":"chúng","start":12.940,"end":13.120},{"word":"ta.","start":13.120,"end":13.380}],[{"word":"Bây","start":0.000,"end":0.240},{"word":"giờ","start":0.240,"end":0.340},{"word":"chúng","start":0.340,"end":0.600},{"word":"ta","start":0.600,"end":0.760},{"word":"chuyển","start":0.760,"end":0.920},{"word":"sang","start":0.920,"end":1.100},{"word":"phần","start":1.100,"end":1.260},{"word":"Q","start":1.260,"end":1.740},{"word":"and","start":1.740,"end":1.740},{"word":"A.","start":1.740,"end":2.040},{"word":"Trước","start":2.920,"end":2.920},{"word":"khi","start":2.920,"end":3.100},{"word":"hỏi,","start":3.100,"end":3.360},{"word":"mọi","start":3.720,"end":3.760},{"word":"người","start":3.760,"end":3.860},{"word":"có","start":3.860,"end":4.060},{"word":"thể","start":4.060,"end":4.160},{"word":"tự","start":4.160,"end":4.400},{"word":"nghĩ","start":4.400,"end":4.540},{"word":"một","start":4.540,"end":4.920},{"word":"câu.","start":4.920,"end":5.260},{"word":"Trong","start":6.260,"end":6.300},{"word":"workflow","start":6.300,"end":6.760},{"word":"hiện","start":6.760,"end":6.960},{"word":"tại","start":6.960,"end":7.160},{"word":"của","start":7.160,"end":7.400},{"word":"team","start":7.400,"end":7.500},{"word":"mình,","start":7.500,"end":7.740},{"word":"AI","start":8.340,"end":8.520},{"word":"đang","start":8.520,"end":8.760},{"word":"thật","start":8.760,"end":9.060},{"word":"sự","start":9.060,"end":9.320},{"word":"giúp","start":9.320,"end":9.480},{"word":"tiết","start":9.480,"end":9.700},{"word":"kiệm","start":9.700,"end":9.900},{"word":"thời","start":9.900,"end":10.080},{"word":"gian?","start":10.080,"end":10.300},{"word":"Hay","start":10.980,"end":11.100},{"word":"đôi","start":11.100,"end":11.280},{"word":"khi,","start":11.280,"end":11.460},{"word":"AI","start":11.460,"end":11.880},{"word":"đang","start":11.880,"end":12.100},{"word":"tạo","start":12.100,"end":12.260},{"word":"thêm","start":12.260,"end":12.520},{"word":"việc","start":12.520,"end":12.720},{"word":"để","start":12.720,"end":12.880},{"word":"mình","start":12.880,"end":13.020},{"word":"phải","start":13.020,"end":13.260},{"word":"sửa","start":13.260,"end":13.400},{"word":"lại?","start":13.400,"end":13.580}]];
+  var WLINE     = 7; // words per subtitle line
+
+  function backspaceWord(tl, el, word, startTime, cps) {
+    var interval = 1 / cps;
+    for (var k = word.length - 1; k >= 0; k--) {
+      (function(index) {
+        tl.call(function() {
+          el.textContent = word.slice(0, index);
+        }, [], startTime + (word.length - index) * interval);
+      })(k);
+    }
+    return word.length * interval;
+  }
+
+  function compileTextEffects(sceneId, sceneStart, tl) {
+    var scEl = document.querySelector(sceneId);
+    if (!scEl) return;
+
+    // A. Typewriter effect
+    var typewriters = scEl.querySelectorAll("[data-effect='typewriter']");
+    typewriters.forEach(function(el) {
+      var text = el.textContent.trim();
+      if (!text) return;
+
+      var cursor = el.nextElementSibling;
+      var hasCursor = cursor && (cursor.className.indexOf("cursor") !== -1);
+
+      var cps = 12; // conversational speed
+      var dur = text.length / cps;
+      var startOffset = sceneStart + 0.3; // wait briefly for badge entrance
+
+      // Deterministically clear the element at the beginning of its typing
+      tl.set(el, { text: "" }, startOffset);
+
+      if (hasCursor) {
+        tl.call(function() { cursor.className = "cursor-solid"; }, [], startOffset);
+      }
+      tl.to(el, { text: { value: text }, duration: dur, ease: "none" }, startOffset);
+      if (hasCursor) {
+        tl.call(function() { cursor.className = "cursor-blink"; }, [], startOffset + dur);
+      }
+    });
+
+    // B. Word Rotations
+    var rotators = scEl.querySelectorAll("[data-effect='word-rotate']");
+    rotators.forEach(function(el) {
+      var wordsStr = el.getAttribute("data-words");
+      if (!wordsStr) return;
+      var words = wordsStr.split(",").map(function(w) { return w.trim(); });
+      if (words.length === 0) return;
+
+      var cursor = el.nextElementSibling;
+      var hasCursor = cursor && (cursor.className.indexOf("cursor") !== -1);
+
+      var offset = sceneStart + 0.4;
+      
+      // Deterministically clear the element at the beginning of its rotation
+      tl.set(el, { text: "" }, offset);
+
+      words.forEach(function(word, i) {
+        var typeDur = word.length / 10;
+
+        // Type word
+        if (hasCursor) {
+          tl.call(function() { cursor.className = "cursor-solid"; }, [], offset);
+        }
+        tl.to(el, { text: { value: word }, duration: typeDur, ease: "none" }, offset);
+        if (hasCursor) {
+          tl.call(function() { cursor.className = "cursor-blink"; }, [], offset + typeDur);
+        }
+
+        offset += typeDur + 1.2; // hold word
+
+        // Backspace if not the last word
+        if (i < words.length - 1) {
+          if (hasCursor) {
+            tl.call(function() { cursor.className = "cursor-solid"; }, [], offset);
+          }
+          var clearDur = backspaceWord(tl, el, word, offset, 16);
+          if (hasCursor) {
+            tl.call(function() { cursor.className = "cursor-blink"; }, [], offset + clearDur);
+          }
+          offset += clearDur + 0.2; // brief pause before next word
+        }
+      });
+    });
+  }
+
+  function groupLines(ws) {
+    var r = [], i = 0;
+    for (; i < ws.length; i += WLINE) r.push(ws.slice(i, i + WLINE));
+    return r;
+  }
+
+  function ensureScenes() {
+    var root = document.getElementById("root");
+    if (!root) return;
+    for (var i = 0; i < starts.length; i++) {
+      var n = i + 1;
+      if (document.getElementById("scene" + n)) continue;
+      var ph = document.createElement("div");
+      ph.id = "scene" + n;
+      ph.className = "scene scene-fallback centered";
+      ph.style.cssText = "position:absolute;inset:0;opacity:0;visibility:hidden;background:linear-gradient(135deg,var(--bg,#08080f),var(--bg2,#0f0f1a));";
+      var audio = document.querySelector("audio#v" + n);
+      var title = audio ? (audio.getAttribute("data-title") || "") : "";
+      var narration = narrations[i] || "";
+      var sceneNumPadded = (n < 10 ? "0" + n : "" + n);
+      var emojis = ["✨", "⚡", "🚀", "💫", "🎯", "🔥", "💎", "🌟"];
+      var emoji = emojis[(n - 1) % emojis.length];
+      ph.innerHTML =
+        '<div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>' +
+        '<div class="corner-bracket bl"></div><div class="corner-bracket br"></div>' +
+        '<div class="top-line"></div>' +
+        '<span class="scene-num">' + sceneNumPadded + '</span>' +
+        '<div class="layout" style="padding:100px 140px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:36px;">' +
+          '<div id="s' + n + '-badge" class="badge" style="margin:0 auto;">' + emoji + ' &nbsp; PHẦN ' + n + '</div>' +
+          '<h1 id="s' + n + '-title" class="title-xl grad-text" style="max-width:1400px;margin:0 auto;">' + (title || ("Nội dung phân cảnh " + n)) + '</h1>' +
+          (narration ? ('<p id="s' + n + '-desc" class="body-text" style="max-width:1000px;margin:0 auto;font-size:1.5rem;line-height:1.6;color:var(--text2,#a09db8);">' + narration.slice(0, 220) + (narration.length > 220 ? "…" : "") + '</p>') : '') +
+          '<div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">' +
+            '<div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>' +
+            '<div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE ' + sceneNumPadded + '</div>' +
+            '<div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; TECHBEAT</div>' +
+          '</div>' +
+        '</div>';
+      root.appendChild(ph);
+    }
+  }
+
+  // Chunk fallback: split text into uniform 6-word groups (natural reading pace).
+  function chunkText(text) {
+    if (!text) return [];
+    var maxWords = 6;
+    var words = text.trim().split(/\s+/).filter(Boolean);
+    var chunks = [];
+    for (var i = 0; i < words.length; i += maxWords) {
+      chunks.push(words.slice(i, i + maxWords).join(" "));
+    }
+    return chunks;
+  }
+
+  function ensureSubtitles() {
+    var root = document.getElementById("root");
+    if (!root || document.getElementById("techbeat-subtitles")) return;
+    var c = document.createElement("div");
+    c.id = "techbeat-subtitles";
+    c.className = "techbeat-subtitles";
+
+    for (var i = 0; i < starts.length; i++) {
+      var n = i + 1;
+      var ss = document.createElement("div");
+      ss.id = "sub-scene" + n;
+      ss.className = "sub-scene";
+      ss.style.display = "none";
+
+      var wd = wordData[i];
+      if (wd && wd.length > 0) {
+        // ── Whisper word-level mode ──────────────────────────────────────
+        var lines = groupLines(wd);
+        for (var li = 0; li < lines.length; li++) {
+          var lineEl = document.createElement("div");
+          lineEl.id = "sub-l" + n + "-" + li;
+          lineEl.className = "sub-line";
+          var lw = lines[li];
+          for (var wi = 0; wi < lw.length; wi++) {
+            var sp = document.createElement("span");
+            sp.id = "sub-w" + n + "-" + li + "-" + wi;
+            sp.className = "sub-word";
+            sp.textContent = lw[wi].word + (wi < lw.length - 1 ? " " : "");
+            lineEl.appendChild(sp);
+          }
+          ss.appendChild(lineEl);
+        }
+      } else {
+        // ── Chunk fallback ───────────────────────────────────────────────
+        var chunks = chunkText(narrations[i] || "");
+        chunks.forEach(function(chunk, ci) {
+          var ce = document.createElement("div");
+          ce.id = "sub-" + n + "-" + ci;
+          ce.className = "sub-chunk";
+          ce.style.cssText = "display:none;opacity:0;";
+          ce.innerText = chunk;
+          ss.appendChild(ce);
+        });
+      }
+      c.appendChild(ss);
+    }
+    root.appendChild(c);
+  }
+
+  function buildTimeline() {
+    if (!window.gsap) return;
+    if (window.TextPlugin) gsap.registerPlugin(TextPlugin);
+    ensureScenes();
+    ensureSubtitles();
+
+    // Bug5 fix: do NOT clearProps on ".scene *" — that forces opacity:1 on all children before
+    // gsap.from() tweens run, making every block appear simultaneously.
+    // Instead: explicitly preset children of non-first scenes to opacity:0 so from() has a valid start state.
+    // Store natural opacities before presetting them to 0
+    function getNaturalOpacity(target) {
+      if (target.classList.contains("ghost-text")) return 0.085;
+      if (target.classList.contains("aurora-glow") || target.classList.contains("glow-orb")) return 0.48;
+      if (target.classList.contains("animated-grid")) return 0.55;
+      if (target.classList.contains("retro-grid")) return 0.45;
+      if (target.classList.contains("light-rays")) return 0.35;
+      if (target.classList.contains("particle-field")) return 0.5;
+      if (target.classList.contains("float-orb-lg")) return 0.48;
+      if (target.classList.contains("float-orb-md")) return 0.38;
+      if (target.classList.contains("float-orb-sm")) return 0.32;
+      
+      var computed = window.getComputedStyle(target).opacity;
+      if (computed && computed !== "1" && computed !== "0") {
+        return parseFloat(computed);
+      }
+      return 1;
+    }
+
+    gsap.utils.toArray(".scene").forEach(function(el) {
+      var ambientSelectors = [
+        ".aurora-glow", ".animated-grid", ".retro-grid", ".light-rays",
+        ".particle-field", ".ghost-text", ".float-orb-lg", ".float-orb-md",
+        ".float-orb-sm", ".y2k-sparkle", ".glow-orb", ".marquee-strip"
+      ];
+      ambientSelectors.forEach(function(sel) {
+        el.querySelectorAll(sel).forEach(function(target) {
+          target._naturalOpacity = getNaturalOpacity(target);
+        });
+      });
+    });
+
+    gsap.utils.toArray(".scene").forEach(function(el, idx) {
+      if (idx === 0) {
+        gsap.set(el, { opacity: 1, visibility: "visible", position: "absolute", inset: 0 });
+      } else {
+        gsap.set(el, { opacity: 0, visibility: "hidden", position: "absolute", inset: 0 });
+      }
+      // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
+      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), { opacity: 0 });
+      var presetEls = [];
+      el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)").forEach(function(item) {
+        if (item.classList.contains("visual-block")) {
+          var hasSubBlocks = item.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card");
+          if (hasSubBlocks) return;
+        }
+        presetEls.push(item);
+      });
+      gsap.set(presetEls, { opacity: 0 });
+      
+      // Preset ambient elements to opacity:0 so they fade in cleanly and deterministically
+      gsap.set(el.querySelectorAll(".aurora-glow, .animated-grid, .retro-grid, .light-rays, .particle-field, .ghost-text, .float-orb-lg, .float-orb-md, .float-orb-sm, .y2k-sparkle, .glow-orb, .marquee-strip"), { opacity: 0 });
+    });
+
+    var tl = gsap.timeline({ paused: true });
+    var lastIdx = starts.length - 1;
+
+    function safeFromTo(sel, fromVars, toVars, at) {
+      if (document.querySelector(sel)) {
+        toVars.immediateRender = false;
+        tl.fromTo(sel, fromVars, toVars, at);
+      }
+    }
+
+    for (var i = 0; i < starts.length; i++) {
+      var n = i + 1;
+      var s = starts[i];
+      var d = durs[i];
+      var sceneId = "#scene" + n;
+      if (!document.querySelector(sceneId)) continue;
+      var isLast = (i === lastIdx);
+
+      // 1. Gather all subtitle times (chunk starts) for the current scene to sync visual block entrances
+      var subtitleTimes = [];
+      var scWd = wordData[i];
+      if (scWd && scWd.length > 0) {
+        var lines = groupLines(scWd);
+        for (var li = 0; li < lines.length; li++) {
+          subtitleTimes.push(s + lines[li][0].start);
+        }
+      } else {
+        var chunks = chunkText(narrations[i] || "");
+        if (chunks.length > 0) {
+          var totalAudioTime = actualDurs[i] || d;
+          var AUDIO_LEAD = 0.15;
+          var speechDur = (totalAudioTime - AUDIO_LEAD) * 0.93;
+          var chunkLens = [], totalLen = 0;
+          chunks.forEach(function(c) {
+            var l = c.length || 1;
+            chunkLens.push(l); totalLen += l;
+          });
+          var elapsed = 0;
+          chunks.forEach(function(c, ci) {
+            var chunkStart = s + AUDIO_LEAD + elapsed;
+            subtitleTimes.push(chunkStart);
+            var chunkDur_c = (chunkLens[ci] / totalLen) * speechDur;
+            elapsed += chunkDur_c;
+          });
+        }
+      }
+
+      if (i === 0) {
+        tl.set(sceneId, { opacity: 1, visibility: "visible" }, s);
+      } else {
+        tl.set(sceneId, { opacity: 0, visibility: "visible" }, s);
+        tl.to(sceneId,  { opacity: 1, duration: 0.6, ease: "power3.out" }, s);
+      }
+
+      // Compile declarative typewriter & word rotation effects
+      compileTextEffects(sceneId, s, tl);
+
+      // ── SUBTITLE TIMING ────────────────────────────────────────────────
+      var subSceneEl = document.getElementById("sub-scene" + n);
+      if (subSceneEl) {
+        tl.set("#sub-scene" + n, { display: "block", opacity: 1 }, s);
+        var scWd = wordData[i];
+
+        if (scWd && scWd.length > 0) {
+          // ── Whisper word-level timing ──────────────────────────────────
+          var lines = groupLines(scWd);
+          for (var li = 0; li < lines.length; li++) {
+            var lw       = lines[li];
+            var lineId   = "#sub-l" + n + "-" + li;
+            var lStart   = s + lw[0].start;
+
+            tl.set(lineId, { display: "block", opacity: 0 }, lStart);
+            tl.to(lineId,  { opacity: 1, duration: 0.15, ease: "power2.out" }, lStart);
+
+            // Fade out previous line as new one appears
+            if (li > 0) {
+              var pId = "#sub-l" + n + "-" + (li - 1);
+              tl.to(pId,  { opacity: 0, duration: 0.1 }, lStart);
+              tl.set(pId, { display: "none" }, lStart + 0.1);
+            }
+
+            // Word-level karaoke highlight — RED (use literal hex; GSAP cannot
+            // resolve CSS variables during headless HyperFrames rendering)
+            for (var wi = 0; wi < lw.length; wi++) {
+              var w   = lw[wi];
+              var wId = "#sub-w" + n + "-" + li + "-" + wi;
+              // Active word: bright RED + scale + glow
+              tl.set(wId, {
+                color: "#ff2d2d",
+                fontWeight: "900",
+                scale: 1.15,
+                textShadow: "0 0 24px rgba(255,45,45,1), 0 0 10px rgba(255,45,45,0.95), 0 2px 4px rgba(0,0,0,0.9)"
+              }, s + w.start);
+              // Spoken word: return to white but slightly dim
+              tl.set(wId, {
+                color: "rgba(255,255,255,0.85)",
+                fontWeight: "600",
+                scale: 1,
+                textShadow: "0 1px 4px rgba(0,0,0,0.85)"
+              }, s + w.end);
+            }
+          }
+          // Fade out subtitle block at scene end
+          tl.to("#sub-scene" + n,  { opacity: 0, duration: 0.3 }, s + d - 0.3);
+          tl.set("#sub-scene" + n, { display: "none", opacity: 1 }, s + d);
+
+        } else {
+          // ── Chunk fallback timing ──────────────────────────────────────
+          var chunkEls  = subSceneEl.querySelectorAll(".sub-chunk");
+          var numChunks = chunkEls.length;
+          if (numChunks > 0) {
+            var totalAudioTime = actualDurs[i] || d;
+            // AUDIO_LEAD: TTS engines (ElevenLabs/gTTS) start speaking after a
+            // brief silence (~0.15 s). Without this offset the subtitle would
+            // appear before the voice, making it feel "ahead" of the audio.
+            var AUDIO_LEAD = 0.15;
+            var speechDur  = (totalAudioTime - AUDIO_LEAD) * 0.93;
+            // Proportional timing: chunks with more characters get more screen time.
+            var chunkLens = [], totalLen = 0;
+            chunkEls.forEach(function(el) {
+              var l = (el.textContent || "").length || 1;
+              chunkLens.push(l); totalLen += l;
+            });
+            var fadeIn = 0.15, fadeOut = 0.15, elapsed = 0;
+            chunkEls.forEach(function(chunkEl, ci) {
+              var chunkDur_c = (chunkLens[ci] / totalLen) * speechDur;
+              var chunkStart = s + AUDIO_LEAD + elapsed;
+              var chunkEnd   = chunkStart + chunkDur_c;
+              tl.set(chunkEl, { display: "block", opacity: 0 }, chunkStart);
+              tl.to(chunkEl,  { opacity: 1, duration: fadeIn, ease: "power2.out" }, chunkStart);
+              if (ci < numChunks - 1) {
+                tl.to(chunkEl,  { opacity: 0, duration: fadeOut, ease: "power2.in" }, chunkEnd - fadeOut);
+                tl.set(chunkEl, { display: "none" }, chunkEnd);
+              }
+              elapsed += chunkDur_c;
+            });
+            tl.to("#sub-scene" + n,  { opacity: 0, duration: 0.3 }, s + d - 0.3);
+            tl.set("#sub-scene" + n, { display: "none" },           s + d);
+            tl.set("#sub-scene" + n, { opacity: 1 },                s + d + 0.001);
+          }
+        }
+      }
+
+      // Ambient decoratives fade in IMMEDIATELY at scene start so the
+      // background never feels empty (orbs, aurora, grid, ghost-text...)
+      var ambientSelectors = [
+        ".aurora-glow", ".animated-grid", ".retro-grid", ".light-rays",
+        ".particle-field", ".ghost-text", ".float-orb-lg", ".float-orb-md",
+        ".float-orb-sm", ".y2k-sparkle", ".glow-orb", ".marquee-strip"
+      ];
+      ambientSelectors.forEach(function(sel) {
+        if (document.querySelector(sceneId + " " + sel)) {
+          tl.fromTo(sceneId + " " + sel,
+            { scale: 0.7, opacity: 0 },
+            { 
+              scale: 1, 
+              opacity: function(i, target) { return target._naturalOpacity || 1; }, 
+              duration: 0.7, 
+              stagger: 0.06, 
+              ease: "power2.out", 
+              immediateRender: false 
+            },
+            s);
+        }
+      });
+
+      // Decorative chrome (corner brackets + top-line + scene-num) entrance
+      var chromeClasses = [".corner-bracket", ".top-line", ".scene-num"];
+      var existingChrome = [];
+      chromeClasses.forEach(function(sel) {
+        var fullSel = sceneId + " " + sel;
+        if (document.querySelector(fullSel)) {
+          existingChrome.push(fullSel);
+        }
+      });
+      if (existingChrome.length > 0) {
+        tl.fromTo(existingChrome.join(", "),
+          { opacity: 0 },
+          { opacity: 1, duration: 0.4, stagger: 0.05, ease: "power1.out", immediateRender: false }, s);
+      }
+
+      // Content entry — start IMMEDIATELY at t=s, tight stagger so the first
+      // 0.5s is filled with motion instead of an empty stationary frame.
+      safeFromTo(sceneId + " [id$='-badge']",    { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }, s);
+      safeFromTo(sceneId + " [id$='-title']",    { y: 40,  opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power4.out"   }, s + 0.12);
+      safeFromTo(sceneId + " [id$='-subtitle']", { y: 30,  opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out"   }, s + 0.25);
+      safeFromTo(sceneId + " [id$='-desc']",     { y: 20,  opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out"   }, s + 0.38);
+      var containerExclude = ":not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)";
+      if (document.querySelector(sceneId + " .visual-col > *" + containerExclude)) {
+        tl.fromTo(sceneId + " .visual-col > *" + containerExclude,
+          { scale: 0.88, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.7, stagger: 0.12, ease: "back.out(1.6)", immediateRender: false },
+          s + 0.18);
+      }
+
+      var blockSelectors = [
+        ".bento-cell", ".feat-card", ".stat-list-card", ".chat-bubble",
+        ".tl-item", ".agent-card", ".tech-card", ".compare .col", ".visual-block",
+        ".step-item", ".formula-pill", ".command-pill", ".glass-card",
+        ".visual-col > *:not(.stat-list):not(.feat-row):not(.bento-grid):not(.bento-3x2):not(.agent-grid):not(.compare):not(.step-list):not(.formula-stack)"
+      ];
+      var blocks = [];
+      blockSelectors.forEach(function(sel) {
+        var els = document.querySelectorAll(sceneId + " " + sel);
+        els.forEach(function(el) {
+          if (blocks.indexOf(el) === -1) {
+            if (el.classList.contains("visual-block")) {
+              var hasSubBlocks = el.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card");
+              if (hasSubBlocks) return;
+            }
+            blocks.push(el);
+          }
+        });
+      });
+
+      // 3. Animate each block at its corresponding subtitle start timestamp!
+      if (blocks.length > 0) {
+        blocks.forEach(function(blockEl, bi) {
+          var blockStart;
+          if (subtitleTimes.length > 0) {
+            // Map block index to subtitle time index proportionally
+            var subIdx = Math.floor((bi / blocks.length) * subtitleTimes.length);
+            blockStart = subtitleTimes[subIdx];
+          } else {
+            // Fallback stagger if no subtitles exist
+            blockStart = s + 0.2 + (bi * 0.45);
+          }
+          
+          // Animate the block dynamically at the exact timestamp!
+          tl.fromTo(blockEl,
+            { y: 28, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.65, ease: "back.out(1.4)", immediateRender: false },
+            blockStart);
+        });
+      }
+
+      // Last scene stays visible until total — visuals never go black before audio ends.
+      if (!isLast) {
+        tl.to(sceneId,  { opacity: 0, duration: 0.5, ease: "power2.in" }, s + d - 0.6);
+        tl.set(sceneId, { visibility: "hidden" }, s + d);
+      }
+    }
+
+    // Park timeline at t=0 so any pre-seek frame capture matches the
+    // intended initial state instead of post-set hidden state.
+    tl.progress(0).pause();
+
+    // Register the timeline dynamically under the exact data-composition-id
+    // of the root element (fallback to "main"). Avoid extra keys to prevent timeline_id_mismatch.
+    window.__timelines = window.__timelines || {};
+    var rootEl = document.getElementById("root");
+    var compId = rootEl ? (rootEl.getAttribute("data-composition-id") || "main") : "main";
+    
+    console.log("[buildTimeline] Registering timeline under keys: " + compId + ", main");
+    window.__timelines[compId] = tl;
+    window.__timelines["main"] = tl;
+    console.log("[buildTimeline] Timeline registered successfully!");
+  }
+
+  function initTimeline() {
+    var root = document.getElementById("root");
+    console.log("[buildTimeline] initTimeline. root element exists: " + (!!root) + ", readyState: " + document.readyState);
+    if (!root) {
+      console.log("[buildTimeline] root element not found, waiting for DOMContentLoaded");
+      document.addEventListener("DOMContentLoaded", buildTimeline);
+    } else {
+      buildTimeline();
+    }
+  }
+
+  initTimeline();
+})();
+</script>
 </body>
 </html>
