@@ -39,7 +39,7 @@ export function VoicePicker({ value, onChange }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API}/voices`)
+    fetch(`${API}/voices/elevenlabs`)
       .then((r) => r.json())
       .then((d: VoicesResponse) => {
         if (cancelled) return;
