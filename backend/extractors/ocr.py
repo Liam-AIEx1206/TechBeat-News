@@ -68,7 +68,7 @@ async def ocr_image_bytes(images: List[bytes]) -> str:
                 "image_url": {"url": f"data:image/png;base64,{b64}"},
             })
 
-        resp, _provider = await chat_completions_with_fallback(
+        resp, _provider, _model = await chat_completions_with_fallback(
             model_kind="ocr",
             _primary_model=get_ocr_model(),
             messages=[{"role": "user", "content": content}],
