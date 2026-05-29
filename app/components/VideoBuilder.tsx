@@ -14,7 +14,7 @@ type StageState = "pending" | "active" | "done" | "error";
 const STAGES: { key: StageKey; label: string; detail: string; icon: string }[] = [
   { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP",    icon: "🎨" },
   { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project",     icon: "💾" },
-  { key: "tts",         label: "Giọng đọc",      detail: "ElevenLabs / gTTS",              icon: "🎙️" },
+  { key: "tts",         label: "Giọng đọc",      detail: "Edge TTS / gTTS / Gemini",          icon: "🎙️" },
   { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ", icon: "🎤" },
   { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg",              icon: "🎬" },
 ];

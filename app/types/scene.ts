@@ -18,7 +18,7 @@ export interface ScenePlan {
   scenes: Scene[];
   totalDuration: number;
   theme?: ThemeId; // user-selected theme; backend defaults to "cyber-orange" if missing
-  voiceId?: string; // ElevenLabs voice_id; backend uses default if missing
+  voiceId?: string; // TTS voice_id; backend uses default if missing
   /** Full composition HTML cached by the html-preview stage. When present, the
    *  build pipeline skips the composition stage and uses this directly. */
   compositionHtml?: string;

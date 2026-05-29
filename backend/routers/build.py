@@ -31,24 +31,7 @@ def sse(data: dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-# -------- TTS via ElevenLabs (primary) + gTTS (fallback) --------
-
-ELEVENLABS_API = "https://api.elevenlabs.io/v1/text-to-speech"
-# Default Vietnamese-capable voice — Adam (multilingual). User can override via env.
-DEFAULT_ELEVEN_VOICE_ID = "pNInz6obpgDQGcFmaJgB"
-
-# Once ElevenLabs returns 401/402/quota_exceeded for ANY scene in a build, skip
-# it for the remaining scenes so the final video has a single consistent voice
-# (instead of one scene using a foreign male and the rest using gTTS).
-# Reset to False at the start of each build via `reset_elevenlabs_state()`.
-_elevenlabs_disabled = False
-
-
-def reset_elevenlabs_state() -> None:
-    """Call at the start of each build so a previous quota error doesn't
-    permanently disable ElevenLabs for the process."""
-    global _elevenlabs_disabled
-    _elevenlabs_disabled = False
+# -------- ElevenLabs Deprecated --------
 
 
 # -------- Microsoft Edge TTS (secondary fallback) --------
@@ -117,64 +100,7 @@ async def _edge_to_wav(text: str, target: Path, voice_name: str | None = None) -
 
 
 
-async def _elevenlabs_to_wav(text: str, target: Path, voice_id: str | None = None) -> bool:
-    """Try ElevenLabs TTS → wav. Returns True on success, False to fall back."""
-    global _elevenlabs_disabled
-    if _elevenlabs_disabled:
-        return False
-
-    api_key = os.getenv("ELEVENLABS_API_KEY")
-    if not api_key:
-        return False
-
-    voice_id = voice_id or os.getenv("ELEVENLABS_VOICE_ID", DEFAULT_ELEVEN_VOICE_ID)
-    model_id = os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2")
-
-    url = f"{ELEVENLABS_API}/{voice_id}"
-    payload = {
-        "text": text,
-        "model_id": model_id,
-        "voice_settings": {
-            "stability": 0.45,
-            "similarity_boost": 0.75,
-            "style": 0.30,
-            "use_speaker_boost": True,
-        },
-    }
-    headers = {
-        "xi-api-key": api_key,
-        "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(url, json=payload, headers=headers)
-            if resp.status_code != 200:
-                body = resp.text[:300]
-                print(f"[tts] ElevenLabs HTTP {resp.status_code}: {body}")
-                # Disable ElevenLabs for the rest of this build on quota/auth errors
-                # so all scenes use the same engine (consistent voice).
-                if resp.status_code in (401, 402, 403, 429) or "quota" in body.lower() or "payment" in body.lower():
-                    _elevenlabs_disabled = True
-                    print("[tts] ElevenLabs disabled for the rest of this build — falling back to gTTS for consistency.")
-                return False
-            mp3_bytes = resp.content
-    except Exception as e:
-        print(f"[tts] ElevenLabs request failed: {e}")
-        return False
-
-    # Convert mp3 → wav for HyperFrames
-    try:
-        from pydub import AudioSegment
-        from io import BytesIO
-        seg = AudioSegment.from_file(BytesIO(mp3_bytes), format="mp3")
-        await asyncio.to_thread(seg.export, str(target), format="wav")
-        return True
-    except Exception as e:
-        print(f"[tts] mp3→wav conversion failed, writing raw mp3: {e}")
-        target.write_bytes(mp3_bytes)
-        return True
+# ElevenLabs has been deprecated and removed.
 
 
 def _gtts_to_wav_sync(text: str, lang: str, target: Path) -> None:
@@ -457,8 +383,8 @@ async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -
     Order: If voice_id starts with 'openai-', use OpenAI TTS via Pinky.
            If voice_id starts with 'gemini-', use Gemini TTS.
            If voice_id starts with 'edge-', use Edge TTS directly.
-           Else: ElevenLabs (if ELEVENLABS_API_KEY set) → Edge TTS → gTTS fallback.
-    Returns the engine name actually used ('openai', 'gemini', 'elevenlabs', 'edge', or 'gtts').
+           Else: Edge TTS → gTTS fallback.
+    Returns the engine name actually used ('openai', 'gemini', 'edge', or 'gtts').
     """
     # 0. Direct OpenAI TTS routing if explicitly selected in UI
     if voice_id and voice_id.startswith("openai-"):
@@ -502,10 +428,7 @@ async def synthesize_tts(text: str, target: Path, voice_id: str | None = None) -
         await asyncio.to_thread(_gtts_to_wav_sync, text, lang, target)
         return "gtts"
 
-    # 3. Standard pipeline (for ElevenLabs or unconfigured builds)
-    if await _elevenlabs_to_wav(text, target, voice_id=voice_id):
-        return "elevenlabs"
-
+    # 3. Standard pipeline (for unconfigured builds)
     if await _edge_to_wav(text, target):
         return "edge"
 
@@ -1941,9 +1864,7 @@ async def build_pipeline(req: BuildRequest):
 
     # ---- Stage 3: TTS ----
     if not req.skipTts:
-        # Reset ElevenLabs state so a previous build's quota error doesn't
-        # carry over and skip ElevenLabs unnecessarily this run.
-        reset_elevenlabs_state()
+        pass
         engines_used: dict[str, int] = {}
         yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
         wav_paths: list[Path] = []

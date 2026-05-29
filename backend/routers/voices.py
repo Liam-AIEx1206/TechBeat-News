@@ -18,7 +18,7 @@ class PreviewRequest(BaseModel):
     text: str
 
 
-# Default premade voices (ElevenLabs, Microsoft Edge, and Google Gemini AI)
+# Default premade voices (Microsoft Edge, Google Gemini AI, and OpenAI)
 # Enriched with 'actor', 'traits', and 'service' for professional UI display.
 DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
     # OpenAI tts-1 Voices (Pinkyne API)
@@ -76,25 +76,7 @@ DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
         "traits": "Chuyên nghiệp, rõ ràng, tin cậy",
         "service": "OpenAI TTS"
     },
-    # ElevenLabs Premade Voices
-    {
-        "voice_id": "pNInz6obpgDQGcFmaJgB",
-        "name": "Adam",
-        "gender": "male",
-        "description": "Trầm, rõ, broadcast — ElevenLabs, đọc tiếng Việt OK",
-        "actor": "Adam",
-        "traits": "Trầm ấm, mạnh mẽ, broadcast",
-        "service": "ElevenLabs"
-    },
-    {
-        "voice_id": "21m00Tcm4TlvDq8ikWAM",
-        "name": "Rachel",
-        "gender": "female",
-        "description": "Nữ ấm, rõ, nhịp đều — ElevenLabs",
-        "actor": "Rachel",
-        "traits": "Nhẹ nhàng, trong trẻo, tự nhiên",
-        "service": "ElevenLabs"
-    },
+
     # Microsoft Edge Premium Voices (Miễn phí & Không giới hạn)
     {
         "voice_id": "edge-vi-VN-NamMinhNeural",
@@ -166,60 +148,15 @@ DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
 @router.get("/voices/elevenlabs")
 async def list_elevenlabs_voices() -> dict[str, Any]:
     """
-    Return the list of ElevenLabs voices available to the user.
-    - Always includes premade defaults.
-    - If ELEVENLABS_API_KEY is set, also fetches user-added voices (category != "premade").
+    Backwards compatible endpoint to return the list of premium voices.
+    ElevenLabs has been completely deprecated in favor of Microsoft Edge, Google Gemini, and OpenAI.
     """
-    custom: list[dict[str, Any]] = []
-    error: str | None = None
-    api_key = os.getenv("ELEVENLABS_API_KEY")
-
-    if api_key:
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.get(
-                    "https://api.elevenlabs.io/v1/voices",
-                    headers={"xi-api-key": api_key, "Accept": "application/json"},
-                )
-                if resp.status_code == 200:
-                    raw = resp.json().get("voices", [])
-                    custom_categories = {"cloned", "professional", "generated", "famous", "voice_library_added"}
-                    for v in raw:
-                        cat = (v.get("category") or "").lower()
-                        if cat not in custom_categories:
-                            continue
-                        labels = v.get("labels", {}) or {}
-                        custom.append({
-                            "voice_id": v.get("voice_id"),
-                            "name": v.get("name") or "?",
-                            "gender": labels.get("gender") or "",
-                            "description": " · ".join(filter(None, [
-                                labels.get("language") or labels.get("accent"),
-                                labels.get("age"),
-                                labels.get("descriptive"),
-                                labels.get("use_case"),
-                                (v.get("description") or "").strip()[:80],
-                            ])) or v.get("category") or "Custom voice",
-                            "category": v.get("category") or "custom",
-                            "actor": v.get("name") or "Custom Actor",
-                            "traits": labels.get("descriptive") or "Tùy chỉnh, độc đáo",
-                            "service": "ElevenLabs Custom"
-                        })
-                else:
-                    error = f"ElevenLabs API HTTP {resp.status_code}"
-        except Exception as e:
-            error = f"{type(e).__name__}: {e}"
-
-    # Smart Default Voice: If ElevenLabs key is missing, default to Microsoft Edge's Nam Minh voice.
-    # Otherwise, default to ElevenLabs' Adam voice.
-    resolved_default_voice = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB") if api_key else "edge-vi-VN-NamMinhNeural"
-
     return {
-        "default_voice_id": resolved_default_voice,
+        "default_voice_id": "edge-vi-VN-NamMinhNeural",
         "premade": DEFAULT_PREMADE_VOICES,
-        "custom": custom,
-        "has_api_key": bool(api_key),
-        "error": error,
+        "custom": [],
+        "has_api_key": False,
+        "error": None,
     }
 
 
@@ -243,8 +180,6 @@ async def get_voice_demo(voice_id: str) -> dict[str, str]:
         "gemini-3.1-flash-tts-preview:Charon": "Chào bạn! Tôi là Charon, giọng nam trầm sâu, chững chạc và uy tín từ Google Gemini. Hãy cùng tôi xây dựng những nội dung chất lượng.",
         "gemini-3.1-flash-tts-preview:Fenrir": "Chào bạn! Tôi là Fenrir, giọng nam mạnh mẽ, năng động và lôi cuốn từ Google Gemini. Hãy sẵn sàng cùng tôi tạo nên những thước phim đột phá.",
         "gemini-3.1-flash-tts-preview:Kore": "Chào bạn! Tôi là Kore, giọng nữ thanh thoát, êm dịu và trong trẻo từ Google Gemini. Rất hân hạnh được hỗ trợ bạn trong dự án này.",
-        "pNInz6obpgDQGcFmaJgB": "Hello! I am Adam, a professional broadcast voice from ElevenLabs. Nice to meet you.",
-        "21m00Tcm4TlvDq8ikWAM": "Hello! I am Rachel, a warm and natural female voice from ElevenLabs. Hope you enjoy this video.",
     }
 
     matched_voice = next((v for v in DEFAULT_PREMADE_VOICES if v["voice_id"] == voice_id), None)
