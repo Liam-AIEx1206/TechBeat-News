@@ -3124,30 +3124,62 @@ def sanitize_scene_wrapper(scene_html: str, idx: int) -> str:
 
 
 def find_scene_block(html: str, scene_index: int) -> tuple[int, int] | None:
-    """Locate the byte range of <div ... id="sceneN"> ... </div> in `html`.
-
-    Walks open/close <div> tags starting from the scene's opening tag so we
-    can splice in a replacement without using a real HTML parser. Returns
-    None if the scene isn't found or the tags don't balance.
+    """Locate the byte range of the scene container in `html`.
+    
+    Tries multiple ID formats (sceneN, sceneBN, scene_N, scene-N) and falls back
+    to locating the N-th div element containing the class 'scene'. This ensures 
+    robustness against various LLM naming formats.
     """
-    pattern = re.compile(rf'<div\b[^>]*\bid\s*=\s*["\']scene{scene_index}["\'][^>]*>', re.IGNORECASE)
-    m = pattern.search(html)
-    if not m:
-        return None
-    start = m.start()
-    cursor = m.end()
-    depth = 1  # we just consumed an opening <div ...>
-    div_re = re.compile(r"</?div\b[^>]*>", re.IGNORECASE)
-    while depth > 0:
-        nm = div_re.search(html, cursor)
-        if not nm:
-            return None
-        cursor = nm.end()
-        if nm.group(0).lower().startswith("</div"):
-            depth -= 1
-        else:
-            depth += 1
-    return start, cursor
+    # 1. Try various common scene ID pattern variations
+    patterns = [
+        rf'<div\b[^>]*\bid\s*=\s*["\']scene{scene_index}["\'][^>]*>',
+        rf'<div\b[^>]*\bid\s*=\s*["\']sceneB{scene_index}["\'][^>]*>',
+        rf'<div\b[^>]*\bid\s*=\s*["\']scene_{scene_index}["\'][^>]*>',
+        rf'<div\b[^>]*\bid\s*=\s*["\']scene-{scene_index}["\'][^>]*>',
+    ]
+    
+    for pat_str in patterns:
+        pattern = re.compile(pat_str, re.IGNORECASE)
+        m = pattern.search(html)
+        if m:
+            start = m.start()
+            cursor = m.end()
+            depth = 1  # we just consumed an opening <div ...>
+            div_re = re.compile(r"</?div\b[^>]*>", re.IGNORECASE)
+            while depth > 0:
+                nm = div_re.search(html, cursor)
+                if not nm:
+                    break
+                cursor = nm.end()
+                if nm.group(0).lower().startswith("</div"):
+                    depth -= 1
+                else:
+                    depth += 1
+            if depth == 0:
+                return start, cursor
+
+    # 2. Fallback: Locate by N-th (1-based) occurrence of a div with class "scene"
+    scene_div_re = re.compile(r'<div\b[^>]*\bclass\s*=\s*["\'][^"\']*\bscene\b[^"\']*["\'][^>]*>', re.IGNORECASE)
+    matches = list(scene_div_re.finditer(html))
+    if len(matches) >= scene_index:
+        m = matches[scene_index - 1]
+        start = m.start()
+        cursor = m.end()
+        depth = 1
+        div_re = re.compile(r"</?div\b[^>]*>", re.IGNORECASE)
+        while depth > 0:
+            nm = div_re.search(html, cursor)
+            if not nm:
+                break
+            cursor = nm.end()
+            if nm.group(0).lower().startswith("</div"):
+                depth -= 1
+            else:
+                depth += 1
+        if depth == 0:
+            return start, cursor
+
+    return None
 
 
 class RegenSceneRequest(BaseModel):
