@@ -27,12 +27,9 @@ function isSceneDirty(html: string | undefined, scene: Scene): boolean {
   };
   
   const titleClean = cleanText(scene.title);
-  const narrationClean = cleanText(scene.narration.slice(0, 40));
-  
   const htmlClean = cleanText(html);
   
   if (titleClean && !htmlClean.includes(titleClean)) return true;
-  if (narrationClean && !htmlClean.includes(narrationClean)) return true;
   
   return false;
 }
