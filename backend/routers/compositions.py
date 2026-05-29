@@ -167,8 +167,8 @@ body {{
 
 /* Standard layout patterns — expanded for video canvas */
 .scene .layout {{
-  display: grid; gap: 60px; height: 100%;
-  padding: 60px 120px 180px; align-items: center;
+  display: grid; gap: 40px; height: 100%;
+  padding: 50px 120px 240px; align-items: center;
   position: relative; z-index: 10;
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
@@ -302,7 +302,7 @@ body {{
   backdrop-filter: blur(12px);
   box-shadow: 0 40px 100px -20px var(--glow), inset 0 0 80px rgba(255,255,255,0.02);
   position: relative; overflow: visible;
-  padding: 60px;
+  padding: 32px 40px;
   width: 100%;
 }}
 .visual-block::before {{
@@ -344,8 +344,8 @@ body {{
 .terminal {{
   font-family: 'JetBrains Mono', monospace;
   background: rgba(0,0,0,0.65); border: 2px solid {accent}44;
-  border-radius: 24px; padding: 40px 48px;
-  font-size: 1.35rem; line-height: 1.8; color: var(--text2);
+  border-radius: 24px; padding: 24px 32px;
+  font-size: 1.25rem; line-height: 1.8; color: var(--text2);
   box-shadow: 0 20px 50px -10px var(--glow);
   width: 100%;
 }}
@@ -377,32 +377,32 @@ body {{
 .feat-card .d  {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
 
 /* Comparison — for B4 */
-.compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 32px; min-height: 0; width: 100%; }}
-.compare .col {{ padding: 40px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
+.compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; width: 100%; }}
+.compare .col {{ padding: 24px 28px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
 .compare .col:hover {{ border-color: var(--accent2); transform: scale(1.02); }}
-.compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 24px; }}
-.compare .col li {{ list-style: none; padding: 12px 0; color: var(--text2); font-size: 1.6rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
+.compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
+.compare .col li {{ list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.4rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
 .compare .col li::before {{ content: '✓ '; color: var(--accent3); font-weight: 700; }}
 .compare .col.bad li::before {{ content: '✗ '; color: #ef4444; }}
 
 /* Timeline — for B5 */
 .tl-list {{ position: relative; padding-left: 48px; width: 100%; }}
 .tl-list::before {{ content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), {accent}33); }}
-.tl-item {{ position: relative; padding: 16px 0 28px; }}
-.tl-item::before {{ content: ''; position: absolute; left: -43px; top: 20px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 6px {accent}33; }}
+.tl-item {{ position: relative; padding: 8px 0 16px; }}
+.tl-item::before {{ content: ''; position: absolute; left: -41px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px {accent}33; }}
 .tl-item .y {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--accent2); letter-spacing: 0.1em; }}
-.tl-item .t {{ font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 8px 0; }}
-.tl-item .d {{ color: var(--text2); font-size: 1.3rem; line-height: 1.6; word-break: break-word; }}
+.tl-item .t {{ font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
+.tl-item .d {{ color: var(--text2); font-size: 1.2rem; line-height: 1.6; word-break: break-word; }}
 
 /* Quote — for B6 */
-.quote-block {{ position: relative; padding: 40px 60px; width: 100%; }}
+.quote-block {{ position: relative; padding: 20px 40px; width: 100%; }}
 .quote-block::before {{
-  content: '"'; position: absolute; left: -20px; top: -60px;
-  font-size: 18rem; line-height: 1; color: var(--accent);
+  content: '"'; position: absolute; left: -10px; top: -40px;
+  font-size: 12rem; line-height: 1; color: var(--accent);
   opacity: 0.18; font-family: Georgia, serif;
 }}
-.quote-text {{ font-size: 2.5rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }}
-.quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 32px; letter-spacing: 0.1em; }}
+.quote-text {{ font-size: 2.0rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }}
+.quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 16px; letter-spacing: 0.1em; }}
 .quote-attr::before {{ content: '— '; }}
 
 .scene.centered .quote-block {{
@@ -427,21 +427,21 @@ body {{
 
 /* Glass stat-list (horizontal stack cards like 4x, 12x, 50% column) */
 .stat-list {{
-  display: flex; flex-direction: column; gap: 24px; width: 100%;
+  display: flex; flex-direction: column; gap: 12px; width: 100%;
 }}
 .stat-list-card {{
-  display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
-  padding: 32px 36px; border-radius: 28px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 16px 20px; border-radius: 20px;
   background: linear-gradient(135deg, {surface}a3, {surface}66);
   border: 1px solid {accent}33;
   backdrop-filter: blur(12px);
-  box-shadow: 0 15px 45px -10px var(--glow), inset 0 0 40px rgba(255,255,255,0.01);
+  box-shadow: 0 10px 30px -10px var(--glow), inset 0 0 30px rgba(255,255,255,0.01);
   position: relative; overflow: visible;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }}
 .stat-list-card:hover {{
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 20px 50px -5px var(--accent), inset 0 0 40px rgba(255,255,255,0.02);
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 15px 35px -5px var(--accent), inset 0 0 30px rgba(255,255,255,0.02);
   border-color: var(--accent2);
 }}
 .stat-list-card::before {{
@@ -451,25 +451,25 @@ body {{
 }}
 .stat-list-card .ic-wrap {{
   display: flex; align-items: center; justify-content: center;
-  width: 76px; height: 76px; border-radius: 18px;
+  width: 54px; height: 54px; border-radius: 12px;
   background: {accent}1c; border: 2px solid {accent}4d;
-  color: var(--accent2); font-size: 2.2rem; flex-shrink: 0;
+  color: var(--accent2); font-size: 1.6rem; flex-shrink: 0;
 }}
 .stat-list-card .num {{
-  font-size: 4.2rem; font-weight: 900;
+  font-size: 3.0rem; font-weight: 900;
   color: var(--accent); font-family: 'JetBrains Mono', monospace;
-  line-height: 1; min-width: 120px; text-shadow: 0 0 15px var(--glow);
+  line-height: 1; min-width: 90px; text-shadow: 0 0 10px var(--glow);
   flex-shrink: 0;
 }}
 .stat-list-card .details {{
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 4px;
   min-width: 0; flex: 1;
 }}
 .stat-list-card .title {{
-  font-size: 1.6rem; font-weight: 700; color: var(--text1); line-height: 1.3;
+  font-size: 1.45rem; font-weight: 700; color: var(--text1); line-height: 1.3;
 }}
 .stat-list-card .desc {{
-  font-size: 1.5rem; color: var(--text2); opacity: 0.85;
+  font-size: 1.35rem; color: var(--text2); opacity: 0.85;
 }}
 
 /* ───────────────── PREMIUM COMPONENT EXTENSIONS (FROM IMAGE REFERENCE) ───────────────── */
@@ -876,17 +876,17 @@ body {{
   color: #fde047; font-weight: 600; margin-bottom: 24px; width: 100%;
 }}
 .step-list {{
-  display: flex; flex-direction: column; gap: 16px; width: 100%;
+  display: flex; flex-direction: column; gap: 10px; width: 100%;
 }}
 .step-item {{
-  display: flex; align-items: flex-start; gap: 20px; font-size: 1.8rem; line-height: 1.6;
+  display: flex; align-items: flex-start; gap: 12px; font-size: 1.4rem; line-height: 1.6;
   color: var(--text1, #e8e8f0);
 }}
 .step-circle {{
   display: flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
   background: var(--accent); color: #fff; font-weight: 800;
-  font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;
+  font-size: 1.1rem; flex-shrink: 0; margin-top: 2px;
 }}
 .bento-3x2 {{
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%;
