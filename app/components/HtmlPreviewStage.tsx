@@ -20,6 +20,23 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Trạng thái từng scene trong quá trình gen tuần tự
 type SceneGenStatus = "pending" | "generating" | "done" | "error";
 
+function isSceneDirty(html: string | undefined, scene: Scene): boolean {
+  if (!html) return true;
+  const cleanText = (t: string) => {
+    return t.replace(/[^a-zA-Z0-9áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/gi, "").toLowerCase();
+  };
+  
+  const titleClean = cleanText(scene.title);
+  const narrationClean = cleanText(scene.narration.slice(0, 40));
+  
+  const htmlClean = cleanText(html);
+  
+  if (titleClean && !htmlClean.includes(titleClean)) return true;
+  if (narrationClean && !htmlClean.includes(narrationClean)) return true;
+  
+  return false;
+}
+
 function patchThemeInHtml(html: string, newThemeId: ThemeId): string {
   const newTheme = getTheme(newThemeId);
   const rootRegex = /:root\s*\{([^}]*)\}/i;
@@ -116,25 +133,32 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
   // ── Gen step-by-step state ──────────────────────────────────────────
   // sceneStatuses[i] = trạng thái của scene i (0-based)
   const [sceneStatuses, setSceneStatuses] = useState<SceneGenStatus[]>(() =>
-    scenePlan.scenes.map((_, i) => {
+    scenePlan.scenes.map((scene, i) => {
       const hasScene = scenePlan.compositionHtml && (
         scenePlan.compositionHtml.includes(`id="scene${i + 1}"`) ||
         scenePlan.compositionHtml.includes(`id='scene${i + 1}'`) ||
-        scenePlan.compositionHtml.includes(`id=scene${i + 1}`)
+        scenePlan.compositionHtml.includes(`id=scene${i + 1}`) ||
+        scenePlan.compositionHtml.includes(`id="sceneB${i + 1}"`) ||
+        scenePlan.compositionHtml.includes(`id='sceneB${i + 1}'`)
       );
-      return hasScene ? "done" : "pending";
+      if (!hasScene) return "pending";
+      const dirty = isSceneDirty(scenePlan.compositionHtml, scene);
+      return dirty ? "pending" : "done";
     })
   );
   // Số scene đã gen xong (để tính tiến độ)
   const [genedCount, setGenedCount] = useState<number>(() => {
     if (!scenePlan.compositionHtml) return 0;
-    return scenePlan.scenes.filter((_, i) => {
+    return scenePlan.scenes.filter((scene, i) => {
       const html = scenePlan.compositionHtml;
-      return html && (
+      const hasScene = html && (
         html.includes(`id="scene${i + 1}"`) ||
         html.includes(`id='scene${i + 1}'`) ||
-        html.includes(`id=scene${i + 1}`)
+        html.includes(`id=scene${i + 1}`) ||
+        html.includes(`id="sceneB${i + 1}"`) ||
+        html.includes(`id='sceneB${i + 1}'`)
       );
+      return hasScene && !isSceneDirty(html, scene);
     }).length;
   });
   // Đang gen scene nào? null = không gen
@@ -167,6 +191,29 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
   const scenePlanRef = useRef(scenePlan);
   useEffect(() => { scenePlanRef.current = scenePlan; });
 
+  // ── Sync sceneRegenFlags on mount based on isSceneDirty check ────────
+  useEffect(() => {
+    if (!html) return;
+    let changed = false;
+    const flags = [...(scenePlan.sceneRegenFlags ?? scenePlan.scenes.map(() => false))];
+    
+    scenePlan.scenes.forEach((scene, i) => {
+      const dirty = isSceneDirty(html, scene);
+      if (dirty && !flags[i]) {
+        flags[i] = true;
+        changed = true;
+      }
+    });
+    
+    if (changed) {
+      setScenePlan({
+        ...scenePlan,
+        sceneRegenFlags: flags
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const abortRef = useRef<AbortController | null>(null);
   const html = scenePlan.compositionHtml;
   const active = scenePlan.scenes[activeIdx];
@@ -183,17 +230,24 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       prevContextRef.current = { layout: null, visual_pattern: null, used_layouts: [], used_patterns: [] };
     } else {
       setSceneStatuses(prev => {
-        return scenePlan.scenes.map((_, i) => {
+        return scenePlan.scenes.map((scene, i) => {
           const hasScene = html.includes(`id="scene${i + 1}"`) ||
                            html.includes(`id='scene${i + 1}'`) ||
-                           html.includes(`id=scene${i + 1}`);
-          return hasScene ? "done" : prev[i] === "generating" ? "generating" : "pending";
+                           html.includes(`id=scene${i + 1}`) ||
+                           html.includes(`id="sceneB${i + 1}"`) ||
+                           html.includes(`id='sceneB${i + 1}'`);
+          if (!hasScene) return "pending";
+          const dirty = isSceneDirty(html, scene);
+          return dirty ? "pending" : prev[i] === "generating" ? "generating" : "done";
         });
       });
-      const count = scenePlan.scenes.filter((_, i) => {
-        return html.includes(`id="scene${i + 1}"`) ||
-               html.includes(`id='scene${i + 1}'`) ||
-               html.includes(`id=scene${i + 1}`);
+      const count = scenePlan.scenes.filter((scene, i) => {
+        const hasScene = html.includes(`id="scene${i + 1}"`) ||
+                         html.includes(`id='scene${i + 1}'`) ||
+                         html.includes(`id=scene${i + 1}`) ||
+                         html.includes(`id="sceneB${i + 1}"`) ||
+                         html.includes(`id='sceneB${i + 1}'`);
+        return hasScene && !isSceneDirty(html, scene);
       }).length;
       setGenedCount(count);
     }
