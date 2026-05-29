@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DailyByte News — Docker Compose
+#
+# Khởi động:
+#   1. Copy backend/.env.docker.example → backend/.env  rồi điền API keys
+#   2. Copy .env.compose.example → .env (cùng thư mục này)  rồi điền secrets
+#   3. docker compose up --build
+#
+# Sau khi render, file MP4 xuất hiện ngay tại:  my-video/renders/
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Backend: FastAPI + TTS + LLM + HyperFrames renderer ─────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: dailybyte-backend:latest
+    container_name: dailybyte-backend
+    ports:
+      - "8000:8000"
+    # Đọc API keys từ backend/.env (giống dev workflow)
+    env_file:
+      - path: ./backend/.env
+        required: false          # không crash nếu file chưa tồn tại
+    environment:
+      # Override HYPERFRAMES_PROJECT sang đường dẫn Linux trong container
+      HYPERFRAMES_PROJECT: /data/my-video
+      # Các biến docker-compose từ file .env root (xem .env.compose.example)
+      OPENAI_API_KEY:           ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL:          ${OPENAI_BASE_URL:-https://api.pinkyne.com/v1}
+      OPENAI_MODEL:             ${OPENAI_MODEL:-gpt-5.1}
+      OPENAI_COMPOSITION_MODEL: ${OPENAI_COMPOSITION_MODEL:-claude-sonnet-4-6}
+      OPENAI_TTS_MODEL:         ${OPENAI_TTS_MODEL:-speech-2.8-hd}
+      OPENAI_TTS_VOICE:         ${OPENAI_TTS_VOICE:-female-tianmei}
+      FALLBACK_API_KEY:         ${FALLBACK_API_KEY:-}
+      FALLBACK_BASE_URL:        ${FALLBACK_BASE_URL:-https://api.anthropic.com/v1/}
+      FALLBACK_MODEL:           ${FALLBACK_MODEL:-claude-sonnet-4-6}
+      GROQ_API_KEY:             ${GROQ_API_KEY:-}
+    volumes:
+      # Bind-mount thư mục my-video từ host → file render MP4 ra thẳng Windows Explorer
+      - ./my-video:/data/my-video
+      # Named volume để cache Playwright Chromium — chỉ download 1 lần đầu
+      - playwright_cache:/ms-playwright
+    # Tăng shared memory — Chromium cần ít nhất 128 MB trong Docker
+    shm_size: '256mb'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── Frontend: Next.js 16 Standalone ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_ vars phải được bake vào lúc build (không thể đổi runtime)
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    image: dailybyte-frontend:latest
+    container_name: dailybyte-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXTAUTH_URL:              ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET:           ${NEXTAUTH_SECRET:-change-me-32-chars-minimum}
+      GOOGLE_CLIENT_ID:          ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET:      ${GOOGLE_CLIENT_SECRET:-}
+      NEXT_PUBLIC_SUPABASE_URL:  ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_KEY:      ${SUPABASE_SERVICE_KEY:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  # Cache Playwright Chromium — persist giữa các lần restart container
+  playwright_cache:
+    driver: local
