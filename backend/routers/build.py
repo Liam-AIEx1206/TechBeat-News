@@ -1565,7 +1565,29 @@ def patch_html_timing(
       // Content entry — start IMMEDIATELY at t=s, tight stagger so the first
       // 0.5s is filled with motion instead of an empty stationary frame.
       safeFromTo(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }}, s);
-      safeFromTo(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.7, ease: "power4.out"   }}, s + 0.12);
+
+      var titleWordsCount = 0;
+      var titleEl = document.querySelector(sceneId + " [id$='-title']");
+      if (titleEl) {{
+        splitTextIntoWords(titleEl);
+        var words = titleEl.querySelectorAll(".title-word");
+        titleWordsCount = words.length;
+        if (words.length > 0) {{
+          tl.fromTo(words,
+            {{ opacity: 0, y: 15 }},
+            {{ opacity: 1, y: 0, duration: 0.35, stagger: 0.08, ease: "power2.out", immediateRender: false }},
+            s + 0.12
+          );
+        }} else {{
+          tl.fromTo(titleEl,
+            {{ opacity: 0, y: 30 }},
+            {{ opacity: 1, y: 0, duration: 0.7, ease: "power4.out", immediateRender: false }},
+            s + 0.12
+          );
+        }}
+      }}
+      var titleEndTime = s + 0.12 + 0.35 + (titleWordsCount * 0.08) + 0.1;
+
       safeFromTo(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.6, ease: "power3.out"   }}, s + 0.25);
       safeFromTo(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.5, ease: "power2.out"   }}, s + 0.38);
       var containerExclude = ":not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)";
@@ -1596,19 +1618,61 @@ def patch_html_timing(
         }});
       }});
 
+      function normalizeStr(str) {{
+        return (str || "").toLowerCase()
+          .replace(/[.,\\/#!$%\\^&\\*;:{{}}=\\-_`~()?"']/g, "")
+          .trim();
+      }}
+
       // 3. Animate each block at its corresponding subtitle start timestamp!
       if (blocks.length > 0) {{
+        var lastBlockStart = titleEndTime;
         blocks.forEach(function(blockEl, bi) {{
           var blockStart;
-          if (subtitleTimes.length > 0) {{
-            // Map block index to subtitle time index proportionally
-            var subIdx = Math.floor((bi / blocks.length) * subtitleTimes.length);
-            blockStart = subtitleTimes[subIdx];
-          }} else {{
-            // Fallback stagger if no subtitles exist
-            blockStart = s + 0.2 + (bi * 0.45);
+          var scWd = wordData[i];
+          var matchedStart = -1;
+
+          // Attempt keyword matching if wordData is present
+          if (scWd && scWd.length > 0) {{
+            var textEls = blockEl.querySelectorAll(".num, .title, .t, .d, h4, h3, li, p");
+            var blockText = "";
+            if (textEls.length > 0) {{
+              var parts = [];
+              textEls.forEach(function(te) {{ parts.push(te.innerText); }});
+              blockText = parts.join(" ");
+            }} else {{
+              blockText = blockEl.innerText;
+            }}
+
+            var blockWords = normalizeStr(blockText).split(/\\s+/).filter(function(w) {{
+              return w.length > 2;
+            }});
+
+            if (blockWords.length > 0) {{
+              for (var k = 0; k < scWd.length; k++) {{
+                var voiceWord = normalizeStr(scWd[k].word);
+                if (voiceWord.length > 2 && blockWords.indexOf(voiceWord) !== -1) {{
+                  matchedStart = s + scWd[k].start;
+                  break;
+                }}
+              }
+            }}
           }}
+
+          var fallbackTime;
+          if (subtitleTimes.length > 0) {{
+            var subIdx = Math.min(Math.floor((bi / blocks.length) * subtitleTimes.length), subtitleTimes.length - 1);
+            fallbackTime = subtitleTimes[subIdx];
+          } else {{
+            fallbackTime = s + 0.35 + (bi * 0.45);
+          }}
+
+          blockStart = (matchedStart !== -1) ? matchedStart : fallbackTime;
           
+          // Force blocks to appear only after title animation has completed, and in sequential order!
+          blockStart = Math.max(blockStart, lastBlockStart);
+          lastBlockStart = blockStart + 0.15; // 0.15s minimum stagger between consecutive blocks
+
           // Animate the block dynamically at the exact timestamp!
           tl.fromTo(blockEl,
             {{ y: 28, opacity: 0 }},

@@ -165,11 +165,14 @@ body {{
   opacity: 1; visibility: visible;
 }}
 
-/* Standard layout patterns — expanded for video canvas */
+/* Standard layout patterns — bounded height to guarantee no subtitle overlap */
 .scene .layout {{
-  display: grid; gap: 40px; height: 100%;
-  padding: 50px 120px 240px; align-items: center;
+  display: grid; gap: 40px;
+  height: 920px; /* Bounded height to guarantee no subtitle overlap while maximizing content space */
+  padding: 60px 120px 0;
+  align-items: center;
   position: relative; z-index: 10;
+  overflow: hidden; /* Force clipping to protect the subtitle area */
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
 .scene.hero .layout     {{ grid-template-columns: 1.1fr 0.9fr; }}
@@ -213,16 +216,16 @@ body {{
 
 .scene-num {{
   position: absolute; bottom: 24px; right: 40px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8rem; font-weight: 800;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 8rem; font-weight: 900;
   color: var(--accent); opacity: 0.06; line-height: 1;
   pointer-events: none; z-index: 5;
 }}
 
 .status-pill {{
   position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.0rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1.0rem; font-weight: 800;
   color: var(--accent3); background: {accent3}1a;
   border: 2px solid {accent3}4d;
   border-radius: 99px; padding: 8px 24px;
@@ -232,8 +235,8 @@ body {{
 /* Typography utilities — scaled up */
 .badge {{
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.0rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1.0rem; font-weight: 800;
   color: var(--accent2); background: var(--surface);
   border: 2px solid var(--accent);
   border-radius: 99px; padding: 10px 24px;
@@ -242,12 +245,12 @@ body {{
 }}
 
 .title-xl {{
-  font-size: clamp(4.0rem, 6.5vw, 6.5rem);
+  font-size: clamp(2.8rem, 3.8vw, 3.8rem);
   font-weight: 900; line-height: 1.32; letter-spacing: -0.04em;
   color: var(--text1);
 }}
 .title-hero {{
-  font-size: clamp(5.5rem, 8.5vw, 8.5rem);
+  font-size: clamp(3.2rem, 4.5vw, 4.5rem);
   font-weight: 900; line-height: 1.32; letter-spacing: -0.05em;
   color: var(--text1);
 }}
@@ -261,9 +264,9 @@ body {{
   word-break: break-word;
 }}
 .caption {{
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 1.2rem; color: var(--text2);
-  letter-spacing: 0.1em; text-transform: uppercase;
+  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
 }}
 
 .grad-text {{
@@ -273,6 +276,11 @@ body {{
   /* Bug1 fix: force independent GPU layer to prevent parent blur bleeding into text rasterisation */
   will-change: transform; isolation: isolate; transform: translateZ(0);
   padding-bottom: 0.18em; margin-bottom: -0.18em;
+}}
+.title-word {{
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  will-change: auto !important;
+  transform: none !important;
 }}
 .outline-text {{
   -webkit-text-stroke: 2px var(--accent); color: transparent;
@@ -333,16 +341,16 @@ body {{
 
 .img-caption {{
   position: absolute; bottom: 24px; left: 24px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 1.1rem; color: var(--text1);
   background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
   border: 1px solid {accent}55;
   padding: 10px 20px; border-radius: 99px; z-index: 2;
 }}
 
-/* Terminal block — for B2 CODE pattern */
+/* Terminal block — for B2 CODE pattern — using highly compatible standard system monospace fonts */
 .terminal {{
-  font-family: 'JetBrains Mono', monospace;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   background: rgba(0,0,0,0.65); border: 2px solid {accent}44;
   border-radius: 24px; padding: 24px 32px;
   font-size: 1.25rem; line-height: 1.8; color: var(--text2);
@@ -380,7 +388,7 @@ body {{
 .compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; width: 100%; }}
 .compare .col {{ padding: 24px 28px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
 .compare .col:hover {{ border-color: var(--accent2); transform: scale(1.02); }}
-.compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
+.compare .col h4 {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
 .compare .col li {{ list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.4rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
 .compare .col li::before {{ content: '✓ '; color: var(--accent3); font-weight: 700; }}
 .compare .col.bad li::before {{ content: '✗ '; color: #ef4444; }}
@@ -390,7 +398,7 @@ body {{
 .tl-list::before {{ content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), {accent}33); }}
 .tl-item {{ position: relative; padding: 8px 0 16px; }}
 .tl-item::before {{ content: ''; position: absolute; left: -41px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px {accent}33; }}
-.tl-item .y {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--accent2); letter-spacing: 0.1em; }}
+.tl-item .y {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent2); letter-spacing: 0.1em; }}
 .tl-item .t {{ font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
 .tl-item .d {{ color: var(--text2); font-size: 1.2rem; line-height: 1.6; word-break: break-word; }}
 
@@ -402,7 +410,7 @@ body {{
   opacity: 0.18; font-family: Georgia, serif;
 }}
 .quote-text {{ font-size: 2.0rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }}
-.quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 16px; letter-spacing: 0.1em; }}
+.quote-attr {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--accent2); margin-top: 16px; letter-spacing: 0.1em; }}
 .quote-attr::before {{ content: '— '; }}
 
 .scene.centered .quote-block {{
@@ -457,7 +465,7 @@ body {{
 }}
 .stat-list-card .num {{
   font-size: 3.0rem; font-weight: 900;
-  color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  color: var(--accent); font-family: 'Be Vietnam Pro', sans-serif;
   line-height: 1; min-width: 90px; text-shadow: 0 0 10px var(--glow);
   flex-shrink: 0;
 }}
@@ -494,13 +502,13 @@ body {{
   border-color: {accent}4d;
 }}
 .chat-bubble .sender-tag {{
-  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.9rem; font-weight: 800;
   margin-bottom: 8px; letter-spacing: 0.1em; text-transform: uppercase;
 }}
 .chat-bubble.user .sender-tag {{ color: var(--accent2); }}
 .chat-bubble.ai .sender-tag {{ color: var(--accent3); }}
 .chat-footer-pill {{
-  align-self: center; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+  align-self: center; font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.1rem; font-weight: 700;
   padding: 12px 28px; border-radius: 99px; background: rgba(0,0,0,0.45);
   border: 1px solid rgba(255,255,255,0.08); color: var(--text2); text-align: center;
   width: 100%; margin-top: 12px;
@@ -536,7 +544,7 @@ body {{
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }}
 .tech-card .meta {{
-  display: flex; align-items: center; gap: 12px; font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 12px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700;
   font-size: 1.15rem; color: var(--accent3); margin-bottom: 28px;
 }}
 .tech-card .bullets {{
@@ -547,7 +555,7 @@ body {{
   display: flex; flex-wrap: wrap; gap: 12px;
 }}
 .tech-card .tag {{
-  font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.95rem; font-weight: 700;
   padding: 8px 18px; border-radius: 99px;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
   color: var(--text1);
@@ -567,7 +575,7 @@ body {{
 }}
 .agent-card .icon {{ font-size: 2.8rem; filter: drop-shadow(0 0 6px var(--glow)); }}
 .agent-card .role {{
-  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2);
 }}
 .agent-card .desc {{
@@ -575,7 +583,7 @@ body {{
 }}
 .agent-grid-center-pill {{
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
   color: #000; background: var(--accent3); border: 2px solid var(--accent);
   padding: 10px 24px; border-radius: 99px; z-index: 5;
   box-shadow: 0 0 25px var(--accent3);
@@ -695,7 +703,7 @@ body {{
 }}
 .marquee-strip .pill {{
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--accent2); background: rgba(255,255,255,0.04);
   border: 1px solid {accent}33; border-radius: 99px;
@@ -854,7 +862,7 @@ body {{
 }}
 .formula-stack {{
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin: 32px 0; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  margin: 32px 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 800;
 }}
 .formula-pill {{
   display: inline-flex; align-items: center; gap: 8px;
@@ -963,7 +971,7 @@ body {{
 /* Chunked Subtitle Styles — one short line at a time, fades in/out */
 .techbeat-subtitles {{
   position: absolute;
-  bottom: 72px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   width: auto;
@@ -975,7 +983,7 @@ body {{
 .sub-scene {{
   display: none;
   position: relative;
-  min-height: 80px;
+  min-height: 50px;
 }}
 .sub-chunk {{
   display: none;
@@ -989,7 +997,7 @@ body {{
   letter-spacing: -0.01em;
   line-height: 1.3;
   white-space: normal;
-  padding: 14px 36px;
+  padding: 10px 24px;
   border-radius: 14px;
   background: transparent;
   backdrop-filter: none;
@@ -1024,7 +1032,7 @@ body {{
   letter-spacing: -0.01em;
   line-height: 1.3;
   white-space: normal;
-  padding: 14px 36px;
+  padding: 10px 24px;
   border-radius: 14px;
   background: transparent;
   backdrop-filter: none;
@@ -1071,7 +1079,7 @@ NGÔN NGỮ: tiếng Việt có dấu. Giữ nguyên văn narration/title/visual
 - KHÔNG viết <script> chứa gsap.timeline (sẽ bị strip server-side).
 - KHÔNG redeclare CSS class đã có sẵn.
 
-CSS framework + GSAP timeline + Inter/JetBrains Mono font đã được inject server-side.
+CSS framework + GSAP timeline + font Inter đã được inject server-side (phông JetBrains Mono đã bị loại bỏ hoàn toàn để chống lỗi chữ tiếng Việt).
 
 Class có sẵn (DÙNG, không tự viết):
 LAYOUT: .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col
@@ -1120,8 +1128,10 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
     Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
   • Cấm tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VÙNG PHỤ ĐỀ):
+- **Tuyệt đối cấm sử dụng phông chữ JetBrains Mono hay phông monospace cho chữ tiếng Việt:** Không sử dụng phông chữ monospace cho tiêu đề, nhãn, số, phụ đề, trích dẫn, v.v. (như `.badge`, `.compare .col h4`, `.caption`...) vì gây lỗi chữ tiếng Việt nghiêm trọng (lỗi hiển thị ư, ô, Đ, ê, ơ). BẮT BUỘC sử dụng phông chữ `'Be Vietnam Pro'` hoặc sans-serif hệ thống. Chỉ đối với các khối code thật trong `.terminal` mới sử dụng `Consolas, monospace`.
 - **Cấm đặt Decoratives sai chỗ (Lỗi nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để tránh đè lên các cột chữ chính.
+- **Chống tràn xuống vùng phụ đề (BẮT BUỘC):** Phụ đề chiếm vùng đáy màn hình sát viền cao 160px. Tất cả nội dung trong `.visual-col` và `.info-col` phải giới hạn tổng chiều cao tối đa không quá 780px để không chạm đến phụ đề. Rút ngắn danh sách/số liệu xuống tối đa 3-4 mục cực kỳ ngắn gọn, súc tích. CẤM TUYỆT ĐỐI xếp chồng nhiều khối trực quan khác nhau trong visual-col (ví dụ: cấm chèn cả .stat-list và .step-list hoặc .feat-grid trên cùng một slide). Cột visual-col chỉ được chứa DUY NHẤT một khối trực quan.
 - **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
   * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
   * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
@@ -1164,7 +1174,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
   </div>
 
 
-- Toàn bộ nội dung mỗi scene PHẢI vừa trong viewport 1920×1080. KHÔNG được để content dài hơn chiều cao 880px (sau khi trừ padding).
+- Toàn bộ nội dung mỗi scene PHẢI vừa trong viewport 1920×1080. KHÔNG được để content dài hơn chiều cao 920px (sau khi trừ padding).
 - Nếu danh sách bullet/feature dài hơn 4 dòng → CẮT GỌN xuống tối đa 4 mục, mỗi mục ngắn gọn.
 - Title trong visual-block không lấy font-size > 2rem; bullet list không > 1.2rem để tránh tràn xuống.
 
@@ -1176,7 +1186,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 <title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>/* override tối đa 60 dòng */</style>
 </head><body>
@@ -1250,7 +1260,7 @@ def build_system_prompt_full(theme: dict, scene_count: int = 0) -> str:
 HỆ THỐNG ĐÃ LO SẴN — KHÔNG CẦN BẠN VIẾT LẠI:
 ✅ CSS framework đầy đủ (variables theme, layouts, typography, decorative chrome) đã được inject server-side trước HTML của bạn.
 ✅ GSAP timeline với fade in/out scene, audio sync, scene visibility lifecycle sẽ được inject server-side với duration thật từ TTS.
-✅ Font Inter + JetBrains Mono đã link sẵn.
+✅ Font Inter + Be Vietnam Pro đã link sẵn. Phông JetBrains Mono đã bị loại bỏ hoàn toàn để chống lỗi hiển thị tiếng Việt.
 
 ⚠️ TUYỆT ĐỐI KHÔNG VIẾT `<script>` chứa `gsap.timeline`.
 
@@ -1313,10 +1323,11 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
     Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
   • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VÙNG PHỤ ĐỀ):
   • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Tuyệt đối cấm sử dụng phông JetBrains Mono hay phông monospace cho tiếng Việt:** Không sử dụng phông monospace cho tiêu đề, nhãn, số, trích dẫn, tag, v.v. (như `.badge`, `.compare .col h4`, `.caption`, `.quote-attr`...) vì gây lỗi chữ tiếng Việt nghiêm trọng (lỗi hiển thị ư, ô, Đ, ê, ơ). BẮT BUỘC sử dụng phông `'Be Vietnam Pro'` hoặc sans-serif hệ thống. Chỉ đối với các khối code trong `.terminal` mới sử dụng `Consolas, monospace`.
   • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
-    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng từ đỉnh xuống, giới hạn tổng chiều cao tối đa của toàn bộ các khối nội dung trong `.visual-col` và `.info-col` không quá 780px để chừa đúng 160px trống phía dưới hoàn toàn cho phụ đề sát viền. Rút ngắn các danh sách/số liệu xuống tối đa 3-4 mục cực kỳ ngắn gọn, súc tích để không bao giờ bị cắt xén hay che bởi phụ đề. CẤM TUYỆT ĐỐI xếp chồng nhiều khối trực quan khác nhau trong visual-col (ví dụ: cấm chèn cả .stat-list và .step-list hoặc .feat-grid trên cùng một slide). Cột visual-col chỉ được chứa DUY NHẤT một khối trực quan.
     * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
     * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tối đa 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
   • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
@@ -1730,7 +1741,7 @@ HEAD BOILERPLATE (copy nguyên xi):
 <title>{{title video}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* CHỈ override scene-specific. KHÔNG redeclare class đã sẵn.
@@ -1860,7 +1871,7 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 - ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
   • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
   • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
-    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình sát viền (cách đáy 160px). CẤM TUYỆT ĐỐI xếp chồng nhiều khối trực quan khác nhau trong visual-col (ví dụ: cấm chèn cả .stat-list và .step-list hoặc .feat-grid trên cùng một slide). Cột visual-col chỉ được chứa DUY NHẤT một khối trực quan.
     * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
     * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tốiã 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
   • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
@@ -1885,7 +1896,7 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 <title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* Override scene-specific (≤80 dòng): keyframes shimmer/pulse cho visual,
@@ -2972,7 +2983,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
 <title>{req.title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */
@@ -3298,7 +3309,7 @@ def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css:
 <title>{title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */
