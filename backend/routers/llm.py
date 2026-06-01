@@ -110,7 +110,7 @@ def _make_async(p: Provider) -> AsyncOpenAI | None:
     key = _resolve_provider_key(p)
     if not key:
         return None
-    client = AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=45.0)
+    client = AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=25.0)
     _async_clients[p.name] = client
     return client
 
@@ -142,9 +142,22 @@ def get_model(kind: str = "default") -> str:
     return PROVIDER_CHAIN[0].model_for(kind)
 
 
+import time
+
+_disabled_until: dict[str, float] = {}
+
 def configured_providers() -> list[Provider]:
-    """Providers in the chain that actually have credentials set."""
-    return [p for p in PROVIDER_CHAIN if _resolve_provider_key(p)]
+    """Providers in the chain that actually have credentials set and are not temporarily disabled."""
+    now = time.time()
+    active = []
+    for p in PROVIDER_CHAIN:
+        if not _resolve_provider_key(p):
+            continue
+        if _disabled_until.get(p.name, 0) > now:
+            print(f"[llm] Skipping provider '{p.name}' (temporarily disabled due to previous error).")
+            continue
+        active.append(p)
+    return active
 
 
 def log_provider_status() -> None:
@@ -241,8 +254,9 @@ async def chat_completions_with_fallback(*, model_kind: str, kwargs_factory=None
                 print(f"[llm] Provider '{p.name}' failed with non-quota error "
                       f"({type(e).__name__}: {e}). Aborting chain.")
                 raise
-            print(f"[llm] Provider '{p.name}' quota exhausted ({type(e).__name__}: {e}). "
-                  f"Trying next in chain...")
+            print(f"[llm] Provider '{p.name}' quota exhausted or timed out ({type(e).__name__}: {e}). "
+                  f"Disabling for 5 minutes and trying next in chain...")
+            _disabled_until[p.name] = time.time() + 300
             continue
 
     msg_lines = [
