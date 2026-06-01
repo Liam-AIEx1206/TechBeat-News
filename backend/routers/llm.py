@@ -110,7 +110,7 @@ def _make_async(p: Provider) -> AsyncOpenAI | None:
     key = _resolve_provider_key(p)
     if not key:
         return None
-    client = AsyncOpenAI(api_key=key, base_url=p.base_url)
+    client = AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=45.0)
     _async_clients[p.name] = client
     return client
 
@@ -176,12 +176,14 @@ def _is_quota_or_billing_error(e: Exception) -> bool:
         # through to groq-fast (Scout 17B, looser caps) instead of aborting.
         "reduce the length", "messages or completion",
         "request too large", "context length", "context_length_exceeded",
-        "too many tokens",
+        "too many tokens", "timeout", "timed out", "connect timeout"
     )
     if any(k in msg for k in keywords):
         return True
+    if type(e).__name__ in ("APITimeoutError", "TimeoutException", "ConnectTimeout"):
+        return True
     code = getattr(e, "status_code", None) or getattr(e, "code", None)
-    if code in (402, 429):  # 402 = payment required, 429 = rate limit / quota
+    if code in (402, 429, 502, 504):  # 402 = payment required, 429 = rate limit / quota, 502/504 = gateway timeout
         return True
     return False
 
