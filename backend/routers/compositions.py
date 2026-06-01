@@ -277,6 +277,14 @@ body {{
   will-change: transform; isolation: isolate; transform: translateZ(0);
   padding-bottom: 0.18em; margin-bottom: -0.18em;
 }}
+/* Bug6 fix: children of grad-text (e.g. .title-word spans from splitTextIntoWords)
+   must inherit transparent fill so the parent's background-clip:text gradient shows through */
+.grad-text .title-word,
+.grad-text span {{
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  background: none !important;
+}}
 .title-word {{
   font-family: 'Be Vietnam Pro', sans-serif !important;
   will-change: auto !important;
@@ -925,7 +933,7 @@ body {{
 .scene .formula-pill,
 .scene p,
 .scene li,
-.scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix) {{
+.scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix):not(.title-word) {{
   color: var(--text1, #e8e8f0) !important;
   text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }}

@@ -1142,6 +1142,30 @@ def patch_html_timing(
     return word.length * interval;
   }}
 
+  function splitTextIntoWords(el) {{
+    if (!el || el._isWordSplit) return;
+    var text = el.innerText.trim();
+    if (!text) return;
+
+    // Giữ nguyên các class grad-text, outline-text, glow-text ở phần tử cha (h1)
+    // để tránh lỗi dựng hình (Chrome background-clip rendering bug khi kết hợp compositing/will-change)
+    var classesToTransfer = [];
+    var activeClasses = [];
+    classesToTransfer.forEach(function(cls) {{
+      if (el.classList.contains(cls)) {{
+        activeClasses.push(cls);
+        el.classList.remove(cls);
+      }}
+    }});
+
+    var words = text.split(/\\s+/).filter(Boolean);
+    el.innerHTML = words.map(function(word) {{
+      var classAttr = activeClasses.length > 0 ? 'class="title-word ' + activeClasses.join(' ') + '"' : 'class="title-word"';
+      return '<span ' + classAttr + ' style="display:inline-block;opacity:0;">' + word + '</span>';
+    }}).join(' ');
+    el._isWordSplit = true;
+  }}
+
   function compileTextEffects(sceneId, sceneStart, tl) {{
     var scEl = document.querySelector(sceneId);
     if (!scEl) return;
@@ -1366,7 +1390,14 @@ def patch_html_timing(
         gsap.set(el, {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
       }}
       // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
-      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
+      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
+      
+      var titleEl = el.querySelector("[id$='-title']");
+      if (titleEl) {{
+        gsap.set(titleEl, {{ opacity: 1 }}); // Ensure title container stays visible
+        splitTextIntoWords(titleEl);
+        gsap.set(titleEl.querySelectorAll(".title-word"), {{ opacity: 0 }});
+      }}
       var presetEls = [];
       el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)").forEach(function(item) {{
         if (item.classList.contains("visual-block")) {{
@@ -1655,7 +1686,7 @@ def patch_html_timing(
                   matchedStart = s + scWd[k].start;
                   break;
                 }}
-              }
+              }}
             }}
           }}
 
@@ -1663,7 +1694,7 @@ def patch_html_timing(
           if (subtitleTimes.length > 0) {{
             var subIdx = Math.min(Math.floor((bi / blocks.length) * subtitleTimes.length), subtitleTimes.length - 1);
             fallbackTime = subtitleTimes[subIdx];
-          } else {{
+          }} else {{
             fallbackTime = s + 0.35 + (bi * 0.45);
           }}
 
