@@ -77,7 +77,7 @@ export default function Home() {
       const processLines = (raw: string) => {
         for (const line of raw.split("\n\n")) {
           if (!line.startsWith("data: ")) continue;
-          let event: { type: string; text?: string; scenePlan?: unknown; message?: string };
+          let event: { type: string; text?: string; scenePlan?: unknown; message?: string; llmProvider?: string; llmModel?: string; };
           try { event = JSON.parse(line.slice(6)); } catch { continue; }
           if (event.type === "chunk" && event.text) {
             setStreamBuffer((prev) => prev + event.text);
