@@ -28,7 +28,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 # Cài đặt Font Be Vietnam Pro để render phụ đề tiếng Việt chuẩn đẹp
 RUN mkdir -p /usr/share/fonts/truetype/be-vietnam-pro \
-    && curl -L -o /tmp/be-vietnam-pro.zip "https://fonts.google.com/download?family=Be%20Vietnam%20Pro" \
+    && curl -L -o /tmp/be-vietnam-pro.zip "https://gwfh.mranv.com/api/fonts/be-vietnam-pro?download=zip&subsets=vietnamese,latin" \
     && unzip /tmp/be-vietnam-pro.zip -d /usr/share/fonts/truetype/be-vietnam-pro \
     && rm /tmp/be-vietnam-pro.zip \
     && fc-cache -f -v
