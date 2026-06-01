@@ -111,7 +111,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
 
     const abort = new AbortController(); abortRef.current = abort;
     try {
-      const res = await fetch(`${API}/build-video`, {
+      const res = await fetch(`/api/proxy/build-video`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(scenePlan), signal: abort.signal,
       });
