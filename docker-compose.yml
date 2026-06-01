@@ -18,9 +18,6 @@ services:
       dockerfile: Dockerfile
     image: dailybyte-backend:latest
     container_name: dailybyte-backend
-    ports:
-      # Ràng buộc nghiêm ngặt vào localhost trên cổng phụ 8009 để tránh xung đột cổng 8000 của dự án khác
-      - "127.0.0.1:8009:8000"
     # Đọc API keys từ backend/.env (giống dev workflow)
     env_file:
       - path: ./backend/.env
@@ -66,9 +63,6 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     image: dailybyte-frontend:latest
     container_name: dailybyte-frontend
-    ports:
-      # Ràng buộc nghiêm ngặt vào localhost trên cổng phụ 3009 để tránh xung đột cổng 3000 của dự án khác
-      - "127.0.0.1:3009:3000"
     environment:
       NODE_ENV: production
       NEXTAUTH_URL:              ${NEXTAUTH_URL:-http://localhost:3000}
