@@ -22,15 +22,9 @@ type SceneGenStatus = "pending" | "generating" | "done" | "error";
 
 function isSceneDirty(html: string | undefined, scene: Scene): boolean {
   if (!html) return true;
-  const cleanText = (t: string) => {
-    return t.replace(/[^a-zA-Z0-9áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/gi, "").toLowerCase();
-  };
-  
-  const titleClean = cleanText(scene.title);
-  const htmlClean = cleanText(html);
-  
-  if (titleClean && !htmlClean.includes(titleClean)) return true;
-  
+  // User edits are tracked via sceneRegenFlags in setScene().
+  // We no longer strictly check if the title text is in the HTML because the LLM might abbreviate it,
+  // which causes infinite "pending" states for scenes with long titles.
   return false;
 }
 
@@ -139,7 +133,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
         scenePlan.compositionHtml.includes(`id='sceneB${i + 1}'`)
       );
       if (!hasScene) return "pending";
-      const dirty = isSceneDirty(scenePlan.compositionHtml, scene);
+      const dirty = scenePlan.sceneRegenFlags?.[i] || isSceneDirty(scenePlan.compositionHtml, scene);
       return dirty ? "pending" : "done";
     })
   );
@@ -155,7 +149,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
         html.includes(`id="sceneB${i + 1}"`) ||
         html.includes(`id='sceneB${i + 1}'`)
       );
-      return hasScene && !isSceneDirty(html, scene);
+      return hasScene && !scenePlan.sceneRegenFlags?.[i] && !isSceneDirty(html, scene);
     }).length;
   });
   // Đang gen scene nào? null = không gen
@@ -234,7 +228,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                            html.includes(`id="sceneB${i + 1}"`) ||
                            html.includes(`id='sceneB${i + 1}'`);
           if (!hasScene) return "pending";
-          const dirty = isSceneDirty(html, scene);
+          const dirty = scenePlan.sceneRegenFlags?.[i] || isSceneDirty(html, scene);
           return dirty ? "pending" : prev[i] === "generating" ? "generating" : "done";
         });
       });
@@ -244,7 +238,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                          html.includes(`id=scene${i + 1}`) ||
                          html.includes(`id="sceneB${i + 1}"`) ||
                          html.includes(`id='sceneB${i + 1}'`);
-        return hasScene && !isSceneDirty(html, scene);
+        return hasScene && !scenePlan.sceneRegenFlags?.[i] && !isSceneDirty(html, scene);
       }).length;
       setGenedCount(count);
     }

@@ -2510,15 +2510,8 @@ QUY TẮC HTML BẮT BUỘC CHO SCENE {scene_index} (QUYẾT ĐỊNH VẺ ĐẸP
 3. 🎬 NẾU LÀ SCENE MỞ ĐẦU (SCENE 1) - BẮT BUỘC WOW HERO:
    - Đây là phân cảnh giới thiệu nội dung chính của cả buổi thuyết trình. Tiêu đề chính (Title) của Scene 1 BẮT BUỘC PHẢI cực kỳ lớn, in đậm và nổi bật để tạo tác động mạnh mẽ (WOW effect) ngay lập tức.
    - BẮT BUỘC dùng class `.title-hero.grad-text` cho thẻ h1 của Scene 1 (không dùng `.title-xl`), và thêm CSS inline style `style="font-weight: 900 !important;"` để in đậm tối đa tiêu đề.
-   - Hãy chọn 1 trong các TEMPLATES sau (tự do, đừng dùng .split):
-   ▸ TEMPLATE A — FULL-BLEED HERO (intro):
-     `<div class="scene hero" id="scene1">` có các background đầy đủ, status-pill, badges, particle-field và tech-card B14 hoặc bento-grid B16 lấp đầy không gian.
-   ▸ TEMPLATE B — MEGA-NUM HERO (intro stats):
-     `<div class="scene centered" id="scene1">` có mega-num cực lớn và hero-stat-banner.
-   ▸ TEMPLATE C — RETRO/SYNTHWAVE HERO (intro theme y2k):
-     `<div class="scene centered" id="scene1">` có retro-grid và outline-text.
-   ▸ TEMPLATE D — BENTO HERO (tech showcase):
-     `<div class="scene" id="scene1" style="padding:80px;">` có bento-grid 4 ô cực đẹp.
+   - Layout nên ưu tiên `.scene.hero` hoặc `.scene.centered`.
+   - BẮT BUỘC CHỌN 1 TRONG CÁC VISUAL PATTERN CHI TIẾT NHƯ (B1, B13, B14, B17) VÀO TRONG `.visual-col` ĐỂ LẤP ĐẦY KHÔNG GIAN, KHÔNG ĐƯỢC ĐỂ TRỐNG.
 
 4. 🌌 DECORATIVE DENSITY (CHỐNG SLIDE TRỐNG):
    - MỖI scene BẮT BUỘC có 2-5 ambient decoratives lấp đầy không gian trống:
