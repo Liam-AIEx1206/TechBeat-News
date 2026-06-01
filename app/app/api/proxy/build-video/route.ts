@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  // Always proxy directly to the internal backend container
-  const backendUrl = "http://backend:8000/build-video";
+  // Always proxy directly to the internal backend container in prod, or localhost in dev
+  const isDev = process.env.NODE_ENV === "development";
+  const backendUrl = isDev ? "http://localhost:8000/build-video" : "http://backend:8000/build-video";
   
   const response = await fetch(backendUrl, {
     method: "POST",

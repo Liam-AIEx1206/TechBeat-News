@@ -111,7 +111,9 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
 
     const abort = new AbortController(); abortRef.current = abort;
     try {
-      const res = await fetch(`/api/proxy/build-video`, {
+      const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
+      const endpoint = isLocal ? `${API}/build-video` : `/api/proxy/build-video`;
+      const res = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(scenePlan), signal: abort.signal,
       });
