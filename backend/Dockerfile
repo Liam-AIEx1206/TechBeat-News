@@ -48,9 +48,9 @@ RUN mkdir -p /ms-playwright \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt hyperframes package globally để cache npx và chạy thử doctor để test môi trường
-RUN npm install -g hyperframes@0.6.20 \
-    && hyperframes doctor || true
+# Cài đặt hyperframes package locally trong /app để tránh lỗi global hoisting của npm
+RUN npm init -y && npm install hyperframes@0.6.20 \
+    && npx hyperframes doctor || true
 
 # Copy toàn bộ code backend vào container
 COPY . .

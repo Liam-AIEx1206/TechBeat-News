@@ -1776,7 +1776,7 @@ async def run_render(project_root: Path, on_log) -> Path:
             cmd = ["npx.cmd", "--yes", "hyperframes@0.6.20", "render"]
             kwargs = {"shell": False}
         else:
-            cmd = ["hyperframes", "render"]
+            cmd = ["/app/node_modules/.bin/hyperframes", "render"]
             kwargs = {}
 
         proc = subprocess.Popen(
