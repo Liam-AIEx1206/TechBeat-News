@@ -60,7 +60,7 @@ services:
       dockerfile: Dockerfile
       args:
         # NEXT_PUBLIC_ vars phải được bake vào lúc build (không thể đổi runtime)
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api-backend}
     image: dailybyte-frontend:latest
     container_name: dailybyte-frontend
     environment:
