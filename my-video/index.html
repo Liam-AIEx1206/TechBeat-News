@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperFrames - Tạo Video Từ HTML Đơn Giản</title>
+<title>Khám Phá GitHub - Roboflow Notebooks: Hướng Dẫn Mô Hình Thị Giác Máy Tinh Tế</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
@@ -12,15 +12,15 @@
 /* === techbeat:base-css === */
 
 :root {
-  --bg: #0d0410;
-  --bg2: #1a0825;
-  --surface: #27123a;
-  --accent: #ec4899;
-  --accent2: #f472b6;
-  --accent3: #fde047;
-  --text1: #fdf4ff;
-  --text2: #f9a8d4;
-  --glow: #ec489955;
+  --bg: #03070d;
+  --bg2: #061018;
+  --surface: #0a1722;
+  --accent: #22d3ee;
+  --accent2: #67e8f9;
+  --accent3: #a5f3fc;
+  --text1: #ecfeff;
+  --text2: #7dd3fc;
+  --glow: #22d3ee55;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,16 +41,16 @@ body {
   height: 1080px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 1400px 900px at 20% 50%, #ec489914 0%, transparent 70%),
-    radial-gradient(ellipse 1000px 700px at 80% 20%, #f472b610 0%, transparent 60%),
-    radial-gradient(ellipse 800px 600px at 60% 80%, #fde0470a 0%, transparent 60%),
+    radial-gradient(ellipse 1400px 900px at 20% 50%, #22d3ee14 0%, transparent 70%),
+    radial-gradient(ellipse 1000px 700px at 80% 20%, #67e8f910 0%, transparent 60%),
+    radial-gradient(ellipse 800px 600px at 60% 80%, #a5f3fc0a 0%, transparent 60%),
     linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
   transform-origin: top left;
 }
 
 #root::before {
   content: ''; position: absolute; inset: 0;
-  background-image: radial-gradient(circle, #ec489924 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, #22d3ee24 1.5px, transparent 1.5px);
   background-size: 48px 48px; opacity: 0.32;
   pointer-events: none; z-index: 0;
   animation: grid-sweep 12s linear infinite;
@@ -140,8 +140,8 @@ body {
   position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
   font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 1.0rem; font-weight: 800;
-  color: var(--accent3); background: #fde0471a;
-  border: 2px solid #fde0474d;
+  color: var(--accent3); background: #a5f3fc1a;
+  border: 2px solid #a5f3fc4d;
   border-radius: 99px; padding: 8px 24px;
   letter-spacing: 0.18em; text-transform: uppercase; z-index: 20;
 }
@@ -226,8 +226,8 @@ body {
 
 /* Visual block — generic glass card wrapper */
 .visual-block {
-  background: linear-gradient(135deg, var(--surface), #27123ab3);
-  border: 2px solid #ec489933;
+  background: linear-gradient(135deg, var(--surface), #0a1722b3);
+  border: 2px solid #22d3ee33;
   border-radius: 32px;
   backdrop-filter: blur(12px);
   box-shadow: 0 40px 100px -20px var(--glow), inset 0 0 80px rgba(255,255,255,0.02);
@@ -246,7 +246,7 @@ body {
   position: relative; border-radius: 24px;
   overflow: hidden; isolation: isolate;
   width: 100%; aspect-ratio: 16 / 10; max-height: 760px;
-  box-shadow: 0 0 0 1px #ec489955, 0 30px 80px -20px var(--accent), 0 0 100px -30px var(--accent);
+  box-shadow: 0 0 0 1px #22d3ee55, 0 30px 80px -20px var(--accent), 0 0 100px -30px var(--accent);
 }
 .img-frame img {
   width: 100%; height: 100%;
@@ -266,14 +266,14 @@ body {
   font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 1.1rem; color: var(--text1);
   background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
-  border: 1px solid #ec489955;
+  border: 1px solid #22d3ee55;
   padding: 10px 20px; border-radius: 99px; z-index: 2;
 }
 
 /* Terminal block — for B2 CODE pattern — using highly compatible standard system monospace fonts */
 .terminal {
   font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-  background: rgba(0,0,0,0.65); border: 2px solid #ec489944;
+  background: rgba(0,0,0,0.65); border: 2px solid #22d3ee44;
   border-radius: 24px; padding: 24px 32px;
   font-size: 1.25rem; line-height: 1.8; color: var(--text2);
   box-shadow: 0 20px 50px -10px var(--glow);
@@ -293,8 +293,8 @@ body {
 .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }
 .feat-card {
   padding: 32px; border-radius: 24px;
-  background: linear-gradient(135deg, var(--surface), #27123a80);
-  border: 1px solid #ec489933;
+  background: linear-gradient(135deg, var(--surface), #0a172280);
+  border: 1px solid #22d3ee33;
   transition: all 0.3s ease;
 }
 .feat-card:hover {
@@ -308,7 +308,7 @@ body {
 
 /* Comparison — for B4 */
 .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; width: 100%; }
-.compare .col { padding: 24px 28px; border-radius: 28px; border: 2px solid #ec489933; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }
+.compare .col { padding: 24px 28px; border-radius: 28px; border: 2px solid #22d3ee33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }
 .compare .col:hover { border-color: var(--accent2); transform: scale(1.02); }
 .compare .col h4 { font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }
 .compare .col li { list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.4rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }
@@ -317,9 +317,9 @@ body {
 
 /* Timeline — for B5 */
 .tl-list { position: relative; padding-left: 48px; width: 100%; }
-.tl-list::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), #ec489933); }
+.tl-list::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), #22d3ee33); }
 .tl-item { position: relative; padding: 8px 0 16px; }
-.tl-item::before { content: ''; position: absolute; left: -41px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px #ec489933; }
+.tl-item::before { content: ''; position: absolute; left: -41px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px #22d3ee33; }
 .tl-item .y { font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent2); letter-spacing: 0.1em; }
 .tl-item .t { font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 4px 0; }
 .tl-item .d { color: var(--text2); font-size: 1.2rem; line-height: 1.6; word-break: break-word; }
@@ -362,8 +362,8 @@ body {
 .stat-list-card {
   display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
   padding: 16px 20px; border-radius: 20px;
-  background: linear-gradient(135deg, #27123aa3, #27123a66);
-  border: 1px solid #ec489933;
+  background: linear-gradient(135deg, #0a1722a3, #0a172266);
+  border: 1px solid #22d3ee33;
   backdrop-filter: blur(12px);
   box-shadow: 0 10px 30px -10px var(--glow), inset 0 0 30px rgba(255,255,255,0.01);
   position: relative; overflow: visible;
@@ -382,7 +382,7 @@ body {
 .stat-list-card .ic-wrap {
   display: flex; align-items: center; justify-content: center;
   width: 54px; height: 54px; border-radius: 12px;
-  background: #ec48991c; border: 2px solid #ec48994d;
+  background: #22d3ee1c; border: 2px solid #22d3ee4d;
   color: var(--accent2); font-size: 1.6rem; flex-shrink: 0;
 }
 .stat-list-card .num {
@@ -421,7 +421,7 @@ body {
 .chat-bubble.ai {
   align-self: flex-start;
   background: linear-gradient(135deg, var(--surface), rgba(0,0,0,0.45));
-  border-color: #ec48994d;
+  border-color: #22d3ee4d;
 }
 .chat-bubble .sender-tag {
   font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.9rem; font-weight: 800;
@@ -442,8 +442,8 @@ body {
 }
 .glass-card {
   padding: 40px 32px; border-radius: 28px; text-align: center;
-  background: linear-gradient(135deg, var(--surface), #27123a66);
-  border: 1px solid #ec489922; backdrop-filter: blur(16px);
+  background: linear-gradient(135deg, var(--surface), #0a172266);
+  border: 1px solid #22d3ee22; backdrop-filter: blur(16px);
   transition: all 0.3s ease; position: relative; overflow: visible;
 }
 .glass-card:hover {
@@ -457,7 +457,7 @@ body {
 /* Google I/O tech card (Scene 3) */
 .tech-card {
   background: linear-gradient(135deg, rgba(15,10,25,0.85), rgba(5,3,10,0.95));
-  border: 2px solid #ec48994d; border-radius: 32px; padding: 48px;
+  border: 2px solid #22d3ee4d; border-radius: 32px; padding: 48px;
   box-shadow: 0 40px 100px -15px var(--glow); position: relative; width: 100%;
 }
 .tech-card .brand {
@@ -489,8 +489,8 @@ body {
 }
 .agent-card {
   padding: 32px; border-radius: 24px;
-  background: linear-gradient(135deg, var(--surface), #27123a66);
-  border: 1px solid #ec489933; position: relative; text-align: left;
+  background: linear-gradient(135deg, var(--surface), #0a172266);
+  border: 1px solid #22d3ee33; position: relative; text-align: left;
 }
 .agent-card .header-wrap {
   display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
@@ -628,7 +628,7 @@ body {
   font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--accent2); background: rgba(255,255,255,0.04);
-  border: 1px solid #ec489933; border-radius: 99px;
+  border: 1px solid #22d3ee33; border-radius: 99px;
   padding: 10px 22px;
 }
 .marquee-strip .pill::before {
@@ -676,9 +676,9 @@ body {
   gap: 24px; width: 100%;
 }
 .bento-cell {
-  background: linear-gradient(135deg, var(--surface), #27123a80);
-  border: 1px solid #ec489933;
-  border-top: 3px solid #ec4899;
+  background: linear-gradient(135deg, var(--surface), #0a172280);
+  border: 1px solid #22d3ee33;
+  border-top: 3px solid #22d3ee;
   border-radius: 28px; padding: 32px;
   position: relative; overflow: hidden;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -693,7 +693,7 @@ body {
 .bento-cell .d   { font-size: 1.5rem; color: var(--text2); line-height: 1.5; }
 .bento-cell.wide { grid-column: span 2; }
 .bento-cell.tall { grid-row: span 2; }
-.bento-cell.hero { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), #ec48991a); border-color: #ec489966; border-top-color: #ec4899; }
+.bento-cell.hero { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), #22d3ee1a); border-color: #22d3ee66; border-top-color: #22d3ee; }
 .bento-cell:hover { transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 20px 50px -10px var(--glow); }
 
 /* Premium UI/UX Pro Max Animations & Shimmers */
@@ -767,7 +767,7 @@ body {
   z-index: 10;
 }
 .glow-card {
-  border: 1px solid #ec489933;
+  border: 1px solid #22d3ee33;
   box-shadow: 0 10px 40px 0 var(--glow);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -1020,11 +1020,11 @@ body {
 </style>
 </head>
 <body>
-<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="71">
-  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="18" data-volume="1" data-title="Giới thiệu về HyperFrames"></audio>
-  <audio id="v2" src="assets/p2.wav" data-start="18" data-duration="17" data-volume="1" data-title="Cách sử dụng HyperFrames"></audio>
-  <audio id="v3" src="assets/p3.wav" data-start="35" data-duration="18" data-volume="1" data-title="Tính năng nổi bật của HyperFrames"></audio>
-  <audio id="v4" src="assets/p4.wav" data-start="53" data-duration="18" data-volume="1" data-title="Tương lai của HyperFrames"></audio>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="66">
+  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="18" data-volume="1" data-title="Mở đầu về Roboflow Notebooks"></audio>
+  <audio id="v2" src="assets/p2.wav" data-start="18" data-duration="18" data-volume="1" data-title="Hướng dẫn và Tài liệu"></audio>
+  <audio id="v3" src="assets/p3.wav" data-start="36" data-duration="14" data-volume="1" data-title="Chạy Notebooks Địa Phương"></audio>
+  <audio id="v4" src="assets/p4.wav" data-start="50" data-duration="16" data-volume="1" data-title="Kết luận và Tầm quan trọng"></audio>
 
   <div class="scanlines"></div>
 
@@ -1034,130 +1034,45 @@ body {
       0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
       50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
     }
-    @keyframes star-blink {
-      0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
-      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
     }
-    @keyframes grad-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    .float-orb-md {
+      animation: pulse 4s ease-in-out infinite;
     }
   </style>
+  
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="\1" data-layout-ignore style="top:20%; left:5%;"></div>
-  <div class="\1" data-layout-ignore style="bottom:10%; right:15%;"></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">FRAME</div>
-  <div class="y2k-sparkle" style="top:15%; left:10%;"></div>
-  <div class="y2k-sparkle" style="bottom:25%; right:20%;"></div>
+  <div class="\1" data-layout-ignore></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">CODE</div>
+  <div class="y2k-sparkle" style="top: 20%; left: 15%; animation: star-blink 3s infinite;"></div>
+  <div class="y2k-sparkle" style="top: 60%; right: 10%; animation: star-blink 3.5s infinite;"></div>
+  <div class="\1" data-layout-ignore style="top: 30%; left: 70%; background: var(--accent3);"></div>
+
   <div class="layout">
     <div class="info-col">
       <div id="s1-badge" class="badge">PHẦN 1</div>
-      <h1 id="s1-title" class="title-hero grad-text" style="font-weight: 900 !important;">Giới thiệu về HyperFrames</h1>
-      <p id="s1-subtitle" class="subtitle">Chuyển đổi HTML thành video</p>
-      <p id="s1-desc" class="body-text">Framework mở nguồn tạo video MP4</p>
+      <h1 id="s1-title" class="title-hero grad-text" style="font-weight: 900 !important;">Mở đầu về Roboflow Notebooks</h1>
+      <p id="s1-subtitle" class="subtitle">Hành trình cùng GitHub</p>
+      <p id="s1-desc" class="body-text">Khám phá mô hình thị giác tiên tiến</p>
     </div>
     <div class="visual-col">
-      <div class="bento-3x2">
-        <div class="bento-cell" style="border-top-color:#eab308; padding:20px;">
-          <div class="ic">📊</div><div class="t">1. Tạo video sản phẩm</div><div class="d">Tự động hóa video quảng cáo</div>
-        </div>
-        <div class="bento-cell" style="border-top-color:#38bdf8; padding:20px;">
-          <div class="ic">📝</div><div class="t">2. Hướng dẫn sản phẩm</div><div class="d">Video minh họa trực quan</div>
-        </div>
-        <div class="bento-cell" style="border-top-color:#4ade80; padding:20px;">
-          <div class="ic">🔍</div><div class="t">3. Tích hợp HTML</div><div class="d">Hỗ trợ media đa dạng</div>
-        </div>
-        <div class="bento-cell" style="border-top-color:#f472b6; padding:20px;">
-          <div class="ic">🎬</div><div class="t">4. Tạo video cao cấp</div><div class="d">Kết quả chất lượng cao</div>
-        </div>
-        <div class="bento-cell" style="border-top-color:#f59e0b; padding:20px;">
-          <div class="ic">💡</div><div class="t">5. Dễ dàng sử dụng</div><div class="d">Giao diện thân thiện</div>
-        </div>
-        <div class="bento-cell" style="border-top-color:#10b981; padding:20px;">
-          <div class="ic">📈</div><div class="t">6. Tăng hiệu suất</div><div class="d">Hiệu quả vượt trội</div>
-        </div>
+      <div class="feat-row">
+        <div class="glass-card breath"><span class="emoji">🐙</span><div class="title">GitHub</div><div class="desc">Lưu trữ mã nguồn mở</div></div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;"><span class="emoji">🤖</span><div class="title">Roboflow</div><div class="desc">Công cụ phát triển AI</div></div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;"><span class="emoji">📊</span><div class="title">YOLO & SAM</div><div class="desc">Mô hình thị giác hàng đầu</div></div>
       </div>
     </div>
   </div>
-  <div class="corner-bracket tl"></div>
-  <div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div>
-  <div class="corner-bracket br"></div>
+  
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">01</span>
 </div>
 
-<div class="scene centered" id="scene2">
-  <style>
-    @keyframes glow-pulse {
-      0%, 100% { box-shadow: 0 0 15px var(--glow); }
-      50% { box-shadow: 0 0 30px var(--accent2); }
-    }
-
-    @keyframes cursor-blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    .terminal {
-      background: var(--surface);
-      border-radius: 20px;
-      padding: 24px;
-      font-family: 'Courier New', monospace;
-      font-size: 1rem;
-      color: var(--text1);
-      box-shadow: 0 0 15px var(--glow);
-      animation: glow-pulse 3s infinite;
-    }
-
-    .terminal .dots i {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: var(--accent3);
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-
-    .terminal .cursor {
-      display: inline-block;
-      width: 8px;
-      height: 1rem;
-      background: var(--accent2);
-      animation: cursor-blink 1s infinite;
-    }
-  </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">CODE</div>
-
-  <div class="layout">
-    <div class="info-col">
-      <div id="s2-badge" class="badge">PHẦN 2</div>
-      <h1 id="s2-title" class="title-xl grad-text">Cách sử dụng HyperFrames</h1>
-      <p id="s2-subtitle" class="subtitle">Cài đặt siêu tốc</p>
-      <p id="s2-desc" class="body-text">Chỉ với vài lệnh đơn giản</p>
-    </div>
-    <div class="visual-col">
-      <div class="terminal">
-        <div class="dots"><i></i><i></i><i></i></div>
-        <div><span class="c">// Khởi tạo dự án HyperFrames</span></div>
-        <div>$ <span class="k">npx</span> <span class="fn">hyperframes</span> <span class="arg">init my-video</span></div>
-        <div><span class="c">// Xem trước video</span></div>
-        <div>$ <span class="k">npx</span> <span class="fn">hyperframes</span> <span class="arg">preview</span></div>
-        <div><span class="c">// Kết xuất video</span></div>
-        <div>$ <span class="k">npx</span> <span class="fn">hyperframes</span> <span class="arg">render</span></div>
-        <div>$ <span class="cursor"></span></div>
-      </div>
-    </div>
-  </div>
-  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
-  <div class="top-line"></div>
-  <span class="scene-num">02</span>
-</div>
-
-<div class="scene split" id="scene3">
+<div class="scene data" id="scene2">
   <style>
     @keyframes neon-glow {
       0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
@@ -1167,44 +1082,102 @@ body {
       0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
       50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
     }
-    @keyframes star-blink {
-      0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
-      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+  </style>
+  <div class="aurora-glow" style="top:-20%; left:-15%; animation: aurora-mesh 12s infinite;"></div>
+  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">GUIDE</div>
+  
+  <div class="layout">
+    <div class="info-col">
+      <div id="s2-badge" class="badge">PHẦN 2</div>
+      <h1 id="s2-title" class="title-xl grad-text" data-effect="typewriter">Hướng dẫn và Tài liệu</h1>
+      <span class="cursor-blink">|</span>
+      <p id="s2-subtitle" class="subtitle">Kho tài liệu trực quan</p>
+      <p id="s2-desc" class="body-text">Học từ RF-DETR đến YOLOv8 dễ dàng</p>
+    </div>
+    <div class="visual-col">
+      <div class="bento-3x2">
+        <div class="bento-cell" style="border-top-color:var(--accent); padding:20px;">
+          <div class="ic">📓</div>
+          <div class="t">1. Track Objects with RF-DETR</div>
+          <div class="d">Hướng dẫn từng bước theo dõi đối tượng.</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--accent2); padding:20px;">
+          <div class="ic">⚡</div>
+          <div class="t">2. Accelerate Image Annotation with SAM</div>
+          <div class="d">Sử dụng SAM để gắn nhãn nhanh hơn.</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--accent3); padding:20px;">
+          <div class="ic">📈</div>
+          <div class="t">3. Model Efficiency Comparison</div>
+          <div class="d">Hiệu suất các mô hình SOTA.</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--surface); padding:20px;">
+          <div class="ic">🖼️</div>
+          <div class="t">4. Image Segmentation Basics</div>
+          <div class="d">Phân đoạn hình ảnh đơn giản.</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--bg2); padding:20px;">
+          <div class="ic">🔍</div>
+          <div class="t">5. Understand YOLOv8</div>
+          <div class="d">Cách hoạt động của YOLOv8.</div>
+        </div>
+        <div class="bento-cell" style="border-top-color:var(--glow); padding:20px;">
+          <div class="ic">🎯</div>
+          <div class="t">6. Real-World Applications</div>
+          <div class="d">Các dự án thực tế sử dụng mô hình.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">02</span>
+</div>
+
+<div class="scene centered" id="scene3">
+  <style>
+    @keyframes neon-glow {
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
+    }
+    @keyframes aurora-mesh {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
+    }
+    @keyframes grad-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
   </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">DATA</div>
+  <div class="aurora-glow" style="top: -15%; left: -10%;"></div>
+  <div class="\1" data-layout-ignore style="bottom: -5%; right: -5%;">PYTHON</div>
+  
   <div class="layout">
     <div class="info-col">
       <div id="s3-badge" class="badge">PHẦN 3</div>
-      <h1 id="s3-title" class="title-xl grad-text" data-effect="typewriter">Tính năng nổi bật của HyperFrames</h1>
+      <h1 id="s3-title" class="title-xl grad-text" data-effect="typewriter">Chạy Notebooks Địa Phương</h1>
       <span class="cursor-blink">|</span>
-      <p id="s3-subtitle" class="subtitle">Hiệu suất vượt trội</p>
-      <p id="s3-desc" class="body-text">Tạo video động nhanh chóng</p>
+      <p id="s3-subtitle" class="subtitle">Thiết lập môi trường</p>
+      <p id="s3-desc" class="body-text">Clone, cài đặt, khởi động dễ dàng</p>
     </div>
     <div class="visual-col">
-      <div class="compare">
-        <div class="col">
-          <h4>HyperFrames</h4>
-          <ul>
-            <li>Hỗ trợ GSAP, CSS</li>
-            <li>Tích hợp CI/CD</li>
-            <li>Tiết kiệm thời gian</li>
-          </ul>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-circle">1</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Clone kho lưu trữ: <code>git clone https://github.com/example/repo.git</code></div>
         </div>
-        <div class="col bad">
-          <h4>Remotion</h4>
-          <ul>
-            <li>Không có GSAP</li>
-            <li>Hạn chế môi trường</li>
-            <li>Ít tùy chỉnh</li>
-          </ul>
+        <div class="step-item">
+          <div class="step-circle">2</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Cài đặt dependencies: <code>pip install -r requirements.txt</code></div>
         </div>
-      </div>
-      <div class="stat-list" style="margin-top: 40px;">
-        <div class="stat-list-card shimmer-fast glow-card"><div class="ic-wrap">📊</div><div class="num">90%</div><div class="details"><div class="title">Hiệu suất</div><div class="desc">Tối ưu hóa video động</div></div></div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;"><div class="ic-wrap">🚀</div><div class="num">4x</div><div class="details"><div class="title">Tốc độ</div><div class="desc">Nhanh hơn các công cụ khác</div></div></div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;"><div class="ic-wrap">💡</div><div class="num">50%</div><div class="details"><div class="title">Tiết kiệm</div><div class="desc">Giảm công sức phát triển</div></div></div>
+        <div class="step-item">
+          <div class="step-circle">3</div>
+          <div class="step-text" style="text-align:left; font-weight:500;">Khởi động Jupyter Notebook: <code>jupyter notebook</code></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1218,70 +1191,51 @@ body {
 
 <div class="scene magazine" id="scene4">
   <style>
-    @keyframes aurora-mesh {
-      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      50% { transform: translate(30px, -20px) scale(1.05) rotate(5deg); }
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 20px var(--accent), 0 0 40px var(--glow); }
+      50% { box-shadow: 0 0 40px var(--accent2), 0 0 80px var(--glow); }
     }
-    @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
-      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
+    @keyframes fade-in {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
-    @keyframes star-blink {
-      0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
-      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+    .quote-block {
+      animation: fade-in 1s ease forwards;
+    }
+    .feat-row .glass-card {
+      animation: glow-pulse 3s infinite alternate;
     }
   </style>
   <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
   <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">FUTURE</div>
-  <div class="y2k-sparkle" style="top: 20%; left: 15%; animation: star-blink 2s infinite;"></div>
-  <div class="y2k-sparkle" style="top: 40%; right: 20%; animation: star-blink 3s infinite;"></div>
-  <div class="y2k-sparkle" style="bottom: 30%; left: 10%; animation: star-blink 2.5s infinite;"></div>
-
+  
   <div class="layout">
     <div class="info-col">
       <div id="s4-badge" class="badge">PHẦN 4</div>
-      <h1 id="s4-title" class="title-xl grad-text" data-effect="typewriter">Tương lai của HyperFrames</h1>
-      <span class="cursor-blink">|</span>
-      <p id="s4-subtitle" class="subtitle">Thúc đẩy sáng tạo</p>
-      <p id="s4-desc" class="body-text">Tham gia ngay hôm nay!</p>
+      <h1 id="s4-title" class="title-xl grad-text">Kết luận và Tầm quan trọng</h1>
+      <p id="s4-subtitle" class="subtitle">Cộng đồng và tài nguyên</p>
+      <p id="s4-desc" class="body-text">Nguồn lực quý giá cho lập trình viên</p>
     </div>
     <div class="visual-col">
       <div class="quote-block">
-        <p class="quote-text">"HyperFrames sẽ mở ra nhiều cơ hội sáng tạo chưa từng có."</p>
-      </div>
-      <div class="stat-list">
-        <div class="stat-list-card shimmer-fast glow-card">
-          <div class="ic-wrap">🌐</div>
-          <div class="num">100+</div>
-          <div class="details">
-            <div class="title">Dự án cộng đồng</div>
-            <div class="desc">Đã triển khai trên toàn cầu</div>
-          </div>
-        </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">🚀</div>
-          <div class="num">5x</div>
-          <div class="details">
-            <div class="title">Tăng trưởng</div>
-            <div class="desc">Ứng dụng trong 2 năm tới</div>
-          </div>
-        </div>
+        <p class="quote-text">"Roboflow Notebooks là một nguồn tài nguyên không thể thiếu, giúp tôi nhanh chóng triển khai các mô hình thị giác máy tính."</p>
+        <p class="quote-attr">Nguyễn Văn Bảo · Lập trình viên AI</p>
       </div>
       <div class="feat-row">
         <div class="glass-card breath">
-          <span class="emoji">🎓</span>
-          <div class="title">Giáo dục</div>
-          <div class="desc">Đào tạo trực tuyến và tương tác</div>
+          <span class="emoji">📖</span>
+          <div class="title">Hỗ trợ tài liệu</div>
+          <div class="desc">Hướng dẫn chi tiết từ cơ bản đến nâng cao.</div>
         </div>
         <div class="glass-card breath" style="animation-delay: 0.5s;">
-          <span class="emoji">📈</span>
-          <div class="title">Quảng cáo</div>
-          <div class="desc">Tăng tương tác thương hiệu</div>
-        </div>
-        <div class="glass-card breath" style="animation-delay: 1s;">
           <span class="emoji">🤝</span>
-          <div class="title">Kết nối</div>
-          <div class="desc">Mở rộng cộng đồng sáng tạo</div>
+          <div class="title">Cộng đồng mạnh</div>
+          <div class="desc">Chia sẻ kiến thức và hỗ trợ lẫn nhau.</div>
+        </div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;">
+          <span class="emoji">📢</span>
+          <div class="title">Phản hồi nhanh</div>
+          <div class="desc">Nhận hỗ trợ ngay khi cần thiết.</div>
         </div>
       </div>
     </div>
@@ -1302,13 +1256,13 @@ body {
 // The LLM's original timeline script has been stripped server-side so this
 // is the ONLY timeline registered on window.__timelines["main"].
 (function() {
-  var starts    = [0, 18, 35, 53];
-  var durs      = [18, 17, 18, 18];
-  var actualDurs= [16.896, 15.744, 16.632, 16.440];
-  var narrations= ["HyperFrames là một framework mã nguồn mở giúp chuyển đổi HTML, CSS và media thành video MP4. Framework này quan trọng vì nó cho phép người dùng dễ dàng tạo video chất lượng cao từ văn bản và hình ảnh, hỗ trợ cho nhiều ứng dụng như quảng cáo và hướng dẫn sản phẩm.", "Để sử dụng HyperFrames, người dùng chỉ cần cài đặt qua lệnh 'npx hyperframes init my-video'. Sau đó, họ có thể viết mã HTML để định nghĩa video, thêm hiệu ứng và âm thanh, giúp cho quá trình sản xuất video trở nên đơn giản và nhanh chóng hơn.", "HyperFrames cho phép người dùng tạo các video động với nhiều ứng dụng như video quảng bá, hướng dẫn và giải thích dữ liệu. Nó hỗ trợ các thư viện như GSAP, CSS và có thể sử dụng trong môi trường CI, giúp tiết kiệm thời gian và công sức cho các nhà phát triển.", "Với sự phát triển không ngừng, HyperFrames hứa hẹn sẽ trở thành công cụ mạnh mẽ cho việc tạo video từ HTML. Sự mở rộng của cộng đồng và các tính năng mới sẽ thúc đẩy ứng dụng của nó trong nhiều lĩnh vực, từ giáo dục đến quảng cáo, mang lại giá trị cao cho người dùng."];
-  var total     = 71;
+  var starts    = [0, 18, 36, 50];
+  var durs      = [18, 18, 14, 16];
+  var actualDurs= [16.152, 16.248, 12.840, 14.832];
+  var narrations= ["Roboflow Notebooks trên GitHub là một kho tài liệu phong phú về các mô hình thị giác máy tính tiên tiến. Với hàng loạt hướng dẫn từ cơ bản đến nâng cao, người dùng có thể dễ dàng tìm hiểu cách sử dụng các mô hình như YOLO và SAM cho nhiều tác vụ khác nhau trong lĩnh vực này.", "Kho tài liệu Roboflow cung cấp các hướng dẫn chi tiết về các mô hình SOTA như RF-DETR và YOLOv8, giúp người dùng thực hiện từ nhận diện đối tượng đến phân đoạn hình ảnh. Những bài viết này không chỉ hướng dẫn cách triển khai mà còn giải thích cách thức hoạt động của các mô hình này.", "Người dùng cũng có thể chạy các notebook này trên môi trường địa phương bằng cách clone kho lưu trữ và thiết lập môi trường Python. Hướng dẫn này rất cần thiết cho những ai muốn tùy chỉnh và tối ưu hóa mô hình cho dự án riêng của họ.", "Roboflow Notebooks không chỉ cung cấp hướng dẫn chi tiết mà còn hỗ trợ cộng đồng xây dựng và phát triển các mô hình thị giác máy tính. Từ việc chia sẻ tài liệu đến tạo ra các yêu cầu mới, đây là một nguồn tài nguyên quý giá cho lập trình viên và nhà nghiên cứu."];
+  var total     = 66;
   // Word-level Whisper data. Each entry: [{word,start,end},...] or []
-  var wordData  = [[{"word":"HyperFrames","start":0.000,"end":0.700},{"word":"là","start":0.700,"end":1.100},{"word":"một","start":1.100,"end":1.320},{"word":"framework","start":1.320,"end":1.680},{"word":"mã","start":1.680,"end":1.940},{"word":"nguồn","start":1.940,"end":2.180},{"word":"mở","start":2.180,"end":2.400},{"word":"giúp","start":2.400,"end":2.820},{"word":"chuyển","start":2.820,"end":3.020},{"word":"đổi","start":3.020,"end":3.180},{"word":"HTML,","start":3.180,"end":3.640},{"word":"CSS","start":4.260,"end":4.620},{"word":"và","start":4.620,"end":4.940},{"word":"media","start":4.940,"end":5.400},{"word":"thành","start":5.400,"end":5.680},{"word":"video","start":5.680,"end":6.040},{"word":"MP4.","start":6.040,"end":6.620},{"word":"Framework","start":7.680,"end":7.820},{"word":"này","start":7.820,"end":8.020},{"word":"quan","start":8.020,"end":8.300},{"word":"trọng","start":8.300,"end":8.540},{"word":"vì","start":8.540,"end":8.840},{"word":"nó","start":8.840,"end":9.060},{"word":"cho","start":9.060,"end":9.140},{"word":"phép","start":9.140,"end":9.300},{"word":"người","start":9.300,"end":9.540},{"word":"dùng","start":9.540,"end":9.700},{"word":"dễ","start":9.700,"end":9.960},{"word":"dàng","start":9.960,"end":10.220},{"word":"tạo","start":10.220,"end":10.400},{"word":"video","start":10.400,"end":10.780},{"word":"chất","start":10.780,"end":10.940},{"word":"lượng","start":10.940,"end":11.120},{"word":"cao","start":11.120,"end":11.540},{"word":"từ","start":11.540,"end":11.860},{"word":"văn","start":11.860,"end":12.020},{"word":"bản","start":12.020,"end":12.220},{"word":"và","start":12.220,"end":12.440},{"word":"hình","start":12.440,"end":12.660},{"word":"ảnh,","start":12.660,"end":12.800},{"word":"hỗ","start":13.520,"end":13.520},{"word":"trợ","start":13.520,"end":13.520},{"word":"cho","start":13.520,"end":13.720},{"word":"nhiều","start":13.720,"end":13.900},{"word":"ứng","start":13.900,"end":14.060},{"word":"dụng","start":14.060,"end":14.340},{"word":"như","start":14.340,"end":14.780},{"word":"quảng","start":14.780,"end":15.000},{"word":"cáo","start":15.000,"end":15.380},{"word":"và","start":15.380,"end":15.520},{"word":"hướng","start":15.520,"end":15.660},{"word":"dẫn","start":15.660,"end":15.820},{"word":"sản","start":15.820,"end":16.040},{"word":"phẩm.","start":16.040,"end":16.220}],[{"word":"Để","start":0.000,"end":0.220},{"word":"sử","start":0.220,"end":0.320},{"word":"dụng","start":0.320,"end":0.520},{"word":"HyperFrames,","start":0.520,"end":1.160},{"word":"người","start":1.600,"end":1.600},{"word":"dùng","start":1.600,"end":1.720},{"word":"chỉ","start":1.720,"end":1.960},{"word":"cần","start":1.960,"end":2.120},{"word":"cài","start":2.120,"end":2.320},{"word":"đặt","start":2.320,"end":2.440},{"word":"qua","start":2.440,"end":2.720},{"word":"lệnh","start":2.720,"end":2.940},{"word":"'npx","start":2.940,"end":3.880},{"word":"hyperframes","start":3.880,"end":4.600},{"word":"init","start":4.600,"end":5.020},{"word":"my-video'.","start":5.020,"end":5.940},{"word":"Sau","start":7.660,"end":7.660},{"word":"đó,","start":7.660,"end":7.880},{"word":"họ","start":8.000,"end":8.040},{"word":"có","start":8.040,"end":8.200},{"word":"thể","start":8.200,"end":8.300},{"word":"viết","start":8.300,"end":8.480},{"word":"mã","start":8.480,"end":8.660},{"word":"HTML","start":8.660,"end":9.300},{"word":"để","start":9.300,"end":9.580},{"word":"định","start":9.580,"end":9.720},{"word":"nghĩa","start":9.720,"end":10.020},{"word":"video,","start":10.020,"end":10.340},{"word":"thêm","start":11.020,"end":11.020},{"word":"hiệu","start":11.020,"end":11.240},{"word":"ứng","start":11.240,"end":11.380},{"word":"và","start":11.380,"end":11.580},{"word":"âm","start":11.580,"end":11.720},{"word":"thanh,","start":11.720,"end":12.140},{"word":"giúp","start":12.480,"end":12.480},{"word":"cho","start":12.480,"end":12.680},{"word":"quá","start":12.680,"end":12.860},{"word":"trình","start":12.860,"end":13.020},{"word":"sản","start":13.020,"end":13.220},{"word":"xuất","start":13.220,"end":13.400},{"word":"video","start":13.400,"end":13.820},{"word":"trở","start":13.820,"end":14.140},{"word":"nên","start":14.140,"end":14.300},{"word":"đơn","start":14.300,"end":14.560},{"word":"giản","start":14.560,"end":14.820},{"word":"và","start":14.820,"end":15.060},{"word":"nhanh","start":15.060,"end":15.240},{"word":"chóng","start":15.240,"end":15.440},{"word":"hơn.","start":15.440,"end":15.640}],[{"word":"HyperFrames","start":0.000,"end":0.760},{"word":"cho","start":0.760,"end":1.140},{"word":"phép","start":1.140,"end":1.300},{"word":"người","start":1.300,"end":1.500},{"word":"dùng","start":1.500,"end":1.700},{"word":"tạo","start":1.700,"end":1.960},{"word":"các","start":1.960,"end":2.180},{"word":"video","start":2.180,"end":2.540},{"word":"động","start":2.540,"end":2.860},{"word":"với","start":2.860,"end":3.240},{"word":"nhiều","start":3.240,"end":3.500},{"word":"ứng","start":3.500,"end":3.660},{"word":"dụng","start":3.660,"end":3.980},{"word":"như","start":4.400,"end":4.460},{"word":"video","start":4.460,"end":4.900},{"word":"quảng","start":4.900,"end":5.120},{"word":"bá,","start":5.120,"end":5.420},{"word":"hướng","start":6.020,"end":6.020},{"word":"dẫn","start":6.020,"end":6.220},{"word":"và","start":6.220,"end":6.540},{"word":"giải","start":6.540,"end":6.700},{"word":"thích","start":6.700,"end":6.880},{"word":"dữ","start":6.880,"end":7.100},{"word":"liệu.","start":7.100,"end":7.300},{"word":"Nó","start":8.520,"end":8.560},{"word":"hỗ","start":8.560,"end":8.760},{"word":"trợ","start":8.760,"end":8.920},{"word":"các","start":8.920,"end":9.100},{"word":"thư","start":9.100,"end":9.300},{"word":"viện","start":9.300,"end":9.460},{"word":"như","start":9.460,"end":9.780},{"word":"GSAP,","start":9.780,"end":10.300},{"word":"CSS","start":10.720,"end":11.220},{"word":"và","start":11.220,"end":11.660},{"word":"có","start":11.660,"end":11.800},{"word":"thể","start":11.800,"end":11.940},{"word":"sử","start":11.940,"end":12.120},{"word":"dụng","start":12.120,"end":12.300},{"word":"trong","start":12.300,"end":12.500},{"word":"môi","start":12.500,"end":12.640},{"word":"trường","start":12.640,"end":12.820},{"word":"CI,","start":12.820,"end":13.360},{"word":"giúp","start":13.840,"end":13.880},{"word":"tiết","start":13.880,"end":14.060},{"word":"kiệm","start":14.060,"end":14.300},{"word":"thời","start":14.300,"end":14.480},{"word":"gian","start":14.480,"end":14.700},{"word":"và","start":14.700,"end":14.920},{"word":"công","start":14.920,"end":15.120},{"word":"sức","start":15.120,"end":15.300},{"word":"cho","start":15.300,"end":15.540},{"word":"các","start":15.540,"end":15.660},{"word":"nhà","start":15.660,"end":15.880},{"word":"phát","start":15.880,"end":16.020},{"word":"triển.","start":16.020,"end":16.260}],[{"word":"Với","start":0.000,"end":0.220},{"word":"sự","start":0.220,"end":0.420},{"word":"phát","start":0.420,"end":0.540},{"word":"triển","start":0.540,"end":0.760},{"word":"không","start":0.760,"end":1.080},{"word":"ngừng,","start":1.080,"end":1.280},{"word":"HyperFrames","start":1.800,"end":2.380},{"word":"hứa","start":2.380,"end":2.760},{"word":"hẹn","start":2.760,"end":3.080},{"word":"sẽ","start":3.080,"end":3.320},{"word":"trở","start":3.320,"end":3.480},{"word":"thành","start":3.480,"end":3.640},{"word":"công","start":3.640,"end":3.920},{"word":"cụ","start":3.920,"end":4.060},{"word":"mạnh","start":4.060,"end":4.340},{"word":"mẽ","start":4.340,"end":4.600},{"word":"cho","start":4.600,"end":5.020},{"word":"việc","start":5.020,"end":5.200},{"word":"tạo","start":5.200,"end":5.400},{"word":"video","start":5.400,"end":5.900},{"word":"từ","start":5.900,"end":6.180},{"word":"HTML.","start":6.180,"end":6.800},{"word":"Sự","start":7.860,"end":7.860},{"word":"mở","start":7.860,"end":8.080},{"word":"rộng","start":8.080,"end":8.260},{"word":"của","start":8.260,"end":8.440},{"word":"cộng","start":8.440,"end":8.580},{"word":"đồng","start":8.580,"end":8.820},{"word":"và","start":8.820,"end":9.140},{"word":"các","start":9.140,"end":9.320},{"word":"tính","start":9.320,"end":9.480},{"word":"năng","start":9.480,"end":9.640},{"word":"mới","start":9.640,"end":9.940},{"word":"sẽ","start":9.940,"end":10.160},{"word":"thúc","start":10.160,"end":10.340},{"word":"đẩy","start":10.340,"end":10.600},{"word":"ứng","start":10.600,"end":10.740},{"word":"dụng","start":10.740,"end":10.940},{"word":"của","start":10.940,"end":11.140},{"word":"nó","start":11.140,"end":11.340},{"word":"trong","start":11.340,"end":11.560},{"word":"nhiều","start":11.560,"end":11.760},{"word":"lĩnh","start":11.760,"end":12.020},{"word":"vực,","start":12.020,"end":12.160},{"word":"từ","start":12.580,"end":12.680},{"word":"giáo","start":12.680,"end":12.900},{"word":"dục","start":12.900,"end":13.120},{"word":"đến","start":13.120,"end":13.580},{"word":"quảng","start":13.580,"end":13.820},{"word":"cáo,","start":13.820,"end":14.280},{"word":"mang","start":14.700,"end":14.700},{"word":"lại","start":14.700,"end":14.940},{"word":"giá","start":14.940,"end":15.120},{"word":"trị","start":15.120,"end":15.320},{"word":"cao","start":15.320,"end":15.740},{"word":"cho","start":15.740,"end":15.860},{"word":"người","start":15.860,"end":16.060},{"word":"dùng.","start":16.060,"end":16.200}]];
+  var wordData  = [[{"word":"Roboflow","start":0.000,"end":0.680},{"word":"Notebooks","start":0.680,"end":1.360},{"word":"trên","start":1.360,"end":1.640},{"word":"GitHub","start":1.640,"end":2.000},{"word":"là","start":2.000,"end":2.600},{"word":"một","start":2.600,"end":2.820},{"word":"kho","start":2.820,"end":2.920},{"word":"tài","start":2.920,"end":3.140},{"word":"liệu","start":3.140,"end":3.320},{"word":"phong","start":3.320,"end":3.560},{"word":"phú","start":3.560,"end":3.740},{"word":"về","start":3.740,"end":4.000},{"word":"các","start":4.000,"end":4.260},{"word":"mô","start":4.260,"end":4.380},{"word":"hình","start":4.380,"end":4.500},{"word":"thị","start":4.500,"end":4.740},{"word":"giác","start":4.740,"end":4.940},{"word":"máy","start":4.940,"end":5.160},{"word":"tính","start":5.160,"end":5.300},{"word":"tiên","start":5.300,"end":5.560},{"word":"tiến.","start":5.560,"end":5.800},{"word":"Với","start":6.940,"end":6.980},{"word":"hàng","start":6.980,"end":7.200},{"word":"loạt","start":7.200,"end":7.320},{"word":"hướng","start":7.320,"end":7.540},{"word":"dẫn","start":7.540,"end":7.740},{"word":"từ","start":7.740,"end":7.980},{"word":"cơ","start":7.980,"end":8.140},{"word":"bản","start":8.140,"end":8.320},{"word":"đến","start":8.320,"end":8.520},{"word":"nâng","start":8.520,"end":8.740},{"word":"cao,","start":8.740,"end":9.000},{"word":"người","start":9.440,"end":9.480},{"word":"dùng","start":9.480,"end":9.620},{"word":"có","start":9.620,"end":9.780},{"word":"thể","start":9.780,"end":9.920},{"word":"dễ","start":9.920,"end":10.100},{"word":"dàng","start":10.100,"end":10.320},{"word":"tìm","start":10.320,"end":10.560},{"word":"hiểu","start":10.560,"end":10.740},{"word":"cách","start":10.740,"end":10.920},{"word":"sử","start":10.920,"end":11.080},{"word":"dụng","start":11.080,"end":11.260},{"word":"các","start":11.260,"end":11.540},{"word":"mô","start":11.540,"end":11.640},{"word":"hình","start":11.640,"end":11.760},{"word":"như","start":11.760,"end":12.120},{"word":"YOLO","start":12.120,"end":12.820},{"word":"và","start":12.820,"end":13.060},{"word":"SAM","start":13.060,"end":13.340},{"word":"cho","start":13.340,"end":13.580},{"word":"nhiều","start":13.580,"end":13.740},{"word":"tác","start":13.740,"end":13.960},{"word":"vụ","start":13.960,"end":14.100},{"word":"khác","start":14.100,"end":14.340},{"word":"nhau","start":14.340,"end":14.580},{"word":"trong","start":14.580,"end":14.800},{"word":"lĩnh","start":14.800,"end":14.960},{"word":"vực","start":14.960,"end":15.100},{"word":"này.","start":15.100,"end":15.320}],[{"word":"Kho","start":0.000,"end":0.420},{"word":"tài","start":0.420,"end":0.620},{"word":"liệu","start":0.620,"end":0.780},{"word":"Roboflow","start":0.780,"end":1.340},{"word":"cung","start":1.340,"end":1.600},{"word":"cấp","start":1.600,"end":1.700},{"word":"các","start":1.700,"end":2.020},{"word":"hướng","start":2.020,"end":2.100},{"word":"dẫn","start":2.100,"end":2.260},{"word":"chi","start":2.260,"end":2.540},{"word":"tiết","start":2.540,"end":2.720},{"word":"về","start":2.720,"end":2.920},{"word":"các","start":2.920,"end":3.200},{"word":"mô","start":3.200,"end":3.260},{"word":"hình","start":3.260,"end":3.380},{"word":"SOTA","start":3.380,"end":4.200},{"word":"như","start":4.200,"end":4.420},{"word":"RF-DETR","start":4.420,"end":5.360},{"word":"và","start":5.360,"end":5.700},{"word":"YOLOv8,","start":5.700,"end":6.840},{"word":"giúp","start":6.840,"end":6.840},{"word":"người","start":6.840,"end":7.080},{"word":"dùng","start":7.080,"end":7.260},{"word":"thực","start":7.260,"end":7.420},{"word":"hiện","start":7.420,"end":7.600},{"word":"từ","start":7.600,"end":7.860},{"word":"nhận","start":7.860,"end":8.040},{"word":"diện","start":8.040,"end":8.240},{"word":"đối","start":8.240,"end":8.460},{"word":"tượng","start":8.460,"end":8.640},{"word":"đến","start":8.640,"end":8.900},{"word":"phân","start":8.900,"end":9.060},{"word":"đoạn","start":9.060,"end":9.280},{"word":"hình","start":9.280,"end":9.460},{"word":"ảnh.","start":9.460,"end":10.000},{"word":"Những","start":10.840,"end":10.900},{"word":"bài","start":10.900,"end":11.080},{"word":"viết","start":11.080,"end":11.220},{"word":"này","start":11.220,"end":11.460},{"word":"không","start":11.460,"end":11.660},{"word":"chỉ","start":11.660,"end":11.840},{"word":"hướng","start":11.840,"end":12.040},{"word":"dẫn","start":12.040,"end":12.220},{"word":"cách","start":12.220,"end":12.420},{"word":"triển","start":12.420,"end":12.660},{"word":"khai","start":12.660,"end":12.920},{"word":"mà","start":12.920,"end":13.220},{"word":"còn","start":13.220,"end":13.440},{"word":"giải","start":13.440,"end":13.600},{"word":"thích","start":13.600,"end":13.780},{"word":"cách","start":13.780,"end":13.940},{"word":"thức","start":13.940,"end":14.180},{"word":"hoạt","start":14.180,"end":14.380},{"word":"động","start":14.380,"end":14.540},{"word":"của","start":14.540,"end":14.740},{"word":"các","start":14.740,"end":14.940},{"word":"mô","start":14.940,"end":15.080},{"word":"hình","start":15.080,"end":15.180},{"word":"này.","start":15.180,"end":15.380}],[{"word":"Người","start":0.000,"end":0.440},{"word":"dùng","start":0.440,"end":0.640},{"word":"cũng","start":0.640,"end":0.840},{"word":"có","start":0.840,"end":1.000},{"word":"thể","start":1.000,"end":1.080},{"word":"chạy","start":1.080,"end":1.260},{"word":"các","start":1.260,"end":1.500},{"word":"notebook","start":1.500,"end":1.920},{"word":"này","start":1.920,"end":2.280},{"word":"trên","start":2.280,"end":2.440},{"word":"môi","start":2.440,"end":2.640},{"word":"trường","start":2.640,"end":2.800},{"word":"địa","start":2.800,"end":3.060},{"word":"phương","start":3.060,"end":3.240},{"word":"bằng","start":3.240,"end":3.480},{"word":"cách","start":3.480,"end":3.760},{"word":"clone","start":3.760,"end":3.980},{"word":"kho","start":3.980,"end":4.200},{"word":"lưu","start":4.200,"end":4.400},{"word":"trữ","start":4.400,"end":4.620},{"word":"và","start":4.620,"end":4.900},{"word":"thiết","start":4.900,"end":5.080},{"word":"lập","start":5.080,"end":5.260},{"word":"môi","start":5.260,"end":5.560},{"word":"trường","start":5.560,"end":5.700},{"word":"Python.","start":5.700,"end":7.360},{"word":"Hướng","start":7.360,"end":7.360},{"word":"dẫn","start":7.360,"end":7.520},{"word":"này","start":7.520,"end":7.740},{"word":"rất","start":7.740,"end":7.960},{"word":"cần","start":7.960,"end":8.120},{"word":"thiết","start":8.120,"end":8.320},{"word":"cho","start":8.320,"end":8.500},{"word":"những","start":8.500,"end":8.640},{"word":"ai","start":8.640,"end":8.860},{"word":"muốn","start":8.860,"end":9.040},{"word":"tùy","start":9.040,"end":9.300},{"word":"chỉnh","start":9.300,"end":9.580},{"word":"và","start":9.580,"end":9.780},{"word":"tối","start":9.780,"end":10.020},{"word":"ưu","start":10.020,"end":10.240},{"word":"hóa","start":10.240,"end":10.440},{"word":"mô","start":10.440,"end":10.620},{"word":"hình","start":10.620,"end":10.740},{"word":"cho","start":10.740,"end":11.000},{"word":"dự","start":11.000,"end":11.140},{"word":"án","start":11.140,"end":11.320},{"word":"riêng","start":11.320,"end":11.580},{"word":"của","start":11.580,"end":11.720},{"word":"họ.","start":11.720,"end":11.920}],[{"word":"Roboflow","start":0.000,"end":0.680},{"word":"Notebooks","start":0.680,"end":1.360},{"word":"không","start":1.360,"end":1.780},{"word":"chỉ","start":1.780,"end":2.020},{"word":"cung","start":2.020,"end":2.180},{"word":"cấp","start":2.180,"end":2.300},{"word":"hướng","start":2.300,"end":2.540},{"word":"dẫn","start":2.540,"end":2.780},{"word":"chi","start":2.780,"end":3.020},{"word":"tiết","start":3.020,"end":3.320},{"word":"mà","start":3.440,"end":3.560},{"word":"còn","start":3.560,"end":3.760},{"word":"hỗ","start":3.760,"end":3.960},{"word":"trợ","start":3.960,"end":4.100},{"word":"cộng","start":4.100,"end":4.320},{"word":"đồng","start":4.320,"end":4.500},{"word":"xây","start":4.500,"end":4.800},{"word":"dựng","start":4.800,"end":4.940},{"word":"và","start":4.940,"end":5.240},{"word":"phát","start":5.240,"end":5.320},{"word":"triển","start":5.320,"end":5.520},{"word":"các","start":5.520,"end":5.760},{"word":"mô","start":5.760,"end":5.900},{"word":"hình","start":5.900,"end":6.060},{"word":"thị","start":6.060,"end":6.300},{"word":"giác","start":6.300,"end":6.500},{"word":"máy","start":6.500,"end":6.700},{"word":"tính.","start":6.700,"end":6.880},{"word":"Từ","start":8.080,"end":8.080},{"word":"việc","start":8.080,"end":8.320},{"word":"chia","start":8.320,"end":8.480},{"word":"sẻ","start":8.480,"end":8.660},{"word":"tài","start":8.660,"end":8.820},{"word":"liệu","start":8.820,"end":9.000},{"word":"đến","start":9.000,"end":9.240},{"word":"tạo","start":9.240,"end":9.380},{"word":"ra","start":9.380,"end":9.640},{"word":"các","start":9.640,"end":9.880},{"word":"yêu","start":9.880,"end":10.000},{"word":"cầu","start":10.000,"end":10.160},{"word":"mới,","start":10.160,"end":10.440},{"word":"đây","start":10.820,"end":10.940},{"word":"là","start":10.940,"end":11.100},{"word":"một","start":11.100,"end":11.420},{"word":"nguồn","start":11.420,"end":11.500},{"word":"tài","start":11.500,"end":11.700},{"word":"nguyên","start":11.700,"end":11.920},{"word":"quý","start":11.920,"end":12.100},{"word":"giá","start":12.100,"end":12.340},{"word":"cho","start":12.340,"end":12.480},{"word":"lập","start":12.480,"end":12.660},{"word":"trình","start":12.660,"end":12.900},{"word":"viên","start":12.900,"end":13.100},{"word":"và","start":13.100,"end":13.300},{"word":"nhà","start":13.300,"end":13.500},{"word":"nghiên","start":13.500,"end":13.680},{"word":"cứu.","start":13.680,"end":13.940}]];
   var WLINE     = 7; // words per subtitle line
 
   function backspaceWord(tl, el, word, startTime, cps) {

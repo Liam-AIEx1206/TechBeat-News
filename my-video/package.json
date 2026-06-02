@@ -7,5 +7,17 @@
     "check": "npx --yes hyperframes@0.6.20 lint && npx --yes hyperframes@0.6.20 validate && npx --yes hyperframes@0.6.20 inspect",
     "render": "npx --yes hyperframes@0.6.20 render",
     "publish": "npx --yes hyperframes@0.6.20 publish"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "hyperframes": "^0.6.20"
   }
 }

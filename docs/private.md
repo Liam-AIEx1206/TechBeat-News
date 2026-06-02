@@ -1,0 +1,4 @@
+aiteam@138.199.233.75
+61bWVquJdiftUFkRgptioKt9AP6fJbnA
+
+docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiNzYyNjcxZWQxMWNiZDE0NmE1ZWRlNTQ4ZWRkOTA1MmUiLCJ0IjoiOTdhZTdmYWItMTZmZC00NTZkLWFkNGEtMmUzMWI0MmIxNzljIiwicyI6IllqRXpPR0UzTldJdE56RmtZeTAwWW1VeUxXRTBOalV0TkdFMVlqTTFOalF4TVRZdyJ9
