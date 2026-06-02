@@ -119,6 +119,7 @@ body {{
   min-height: 100vh;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
+  color: var(--text1, #e8e8f0);
 }}
 
 #root {{
@@ -158,6 +159,11 @@ body {{
   position: absolute; inset: 0;
   opacity: 0; visibility: hidden; z-index: 10;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text1, #e8e8f0);
+}}
+.scene pre,
+.scene code {{
+  color: var(--text1, #e8e8f0);
 }}
 
 /* Frame-0 fallback */
@@ -176,7 +182,14 @@ body {{
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
 .scene.hero .layout     {{ grid-template-columns: 1.1fr 0.9fr; }}
-.scene.centered .layout {{ grid-template-columns: 1fr; justify-items: center; text-align: center; }}
+.scene.centered .layout {{
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  align-content: flex-start;
+  gap: 24px;
+  padding-top: 80px;
+}}
 /* Bug2 fix: cascade text-align into info-col and all its direct children so body-text/caption inherit centering */
 .scene.centered .info-col {{ align-items: center; text-align: center; }}
 .scene.centered .info-col > * {{ text-align: center; }}
@@ -976,6 +989,18 @@ body {{
   text-shadow: 0 1px 6px rgba(0,0,0,0.7) !important;
 }}
 
+/* Prevent horizontal overflow clipping inside cards (Bug 5) */
+.glass-card, .feat-card, .bento-cell, .stat-list-card, .terminal, .visual-block, .compare .col, .agent-card, .tech-card {{
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}}
+.glass-card *, .feat-card *, .bento-cell *, .stat-list-card *, .terminal *, .visual-block *, .compare .col *, .agent-card *, .tech-card * {{
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}}
+
+
 /* Chunked Subtitle Styles — one short line at a time, fades in/out */
 .techbeat-subtitles {{
   position: absolute;
@@ -998,13 +1023,13 @@ body {{
   opacity: 0;
   position: relative;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 600;
   color: #ffffff;
   text-shadow: 0 0 14px rgba(0, 0, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: normal;
+  white-space: nowrap;
   padding: 10px 24px;
   border-radius: 14px;
   background: transparent;
@@ -1033,13 +1058,13 @@ body {{
   opacity: 0;
   position: relative;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
   text-shadow: 0 0 14px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: normal;
+  white-space: nowrap;
   padding: 10px 24px;
   border-radius: 14px;
   background: transparent;
@@ -1168,7 +1193,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 
 📝 THÊM VÍ DỤ NỘI DUNG THỰC TẾ (REAL-WORLD PREVIEWS / CODE / DATA):
 - Để các khối trực quan không bị đơn điệu chỉ có chữ và icon, hãy chèn thêm các khối ví dụ nội dung thực tế (mock previews) bên dưới mô tả để lấp đầy không gian trống cực kỳ cinematic và chân thực:
-  - Nếu nói về Code / Tech Stack: Chèn một khối `<pre style="font-family:'JetBrains Mono';font-size:0.9rem;opacity:0.85;margin-top:10px;">` hoặc `.terminal` có code React/TypeScript/JSON thực tế (ví dụ: code config, function export, dependency tag).
+  - Nếu nói về Code / Tech Stack: Chèn một khối `<pre style="font-family:'JetBrains Mono';font-size:0.9rem;color:var(--text1);opacity:0.85;margin-top:10px;">` hoặc `.terminal` có code React/TypeScript/JSON thực tế (ví dụ: code config, function export, dependency tag).
   - Nếu nói về Community / GitHub: Chèn mockup danh sách commit log mini, contributor list, contributors avatars mockup, pull request status pill hoặc tags `#github #pull-request`.
   - Nếu nói về Performance / Stats / Features: Chèn thanh tiến trình `<div class="progress-bar" style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:10px;overflow:hidden;"><div class="fill" style="width:85%;height:100%;background:var(--accent2);"></div></div>` hoặc các tag badge mini `<span class="badge-mini" style="font-size:0.8rem;padding:2px 8px;background:rgba(255,255,255,0.06);border-radius:4px;margin-right:6px;">#feature</span>` stack ngang.
 
@@ -1288,7 +1313,7 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
 ═══════════════════════════════════════
 - ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
   • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
-  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung (ví dụ các card tính năng "Tạm dừng cập nhật", "Chọn ngày cập nhật", "Giảm thiểu lỗi cập nhật" ở Scene 2), CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge "Phần 2" hoặc bị cắt xén ở trên.
+  • SCENE 2 VÀ CÁC LAYOUT CHIA CỘT (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung (ví dụ các card tính năng "Tạm dừng cập nhật", "Chọn ngày cập nhật", "Giảm thiểu lỗi cập nhật" ở Scene 2), CẤM TUYỆT ĐỐI xếp hàng ngang trong các layout chia cột như .split, .magazine, .data. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge "Phần 2" hoặc bị cắt xén ở trên. Chỉ sử dụng hàng ngang 3 cột (.feat-row hoặc 3 glass-card ngang) trong layout .centered hoặc layout chiếm toàn màn hình để tránh bị bóp nghẹt và tràn lề phải màn hình.
   • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
 
 - ⚠️ QUY TẮC TUYỆT ĐỐI CHỐNG THIẾU ẢNH (BẮT BUỘC):
@@ -2255,7 +2280,7 @@ def build_user_prompt(req: CompositionRequest) -> str:
         if is_last:
             lines.append(
                 "  📐 SCENE CUỐI — CHỐNG OVERFLOW & BẮT BUỘC ĐỘC ĐÁO:"
-                "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG. Cấm tuyệt đối chỉ nhồi ambient decoratives hay bỏ trống."
+                "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI chọn 1 trong 2 bố cục để tránh tràn dọc: HOẶC là 1 khối .quote-block duy nhất cực kỳ trang trọng, HOẶC là một nhóm card trực quan ngăn nắp (như 1 .stat-list có 2-3 stat-list-card, hoặc 1 .feat-row có 3 glass-card). CẤM TUYỆT ĐỐI nhồi nhét cả trích dẫn và card tính năng trên cùng slide."
                 "\n  ⚠️ CẤM ĐẶT DECORATIVES TRONG .visual-col hoặc .info-col: Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) PHẢI là con trực tiếp của thẻ .scene (ngay trước thẻ đóng </div> của .scene) làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ."
                 "\n  ⚠️ Toàn bộ content visual-col PHẢI vừa trong khung 1920×1080 (chiều cao usable ~880px sau padding)."
                 "\n  ⚠️ Nếu có danh sách bullet/feature > 4 mục → CẮT XUỐNG tối đa 4 mục."
@@ -2412,7 +2437,7 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
 ═══════════════════════════════════════
 - ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
   • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
-  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung, CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge hoặc bị cắt xén ở trên.
+  • SCENE 2 VÀ CÁC LAYOUT CHIA CỘT (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung, CẤM TUYỆT ĐỐI xếp hàng ngang trong các layout chia cột như .split, .magazine, .data. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge hoặc bị cắt xén ở trên. Chỉ sử dụng hàng ngang 3 cột (.feat-row hoặc 3 glass-card ngang) trong layout .centered hoặc layout chiếm toàn màn hình để tránh bị bóp nghẹt và tràn lề phải màn hình.
   • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
 
 - 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
@@ -2725,7 +2750,7 @@ def build_user_prompt_single_scene(s: ScenePayload, previous_context: dict, is_f
     elif is_last:
         lines.append(
             "\n  📐 SCENE CUỐI — CHỐNG OVERFLOW & BẮT BUỘC ĐỘC ĐÁO:"
-            "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG."
+            "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI chọn 1 trong 2 bố cục để tránh tràn dọc: HOẶC là 1 khối .quote-block duy nhất cực kỳ trang trọng, HOẶC là một nhóm card trực quan ngăn nắp (như 1 .stat-list có 2-3 stat-list-card, hoặc 1 .feat-row có 3 glass-card). CẤM TUYỆT ĐỐI nhồi nhét cả trích dẫn và card tính năng trên cùng slide."
         )
         
     lines.append(

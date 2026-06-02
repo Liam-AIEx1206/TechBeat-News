@@ -94,6 +94,7 @@ export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height 
       }}
     >
       <iframe
+        key={`${sceneIndex}-${doc.length}`}
         title={`scene-${sceneIndex}-preview`}
         srcDoc={doc}
         sandbox="allow-scripts allow-same-origin"

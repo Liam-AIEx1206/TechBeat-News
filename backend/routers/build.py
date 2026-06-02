@@ -1128,7 +1128,7 @@ def patch_html_timing(
   var total     = {total};
   // Word-level Whisper data. Each entry: [{{word,start,end}},...] or []
   var wordData  = {word_data_js};
-  var WLINE     = 7; // words per subtitle line
+  var WLINE     = 4; // words per subtitle line
 
   function backspaceWord(tl, el, word, startTime, cps) {{
     var interval = 1 / cps;
@@ -1284,7 +1284,7 @@ def patch_html_timing(
   // Chunk fallback: split text into uniform 6-word groups (natural reading pace).
   function chunkText(text) {{
     if (!text) return [];
-    var maxWords = 6;
+    var maxWords = 4;
     var words = text.trim().split(/\\s+/).filter(Boolean);
     var chunks = [];
     for (var i = 0; i < words.length; i += maxWords) {{

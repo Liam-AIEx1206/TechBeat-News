@@ -8,7 +8,8 @@ client.connect('138.199.233.75', username='aiteam', password='61bWVquJdiftUFkRgp
 import sys
 commands = [
     "cd TechBeat-News",
-    "git pull origin ver2",
+    "git fetch origin ver2",
+    "git reset --hard origin/ver2",
     "echo '61bWVquJdiftUFkRgptioKt9AP6fJbnA' | sudo -S docker compose up -d --build frontend backend"
 ]
 
