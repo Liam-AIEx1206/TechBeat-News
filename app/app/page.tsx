@@ -54,9 +54,12 @@ export default function Home() {
     const abort = new AbortController();
     abortRef.current = abort;
     const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const endpoint = process.env.NODE_ENV === "development"
+      ? `${API}/generate-scenes`
+      : `/api/proxy/generate-scenes`;
 
     try {
-      const res = await fetch(`${API}/generate-scenes`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

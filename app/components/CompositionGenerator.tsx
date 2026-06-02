@@ -31,7 +31,10 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
     abortRef.current = abort;
 
     try {
-      const res = await fetch(`${API}/generate-composition`, {
+      const endpoint = process.env.NODE_ENV === "development"
+        ? `${API}/generate-composition`
+        : `/api/proxy/generate-composition`;
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(scenePlan),
