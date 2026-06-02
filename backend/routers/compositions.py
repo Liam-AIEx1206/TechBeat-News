@@ -402,15 +402,15 @@ body {{
   box-shadow: 0 15px 40px -10px var(--glow);
 }}
 .feat-card .ic {{ font-size: 3rem; margin-bottom: 16px; }}
-.feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.5rem; }}
-.feat-card .d  {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
+.feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.75rem; }}
+.feat-card .d  {{ font-size: 1.55rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
 
 /* Comparison — for B4 */
 .compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; width: 100%; }}
 .compare .col {{ padding: 24px 28px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
 .compare .col:hover {{ border-color: var(--accent2); transform: scale(1.02); }}
-.compare .col h4 {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
-.compare .col li {{ list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.4rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
+.compare .col h4 {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
+.compare .col li {{ list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.55rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
 .compare .col li::before {{ content: '✓ '; color: var(--accent3); font-weight: 700; }}
 .compare .col.bad li::before {{ content: '✗ '; color: #ef4444; }}
 
@@ -420,8 +420,8 @@ body {{
 .tl-item {{ position: relative; padding: 8px 0 16px; }}
 .tl-item::before {{ content: ''; position: absolute; left: -41px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px {accent}33; }}
 .tl-item .y {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent2); letter-spacing: 0.1em; }}
-.tl-item .t {{ font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
-.tl-item .d {{ color: var(--text2); font-size: 1.2rem; line-height: 1.6; word-break: break-word; }}
+.tl-item .t {{ font-size: 1.8rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
+.tl-item .d {{ color: var(--text2); font-size: 1.45rem; line-height: 1.6; word-break: break-word; }}
 
 /* Quote — for B6 */
 .quote-block {{ position: relative; padding: 20px 40px; width: 100%; }}
@@ -495,10 +495,10 @@ body {{
   min-width: 0; flex: 1;
 }}
 .stat-list-card .title {{
-  font-size: 1.45rem; font-weight: 700; color: var(--text1); line-height: 1.3;
+  font-size: 1.65rem; font-weight: 700; color: var(--text1); line-height: 1.3;
 }}
 .stat-list-card .desc {{
-  font-size: 1.35rem; color: var(--text2); opacity: 0.85;
+  font-size: 1.45rem; color: var(--text2); opacity: 0.85;
 }}
 
 /* ───────────────── PREMIUM COMPONENT EXTENSIONS (FROM IMAGE REFERENCE) ───────────────── */
@@ -550,8 +550,8 @@ body {{
   box-shadow: 0 25px 60px -10px var(--glow);
 }}
 .glass-card .emoji {{ font-size: 3.5rem; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
-.glass-card .title {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }}
-.glass-card .desc {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; }}
+.glass-card .title {{ font-size: 1.75rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }}
+.glass-card .desc {{ font-size: 1.55rem; color: var(--text2); line-height: 1.6; }}
 
 /* Google I/O tech card (Scene 3) */
 .tech-card {{
@@ -596,11 +596,11 @@ body {{
 }}
 .agent-card .icon {{ font-size: 2.8rem; filter: drop-shadow(0 0 6px var(--glow)); }}
 .agent-card .role {{
-  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.35rem; font-weight: 800;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2);
 }}
 .agent-card .desc {{
-  font-size: 1.25rem; color: var(--text2); line-height: 1.6;
+  font-size: 1.45rem; color: var(--text2); line-height: 1.6;
 }}
 .agent-grid-center-pill {{
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -788,8 +788,8 @@ body {{
 .bento-cell:nth-child(4) {{ border-top-color: #4ade80; }}
 .bento-cell:nth-child(5) {{ border-top-color: #f472b6; }}
 .bento-cell .ic  {{ font-size: 3.2rem; margin-bottom: 14px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
-.bento-cell .t   {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }}
-.bento-cell .d   {{ font-size: 1.5rem; color: var(--text2); line-height: 1.5; }}
+.bento-cell .t   {{ font-size: 1.75rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }}
+.bento-cell .d   {{ font-size: 1.55rem; color: var(--text2); line-height: 1.5; }}
 .bento-cell.wide {{ grid-column: span 2; }}
 .bento-cell.tall {{ grid-row: span 2; }}
 .bento-cell.hero {{ grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), {accent}1a); border-color: {accent}66; border-top-color: {accent}; }}
@@ -887,7 +887,7 @@ body {{
 }}
 .formula-pill {{
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 24px; border-radius: 99px; font-size: 1.2rem;
+  padding: 10px 24px; border-radius: 99px; font-size: 1.45rem;
   border: 2px solid rgba(255,255,255,0.1);
   color: var(--text1); text-transform: uppercase;
 }}
@@ -901,21 +901,21 @@ body {{
 .command-pill {{
   display: flex; align-items: center; gap: 16px;
   background: rgba(253,224,71,0.06); border: 2px solid rgba(253,224,71,0.25);
-  padding: 18px 32px; border-radius: 16px; font-size: 1.35rem;
+  padding: 18px 32px; border-radius: 16px; font-size: 1.55rem;
   color: #fde047; font-weight: 600; margin-bottom: 24px; width: 100%;
 }}
 .step-list {{
   display: flex; flex-direction: column; gap: 10px; width: 100%;
 }}
 .step-item {{
-  display: flex; align-items: flex-start; gap: 12px; font-size: 1.4rem; line-height: 1.6;
+  display: flex; align-items: flex-start; gap: 12px; font-size: 1.55rem; line-height: 1.6;
   color: var(--text1, #e8e8f0);
 }}
 .step-circle {{
   display: flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 50%;
   background: var(--accent); color: #fff; font-weight: 800;
-  font-size: 1.1rem; flex-shrink: 0; margin-top: 2px;
+  font-size: 1.25rem; flex-shrink: 0; margin-top: 2px;
 }}
 .bento-3x2 {{
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%;
@@ -1369,6 +1369,11 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
     * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
   • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
     * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * **QUY TẮC PHẢI THUỘC LÒNG VỀ THẨM MỸ CARD & KHỐI TRỰC QUAN:**
+      - **CẤM TUYỆT ĐỐI** tự tạo hoặc vẽ các ô/hộp bằng thẻ `<div>` tự viết `style` viền hay nền. BẮT BUỘC tận dụng 100% các class premium thiết kế sẵn: `.feat-card`, `.glass-card`, `.stat-list-card`, hoặc `.bento-cell` để đảm bảo tính mỹ thuật tối cao của Awwwards.
+      - **BẮT BUỘC chèn hình ảnh emoji/icon lớn minh họa sinh động** ở góc trên cùng hoặc đầu của mỗi khối/ô nội dung (ví dụ: `<div class="ic">⚡</div>` hoặc `<div class="ic-wrap">⚡</div>` cho `.feat-card` / `.stat-list-card`, hoặc `<span class="emoji">⚡</span>` cho `.glass-card`). CẤM để các card trơn tuột chỉ có chữ mà thiếu đi icon/emoji nhận diện trực quan!
+      - **CẤM TUYỆT ĐỐI sắp xếp lệch lạc để thừa nhiều khoảng trống vô nghĩa**: Phải phân bổ số lượng card hợp lý (ví dụ: 2-3 card dọc với `.stat-list`, 4 card với `.feat-grid` 2x2, 3 card ngang `.feat-row` trong layout centered) để lấp đầy không gian một cách trực quan, cân đối, hài hòa.
+      - **Không tự ý override làm cỡ chữ trong card bị bé tí khó nhìn**: Cỡ chữ tiêu đề của các card phải lớn, nổi bật (tiêu đề $\ge 1.6rem$, mô tả $\ge 1.45rem$) và tương phản cực tốt để người xem dễ dàng đọc được.
     * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch. Đặc biệt đối với step-list (B19), bắt buộc chèn thêm các emoji tương ứng trước nội dung text của từng bước (ví dụ: "📂 Liệt kê file", "📝 Mô tả thay đổi") để tạo điểm nhấn thị giác sống động và tránh đơn điệu.
     * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene (Ví dụ: nếu nói về GSAP thì phải có các thư viện thật như TweenLite, TweenMax, hoặc benchmark thật. Cấm bê nguyên văn placeholder "Benchmark 2024", "cost efficiency" của hệ thống vào).
   • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
@@ -2479,6 +2484,11 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
     * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
   • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
     * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * **QUY TẮC PHẢI THUỘC LÒNG VỀ THẨM MỸ CARD & KHỐI TRỰC QUAN:**
+      - **CẤM TUYỆT ĐỐI** tự tạo hoặc vẽ các ô/hộp bằng thẻ `<div>` tự viết `style` viền hay nền. BẮT BUỘC tận dụng 100% các class premium thiết kế sẵn: `.feat-card`, `.glass-card`, `.stat-list-card`, hoặc `.bento-cell` để đảm bảo tính mỹ thuật tối cao của Awwwards.
+      - **BẮT BUỘC chèn hình ảnh emoji/icon lớn minh họa sinh động** ở góc trên cùng hoặc đầu của mỗi khối/ô nội dung (ví dụ: `<div class="ic">⚡</div>` hoặc `<div class="ic-wrap">⚡</div>` cho `.feat-card` / `.stat-list-card`, hoặc `<span class="emoji">⚡</span>` cho `.glass-card`). CẤM để các card trơn tuột chỉ có chữ mà thiếu đi icon/emoji nhận diện trực quan!
+      - **CẤM TUYỆT ĐỐI sắp xếp lệch lạc để thừa nhiều khoảng trống vô nghĩa**: Phải phân bổ số lượng card hợp lý (ví dụ: 2-3 card dọc với `.stat-list`, 4 card với `.feat-grid` 2x2, 3 card ngang `.feat-row` trong layout centered) để lấp đầy không gian một cách trực quan, cân đối, hài hòa.
+      - **Không tự ý override làm cỡ chữ trong card bị bé tí khó nhìn**: Cỡ chữ tiêu đề của các card phải lớn, nổi bật (tiêu đề $\ge 1.6rem$, mô tả $\ge 1.45rem$) và tương phản cực tốt để người xem dễ dàng đọc được.
     * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
     * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene.
   • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
