@@ -85,6 +85,105 @@ THEMES: dict[str, dict] = {
 
 DEFAULT_THEME = "cyber-orange"
 
+ENTRANCE_ANIMATION_SCRIPT = """  <script>
+    window.__timelines = window.__timelines || {};
+    const master = gsap.timeline({ paused: true });
+    
+    const scenes = document.querySelectorAll(".scene");
+    scenes.forEach((sceneEl) => {
+        const idStr = sceneEl.id;
+        const num = idStr.replace("scene", "");
+        const audioEl = document.getElementById("v" + num);
+        
+        const start = audioEl ? (parseFloat(audioEl.getAttribute("data-start")) || 0) : 0;
+        const duration = audioEl ? (parseFloat(audioEl.getAttribute("data-duration")) || 5) : 5;
+        
+        const sceneTl = gsap.timeline();
+        
+        // Select elements inside this scene
+        const title = sceneEl.querySelector("h1");
+        const subtitle = sceneEl.querySelector(".subtitle");
+        const badge = sceneEl.querySelector(".badge");
+        const statusPill = sceneEl.querySelector(".status-pill");
+        
+        const cards = sceneEl.querySelectorAll(
+            ".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare .col, .step-item, .agent-card, .formula-pill"
+        );
+        
+        // Split title into words for staggered word-by-word animation
+        if (title) {
+            const text = title.innerText.trim();
+            const words = text.split(/\s+/);
+            title.innerHTML = words.map(word => `<span class="title-word" style="display:inline-block; opacity:0; transform:translateY(15px);">${word}</span>`).join(" ");
+        }
+        
+        const titleWords = title ? title.querySelectorAll(".title-word") : [];
+        
+        // Initial states
+        sceneTl.set(sceneEl, { autoAlpha: 0 });
+        if (subtitle) sceneTl.set(subtitle, { opacity: 0, x: -20, y: 15 });
+        if (badge) sceneTl.set(badge, { opacity: 0, scale: 0.8 });
+        if (statusPill) sceneTl.set(statusPill, { opacity: 0, y: -20 });
+        cards.forEach(card => sceneTl.set(card, { opacity: 0, x: -30, y: 30 }));
+        
+        // Entrance animations
+        sceneTl.to(sceneEl, { autoAlpha: 1, duration: 0.1 });
+        
+        let t = 0.1;
+        if (statusPill) {
+            sceneTl.to(statusPill, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+            t += 0.15;
+        }
+        if (badge) {
+            sceneTl.to(badge, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, t);
+            t += 0.15;
+        }
+        
+        // Word-by-word slow typewriter staggered entrance
+        if (titleWords.length > 0) {
+            sceneTl.to(titleWords, {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                stagger: 0.08,
+                ease: "power2.out"
+            }, t);
+            t += 0.08 * titleWords.length + 0.15;
+        } else if (title) {
+            sceneTl.to(title, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, t);
+            t += 0.5;
+        }
+        
+        if (subtitle) {
+            sceneTl.to(subtitle, { opacity: 1, x: 0, y: 0, duration: 0.6, ease: "power2.out" }, t);
+            t += 0.25;
+        }
+        
+        // Cards stagger-reveal: slow slide from left-bottom to top-right
+        if (cards.length > 0) {
+            sceneTl.to(cards, {
+                opacity: 1,
+                x: 0,
+                y: 0,
+                duration: 0.9,
+                stagger: 0.25,
+                ease: "power2.out"
+            }, t);
+        }
+        
+        master.add(sceneTl, start);
+    });
+    
+    const compId = document.getElementById("root").getAttribute("data-composition-id") || "main";
+    window.__timelines[compId] = master;
+    
+    if (compId === "preview") {
+        setTimeout(() => {
+            master.play();
+        }, 500);
+    }
+  </script>"""
+
 
 def get_theme(theme_id: str | None) -> dict:
     return THEMES.get(theme_id or DEFAULT_THEME, THEMES[DEFAULT_THEME])
@@ -1095,6 +1194,401 @@ def render_base_css(theme: dict) -> str:
     return BASE_CSS_TEMPLATE.format(**{k: theme[k] for k in (
         "bg", "bg2", "surface", "accent", "accent2", "accent3", "text1", "text2"
     )})
+
+
+# ─────────────────────────  TEMPLATE ENGINE  ─────────────────────────
+# Fixed HTML templates eliminate layout bugs. The LLM only fills content.
+
+import functools
+
+_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+
+
+@functools.lru_cache(maxsize=1)
+def load_template_catalog() -> dict:
+    """Load catalog.json once and cache it."""
+    catalog_path = _TEMPLATES_DIR / "catalog.json"
+    with open(catalog_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@functools.lru_cache(maxsize=16)
+def load_template_html(filename: str) -> str:
+    """Load a single template HTML file and cache it."""
+    tpl_path = _TEMPLATES_DIR / filename
+    with open(tpl_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def render_template(template_id: str, content: dict, scene_num: int) -> str:
+    """Replace {{PLACEHOLDER}} markers in a template with actual content.
+    
+    Always injects SCENE_NUM and SCENE_NUM_PADDED automatically.
+    Missing placeholders are replaced with empty string to avoid broken HTML.
+    """
+    catalog = load_template_catalog()
+    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    if not tpl_meta:
+        raise ValueError(f"Template {template_id} not found in catalog")
+    
+    html = load_template_html(tpl_meta["file"])
+    
+    # Auto-inject scene number fields
+    content["SCENE_NUM"] = str(scene_num)
+    content["SCENE_NUM_PADDED"] = f"{scene_num:02d}"
+    
+    # Inject data-template-id attribute into root element
+    import re as _re
+    tag_match = _re.match(r'^(<div\b[^>]*>)', html, _re.IGNORECASE)
+    if tag_match:
+        tag = tag_match.group(1)
+        if "data-template-id" not in tag:
+            tag = tag.rstrip('>').rstrip('/') + f' data-template-id="{template_id}">'
+            html = tag + html[tag_match.end():]
+    
+    # If content contains an illustration image, dynamically inject the img-frame inside visual-col
+    if "IMAGE_URL" in content and content["IMAGE_URL"]:
+        img_html = f'''<div class="img-frame breath">
+          <img src="{content["IMAGE_URL"]}" alt="">
+          <span class="img-caption">{content.get("IMAGE_CAPTION", "")}</span>
+        </div>'''
+        html = _re.sub(
+            r'(<div\s+class="visual-col"[^>]*>)([\s\S]*?)(</div>)',
+            rf'\g<1>\n        {img_html}\n      \g<3>',
+            html,
+            count=1
+        )
+    
+    # Replace all {{PLACEHOLDER}} markers
+    def _replacer(m):
+        key = m.group(1)
+        return content.get(key, "")
+    
+    return _re.sub(r"\{\{(\w+)\}\}", _replacer, html)
+
+
+def auto_select_template(
+    scene: "ScenePayload",
+    scene_index: int,
+    total_scenes: int,
+    used_templates: list[str],
+    has_image: bool = False,
+) -> str:
+    """Auto-select the best template for a scene based on content analysis.
+    
+    Strategy:
+    1. Scene 1 always picks from hero templates (T01-T03)
+    2. Last scene prefers closing templates (T09 quote, T08 glass cards)
+    3. Middle scenes: keyword-match narration/visualDescription against catalog
+    4. Avoid repeating the same template as the previous scene
+    5. Ensure layout diversity
+    6. If has_image is True, we must select a template that has a visual-col (layout is NOT centered and NOT custom)
+    """
+    catalog = load_template_catalog()
+    templates = catalog["templates"]
+    
+    # Build searchable text from scene content
+    search_text = f"{scene.title} {scene.narration} {scene.visualDescription}".lower()
+    
+    # Filter templates based on image requirement: must have visual-col
+    if has_image:
+        # Templates with visual-col have layout split, magazine, data, or hero (specifically T01)
+        templates = [t for t in templates if t["layout"] in ("split", "magazine", "data", "hero")]
+        if not templates:
+            # Fallback to all templates if filtered is somehow empty
+            templates = catalog["templates"]
+            
+    # ── Scene 1: Hero templates only ──
+    if scene_index == 1:
+        hero_templates = [t for t in templates if t["category"] == "hero"]
+        if not hero_templates:
+            # Fallback if no hero template has visual-col (e.g. T01 is layout "hero" so it is included if has_image is True)
+            hero_templates = [t for t in catalog["templates"] if t["category"] == "hero"]
+        # Score by keyword match
+        scored = []
+        for t in hero_templates:
+            score = sum(1 for kw in t["keywords"] if kw.lower() in search_text)
+            # Bonus for T01 (most versatile hero)
+            if t["id"] == "T01":
+                score += 2
+            scored.append((score, t["id"]))
+        scored.sort(reverse=True)
+        return scored[0][1] if scored else "T01"
+    
+    # ── Last scene: prefer closing templates ──
+    if scene_index == total_scenes:
+        closing_candidates = ["T09", "T08", "T10"]  # Quote, Glass cards, Big stat
+        # If has_image, these are centered (no visual-col), so we might prefer T11 (timeline split) or T12 (comparison)
+        if has_image:
+            closing_candidates = ["T11", "T12", "T13"]
+        for cand in closing_candidates:
+            if cand not in used_templates:
+                # Make sure the candidate is actually in our templates list
+                if any(t["id"] == cand for t in templates):
+                    return cand
+    
+    # ── Middle scenes: keyword scoring ──
+    # Filter out hero-only templates for middle scenes
+    candidates = [t for t in templates if t["category"] != "hero"]
+    if not candidates:
+        candidates = [t for t in catalog["templates"] if t["category"] != "hero"]
+    
+    scored = []
+    for t in candidates:
+        score = 0
+        # Keyword matching
+        for kw in t["keywords"]:
+            if kw.lower() in search_text:
+                score += 3
+        
+        # Penalize if same template was used recently
+        if t["id"] in used_templates:
+            score -= 10
+        
+        # Penalize if same layout was used in the previous scene
+        if used_templates and len(used_templates) > 0:
+            prev_id = used_templates[-1]
+            prev_meta = next((pt for pt in catalog["templates"] if pt["id"] == prev_id), None)
+            if prev_meta and prev_meta["layout"] == t["layout"]:
+                score -= 5
+        
+        scored.append((score, t["id"]))
+    
+    scored.sort(reverse=True)
+    
+    # If best score is negative (all penalized), pick least-used non-hero
+    if scored and scored[0][0] < 0:
+        # Pick the template that appears least in used_templates
+        from collections import Counter
+        usage_count = Counter(used_templates)
+        scored.sort(key=lambda x: (usage_count.get(x[1], 0), -x[0]))
+    
+    return scored[0][1] if scored else "T04"
+
+
+def build_template_content_prompt(
+    template_id: str,
+    scene: "ScenePayload",
+    scene_index: int,
+    theme: dict,
+) -> str:
+    """Build a focused prompt asking the LLM to return JSON content for template placeholders.
+    
+    This is MUCH simpler than the old free-form prompt because the LLM doesn't need to
+    worry about layout, CSS, overflow, or decoratives — just content.
+    """
+    catalog = load_template_catalog()
+    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    if not tpl_meta:
+        raise ValueError(f"Template {template_id} not found")
+    
+    placeholders = list(tpl_meta["placeholders"])
+    
+    has_image = bool(scene.imageAsset)
+    if has_image:
+        if "IMAGE_CAPTION" not in placeholders:
+            placeholders.append("IMAGE_CAPTION")
+    
+    # Build placeholder descriptions based on template type
+    placeholder_hints = _get_placeholder_hints(template_id, placeholders)
+    if has_image and "IMAGE_CAPTION" not in placeholder_hints:
+        placeholder_hints += "\n- IMAGE_CAPTION: Chú thích ảnh minh họa (tiếng Việt ngắn gọn ≤10 từ)"
+    
+    image_info = ""
+    if has_image:
+        image_info = f"\n- IllustrationImage: {scene.imageAsset}\n⚠️ Cảnh này có ảnh minh họa. Bạn BẮT BUỘC phải điền trường IMAGE_CAPTION trong JSON để làm chú thích ảnh."
+    
+    return f"""Bạn là chuyên gia nội dung video TechBeat News. Nhiệm vụ: điền nội dung tiếng Việt vào các placeholder của template scene.
+
+⚠️ QUY TẮC BẮT BUỘC:
+- Trả về DUY NHẤT một JSON object hợp lệ (không markdown, không giải thích, không code fence).
+- Mọi giá trị phải là STRING tiếng Việt có dấu đầy đủ (trừ các trường icon/emoji).
+- TUYỆT ĐỐI KHÔNG copy nguyên văn narration vào TITLE hoặc SUBTITLE — hãy tóm tắt sáng tạo.
+- GHOST_WORD: chỉ 1 từ tiếng Anh 3-6 ký tự (ví dụ: "TECH", "DATA", "SPEED", "AI").
+- BADGE_TEXT: bắt đầu bằng emoji + "PHẦN {scene_index}" (ví dụ: "⚡ PHẦN {scene_index}").
+- TITLE: ≤ 8 từ, ngắn gọn ấn tượng WOW.
+- SUBTITLE: ≤ 8 từ, cụm danh từ ngắn (KHÔNG phải câu hoàn chỉnh).
+- Các trường DESC/mô tả: ≤ 2 dòng, cực kỳ súc tích.
+- Các trường ICON: chỉ 1 emoji duy nhất (ví dụ: "⚡", "🚀", "💰").
+- Nội dung phải DỰA TRÊN kịch bản scene, KHÔNG bịa đặt số liệu.
+
+═══════ THÔNG TIN SCENE ═══════
+Scene {scene_index}:
+- Title: {scene.title}
+- Narration: {scene.narration}
+- Visual: {scene.visualDescription}{image_info}
+
+═══════ TEMPLATE: {tpl_meta['name']} ({template_id}) ═══════
+{placeholder_hints}
+
+Trả về JSON object với các key sau (TẤT CẢ là string):
+{json.dumps(placeholders, ensure_ascii=False)}
+"""
+
+
+def _get_placeholder_hints(template_id: str, placeholders: list[str]) -> str:
+    """Generate human-readable hints for each placeholder based on template type."""
+    hints = []
+    for p in placeholders:
+        hint = _PLACEHOLDER_HINT_MAP.get(p, f"{p}: Nội dung phù hợp")
+        hints.append(f"- {p}: {hint}")
+    return "\n".join(hints)
+
+
+_PLACEHOLDER_HINT_MAP = {
+    "GHOST_WORD": "1 từ tiếng Anh 3-6 ký tự làm watermark nền (VD: 'TECH', 'AI', 'SPEED')",
+    "BADGE_TEXT": "Nhãn badge (VD: '⚡ PHẦN 2 · HIỆU SUẤT')",
+    "TITLE": "Tiêu đề chính ≤ 8 từ, ấn tượng WOW",
+    "SUBTITLE": "Phụ đề ≤ 8 từ, cụm danh từ ngắn",
+    "DESC": "Tagline metadata ≤ 12 từ hoặc chuỗi tags",
+    "TAG_1": "Badge tag #1 (VD: '🚀 Edge AI')",
+    "TAG_2": "Badge tag #2 (VD: '🔒 Privacy First')",
+    "TAG_3": "Badge tag #3 (VD: '⚡ Real-time')",
+    "BRAND_NAME": "Tên thương hiệu/sự kiện (VD: 'Google I/O')",
+    "META_INFO": "Thông tin meta (VD: 'Tháng 6 2026 · Hà Nội')",
+    "BULLET_1": "Điểm nổi bật #1 (1 dòng)",
+    "BULLET_2": "Điểm nổi bật #2 (1 dòng)",
+    "BULLET_3": "Điểm nổi bật #3 (1 dòng)",
+    "TECH_TAG_1": "Tag kỹ thuật #1 (VD: 'Transformer')",
+    "TECH_TAG_2": "Tag kỹ thuật #2",
+    "TECH_TAG_3": "Tag kỹ thuật #3",
+    "MEGA_NUMBER": "Số liệu lớn (VD: '9x', '150%', '2.5B')",
+    "STAT_1_ICON": "Emoji cho stat #1",
+    "STAT_1_NUM": "Số liệu stat #1 (VD: '4x')",
+    "STAT_1_TITLE": "Tiêu đề stat #1 (≤ 10 từ)",
+    "STAT_1_DESC": "Mô tả stat #1 (≤ 8 từ)",
+    "STAT_2_ICON": "Emoji cho stat #2",
+    "STAT_2_NUM": "Số liệu stat #2",
+    "STAT_2_TITLE": "Tiêu đề stat #2",
+    "STAT_2_DESC": "Mô tả stat #2",
+    "STAT_3_ICON": "Emoji cho stat #3",
+    "STAT_3_NUM": "Số liệu stat #3",
+    "STAT_3_TITLE": "Tiêu đề stat #3",
+    "STAT_3_DESC": "Mô tả stat #3",
+    "FEAT_1_ICON": "Emoji tính năng #1",
+    "FEAT_1_TITLE": "Tên tính năng #1",
+    "FEAT_1_DESC": "Mô tả tính năng #1 (≤ 2 dòng)",
+    "FEAT_2_ICON": "Emoji tính năng #2",
+    "FEAT_2_TITLE": "Tên tính năng #2",
+    "FEAT_2_DESC": "Mô tả tính năng #2",
+    "FEAT_3_ICON": "Emoji tính năng #3",
+    "FEAT_3_TITLE": "Tên tính năng #3",
+    "FEAT_3_DESC": "Mô tả tính năng #3",
+    "FEAT_4_ICON": "Emoji tính năng #4",
+    "FEAT_4_TITLE": "Tên tính năng #4",
+    "FEAT_4_DESC": "Mô tả tính năng #4",
+    "CODE_COMMENT": "Comment code (VD: '// Khởi tạo AI model')",
+    "CODE_KW_1": "Keyword code #1 (VD: 'const')",
+    "CODE_VAR_1": "Tên biến #1 (VD: 'model')",
+    "CODE_VAL_1": "Giá trị #1 (VD: 'gpt-4o')",
+    "CODE_KW_2": "Keyword #2 (VD: 'function')",
+    "CODE_FUNC": "Tên hàm (VD: 'processData')",
+    "CODE_BODY": "Thân hàm ngắn (VD: 'model.generate(input)')",
+    "CODE_COMMENT_2": "Comment code #2",
+    "CODE_KW_3": "Keyword #3",
+    "CODE_VAR_2": "Tên biến #2",
+    "CODE_VAL_2": "Giá trị #2",
+    "USER_LABEL": "Nhãn người dùng (VD: 'NGƯỜI DÙNG')",
+    "CHAT_USER_MSG": "Câu hỏi của người dùng (1-2 câu)",
+    "AI_LABEL": "Nhãn AI (VD: 'GEMINI')",
+    "CHAT_AI_MSG": "Câu trả lời AI (2-3 câu ngắn)",
+    "CHAT_FOOTER": "Chú thích chân trang chat (VD: 'Gemini 2.5 Pro · Tháng 6/2026')",
+    "CARD_1_ICON": "Emoji card #1",
+    "CARD_1_TITLE": "Tiêu đề card #1",
+    "CARD_1_DESC": "Mô tả card #1 (≤ 2 dòng)",
+    "CARD_2_ICON": "Emoji card #2",
+    "CARD_2_TITLE": "Tiêu đề card #2",
+    "CARD_2_DESC": "Mô tả card #2",
+    "CARD_3_ICON": "Emoji card #3",
+    "CARD_3_TITLE": "Tiêu đề card #3",
+    "CARD_3_DESC": "Mô tả card #3",
+    "QUOTE_TEXT": "Trích dẫn (1-3 câu ấn tượng)",
+    "QUOTE_ATTR_HTML": 'Thẻ tác giả HTML (VD: \'<p class="quote-attr">Sundar Pichai · CEO Google</p>\') hoặc chuỗi rỗng "" nếu không có',
+    "STAT_NUMBER": "Số liệu lớn (VD: '90')",
+    "STAT_SUFFIX": "Hậu tố (VD: '%', 'x', 'M')",
+    "STAT_LABEL": "Nhãn số liệu (VD: 'Độ chính xác AI')",
+    "STAT_EXPLANATION": "Giải thích 1-2 câu về số liệu",
+    "TL_1_YEAR": "Mốc thời gian #1 (VD: '2023')",
+    "TL_1_EVENT": "Sự kiện #1 (≤ 6 từ)",
+    "TL_1_DESC": "Mô tả sự kiện #1 (1 câu)",
+    "TL_2_YEAR": "Mốc thời gian #2",
+    "TL_2_EVENT": "Sự kiện #2",
+    "TL_2_DESC": "Mô tả sự kiện #2",
+    "TL_3_YEAR": "Mốc thời gian #3",
+    "TL_3_EVENT": "Sự kiện #3",
+    "TL_3_DESC": "Mô tả sự kiện #3",
+    "COL_GOOD_TITLE": "Tiêu đề cột tốt (VD: 'ƯU ĐIỂM')",
+    "COL_GOOD_1": "Điểm tốt #1",
+    "COL_GOOD_2": "Điểm tốt #2",
+    "COL_GOOD_3": "Điểm tốt #3",
+    "COL_BAD_TITLE": "Tiêu đề cột xấu (VD: 'NHƯỢC ĐIỂM')",
+    "COL_BAD_1": "Điểm xấu #1",
+    "COL_BAD_2": "Điểm xấu #2",
+    "COL_BAD_3": "Điểm xấu #3",
+    "STEP_HEADER": "Tiêu đề nhóm bước (VD: '🎮 THỰC HÀNH')",
+    "STEP_1_ICON": "Emoji bước 1 (VD: '📂')",
+    "STEP_1_TEXT": "Nội dung bước 1 (1 câu)",
+    "STEP_2_ICON": "Emoji bước 2",
+    "STEP_2_TEXT": "Nội dung bước 2",
+    "STEP_3_ICON": "Emoji bước 3",
+    "STEP_3_TEXT": "Nội dung bước 3",
+    "AGENT_1_ICON": "Emoji agent #1 (VD: '🧠')",
+    "AGENT_1_ROLE": "Vai trò agent #1 (VD: 'PHÂN TÍCH')",
+    "AGENT_1_DESC": "Mô tả nhiệm vụ #1 (1-2 câu)",
+    "AGENT_2_ICON": "Emoji agent #2",
+    "AGENT_2_ROLE": "Vai trò agent #2",
+    "AGENT_2_DESC": "Mô tả nhiệm vụ #2",
+    "AGENT_3_ICON": "Emoji agent #3",
+    "AGENT_3_ROLE": "Vai trò agent #3",
+    "AGENT_3_DESC": "Mô tả nhiệm vụ #3",
+    "AGENT_4_ICON": "Emoji agent #4",
+    "AGENT_4_ROLE": "Vai trò agent #4",
+    "AGENT_4_DESC": "Mô tả nhiệm vụ #4",
+    "CENTER_PILL_TEXT": "Text pill trung tâm (VD: '⚡ PHỐI HỢP')",
+    "PILL_1_ICON": "Emoji pill #1 (VD: '🎭')",
+    "PILL_1_TEXT": "Text pill #1 (VD: 'VAI TRÒ')",
+    "PILL_2_ICON": "Emoji pill #2",
+    "PILL_2_TEXT": "Text pill #2",
+    "PILL_3_ICON": "Emoji pill #3",
+    "PILL_3_TEXT": "Text pill #3",
+    "PILL_4_ICON": "Emoji pill #4",
+    "PILL_4_TEXT": "Text pill #4",
+    "FORMULA_LINE_1": "Dòng công thức #1 (màu hồng)",
+    "FORMULA_LINE_2": "Dòng công thức #2 (màu vàng)",
+    "FORMULA_LINE_3": "Dòng công thức #3 (màu xanh lá)",
+    "FORMULA_LINE_4": "Dòng công thức #4 (màu xanh dương)",
+    "BENTO_HERO_ICON": "Emoji ô hero bento (VD: '🚀')",
+    "BENTO_HERO_TITLE": "Tiêu đề ô hero bento",
+    "BENTO_HERO_DESC": "Mô tả ô hero bento (1-2 câu)",
+    "BENTO_1_ICON": "Emoji ô bento #1",
+    "BENTO_1_TITLE": "Tiêu đề ô bento #1",
+    "BENTO_1_DESC": "Mô tả ô bento #1",
+    "BENTO_2_ICON": "Emoji ô bento #2",
+    "BENTO_2_TITLE": "Tiêu đề ô bento #2",
+    "BENTO_2_DESC": "Mô tả ô bento #2",
+    "BENTO_3_ICON": "Emoji ô bento #3",
+    "BENTO_3_TITLE": "Tiêu đề ô bento #3",
+    "BENTO_3_DESC": "Mô tả ô bento #3",
+}
+
+
+def parse_llm_json_content(raw_text: str) -> dict | None:
+    """Parse JSON from LLM response, handling common issues like markdown fences."""
+    text = raw_text.strip()
+    # Strip markdown code fences
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```\s*$", "", text)
+    # Try to extract JSON object
+    # Find first { and last }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 # ─────────────────────────────  PROMPT  ─────────────────────────────
@@ -2948,8 +3442,22 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
             is_first = (idx == 1)
             is_last = (idx == len(req.scenes))
 
-            sys_single = build_system_prompt_single_scene(theme, idx, len(req.scenes), previous_context)
-            prompt_single = build_user_prompt_single_scene(s, previous_context, is_first, is_last)
+            # Auto-select the template ID
+            if "used_templates" not in previous_context:
+                previous_context["used_templates"] = []
+            
+            has_image = bool(s.imageAsset)
+            template_id = auto_select_template(
+                scene=s,
+                scene_index=idx,
+                total_scenes=len(req.scenes),
+                used_templates=previous_context["used_templates"],
+                has_image=has_image
+            )
+            previous_context["used_templates"].append(template_id)
+
+            sys_single = build_template_content_prompt(template_id, s, idx, theme)
+            prompt_single = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
             def _kwargs(provider_name: str) -> dict:
                 return {
@@ -2981,13 +3489,23 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                         scene_text += text
                         yield {"type": "chunk", "text": text}
 
-                scene_html = strip_fences(scene_text).strip()
-                if not scene_html.lower().startswith("<div"):
-                    m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html)
-                    if m:
-                        scene_html = m.group(0)
+                # Parse JSON content
+                json_content = parse_llm_json_content(scene_text)
+                if not json_content:
+                    print(f"[composition] JSON parse failed for scene {idx}. Text: {scene_text[:200]}")
+                    raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
 
-                layout, pattern = extract_scene_layout_and_pattern(scene_html)
+                if has_image:
+                    json_content["IMAGE_URL"] = s.imageAsset
+                    
+                scene_html = render_template(template_id, json_content, idx)
+
+                # Get layout/pattern from catalog for previous_context
+                catalog = load_template_catalog()
+                tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+                layout = tpl_meta["layout"] if tpl_meta else "split"
+                pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
+
                 previous_context["layout"] = layout
                 previous_context["visual_pattern"] = pattern
                 if layout:
@@ -2996,7 +3514,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
                     previous_context["used_patterns"].append(pattern)
 
                 scenes_html.append(scene_html)
-                print(f"[composition] Scene {idx}/{len(req.scenes)} generated: layout={layout}, pattern={pattern} ({provider}/{model})")
+                print(f"[composition] Scene {idx}/{len(req.scenes)} generated using template {template_id}: layout={layout}, pattern={pattern} ({provider}/{model})")
 
             except Exception as e:
                 print(f"[composition] Scene {idx}/{len(req.scenes)} generation failed: {e}. Using fallback.")
@@ -3071,6 +3589,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
   
   {scenes_combined}
   
+{ENTRANCE_ANIMATION_SCRIPT}
 </div>
 </body>
 </html>"""
@@ -3262,24 +3781,27 @@ async def regen_scene(body: RegenSceneRequest):
     # or skips the image entirely.
     materialised_scenes = await _materialise_scene_images([body.scene], get_project_root())
     effective_asset = materialised_scenes[0].imageAsset if materialised_scenes else body.scene.imageAsset
-
-    image_clause = ""
-    if effective_asset:
-        image_clause = (
-            f"\n  IllustrationImage: {effective_asset}"
-            f"\n  ⚠️ BẮT BUỘC dùng EXACT HTML: <div class=\"img-frame\"><img src=\"{effective_asset}\" alt=\"\"><span class=\"img-caption\">[caption ≤10 chữ]</span></div>"
-            f"\n  ⚠️ Layout PHẢI là .scene.split hoặc .scene.magazine — KHÔNG .hero/.centered/.bento."
-            f"\n  ✗ TUYỆT ĐỐI KHÔNG full-bleed background image, position:absolute trên <img>, hay background-image url(...) lên #root/.scene."
-        )
+    has_image = bool(effective_asset)
 
     total_scenes = len(re.findall(r'id=["\']scene\d+["\']', body.fullHtml)) or body.sceneIndex
-    sys_msg = build_system_prompt_single_scene(theme, body.sceneIndex, total_scenes, {})
-    user_msg = build_user_prompt_single_scene(
-        body.scene,
-        {},
-        body.sceneIndex == 1,
-        body.sceneIndex == total_scenes
-    )
+    
+    # Try to find data-template-id in the existing scene block
+    existing_block = body.fullHtml[bounds[0]:bounds[1]]
+    tpl_match = re.search(r'data-template-id=["\'](T\d+)["\']', existing_block)
+    if tpl_match:
+        template_id = tpl_match.group(1)
+    else:
+        # Fallback to auto-select
+        template_id = auto_select_template(
+            scene=body.scene,
+            scene_index=body.sceneIndex,
+            total_scenes=total_scenes,
+            used_templates=[],
+            has_image=has_image
+        )
+
+    sys_msg = build_template_content_prompt(template_id, body.scene, body.sceneIndex, theme)
+    user_msg = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
     try:
         resp, provider, model = await chat_completions_with_fallback(
@@ -3295,20 +3817,18 @@ async def regen_scene(body: RegenSceneRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM regen scene thất bại: {e}")
 
-    new_block = strip_fences(resp.choices[0].message.content or "").strip()
-    # Sanity: must start with <div and reference the right id
-    if not new_block.lower().startswith("<div"):
-        # LLM might have wrapped it — try to extract first div block
-        m = re.search(r"<div\b[\s\S]*</div>\s*$", new_block)
-        if m:
-            new_block = m.group(0)
-        else:
-            raise HTTPException(
-                status_code=502,
-                detail="LLM không trả về block <div> hợp lệ.",
-            )
-            
-    # Normalize wrapper class and id programmatically before validation
+    raw_response = resp.choices[0].message.content or ""
+    json_content = parse_llm_json_content(raw_response)
+    if not json_content:
+        raise HTTPException(
+            status_code=502,
+            detail=f"LLM không trả về JSON content hợp lệ cho template {template_id}."
+        )
+
+    if has_image:
+        json_content["IMAGE_URL"] = effective_asset
+
+    new_block = render_template(template_id, json_content, body.sceneIndex)
     new_block = sanitize_scene_wrapper(new_block, body.sceneIndex)
     
     if f'scene{body.sceneIndex}' not in new_block:
@@ -3397,6 +3917,7 @@ def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css:
 
 <!-- __SCENES_PLACEHOLDER__ -->
 
+{ENTRANCE_ANIMATION_SCRIPT}
 </div>
 </body>
 </html>"""
@@ -3446,9 +3967,21 @@ async def gen_scene_one(body: GenSceneOneRequest):
 
     # Lấy previous context từ body hoặc mặc định
     prev_ctx = body.previousContext or {"layout": None, "visual_pattern": None, "used_layouts": [], "used_patterns": []}
+    if "used_templates" not in prev_ctx:
+        prev_ctx["used_templates"] = []
 
-    sys_prompt = build_system_prompt_single_scene(theme, idx, total, prev_ctx)
-    user_prompt = build_user_prompt_single_scene(s, prev_ctx, is_first, is_last)
+    has_image = bool(s.imageAsset)
+    template_id = auto_select_template(
+        scene=s,
+        scene_index=idx,
+        total_scenes=total,
+        used_templates=prev_ctx["used_templates"],
+        has_image=has_image
+    )
+    prev_ctx["used_templates"].append(template_id)
+
+    sys_prompt = build_template_content_prompt(template_id, s, idx, theme)
+    user_prompt = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
     def _kwargs(provider_name: str) -> dict:
         return {
@@ -3471,17 +4004,17 @@ async def gen_scene_one(body: GenSceneOneRequest):
             kwargs_factory=_kwargs,
         )
         raw = resp.choices[0].message.content or ""
-        scene_html = strip_fences(raw).strip()
-        if not scene_html.lower().startswith("<div"):
-            m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html)
-            if m:
-                scene_html = m.group(0)
-            else:
-                scene_html = None
-                
-        # Normalize wrapper class and id programmatically
-        if scene_html:
-            scene_html = sanitize_scene_wrapper(scene_html, idx)
+        json_content = parse_llm_json_content(raw)
+        if not json_content:
+            print(f"[gen-scene-one] JSON parse failed for scene {idx}. Text: {raw[:200]}")
+            raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
+
+        if has_image:
+            json_content["IMAGE_URL"] = s.imageAsset
+            
+        scene_html = render_template(template_id, json_content, idx)
+        scene_html = sanitize_scene_wrapper(scene_html, idx)
+
     except Exception as e:
         print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
 
@@ -3489,8 +4022,11 @@ async def gen_scene_one(body: GenSceneOneRequest):
     if not scene_html:
         scene_html = fallback_scene_html(s, theme)
 
-    # Trích layout / pattern để trả về cho frontend (dùng làm previousContext lần sau)
-    layout, visual_pattern = extract_scene_layout_and_pattern(scene_html)
+    # Trích layout / pattern từ catalog
+    catalog = load_template_catalog()
+    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    layout = tpl_meta["layout"] if tpl_meta else "split"
+    visual_pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
 
     # Ghép HTML
     if is_first or not body.existingHtml:
@@ -3500,7 +4036,7 @@ async def gen_scene_one(body: GenSceneOneRequest):
     else:
         html = _append_scene_to_html(body.existingHtml, scene_html)
 
-    print(f"[gen-scene-one] Scene {idx}/{total} done: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
+    print(f"[gen-scene-one] Scene {idx}/{total} done using template {template_id}: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
 
     return {
         "html": html,
@@ -3516,5 +4052,336 @@ async def gen_scene_one(body: GenSceneOneRequest):
             "visual_pattern": visual_pattern,
             "used_layouts": (prev_ctx.get("used_layouts") or []) + ([layout] if layout else []),
             "used_patterns": (prev_ctx.get("used_patterns") or []) + ([visual_pattern] if visual_pattern else []),
+            "used_templates": prev_ctx["used_templates"],
         },
     }
+
+
+# ─────────────────────────  TEMPLATE PREVIEW ENDPOINTS  ─────────────────────────
+
+from fastapi.responses import HTMLResponse
+
+@router.get("/templates/gallery", response_class=HTMLResponse)
+async def templates_gallery():
+    """Expose a beautiful web interface to list and browse all 15 templates."""
+    catalog = load_template_catalog()
+    templates = catalog["templates"]
+    
+    html_lines = []
+    html_lines.append("""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>HyperFrames Template Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  body {
+    background: #080810;
+    color: #e2e8f0;
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    padding: 40px;
+  }
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fb923c, #f43f5e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .desc {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: #111122;
+    border: 1px solid #22223b;
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: #fb923c;
+    box-shadow: 0 10px 25px rgba(251, 146, 60, 0.1);
+  }
+  .tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+  }
+  .tag.hero { background: rgba(234, 88, 12, 0.13); color: #ff7849; border: 1px solid rgba(234, 88, 12, 0.27); }
+  .tag.content { background: rgba(2, 132, 199, 0.13); color: #38bdf8; border: 1px solid rgba(2, 132, 199, 0.27); }
+  .tag.centered { background: rgba(124, 58, 237, 0.13); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.27); }
+  .tag.data { background: rgba(22, 163, 74, 0.13); color: #4ade80; border: 1px solid rgba(22, 163, 74, 0.27); }
+  .tag.special { background: rgba(219, 39, 119, 0.13); color: #f472b6; border: 1px solid rgba(219, 39, 119, 0.27); }
+  
+  .name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 8px 0;
+  }
+  .meta {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+  .meta span {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .btn {
+    display: block;
+    text-align: center;
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    color: #fff;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn:hover {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+  }
+</style>
+</head>
+<body>
+  <h1>HyperFrames Template Gallery</h1>
+  <p class="desc">Duyệt và xem trước toàn bộ 15 templates chất lượng cao được thiết kế chuẩn 1920x1080.</p>
+  <div class="grid">
+""")
+
+    for t in templates:
+        cat_class = t["category"]
+        html_lines.append(f"""
+    <div class="card">
+      <div>
+        <span class="tag {cat_class}">{t["category"]}</span>
+        <h3 class="name">{t["name"]} ({t["id"]})</h3>
+        <div class="meta">
+          <span><strong>Layout:</strong> {t["layout"]}</span>
+          <span><strong>Visual Pattern:</strong> {t["visual_pattern"]}</span>
+          <span><strong>Phù hợp cho:</strong> {', '.join(t["best_for"])}</span>
+        </div>
+      </div>
+      <a href="/templates/preview/{t["id"]}" class="btn" target="_blank">Xem Thử Trình Duyệt ↗</a>
+    </div>
+""")
+
+    html_lines.append("""
+  </div>
+</body>
+</html>
+""")
+    return "".join(html_lines)
+
+
+@router.get("/templates/preview/{template_id}", response_class=HTMLResponse)
+async def template_preview(template_id: str, theme: str | None = None):
+    """Render a template with mock/dummy data to preview it perfectly in the browser."""
+    catalog = load_template_catalog()
+    t = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    if not t:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy template {template_id}")
+        
+    theme_dict = get_theme(theme)
+    
+    # Generate premium dummy mock data based on placeholders
+    mock_data = {
+        "GHOST_WORD": "TECH",
+        "BADGE_TEXT": f"⚡ SCENE PREVIEW · {template_id}",
+        "TITLE": "Giải Pháp Đột Phá Cho Tương Lai",
+        "SUBTITLE": "Công nghệ AI thế hệ mới dẫn đầu xu hướng toàn cầu",
+        "DESC": "Khám phá sức mạnh xử lý ngôn ngữ thời gian thực trên thiết bị biên.",
+        "TAG_1": "🚀 Edge AI",
+        "TAG_2": "🔒 Bảo Mật Cao",
+        "TAG_3": "⚡ Real-time",
+        "BRAND_NAME": "TechBeat AI Summit 2026",
+        "META_INFO": "Tháng 6 2026 · Hà Nội",
+        "BULLET_1": "Tốc độ xử lý nhanh hơn 4 lần so với GPT-4",
+        "BULLET_2": "Hoạt động offline hoàn toàn không phụ thuộc cloud",
+        "BULLET_3": "Chi phí vận hành tiết kiệm đến 80% ngân sách",
+        "TECH_TAG_1": "Transformers",
+        "TECH_TAG_2": "ONNX Runtime",
+        "TECH_TAG_3": "WebGPU",
+        "MEGA_NUMBER": "4.5x",
+        "STAT_1_ICON": "⚡",
+        "STAT_1_NUM": "4.5x",
+        "STAT_1_TITLE": "Hiệu suất xử lý",
+        "STAT_1_DESC": "So với các giải pháp cloud hiện tại",
+        "STAT_2_ICON": "🔒",
+        "STAT_2_NUM": "100%",
+        "STAT_2_TITLE": "Bảo mật dữ liệu",
+        "STAT_2_DESC": "Không gửi thông tin lên máy chủ ngoại vi",
+        "STAT_3_ICON": "💰",
+        "STAT_3_NUM": "80%",
+        "STAT_3_TITLE": "Tiết kiệm chi phí",
+        "STAT_3_DESC": "Giảm thiểu lưu lượng băng thông truyền tải",
+        "FEAT_1_ICON": "🧠",
+        "FEAT_1_TITLE": "Mô hình siêu nhẹ",
+        "FEAT_1_DESC": "Tối ưu hóa chỉ dung lượng 1.2GB hoạt động mượt mà.",
+        "FEAT_2_ICON": "🔋",
+        "FEAT_2_TITLE": "Tiết kiệm pin",
+        "FEAT_2_DESC": "Giảm thiểu 60% điện năng tiêu thụ trên thiết bị di động.",
+        "FEAT_3_ICON": "🌍",
+        "FEAT_3_TITLE": "Đa ngôn ngữ",
+        "FEAT_3_DESC": "Hỗ trợ dịch thuật trực tiếp hơn 100 quốc gia khác nhau.",
+        "FEAT_4_ICON": "📈",
+        "FEAT_4_TITLE": "Tự động tối ưu",
+        "FEAT_4_DESC": "Tự học hỏi và thích nghi theo thói quen của người dùng.",
+        "CODE_COMMENT": "// Khởi tạo mô hình ngôn ngữ lớn trực tiếp trên trình duyệt",
+        "CODE_KW_1": "const",
+        "CODE_VAR_1": "model",
+        "CODE_VAL_1": "await Kokoro.load('vn-voice-v2')",
+        "CODE_KW_2": "function",
+        "CODE_FUNC": "processVoice",
+        "CODE_BODY": "return model.speak(text, { speed: 1.0 })",
+        "CODE_COMMENT_2": "/* Kết nối thành công */",
+        "CODE_KW_3": "let",
+        "CODE_VAR_2": "status",
+        "CODE_VAL_2": "'CONNECTED'",
+        "USER_LABEL": "NGƯỜI DÙNG",
+        "CHAT_USER_MSG": "Làm thế nào để chạy mô hình AI offline trên thiết bị của tôi?",
+        "CHAT_AI_MSG": "Bạn chỉ cần tích hợp thư viện và tải trọng lượng mô hình 1.2GB. Toàn bộ quá trình tính toán và suy luận sẽ chạy trực tiếp qua WebGPU của thiết bị.",
+        "CHAT_FOOTER": "Gemini 2.5 Pro · Edge AI Architecture 2026",
+        "CARD_1_ICON": "🚀",
+        "CARD_1_TITLE": "Tăng Tốc Vượt Trội",
+        "CARD_1_DESC": "Hiệu suất xử lý phần cứng tối đa.",
+        "CARD_2_ICON": "🔐",
+        "CARD_2_TITLE": "Bảo Mật Tuyệt Đối",
+        "CARD_2_DESC": "Dữ liệu cá nhân luôn được giữ an toàn.",
+        "CARD_3_ICON": "🔌",
+        "CARD_3_TITLE": "Offline Hoàn Toàn",
+        "CARD_3_DESC": "Hoạt động độc lập không cần kết nối mạng.",
+        "QUOTE_TEXT": "Sự kết hợp giữa AI thế hệ mới và tính toán biên sẽ định hình lại cách chúng ta tương tác với thế giới kỹ thuật số xung quanh.",
+        "QUOTE_ATTR_HTML": '<p class="quote-attr">Sundar Pichai · CEO Google</p>',
+        "STAT_NUMBER": "98",
+        "STAT_SUFFIX": "%",
+        "STAT_LABEL": "Độ chính xác nhận diện",
+        "STAT_EXPLANATION": "Đạt mốc ấn tượng trong môi trường nhiều tạp âm nhiễu sóng.",
+        "TL_1_YEAR": "2024",
+        "TL_1_EVENT": "Nghiên cứu cốt lõi",
+        "TL_1_DESC": "Phát triển thuật toán nén mô hình biên.",
+        "TL_2_YEAR": "2025",
+        "TL_2_EVENT": "Phát hành Alpha",
+        "TL_2_DESC": "Kiểm thử trên 100k thiết bị di động.",
+        "TL_3_YEAR": "2026",
+        "TL_3_EVENT": "Ra mắt Toàn cầu",
+        "TL_3_DESC": "Tích hợp sẵn trong các hệ điều hành lớn.",
+        "COL_GOOD_TITLE": "LỢI ÍCH VƯỢT TRỘI",
+        "COL_GOOD_1": "Xử lý tức thì không trễ mạng",
+        "COL_GOOD_2": "An toàn riêng tư tuyệt đối",
+        "COL_GOOD_3": "Vận hành không tốn chi phí băng thông",
+        "COL_BAD_TITLE": "HẠN CHẾ CLOUD",
+        "COL_BAD_1": "Độ trễ cao phụ thuộc đường truyền",
+        "COL_BAD_2": "Rò rỉ dữ liệu cá nhân lên cloud",
+        "COL_BAD_3": "Chi phí thuê server đắt đỏ hàng tháng",
+        "STEP_HEADER": "3 BƯỚC TRIỂN KHAI NHANH CHÓNG",
+        "STEP_1_ICON": "1",
+        "STEP_1_TEXT": "Tải thư viện NPM SDK vào ứng dụng của bạn",
+        "STEP_2_ICON": "2",
+        "STEP_2_TEXT": "Khởi tạo mô hình cấu hình nhẹ 1.2GB",
+        "STEP_3_ICON": "3",
+        "STEP_3_TEXT": "Nhận kết quả suy luận AI offline tức thì",
+        "AGENT_1_ICON": "🤖",
+        "AGENT_1_ROLE": "Analyst Agent",
+        "AGENT_1_DESC": "Thu thập và xử lý thô dữ liệu đầu vào",
+        "AGENT_2_ICON": "📝",
+        "AGENT_2_ROLE": "Writer Agent",
+        "AGENT_2_DESC": "Biên soạn nội dung chuẩn SEO ấn tượng",
+        "AGENT_3_ICON": "🎨",
+        "AGENT_3_ROLE": "Designer Agent",
+        "AGENT_3_DESC": "Bố cục trực quan màu sắc hài hòa",
+        "AGENT_4_ICON": "🚀",
+        "AGENT_4_ROLE": "Publisher Agent",
+        "AGENT_4_DESC": "Đóng gói và phân phối đa nền tảng",
+        "CENTER_PILL_TEXT": "AI COLLABORATION WORKFLOW",
+        "PILL_1_ICON": "⚙️",
+        "PILL_1_TEXT": "Input",
+        "PILL_2_ICON": "🧠",
+        "PILL_2_TEXT": "Processing",
+        "PILL_3_ICON": "⚖️",
+        "PILL_3_TEXT": "Refining",
+        "PILL_4_ICON": "📦",
+        "PILL_4_TEXT": "Output",
+        "FORMULA_LINE_1": "Efficiency = (Output / Input) * Quality",
+        "FORMULA_LINE_2": "Cost_Savings = Cloud_Cost - Local_Resource",
+        "FORMULA_LINE_3": "Latency = Local_Processing_Time (≈5ms)",
+        "FORMULA_LINE_4": "Privacy_Factor = 1.0 (Strict Offline)",
+        "BENTO_HERO_ICON": "⚡",
+        "BENTO_HERO_TITLE": "Edge AI",
+        "BENTO_HERO_DESC": "Tương lai của tính toán",
+        "BENTO_1_ICON": "🔒",
+        "BENTO_1_TITLE": "Bảo mật",
+        "BENTO_1_DESC": "Offline 100%",
+        "BENTO_2_ICON": "🚀",
+        "BENTO_2_TITLE": "Tốc độ",
+        "BENTO_2_DESC": "Độ trễ 5ms",
+        "BENTO_3_ICON": "💰",
+        "BENTO_3_TITLE": "Chi phí",
+        "BENTO_3_DESC": "Tiết kiệm 80%"
+    }
+    
+    rendered_scene = render_template(template_id, mock_data, 1)
+    base_css = render_base_css(theme_dict)
+    
+    html = f"""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview Template {template_id}</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100;300;400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+{base_css}
+
+/* Extra decorative animations used in templates */
+@keyframes neon-glow {{
+  0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }}
+  50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }}
+}}
+@keyframes aurora-mesh {{
+  0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }}
+  50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }}
+}}
+@keyframes star-blink {{
+  0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }}
+  50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }}
+}}
+@keyframes grad-shift {{
+  0% {{ background-position: 0% 50%; }}
+  50% {{ background-position: 100% 50%; }}
+  100% {{ background-position: 0% 50%; }}
+}}
+</style>
+</head>
+<body style="margin:0; padding:0; background:#000; overflow:hidden; display:flex; justify-content:center; align-items:center; min-height:100vh;">
+  <div id="root" data-composition-id="preview" data-start="0" data-width="1920" data-height="1080" data-duration="5" style="transform: scale(0.8); transform-origin: center;">
+    <div class="scanlines"></div>
+    {rendered_scene}
+    {ENTRANCE_ANIMATION_SCRIPT}
+  </div>
+</body>
+</html>"""
+    
+    html = inject_base_css(html, theme_dict)
+    return html

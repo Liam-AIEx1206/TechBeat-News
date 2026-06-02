@@ -1,0 +1,38 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    @keyframes grad-shift-t02 {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    #scene{{SCENE_NUM}} .mega-num {
+      background-size: 200% auto;
+      animation: grad-shift-t02 6s ease infinite, floating 6s ease-in-out infinite;
+    }
+  </style>
+
+  <div class="light-rays"></div>
+  <div class="float-orb-lg" style="top:-10%; left:50%; transform:translateX(-50%); background:var(--accent);"></div>
+  <div class="float-orb-sm" style="bottom:15%; right:10%; background:var(--accent3);"></div>
+  <div class="ghost-text" style="bottom:-5%; left:-8%;">{{GHOST_WORD}}</div>
+  <div class="particle-field"></div>
+  <span class="y2k-sparkle" style="top:15%; left:12%;"></span>
+  <span class="y2k-sparkle" style="top:25%; right:15%;"></span>
+
+  <div class="hero-stat-banner">
+    <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+    <div class="mega-num breath">{{MEGA_NUMBER}}</div>
+    <h1 id="s{{SCENE_NUM}}-title" class="title-xl">{{TITLE}}</h1>
+    <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="max-width:1200px;">{{SUBTITLE}}</p>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
+      <div class="badge">{{TAG_1}}</div>
+      <div class="badge">{{TAG_2}}</div>
+      <div class="badge">{{TAG_3}}</div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

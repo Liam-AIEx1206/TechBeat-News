@@ -1,0 +1,169 @@
+{
+  "templates": [
+    {
+      "id": "T01",
+      "file": "t01_hero_fullbleed.html",
+      "name": "Full-Bleed Hero",
+      "layout": "hero",
+      "visual_pattern": "B14 TECH-CARD",
+      "category": "hero",
+      "best_for": ["opening", "intro", "product_launch", "brand"],
+      "keywords": ["giới thiệu", "mở đầu", "ra mắt", "thương hiệu", "sản phẩm", "công nghệ", "sự kiện"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "TAG_1", "TAG_2", "TAG_3", "BRAND_NAME", "META_INFO", "BULLET_1", "BULLET_2", "BULLET_3", "TECH_TAG_1", "TECH_TAG_2", "TECH_TAG_3"]
+    },
+    {
+      "id": "T02",
+      "file": "t02_hero_meganum.html",
+      "name": "Mega-Num Hero",
+      "layout": "centered",
+      "visual_pattern": "B1 BIG STAT",
+      "category": "hero",
+      "best_for": ["opening_stats", "big_number", "milestone"],
+      "keywords": ["con số", "thống kê", "tăng trưởng", "kỷ lục", "phần trăm", "lần", "triệu", "tỷ"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "MEGA_NUMBER", "TITLE", "SUBTITLE", "TAG_1", "TAG_2", "TAG_3"]
+    },
+    {
+      "id": "T03",
+      "file": "t03_hero_bento.html",
+      "name": "Bento Hero",
+      "layout": "custom",
+      "visual_pattern": "B16 BENTO-GRID",
+      "category": "hero",
+      "best_for": ["tech_showcase", "multi_feature_intro", "dashboard"],
+      "keywords": ["tổng quan", "đa tính năng", "bảng điều khiển", "nhiều thành phần", "hệ thống"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "BENTO_HERO_ICON", "BENTO_HERO_TITLE", "BENTO_HERO_DESC", "BENTO_1_ICON", "BENTO_1_TITLE", "BENTO_1_DESC", "BENTO_2_ICON", "BENTO_2_TITLE", "BENTO_2_DESC", "BENTO_3_ICON", "BENTO_3_TITLE", "BENTO_3_DESC"]
+    },
+    {
+      "id": "T04",
+      "file": "t04_stat_list_split.html",
+      "name": "Stat-List Split",
+      "layout": "split",
+      "visual_pattern": "B11 STAT-LIST",
+      "category": "content",
+      "best_for": ["stats", "metrics", "kpi", "performance", "benchmark"],
+      "keywords": ["chỉ số", "hiệu suất", "benchmark", "tốc độ", "chi phí", "so sánh số liệu", "nhanh hơn", "rẻ hơn"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "STAT_1_ICON", "STAT_1_NUM", "STAT_1_TITLE", "STAT_1_DESC", "STAT_2_ICON", "STAT_2_NUM", "STAT_2_TITLE", "STAT_2_DESC", "STAT_3_ICON", "STAT_3_NUM", "STAT_3_TITLE", "STAT_3_DESC"]
+    },
+    {
+      "id": "T05",
+      "file": "t05_feat_grid_magazine.html",
+      "name": "Feature Grid Magazine",
+      "layout": "magazine",
+      "visual_pattern": "B3 FEATURE GRID",
+      "category": "content",
+      "best_for": ["features", "capabilities", "4_points", "benefits"],
+      "keywords": ["tính năng", "khả năng", "ưu điểm", "lợi ích", "đặc điểm", "chức năng", "hỗ trợ"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "FEAT_1_ICON", "FEAT_1_TITLE", "FEAT_1_DESC", "FEAT_2_ICON", "FEAT_2_TITLE", "FEAT_2_DESC", "FEAT_3_ICON", "FEAT_3_TITLE", "FEAT_3_DESC", "FEAT_4_ICON", "FEAT_4_TITLE", "FEAT_4_DESC"]
+    },
+    {
+      "id": "T06",
+      "file": "t06_terminal_data.html",
+      "name": "Terminal Code",
+      "layout": "data",
+      "visual_pattern": "B2 TERMINAL",
+      "category": "content",
+      "best_for": ["code", "cli", "developer", "technical", "api"],
+      "keywords": ["code", "lệnh", "terminal", "API", "lập trình", "developer", "cài đặt", "cú pháp", "script"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "CODE_COMMENT", "CODE_KW_1", "CODE_VAR_1", "CODE_VAL_1", "CODE_KW_2", "CODE_FUNC", "CODE_BODY", "CODE_COMMENT_2", "CODE_KW_3", "CODE_VAR_2", "CODE_VAL_2"]
+    },
+    {
+      "id": "T07",
+      "file": "t07_chat_dialogue.html",
+      "name": "Chat Dialogue",
+      "layout": "split",
+      "visual_pattern": "B12 CHAT DIALOGUE",
+      "category": "content",
+      "best_for": ["conversation", "qa", "chatbot", "ai_demo"],
+      "keywords": ["hỏi đáp", "chat", "trò chuyện", "AI trả lời", "prompt", "câu hỏi", "phản hồi"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "USER_LABEL", "CHAT_USER_MSG", "AI_LABEL", "CHAT_AI_MSG", "CHAT_FOOTER"]
+    },
+    {
+      "id": "T08",
+      "file": "t08_glass_cards_centered.html",
+      "name": "Glass Card Row",
+      "layout": "centered",
+      "visual_pattern": "B13 3-COLUMN GLASS CARD ROW",
+      "category": "centered",
+      "best_for": ["3_features", "benefits", "pillars", "summary"],
+      "keywords": ["ba điểm", "ba trụ cột", "ba lợi ích", "tóm tắt", "điểm chính", "ưu tiên"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "CARD_1_ICON", "CARD_1_TITLE", "CARD_1_DESC", "CARD_2_ICON", "CARD_2_TITLE", "CARD_2_DESC", "CARD_3_ICON", "CARD_3_TITLE", "CARD_3_DESC"]
+    },
+    {
+      "id": "T09",
+      "file": "t09_quote_centered.html",
+      "name": "Quote Spotlight",
+      "layout": "centered",
+      "visual_pattern": "B6 QUOTE",
+      "category": "centered",
+      "best_for": ["quote", "testimonial", "closing", "statement"],
+      "keywords": ["trích dẫn", "phát biểu", "nhận xét", "đánh giá", "kết luận", "tuyên bố", "tầm nhìn"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "QUOTE_TEXT", "QUOTE_ATTR_HTML"]
+    },
+    {
+      "id": "T10",
+      "file": "t10_big_stat_centered.html",
+      "name": "Big Stat Centered",
+      "layout": "centered",
+      "visual_pattern": "B1 BIG STAT",
+      "category": "centered",
+      "best_for": ["single_metric", "highlight_number", "impact"],
+      "keywords": ["số liệu nổi bật", "phần trăm", "con số ấn tượng", "kết quả", "tác động", "đạt được"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "STAT_NUMBER", "STAT_SUFFIX", "STAT_LABEL", "STAT_EXPLANATION"]
+    },
+    {
+      "id": "T11",
+      "file": "t11_timeline_split.html",
+      "name": "Timeline Split",
+      "layout": "split",
+      "visual_pattern": "B5 TIMELINE",
+      "category": "data",
+      "best_for": ["history", "roadmap", "milestones", "evolution"],
+      "keywords": ["lịch sử", "lộ trình", "cột mốc", "phát triển", "năm", "giai đoạn", "tiến trình"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "TL_1_YEAR", "TL_1_EVENT", "TL_1_DESC", "TL_2_YEAR", "TL_2_EVENT", "TL_2_DESC", "TL_3_YEAR", "TL_3_EVENT", "TL_3_DESC"]
+    },
+    {
+      "id": "T12",
+      "file": "t12_comparison_data.html",
+      "name": "Comparison Data",
+      "layout": "data",
+      "visual_pattern": "B4 COMPARE",
+      "category": "data",
+      "best_for": ["comparison", "pros_cons", "before_after", "versus"],
+      "keywords": ["so sánh", "ưu nhược", "trước sau", "tốt xấu", "đúng sai", "nên không nên"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "COL_GOOD_TITLE", "COL_GOOD_1", "COL_GOOD_2", "COL_GOOD_3", "COL_BAD_TITLE", "COL_BAD_1", "COL_BAD_2", "COL_BAD_3"]
+    },
+    {
+      "id": "T13",
+      "file": "t13_step_list_magazine.html",
+      "name": "Step List Magazine",
+      "layout": "magazine",
+      "visual_pattern": "B19 NUMBERED STEP LIST",
+      "category": "data",
+      "best_for": ["howto", "procedure", "guide", "steps"],
+      "keywords": ["bước", "hướng dẫn", "quy trình", "cách làm", "thực hiện", "thao tác"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "STEP_HEADER", "STEP_1_ICON", "STEP_1_TEXT", "STEP_2_ICON", "STEP_2_TEXT", "STEP_3_ICON", "STEP_3_TEXT"]
+    },
+    {
+      "id": "T14",
+      "file": "t14_agent_grid_split.html",
+      "name": "Agent Grid Split",
+      "layout": "split",
+      "visual_pattern": "B15 MULTI-AGENT GRID",
+      "category": "special",
+      "best_for": ["team", "multi_agent", "collaboration", "roles"],
+      "keywords": ["nhóm", "phối hợp", "vai trò", "đội ngũ", "agent", "thành phần", "module", "hệ thống"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "AGENT_1_ICON", "AGENT_1_ROLE", "AGENT_1_DESC", "AGENT_2_ICON", "AGENT_2_ROLE", "AGENT_2_DESC", "AGENT_3_ICON", "AGENT_3_ROLE", "AGENT_3_DESC", "AGENT_4_ICON", "AGENT_4_ROLE", "AGENT_4_DESC", "CENTER_PILL_TEXT"]
+    },
+    {
+      "id": "T15",
+      "file": "t15_formula_stack_data.html",
+      "name": "Formula Stack Data",
+      "layout": "data",
+      "visual_pattern": "B17 FORMULA TAG STACK",
+      "category": "special",
+      "best_for": ["formula", "structure", "breakdown", "components"],
+      "keywords": ["công thức", "cấu trúc", "thành phần", "phân tích", "phương pháp", "framework", "mô hình"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "PILL_1_ICON", "PILL_1_TEXT", "PILL_2_ICON", "PILL_2_TEXT", "PILL_3_ICON", "PILL_3_TEXT", "PILL_4_ICON", "PILL_4_TEXT", "FORMULA_LINE_1", "FORMULA_LINE_2", "FORMULA_LINE_3", "FORMULA_LINE_4"]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    @keyframes pulse-stat-t10 {
+      0%, 100% { text-shadow: 0 0 40px var(--glow); }
+      50% { text-shadow: 0 0 80px var(--accent), 0 0 120px var(--accent2); }
+    }
+    #scene{{SCENE_NUM}} .stat-hero { animation: pulse-stat-t10 3s ease-in-out infinite; }
+  </style>
+
+  <div class="light-rays"></div>
+  <div class="float-orb-lg" style="top:10%; left:50%; transform:translateX(-50%); background:var(--accent);"></div>
+  <div class="float-orb-sm" style="bottom:20%; left:15%; background:var(--accent3);"></div>
+  <div class="ghost-text" style="bottom:-5%; right:-8%;">{{GHOST_WORD}}</div>
+  <div class="particle-field"></div>
+  <span class="y2k-sparkle" style="top:18%; right:20%;"></span>
+  <span class="y2k-sparkle" style="bottom:25%; left:25%;"></span>
+
+  <div class="layout">
+    <div class="info-col" style="text-align:center;">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast" style="align-self:center;">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+    </div>
+    <div class="visual-col" style="display:flex; align-items:center; justify-content:center;">
+      <div class="visual-block glow-card" style="text-align:center; padding:50px;">
+        <div><span class="stat-hero">{{STAT_NUMBER}}</span><span class="stat-suffix">{{STAT_SUFFIX}}</span></div>
+        <p class="caption" style="margin-top:20px;">{{STAT_LABEL}}</p>
+        <p class="body-text" style="margin:12px auto 0; max-width:480px;">{{STAT_EXPLANATION}}</p>
+        <div class="accent-bar" style="margin:16px auto 0;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

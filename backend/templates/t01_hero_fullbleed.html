@@ -1,0 +1,51 @@
+<div class="scene hero" id="scene{{SCENE_NUM}}">
+  <style>
+    @keyframes neon-glow-t01 {
+      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 45px var(--accent); }
+    }
+    #scene{{SCENE_NUM}} .tech-card { animation: neon-glow-t01 4s ease-in-out infinite; }
+  </style>
+
+  <div class="aurora-glow" style="top:-15%; left:-10%; background:radial-gradient(circle, var(--accent), transparent);"></div>
+  <div class="aurora-glow" style="bottom:-20%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+  <div class="animated-grid"></div>
+  <div class="particle-field"></div>
+  <div class="ghost-text" style="bottom:-8%; right:-5%;">{{GHOST_WORD}}</div>
+  <span class="y2k-sparkle" style="top:12%; right:8%;"></span>
+  <span class="y2k-sparkle" style="bottom:18%; left:5%;"></span>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-hero grad-text" style="font-weight: 900 !important;" data-effect="typewriter">{{TITLE}}</h1><span class="cursor-blink">|</span>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+      <div id="s{{SCENE_NUM}}-desc" style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px;">
+        <div class="badge">{{TAG_1}}</div>
+        <div class="badge">{{TAG_2}}</div>
+        <div class="badge">{{TAG_3}}</div>
+      </div>
+    </div>
+    <div class="visual-col">
+      <div class="tech-card glow-card breath">
+        <div class="brand">{{BRAND_NAME}}</div>
+        <div class="meta">📅 {{META_INFO}}</div>
+        <div class="bullets">
+          <div>{{BULLET_1}}</div>
+          <div>{{BULLET_2}}</div>
+          <div>{{BULLET_3}}</div>
+        </div>
+        <div class="tags">
+          <span class="tag">{{TECH_TAG_1}}</span>
+          <span class="tag">{{TECH_TAG_2}}</span>
+          <span class="tag">{{TECH_TAG_3}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

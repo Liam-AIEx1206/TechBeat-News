@@ -1,0 +1,41 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <div class="aurora-glow" style="top:-20%; left:20%; background:radial-gradient(circle, var(--accent), transparent);"></div>
+  <div class="float-orb-sm" style="bottom:10%; right:8%; background:var(--accent2);"></div>
+  <div class="float-orb-sm" style="top:15%; left:5%; background:var(--accent3);"></div>
+  <div class="ghost-text" style="bottom:-8%; right:-5%;">{{GHOST_WORD}}</div>
+  <div class="particle-field"></div>
+  <span class="y2k-sparkle" style="top:10%; right:20%;"></span>
+  <span class="y2k-sparkle" style="bottom:22%; left:15%;"></span>
+
+  <div class="layout">
+    <div class="info-col" style="text-align:center;">
+      <div id="s{{SCENE_NUM}}-badge" class="badge" style="align-self:center;">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+    </div>
+    <div class="visual-col">
+      <div class="feat-row">
+        <div class="glass-card breath">
+          <span class="emoji">{{CARD_1_ICON}}</span>
+          <div class="title">{{CARD_1_TITLE}}</div>
+          <div class="desc">{{CARD_1_DESC}}</div>
+        </div>
+        <div class="glass-card breath" style="animation-delay: 0.5s;">
+          <span class="emoji">{{CARD_2_ICON}}</span>
+          <div class="title">{{CARD_2_TITLE}}</div>
+          <div class="desc">{{CARD_2_DESC}}</div>
+        </div>
+        <div class="glass-card breath" style="animation-delay: 1.0s;">
+          <span class="emoji">{{CARD_3_ICON}}</span>
+          <div class="title">{{CARD_3_TITLE}}</div>
+          <div class="desc">{{CARD_3_DESC}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

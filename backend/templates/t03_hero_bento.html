@@ -1,0 +1,52 @@
+<div class="scene" id="scene{{SCENE_NUM}}" style="padding:80px;">
+  <style>
+    @keyframes neon-glow-t03 {
+      0%, 100% { border-color: rgba(255,255,255,0.06); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 25px var(--glow); }
+    }
+    #scene{{SCENE_NUM}} .bento-cell { animation: neon-glow-t03 5s ease-in-out infinite; }
+    #scene{{SCENE_NUM}} .bento-cell:nth-child(2) { animation-delay: 0.8s; }
+    #scene{{SCENE_NUM}} .bento-cell:nth-child(3) { animation-delay: 1.6s; }
+    #scene{{SCENE_NUM}} .bento-cell:nth-child(4) { animation-delay: 2.4s; }
+  </style>
+
+  <div class="animated-grid"></div>
+  <div class="float-orb-md" style="top:-5%; left:-5%; background:var(--accent);"></div>
+  <div class="float-orb-md" style="bottom:-5%; right:-5%; background:var(--accent3);"></div>
+  <div class="ghost-text" style="top:-10%; right:-8%;">{{GHOST_WORD}}</div>
+  <span class="y2k-sparkle" style="top:8%; right:12%;"></span>
+  <span class="y2k-sparkle" style="bottom:12%; left:8%;"></span>
+
+  <div style="position:relative; z-index:5; display:flex; flex-direction:column; gap:24px; height:100%;">
+    <div id="s{{SCENE_NUM}}-badge" class="badge">{{BADGE_TEXT}}</div>
+    <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text" style="font-weight: 900 !important;">{{TITLE}}</h1>
+    <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+    <p id="s{{SCENE_NUM}}-desc" class="caption">{{DESC}}</p>
+    <div class="bento-grid" style="flex:1;">
+      <div class="bento-cell hero shimmer-fast">
+        <div class="ic" style="font-size:3rem; margin-bottom:12px;">{{BENTO_HERO_ICON}}</div>
+        <div class="t">{{BENTO_HERO_TITLE}}</div>
+        <div class="d">{{BENTO_HERO_DESC}}</div>
+      </div>
+      <div class="bento-cell">
+        <div class="ic" style="font-size:2.5rem;">{{BENTO_1_ICON}}</div>
+        <div class="t">{{BENTO_1_TITLE}}</div>
+        <div class="d">{{BENTO_1_DESC}}</div>
+      </div>
+      <div class="bento-cell">
+        <div class="ic" style="font-size:2.5rem;">{{BENTO_2_ICON}}</div>
+        <div class="t">{{BENTO_2_TITLE}}</div>
+        <div class="d">{{BENTO_2_DESC}}</div>
+      </div>
+      <div class="bento-cell wide">
+        <div class="ic" style="font-size:2.5rem;">{{BENTO_3_ICON}}</div>
+        <div class="t">{{BENTO_3_TITLE}}</div>
+        <div class="d">{{BENTO_3_DESC}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>
