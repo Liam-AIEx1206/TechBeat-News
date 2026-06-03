@@ -398,16 +398,28 @@ export function useClientRender() {
       if (audioEncoder && mergedAudioBuffer) {
         setProgress({ stage: "encoding", percent: 87, message: "Đang encode audio..." });
 
-        const audioData = new AudioData({
-          format: "f32-planar",
-          sampleRate: 44100,
-          numberOfFrames: mergedAudioBuffer.length,
-          numberOfChannels: 1,
-          timestamp: 0,
-          data: mergedAudioBuffer.getChannelData(0),
-        });
-        audioEncoder.encode(audioData);
-        audioData.close();
+        const channelData = mergedAudioBuffer.getChannelData(0);
+        const totalSamples = channelData.length;
+        const chunkSize = 1024;
+        let offset = 0;
+
+        while (offset < totalSamples) {
+          const size = Math.min(chunkSize, totalSamples - offset);
+          const chunkData = channelData.subarray(offset, offset + size);
+
+          const audioData = new AudioData({
+            format: "f32-planar",
+            sampleRate: 44100,
+            numberOfFrames: size,
+            numberOfChannels: 1,
+            timestamp: Math.round((offset / 44100) * 1_000_000),
+            data: chunkData,
+          });
+          audioEncoder.encode(audioData);
+          audioData.close();
+
+          offset += size;
+        }
 
         await audioEncoder.flush();
         audioEncoder.close();
