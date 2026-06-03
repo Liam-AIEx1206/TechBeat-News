@@ -75,10 +75,10 @@ export function useClientRender() {
     setMp4Url("");
     setError("");
 
-    // ── 1. Create 6 hidden iframes with composition in parallel ──
+    // ── 1. Create hidden iframes with composition ──
     setProgress({ stage: "init", percent: 2, message: "Đang tải composition HTML..." });
 
-    const numWorkers = 6;
+    const numWorkers = 2;
     const iframes: HTMLIFrameElement[] = [];
 
     const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -113,6 +113,41 @@ export function useClientRender() {
     );
 
     finalHtml = finalHtml.replace(/<head\b([^>]*)>/i, `<head$1>${baseTag}`);
+
+    // ── Pre-cache and inline scene images to Base64 ──
+    setProgress({ stage: "init", percent: 3, message: "Đang chuyển đổi và nén ảnh sang Base64..." });
+    try {
+      const srcMatches = Array.from(finalHtml.matchAll(/src=["'](assets\/[^"']+)["']/g));
+      const uniqueSrcs = Array.from(new Set(srcMatches.map(m => m[1])));
+
+      onLog?.(`[DEBUG] Found unique images to inline: ${JSON.stringify(uniqueSrcs)}`);
+
+      for (const src of uniqueSrcs) {
+        if (cancelRef.current) break;
+        try {
+          const fullUrl = `${baseHref}${src}`;
+          onLog?.(`[DEBUG] Inlining image to Base64: ${fullUrl}`);
+          const resp = await fetch(fullUrl);
+          if (!resp.ok) throw new Error(`HTTP status ${resp.status}`);
+          const blob = await resp.blob();
+          
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(blob);
+          const base64Data = await base64Promise;
+          
+          finalHtml = finalHtml.replaceAll(src, base64Data);
+          onLog?.(`[DEBUG] Successfully inlined: ${src}`);
+        } catch (err) {
+          onLog?.(`[WARNING] Failed to inline image ${src}: ${err}`);
+        }
+      }
+    } catch (err) {
+      onLog?.(`[WARNING] Image inlining pre-process error: ${err}`);
+    }
 
     try {
       // Create all iframes in parallel
@@ -309,10 +344,6 @@ export function useClientRender() {
           const iframeDoc = iframe.contentDocument;
           if (!iframeDoc || !iframeDoc.body) throw new Error(`Cannot access iframe ${workerId} document`);
 
-          const workerCanvas = document.createElement("canvas");
-          workerCanvas.width = width;
-          workerCanvas.height = height;
-          const workerCtx = workerCanvas.getContext("2d", { willReadFrequently: true })!;
           const timeline = timelines[workerId].timeline;
 
           while (true) {
@@ -329,15 +360,13 @@ export function useClientRender() {
               height,
               pixelRatio: 1,
               fontEmbedCSS,
+              cacheBust: false,
               style: {
                 transform: 'none',
               }
             });
 
-            workerCtx.clearRect(0, 0, width, height);
-            workerCtx.drawImage(capturedCanvas, 0, 0);
-
-            const bitmap = await createImageBitmap(workerCanvas);
+            const bitmap = await createImageBitmap(capturedCanvas);
             capturedFrames.set(frameIdx, bitmap);
 
             while (frameIdx - nextFrameToEncode > 30 && !cancelRef.current && !workerError) {
