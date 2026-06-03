@@ -81,6 +81,126 @@ THEMES: dict[str, dict] = {
         "vibe": "luxury magazine editorial vàng champagne trên đen sang trọng, serif accents, fine-line dividers",
         "fx": "serif drop-cap, gold leaf shimmer, fine-line dividers, refined fade",
     },
+    "sunset-glow": {
+        "name": "Sunset Glow",
+        "bg": "#0f050b", "bg2": "#1a0815", "surface": "#280f20",
+        "accent": "#f43f5e", "accent2": "#f97316", "accent3": "#fef08a",
+        "text1": "#fff1f2", "text2": "#fda4af",
+        "vibe": "lãng mạn hoàng hôn ấm áp phong cách editorial, với sự pha trộn mềm mại của tone đỏ hồng, cam ấm và ánh sáng vàng nhạt",
+        "fx": "light leak drift, warm dust floating particles, smooth round borders, background gradient flow",
+    },
+    "iceberg-tech": {
+        "name": "Iceberg Tech",
+        "bg": "#02070f", "bg2": "#051220", "surface": "#0a1d33",
+        "accent": "#38bdf8", "accent2": "#34d399", "accent3": "#cbd5e1",
+        "text1": "#f0f9ff", "text2": "#93c5fd",
+        "vibe": "công nghệ lạnh giá tối giản tinh khiết như băng đá, sắc nét với ánh sáng xanh lam và bạc mờ, kết hợp bento hoặc các ô trong suốt",
+        "fx": "frosted glass reflection, paper thin border grids, cold ice ambient pulse, crisp typographic fades",
+    },
+    "retro-arcade": {
+        "name": "Retro Arcade",
+        "bg": "#0b020f", "bg2": "#150622", "surface": "#220c35",
+        "accent": "#eab308", "accent2": "#c084fc", "accent3": "#22c55e",
+        "text1": "#faf5ff", "text2": "#d8b4fe",
+        "vibe": "phòng máy chơi game retro arcade 8-bit hoài cổ, rực rỡ sắc màu tím neon kết hợp vàng chanh và xanh lá, font monospace cá tính",
+        "fx": "CRT scanlines scanning, brutalist solid drop shadows, pixel particle fall, retro flash accents",
+    },
+    "monochrome-pro": {
+        "name": "Monochrome Pro",
+        "bg": "#050505", "bg2": "#121212", "surface": "#1e1e1e",
+        "accent": "#ffffff", "accent2": "#a1a1aa", "accent3": "#52525b",
+        "text1": "#ffffff", "text2": "#d4d4d8",
+        "vibe": "tối giản mực đen trên giấy trắng và xám tro cao cấp, phong cách triển lãm thời trang hiện đại, typography đậm đà đối lập, khoảng trắng lớn",
+        "fx": "stark contrast fade-in, thin hand-drawn separators, organic bento lines, elegant slide transitions",
+    },
+    "coffee-editorial": {
+        "name": "Coffee Editorial",
+        "bg": "#120e0a", "bg2": "#1f1812", "surface": "#2d241b",
+        "accent": "#a16207", "accent2": "#fef08a", "accent3": "#ca8a04",
+        "text1": "#fdf8f5", "text2": "#d7ccc8",
+        "vibe": "không gian ấm áp mộc mạc của quán cà phê gỗ cổ điển, kết hợp tone kem oatmeal nhẹ và nâu đất terracotta trầm ấm",
+        "fx": "paper noise grain overlay, rounded soft card corners, sepia vintage color wash, warm breathing glows",
+    },
+    "ocean-depths": {
+        "name": "Ocean Depths",
+        "bg": "#020712", "bg2": "#051125", "surface": "#0a1c3b",
+        "accent": "#0d9488", "accent2": "#06b6d4", "accent3": "#f43f5e",
+        "text1": "#f0fdfa", "text2": "#99f6e4",
+        "vibe": "đại dương sâu thẳm đầy bí ẩn công nghệ cao sinh học biển, màu nền xanh đen sâu thẳm kết hợp xanh teal điện tử và hồng san hô rực sáng",
+        "fx": "caustic water wave grids, slow bubble rising particles, soft undersea depth fog, glowing reef line edges",
+    },
+    "space-odyssey": {
+        "name": "Space Odyssey",
+        "bg": "#04020a", "bg2": "#0e051a", "surface": "#1b0b30",
+        "accent": "#8b5cf6", "accent2": "#d946ef", "accent3": "#ec4899",
+        "text1": "#faf5ff", "text2": "#e9d5ff",
+        "vibe": "không gian vũ trụ cinematic sâu thẳm huyền bí với dải ngân hà nebula tím và supernova hồng rực rỡ giữa nền không gian tối đặc",
+        "fx": "twinkling stars, nebula particle drift, cosmic dust float, celestial gravity waves, gradient texts",
+    },
+    "copper-steampunk": {
+        "name": "Copper Steampunk",
+        "bg": "#0f0a07", "bg2": "#1c120c", "surface": "#2d1d13",
+        "accent": "#b45309", "accent2": "#ea580c", "accent3": "#ca8a04",
+        "text1": "#fffbeb", "text2": "#fde8d0",
+        "vibe": "thời kỳ cơ khí hơi nước Steampunk cổ điển, chất liệu đồng đỏ xước bóng metallic phối màu gỉ sắt trầm mặc độc lạ",
+        "fx": "revolving gears (CSS keyframes rotation), steam exhaust animation, brushed metal textures, industrial frame borders",
+    },
+    "cyberpunk-glitch": {
+        "name": "Cyberpunk Glitch",
+        "bg": "#0a010c", "bg2": "#15021a", "surface": "#24042d",
+        "accent": "#f43f5e", "accent2": "#a3e635", "accent3": "#d946ef",
+        "text1": "#fff1f2", "text2": "#fca5a5",
+        "vibe": "cyberpunk đường phố neon lập loè chói tai dưới mưa đêm, tương phản cao giữa hồng sen, xanh lime acid và tím chớp giật",
+        "fx": "RGB glitch text distortion, scanning hazard stripes flashing, neon buzz effect, visual noise, raw cyber grids",
+    },
+    "bento-minimal": {
+        "name": "Bento Minimal",
+        "bg": "#080808", "bg2": "#121212", "surface": "#181818",
+        "accent": "#dc2626", "accent2": "#f9fafb", "accent3": "#a1a1aa",
+        "text1": "#f9fafb", "text2": "#d4d4d8",
+        "vibe": "phong cách thiết kế Bento Nhật Bản tối giản, cực kỳ ngăn nắp sạch sẽ, tone xám đen nhám tối giản điểm màu đỏ mặt trời mọc",
+        "fx": "bento grid alignments, ultra-fine boundary grids, Zen transition slide, soft shadows, sharp corners",
+    },
+    "forest-eco": {
+        "name": "Forest Eco",
+        "bg": "#020c08", "bg2": "#051a11", "surface": "#0a281c",
+        "accent": "#10b981", "accent2": "#84cc16", "accent3": "#34d399",
+        "text1": "#f0fdf4", "text2": "#bbf7d0",
+        "vibe": "xanh sinh thái sinh học tự nhiên eco-tech thân thiện, màu xanh rừng rậm tươi mát phối với xanh đọt chuối ngọc bích",
+        "fx": "falling leaves simulation, sun ray light leaks (god rays), organic curved borders, biological grid nodes",
+    },
+    "brutalist-bold": {
+        "name": "Brutalist Bold",
+        "bg": "#0c0c0e", "bg2": "#19191d", "surface": "#222227",
+        "accent": "#ea580c", "accent2": "#facc15", "accent3": "#2563eb",
+        "text1": "#ffffff", "text2": "#e4e4e7",
+        "vibe": "nghệ thuật Brutalism nổi loạn phá cách với typography khổng lồ, viền đen dày, bóng đổ 45 độ sắc cạnh và bảng màu chói cực đoan",
+        "fx": "scrolling endless marquee text, 45deg sharp solid shadows, retro halftone screen grid, blocky layout jumps",
+    },
+    "pop-candy": {
+        "name": "Pop Candy",
+        "bg": "#0d0615", "bg2": "#180c29", "surface": "#23123c",
+        "accent": "#fda4af", "accent2": "#a7f3d0", "accent3": "#c084fc",
+        "text1": "#fdf4ff", "text2": "#f5d0fe",
+        "vibe": "pastel ngọt ngào mộng mơ Kawaii tươi trẻ năng động, sự pha trộn dễ thương giữa đào mọng, soda bạc hà và oải hương",
+        "fx": "confetti falling sparkles, rising soap bubbles, heart pop shapes, round bouncing card entrances",
+    },
+    "royal-velvet": {
+        "name": "Royal Velvet",
+        "bg": "#0b030b", "bg2": "#1b071a", "surface": "#2b0d28",
+        "accent": "#6b21a8", "accent2": "#ca8a04", "accent3": "#991b1b",
+        "text1": "#fdf4ff", "text2": "#f3e8ff",
+        "vibe": "nhung hoàng gia cổ điển quý tộc sang trọng, sự kết hợp giữa tím hoàng cung thâm sâu, vàng gold lá lánh và đỏ rượu vang quý phái",
+        "fx": "velvet cloth shimmer, delicate gold ornament frames, slow cinematic dissolving transitions",
+    },
+    "neon-green-overdrive": {
+        "name": "Neon Green Overdrive",
+        "bg": "#06080d", "bg2": "#0c111c", "surface": "#121b2d",
+        "accent": "#a3e635", "accent2": "#22c55e", "accent3": "#0ea5e9",
+        "text1": "#f0fdf4", "text2": "#bbf7d0",
+        "vibe": "thể thao điện tử eSports cực kỳ phấn khích tốc độ cao, đen carbon bóng bọc viền xanh lá chói mắt phản quang tràn trề năng lượng",
+        "fx": "lightning energy sparks, high-speed motion blur lines, sharp angular borders, neon wireframe glowing rims",
+    },
 }
 
 DEFAULT_THEME = "cyber-orange"
@@ -102,29 +222,34 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
         
         // Select elements inside this scene
         const title = sceneEl.querySelector("h1");
-        const subtitle = sceneEl.querySelector(".subtitle");
         const badge = sceneEl.querySelector(".badge");
         const statusPill = sceneEl.querySelector(".status-pill");
         
+        // Combined query selector covering cards/elements across all 30 templates
         const cards = sceneEl.querySelectorAll(
-            ".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare .col, .step-item, .agent-card, .formula-pill"
+            ".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare .col, .step-item, .agent-card, .formula-pill, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper"
         );
         
-        // Split title into words for staggered word-by-word animation
+        // Filter out text elements inside visual card blocks to animate them in the second phase
+        const rawDescs = sceneEl.querySelectorAll(".subtitle, .body-text, p, .desc, .caption");
+        const descs = Array.from(rawDescs).filter(el => {
+            return !el.closest(".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare, .step-item, .agent-card, .formula-pill, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper");
+        });
+        
+        // Split title into words for staggered word-by-word animation from top-left (left-to-right, top-to-bottom)
         if (title) {
             const text = title.innerText.trim();
             const words = text.split(/\s+/);
-            title.innerHTML = words.map(word => `<span class="title-word" style="display:inline-block; opacity:0; transform:translateY(15px);">${word}</span>`).join(" ");
+            title.innerHTML = words.map(word => `<span class="title-word" style="display:inline-block; opacity:0; transform:translate(-15px, -15px);">${word}</span>`).join(" ");
         }
         
         const titleWords = title ? title.querySelectorAll(".title-word") : [];
         
-        // Initial states
-        sceneTl.set(sceneEl, { autoAlpha: 0 });
-        if (subtitle) sceneTl.set(subtitle, { opacity: 0, x: -20, y: 15 });
-        if (badge) sceneTl.set(badge, { opacity: 0, scale: 0.8 });
-        if (statusPill) sceneTl.set(statusPill, { opacity: 0, y: -20 });
-        cards.forEach(card => sceneTl.set(card, { opacity: 0, x: -30, y: 30 }));
+        // Initial states: offset elements top-left (negative x and negative y) at absolute time 0
+        sceneTl.set(sceneEl, { autoAlpha: 0 }, 0);
+        if (descs.length > 0) sceneTl.set(descs, { opacity: 0, x: -25, y: -25 }, 0);
+        if (badge) sceneTl.set(badge, { opacity: 0, scale: 0.8 }, 0);
+        if (statusPill) sceneTl.set(statusPill, { opacity: 0, y: -20 }, 0);
         
         // Entrance animations
         sceneTl.to(sceneEl, { autoAlpha: 1, duration: 0.1 });
@@ -139,36 +264,235 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
             t += 0.15;
         }
         
-        // Word-by-word slow typewriter staggered entrance
+        // Word-by-word typewriter staggered entrance
         if (titleWords.length > 0) {
             sceneTl.to(titleWords, {
                 opacity: 1,
                 y: 0,
-                duration: 0.8,
-                stagger: 0.08,
+                x: 0,
+                duration: 0.6,
+                stagger: 0.06,
                 ease: "power2.out"
             }, t);
-            t += 0.08 * titleWords.length + 0.15;
+            t += 0.06 * titleWords.length + 0.15;
         } else if (title) {
-            sceneTl.to(title, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, t);
-            t += 0.5;
+            sceneTl.to(title, { opacity: 1, y: 0, x: 0, duration: 0.6, ease: "power2.out" }, t);
+            t += 0.4;
         }
         
-        if (subtitle) {
-            sceneTl.to(subtitle, { opacity: 1, x: 0, y: 0, duration: 0.6, ease: "power2.out" }, t);
-            t += 0.25;
-        }
-        
-        // Cards stagger-reveal: slow slide from left-bottom to top-right
-        if (cards.length > 0) {
-            sceneTl.to(cards, {
+        // Sequential reveal of description texts (subtitle, body-text, paragraphs)
+        if (descs.length > 0) {
+            sceneTl.to(descs, {
                 opacity: 1,
                 x: 0,
                 y: 0,
-                duration: 0.9,
-                stagger: 0.25,
+                duration: 0.5,
+                stagger: 0.15,
                 ease: "power2.out"
             }, t);
+            t += 0.5 + 0.15 * (descs.length - 1);
+        }
+        
+        // Cards/Boxes custom layouts and voiceover duration-aligned animations
+        const templateId = sceneEl.getAttribute("data-template-id") || "";
+        let hasCustomCardAnim = false;
+        
+        if (templateId === "T03" || templateId === "T18" || templateId === "T23") {
+            // Bento layouts: Grid cascade spring scale
+            hasCustomCardAnim = true;
+            sceneTl.set(cards, { opacity: 0, scale: 0.7, x: 0, y: 0 }, 0);
+            sceneTl.to(cards, {
+                opacity: 1,
+                scale: 1,
+                duration: 0.8,
+                stagger: 0.15,
+                ease: "back.out(1.4)"
+            }, t);
+        }
+        else if (templateId === "T06" || templateId === "T24") {
+            // Terminal & Code Diff: Window fade, then line-by-line reveal
+            hasCustomCardAnim = true;
+            const container = sceneEl.querySelector(".terminal, .diff-container");
+            if (container) {
+                sceneTl.set(container, { opacity: 0, y: 30, x: 0 }, 0);
+                sceneTl.to(container, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, t);
+                
+                const codeLines = sceneEl.querySelectorAll("pre, .diff-pane, code, .diff-line");
+                if (codeLines.length > 0) {
+                    sceneTl.set(codeLines, { opacity: 0, x: -10, y: 0 }, 0);
+                    sceneTl.to(codeLines, {
+                        opacity: 1,
+                        x: 0,
+                        duration: 0.5,
+                        stagger: 0.2,
+                        ease: "power1.out"
+                    }, t + 0.4);
+                }
+            }
+        }
+        else if (templateId === "T07") {
+            // Chat Dialogue: message conversation thread simulation
+            hasCustomCardAnim = true;
+            const bubbles = sceneEl.querySelectorAll(".chat-bubble, .chat-box > div");
+            if (bubbles.length > 0) {
+                sceneTl.set(bubbles, { opacity: 0, y: 20, x: 0, scale: 0.95 }, 0);
+                bubbles.forEach((bubble, idx) => {
+                    sceneTl.to(bubble, {
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        duration: 0.6,
+                        ease: "back.out(1.2)"
+                    }, t + idx * 1.2);
+                });
+            }
+        }
+        else if (templateId === "T12" || templateId === "T17") {
+            // Comparison / Pros & Cons: Debating split slide-in from opposite sides
+            hasCustomCardAnim = true;
+            const leftCol = sceneEl.querySelector(".compare .col:first-child, .pc-card.pro");
+            const rightCol = sceneEl.querySelector(".compare .col:last-child, .pc-card.con");
+            
+            if (leftCol && rightCol) {
+                sceneTl.set(leftCol, { opacity: 0, x: -80, y: 0, rotateY: 10 }, 0);
+                sceneTl.set(rightCol, { opacity: 0, x: 80, y: 0, rotateY: -10 }, 0);
+                
+                sceneTl.to(leftCol, { opacity: 1, x: 0, rotateY: 0, duration: 0.8, ease: "power2.out" }, t);
+                sceneTl.to(rightCol, { opacity: 1, x: 0, rotateY: 0, duration: 0.8, ease: "power2.out" }, t + 0.5);
+            }
+        }
+        else if (templateId === "T19") {
+            // Mindmap Node Graph: core node first, draw paths, leaf nodes pop
+            hasCustomCardAnim = true;
+            const coreNode = sceneEl.querySelector(".node.core");
+            const leafNodes = sceneEl.querySelectorAll(".node:not(.core)");
+            const paths = sceneEl.querySelectorAll(".mm-svg path");
+            
+            if (coreNode) {
+                sceneTl.set(coreNode, { opacity: 0, scale: 0.5, x: 0, y: 0 }, 0);
+                sceneTl.to(coreNode, { opacity: 1, scale: 1, duration: 0.7, ease: "back.out(1.5)" }, t);
+                
+                if (paths.length > 0) {
+                    sceneTl.set(paths, { strokeDashoffset: 1000, opacity: 0 }, 0);
+                    sceneTl.to(paths, { opacity: 0.5, strokeDashoffset: 0, duration: 1.0, ease: "power1.inOut" }, t + 0.3);
+                }
+                
+                if (leafNodes.length > 0) {
+                    sceneTl.set(leafNodes, { opacity: 0, scale: 0.7, x: 0, y: 15 }, 0);
+                    sceneTl.to(leafNodes, {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                        duration: 0.6,
+                        stagger: 0.2,
+                        ease: "back.out(1.2)"
+                    }, t + 0.6);
+                }
+            }
+        }
+        else if (templateId === "T11" || templateId === "T16") {
+            // Timeline / Gantt Roadmap: progress bar growth
+            hasCustomCardAnim = true;
+            const rows = sceneEl.querySelectorAll(".gantt-row, .tl-item");
+            const bars = sceneEl.querySelectorAll(".gantt-bar");
+            
+            if (rows.length > 0) {
+                sceneTl.set(rows, { opacity: 0, x: -30, y: -30 }, 0);
+                if (bars.length > 0) {
+                    sceneTl.set(bars, { scaleX: 0, transformOrigin: "left center" }, 0);
+                }
+                
+                rows.forEach((row, idx) => {
+                    sceneTl.to(row, {
+                        opacity: 1,
+                        x: 0,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "power2.out"
+                    }, t + idx * 0.7);
+                    
+                    const bar = row.querySelector(".gantt-bar");
+                    if (bar) {
+                        sceneTl.to(bar, {
+                            scaleX: 1,
+                            duration: 0.8,
+                            ease: "power2.out"
+                        }, t + idx * 0.7 + 0.2);
+                    }
+                });
+            }
+        }
+        else if (templateId === "T20") {
+            // Architecture: nodes fade-in layer-by-layer, arrows pulse/draw
+            hasCustomCardAnim = true;
+            const layers = sceneEl.querySelectorAll(".arch-layer, .arch-node.core-node");
+            const arrows = sceneEl.querySelectorAll(".arch-arrow");
+            
+            if (layers.length > 0) {
+                sceneTl.set(layers, { opacity: 0, scale: 0.9, y: 15, x: 0 }, 0);
+                sceneTl.set(arrows, { opacity: 0 }, 0);
+                
+                layers.forEach((layer, idx) => {
+                    sceneTl.to(layer, { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "back.out(1.2)" }, t + idx * 0.5);
+                    if (arrows[idx]) {
+                        sceneTl.to(arrows[idx], { opacity: 0.6, duration: 0.4, ease: "power1.out" }, t + idx * 0.5 + 0.3);
+                    }
+                });
+            }
+        }
+        else if (templateId === "T13" || templateId === "T22" || templateId === "T28") {
+            // Step flow: sequential slide-in from left to right or top to bottom
+            hasCustomCardAnim = true;
+            const steps = sceneEl.querySelectorAll(".step-item, .flow-step, .status-card");
+            if (steps.length > 0) {
+                sceneTl.set(steps, { opacity: 0, x: -40, y: 0 }, 0);
+                steps.forEach((step, idx) => {
+                    sceneTl.to(step, {
+                        opacity: 1,
+                        x: 0,
+                        duration: 0.7,
+                        ease: "back.out(1.2)"
+                    }, t + idx * 0.5);
+                });
+            }
+        }
+        else if (templateId === "T29" || templateId === "T30") {
+            // CTA / Closing: centered box zoom-in, buttons bounce
+            hasCustomCardAnim = true;
+            const ctaBox = sceneEl.querySelector(".cta-box, .thanks-box");
+            const btn = sceneEl.querySelector(".cta-btn");
+            const meta = sceneEl.querySelector(".cta-meta, .thanks-meta");
+            
+            if (ctaBox) {
+                sceneTl.set(ctaBox, { opacity: 0, scale: 0.8, y: 30, x: 0 }, 0);
+                sceneTl.to(ctaBox, { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: "back.out(1.4)" }, t);
+                
+                if (btn) {
+                    sceneTl.set(btn, { opacity: 0, scale: 0.5 }, 0);
+                    sceneTl.to(btn, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, t + 0.5);
+                }
+                
+                if (meta) {
+                    sceneTl.set(meta, { opacity: 0, y: 10 }, 0);
+                    sceneTl.to(meta, { opacity: 1, y: 0, duration: 0.4, ease: "power1.out" }, t + 0.7);
+                }
+            }
+        }
+        
+        // Fallback: Dynamic staggering reveal based on speech duration
+        if (!hasCustomCardAnim && cards.length > 0) {
+            sceneTl.set(cards, { opacity: 0, x: -35, y: -35 }, 0);
+            const timeLeft = Math.max(duration - t - 0.8, 1.0);
+            const interval = timeLeft / cards.length;
+            cards.forEach((card, index) => {
+                sceneTl.to(card, {
+                    opacity: 1,
+                    x: 0,
+                    y: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                }, t + index * interval);
+            });
         }
         
         master.add(sceneTl, start);
@@ -1317,7 +1641,7 @@ def auto_select_template(
     
     # ── Last scene: prefer closing templates ──
     if scene_index == total_scenes:
-        closing_candidates = ["T09", "T08", "T10"]  # Quote, Glass cards, Big stat
+        closing_candidates = ["T30", "T09", "T08", "T10"]  # Thanks, Quote, Glass cards, Big stat
         # If has_image, these are centered (no visual-col), so we might prefer T11 (timeline split) or T12 (comparison)
         if has_image:
             closing_candidates = ["T11", "T12", "T13"]
@@ -2707,6 +3031,7 @@ class CompositionRequest(BaseModel):
     scenes: list[ScenePayload]
     totalDuration: int
     theme: str | None = None  # ThemeId from frontend; falls back to DEFAULT_THEME
+    sessionId: str | None = None
 
 
 def sse(data: dict) -> str:
@@ -3418,118 +3743,121 @@ def inject_missing_scene_placeholders(html: str, scenes: list[ScenePayload], mis
 
 async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[dict, None]:
     """Yield raw event dicts: {type:'chunk',text} | {type:'done',html,scenes?} | {type:'error',message}"""
-    import os as _os
-    theme = get_theme(req.theme)
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        import os as _os
+        theme = get_theme(req.theme)
 
-    # ── Materialise images FIRST so the LLM gets real file paths ────────
-    try:
-        materialised = await _materialise_scene_images(req.scenes, get_project_root())
-        req = req.model_copy(update={"scenes": materialised})
-    except Exception as e:
-        print(f"[preview] image materialisation skipped: {e}")
+        # ── Materialise images FIRST so the LLM gets real file paths ────────
+        try:
+            materialised = await _materialise_scene_images(req.scenes, get_project_root(session_id=req.sessionId))
+            req = req.model_copy(update={"scenes": materialised})
+        except Exception as e:
+            print(f"[preview] image materialisation skipped: {e}")
 
-    try:
-        scenes_html = []
-        previous_context = {
-            "layout": None,
-            "visual_pattern": None,
-            "used_layouts": [],
-            "used_patterns": []
-        }
+        try:
+            scenes_html = []
+            previous_context = {
+                "layout": None,
+                "visual_pattern": None,
+                "used_layouts": [],
+                "used_patterns": []
+            }
 
-        for idx_zero, s in enumerate(req.scenes):
-            idx = idx_zero + 1
-            is_first = (idx == 1)
-            is_last = (idx == len(req.scenes))
+            for idx_zero, s in enumerate(req.scenes):
+                idx = idx_zero + 1
+                is_first = (idx == 1)
+                is_last = (idx == len(req.scenes))
 
-            # Auto-select the template ID
-            if "used_templates" not in previous_context:
-                previous_context["used_templates"] = []
-            
-            has_image = bool(s.imageAsset)
-            template_id = auto_select_template(
-                scene=s,
-                scene_index=idx,
-                total_scenes=len(req.scenes),
-                used_templates=previous_context["used_templates"],
-                has_image=has_image
-            )
-            previous_context["used_templates"].append(template_id)
-
-            sys_single = build_template_content_prompt(template_id, s, idx, theme)
-            prompt_single = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
-
-            def _kwargs(provider_name: str) -> dict:
-                return {
-                    "messages": [
-                        {"role": "system", "content": sys_single},
-                        {"role": "user", "content": prompt_single},
-                    ],
-                    "temperature": 0.7 if provider_name == "primary" else 0.75,
-                    "max_tokens": 4000,
-                    "stream": True,
-                }
-
-            try:
-                stream, provider, model = await chat_completions_with_fallback(
-                    model_kind="composition",
-                    kwargs_factory=_kwargs,
+                # Auto-select the template ID
+                if "used_templates" not in previous_context:
+                    previous_context["used_templates"] = []
+                
+                has_image = bool(s.imageAsset)
+                template_id = auto_select_template(
+                    scene=s,
+                    scene_index=idx,
+                    total_scenes=len(req.scenes),
+                    used_templates=previous_context["used_templates"],
+                    has_image=has_image
                 )
+                previous_context["used_templates"].append(template_id)
 
-                yield {"type": "model_info", "provider": provider, "model": model}
+                sys_single = build_template_content_prompt(template_id, s, idx, theme)
+                prompt_single = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
-                scene_text = ""
-                async for chunk in stream:
-                    if not chunk.choices:
-                        continue
-                    choice = chunk.choices[0]
-                    delta = choice.delta
-                    text = getattr(delta, "content", None)
-                    if text:
-                        scene_text += text
-                        yield {"type": "chunk", "text": text}
+                def _kwargs(provider_name: str) -> dict:
+                    return {
+                        "messages": [
+                            {"role": "system", "content": sys_single},
+                            {"role": "user", "content": prompt_single},
+                        ],
+                        "temperature": 0.7 if provider_name == "primary" else 0.75,
+                        "max_tokens": 4000,
+                        "stream": True,
+                    }
 
-                # Parse JSON content
-                json_content = parse_llm_json_content(scene_text)
-                if not json_content:
-                    print(f"[composition] JSON parse failed for scene {idx}. Text: {scene_text[:200]}")
-                    raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
+                try:
+                    stream, provider, model = await chat_completions_with_fallback(
+                        model_kind="composition",
+                        kwargs_factory=_kwargs,
+                    )
 
-                if has_image:
-                    json_content["IMAGE_URL"] = s.imageAsset
-                    
-                scene_html = render_template(template_id, json_content, idx)
+                    yield {"type": "model_info", "provider": provider, "model": model}
 
-                # Get layout/pattern from catalog for previous_context
-                catalog = load_template_catalog()
-                tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
-                layout = tpl_meta["layout"] if tpl_meta else "split"
-                pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
+                    scene_text = ""
+                    async for chunk in stream:
+                        if not chunk.choices:
+                            continue
+                        choice = chunk.choices[0]
+                        delta = choice.delta
+                        text = getattr(delta, "content", None)
+                        if text:
+                            scene_text += text
+                            yield {"type": "chunk", "text": text}
 
-                previous_context["layout"] = layout
-                previous_context["visual_pattern"] = pattern
-                if layout:
-                    previous_context["used_layouts"].append(layout)
-                if pattern:
-                    previous_context["used_patterns"].append(pattern)
+                    # Parse JSON content
+                    json_content = parse_llm_json_content(scene_text)
+                    if not json_content:
+                        print(f"[composition] JSON parse failed for scene {idx}. Text: {scene_text[:200]}")
+                        raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
 
-                scenes_html.append(scene_html)
-                print(f"[composition] Scene {idx}/{len(req.scenes)} generated using template {template_id}: layout={layout}, pattern={pattern} ({provider}/{model})")
+                    if has_image:
+                        json_content["IMAGE_URL"] = s.imageAsset
+                        
+                    scene_html = render_template(template_id, json_content, idx)
 
-            except Exception as e:
-                print(f"[composition] Scene {idx}/{len(req.scenes)} generation failed: {e}. Using fallback.")
-                yield {
-                    "type": "warning",
-                    "message": f"Scene {idx} sinh thất bại ({e}). Đã dùng fallback HTML.",
-                }
-                fb_html = fallback_scene_html(s, theme)
-                scenes_html.append(fb_html)
+                    # Get layout/pattern from catalog for previous_context
+                    catalog = load_template_catalog()
+                    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+                    layout = tpl_meta["layout"] if tpl_meta else "split"
+                    pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
 
-        # Assemble the full HTML boilerplate
-        scenes_combined = "\n\n  ".join(scenes_html)
-        base_css = render_base_css(theme)
+                    previous_context["layout"] = layout
+                    previous_context["visual_pattern"] = pattern
+                    if layout:
+                        previous_context["used_layouts"].append(layout)
+                    if pattern:
+                        previous_context["used_patterns"].append(pattern)
 
-        html = f"""<!doctype html>
+                    scenes_html.append(scene_html)
+                    print(f"[composition] Scene {idx}/{len(req.scenes)} generated using template {template_id}: layout={layout}, pattern={pattern} ({provider}/{model})")
+
+                except Exception as e:
+                    print(f"[composition] Scene {idx}/{len(req.scenes)} generation failed: {e}. Using fallback.")
+                    yield {
+                        "type": "warning",
+                        "message": f"Scene {idx} sinh thất bại ({e}). Đã dùng fallback HTML.",
+                    }
+                    fb_html = fallback_scene_html(s, theme)
+                    scenes_html.append(fb_html)
+
+            # Assemble the full HTML boilerplate
+            scenes_combined = "\n\n  ".join(scenes_html)
+            base_css = render_base_css(theme)
+
+            html = f"""<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -3594,11 +3922,11 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
 </body>
 </html>"""
 
-        html = inject_base_css(html, theme)
-        yield {"type": "done", "html": html}
+            html = inject_base_css(html, theme)
+            yield {"type": "done", "html": html}
 
-    except Exception as e:
-        yield {"type": "error", "message": str(e)}
+        except Exception as e:
+            yield {"type": "error", "message": str(e)}
 
 
 async def stream_composition(req: CompositionRequest):
@@ -3618,21 +3946,38 @@ async def generate_composition(body: CompositionRequest):
 class SaveRequest(BaseModel):
     html: str
     projectPath: str | None = None
+    sessionId: str | None = None
 
 
-def get_project_root(override: str | None = None) -> Path:
+def get_project_root(override: str | None = None, session_id: str | None = None) -> Path:
     import os
     if override:
-        return Path(override)
-    env_path = os.getenv("HYPERFRAMES_PROJECT")
-    if env_path:
-        return Path(env_path)
-    return Path(__file__).resolve().parents[2] / "my-video"
+        base = Path(override)
+    else:
+        env_path = os.getenv("HYPERFRAMES_PROJECT")
+        if env_path:
+            base = Path(env_path)
+        else:
+            base = Path(__file__).resolve().parents[2] / "my-video"
+            
+    if session_id:
+        session_dir = base / "sessions" / session_id
+        if not session_dir.exists():
+            session_dir.mkdir(parents=True, exist_ok=True)
+            (session_dir / "assets").mkdir(exist_ok=True)
+            (session_dir / "renders").mkdir(exist_ok=True)
+            hf_json = base / "hyperframes.json"
+            if hf_json.exists():
+                import shutil
+                shutil.copy2(hf_json, session_dir / "hyperframes.json")
+        return session_dir
+        
+    return base
 
 
 @router.post("/save-composition")
 async def save_composition(body: SaveRequest):
-    project_root = get_project_root(body.projectPath)
+    project_root = get_project_root(body.projectPath, body.sessionId)
     if not project_root.exists():
         raise HTTPException(status_code=404, detail=f"Project path không tồn tại: {project_root}")
 
@@ -3753,6 +4098,7 @@ class RegenSceneRequest(BaseModel):
     sceneIndex: int  # 1-based
     scene: ScenePayload  # the (possibly edited) scene the LLM should re-render
     theme: str | None = None
+    sessionId: str | None = None
 
 
 @router.post("/regen-scene")
@@ -3762,24 +4108,27 @@ async def regen_scene(body: RegenSceneRequest):
     The user has edited a scene's title/narration/image and wants to see
     the change reflected in the preview. We ask the LLM for ONLY the scene
     block, then splice it into the cached full HTML."""
-    theme = get_theme(body.theme)
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        theme = get_theme(body.theme)
 
-    # Find the existing scene's bounds so we can replace it
-    bounds = find_scene_block(body.fullHtml, body.sceneIndex)
-    if bounds is None:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Không tìm thấy #scene{body.sceneIndex} trong HTML đã có.",
-        )
+        # Find the existing scene's bounds so we can replace it
+        bounds = find_scene_block(body.fullHtml, body.sceneIndex)
+        if bounds is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Không tìm thấy #scene{body.sceneIndex} trong HTML đã có.",
+            )
 
-    # ── Resolve image source ─────────────────────────────────────────────
-    # Reuse the shared image materialiser so data URLs (upload) AND https
-    # URLs (Openverse) both get downloaded/decoded to assets/sceneN.<ext>
-    # before the LLM is told about them. Without this, the regen call ends
-    # up sending the raw imageUrl (megabytes for data URLs, or unfetched
-    # https for search results) and the LLM either explodes on token limit
-    # or skips the image entirely.
-    materialised_scenes = await _materialise_scene_images([body.scene], get_project_root())
+        # ── Resolve image source ─────────────────────────────────────────────
+        # Reuse the shared image materialiser so data URLs (upload) AND https
+        # URLs (Openverse) both get downloaded/decoded to assets/sceneN.<ext>
+        # before the LLM is told about them. Without this, the regen call ends
+        # up sending the raw imageUrl (megabytes for data URLs, or unfetched
+        # https for search results) and the LLM either explodes on token limit
+        # or skips the image entirely.
+        materialised_scenes = await _materialise_scene_images([body.scene], get_project_root(session_id=body.sessionId))
     effective_asset = materialised_scenes[0].imageAsset if materialised_scenes else body.scene.imageAsset
     has_image = bool(effective_asset)
 
@@ -3853,6 +4202,7 @@ class GenSceneOneRequest(BaseModel):
     sceneIndex: int  # 1-based — scene cần gen lần này
     existingHtml: str | None = None  # HTML đã có (từ scene 1..N-1), None nếu là scene 1
     previousContext: dict | None = None  # layout/pattern của scene trước
+    sessionId: str | None = None
 
 
 def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css: str) -> str:
@@ -3946,115 +4296,118 @@ async def gen_scene_one(body: GenSceneOneRequest):
 
     Response: { html, sceneIndex, totalScenes, done, provider, model, layout, visualPattern }
     """
-    theme = get_theme(body.theme)
-    total = len(body.scenes)
-    idx = body.sceneIndex  # 1-based
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        theme = get_theme(body.theme)
+        total = len(body.scenes)
+        idx = body.sceneIndex  # 1-based
 
-    if idx < 1 or idx > total:
-        raise HTTPException(status_code=400, detail=f"sceneIndex={idx} ngoài phạm vi 1..{total}")
+        if idx < 1 or idx > total:
+            raise HTTPException(status_code=400, detail=f"sceneIndex={idx} ngoài phạm vi 1..{total}")
 
-    # 0-based index trong mảng scenes
-    s = body.scenes[idx - 1]
-    is_first = idx == 1
-    is_last = idx == total
+        # 0-based index trong mảng scenes
+        s = body.scenes[idx - 1]
+        is_first = idx == 1
+        is_last = idx == total
 
-    # Materialise ảnh cho scene này
-    try:
-        materialised = await _materialise_scene_images([s], get_project_root())
-        s = materialised[0]
-    except Exception as e:
-        print(f"[gen-scene-one] image materialise failed for scene {idx}: {e}")
+        # Materialise ảnh cho scene này
+        try:
+            materialised = await _materialise_scene_images([s], get_project_root(session_id=body.sessionId))
+            s = materialised[0]
+        except Exception as e:
+            print(f"[gen-scene-one] image materialise failed for scene {idx}: {e}")
 
-    # Lấy previous context từ body hoặc mặc định
-    prev_ctx = body.previousContext or {"layout": None, "visual_pattern": None, "used_layouts": [], "used_patterns": []}
-    if "used_templates" not in prev_ctx:
-        prev_ctx["used_templates"] = []
+        # Lấy previous context từ body hoặc mặc định
+        prev_ctx = body.previousContext or {"layout": None, "visual_pattern": None, "used_layouts": [], "used_patterns": []}
+        if "used_templates" not in prev_ctx:
+            prev_ctx["used_templates"] = []
 
-    has_image = bool(s.imageAsset)
-    template_id = auto_select_template(
-        scene=s,
-        scene_index=idx,
-        total_scenes=total,
-        used_templates=prev_ctx["used_templates"],
-        has_image=has_image
-    )
-    prev_ctx["used_templates"].append(template_id)
-
-    sys_prompt = build_template_content_prompt(template_id, s, idx, theme)
-    user_prompt = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
-
-    def _kwargs(provider_name: str) -> dict:
-        return {
-            "messages": [
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": 0.7 if provider_name == "primary" else 0.75,
-            "max_tokens": 4000,
-            "stream": False,
-        }
-
-    scene_html: str | None = None
-    provider = "unknown"
-    model = "unknown"
-
-    try:
-        resp, provider, model = await chat_completions_with_fallback(
-            model_kind="composition",
-            kwargs_factory=_kwargs,
+        has_image = bool(s.imageAsset)
+        template_id = auto_select_template(
+            scene=s,
+            scene_index=idx,
+            total_scenes=total,
+            used_templates=prev_ctx["used_templates"],
+            has_image=has_image
         )
-        raw = resp.choices[0].message.content or ""
-        json_content = parse_llm_json_content(raw)
-        if not json_content:
-            print(f"[gen-scene-one] JSON parse failed for scene {idx}. Text: {raw[:200]}")
-            raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
+        prev_ctx["used_templates"].append(template_id)
 
-        if has_image:
-            json_content["IMAGE_URL"] = s.imageAsset
-            
-        scene_html = render_template(template_id, json_content, idx)
-        scene_html = sanitize_scene_wrapper(scene_html, idx)
+        sys_prompt = build_template_content_prompt(template_id, s, idx, theme)
+        user_prompt = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
-    except Exception as e:
-        print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
+        def _kwargs(provider_name: str) -> dict:
+            return {
+                "messages": [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": 0.7 if provider_name == "primary" else 0.75,
+                "max_tokens": 4000,
+                "stream": False,
+            }
 
-    # Fallback nếu LLM thất bại
-    if not scene_html:
-        scene_html = fallback_scene_html(s, theme)
+        scene_html: str | None = None
+        provider = "unknown"
+        model = "unknown"
 
-    # Trích layout / pattern từ catalog
-    catalog = load_template_catalog()
-    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
-    layout = tpl_meta["layout"] if tpl_meta else "split"
-    visual_pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
+        try:
+            resp, provider, model = await chat_completions_with_fallback(
+                model_kind="composition",
+                kwargs_factory=_kwargs,
+            )
+            raw = resp.choices[0].message.content or ""
+            json_content = parse_llm_json_content(raw)
+            if not json_content:
+                print(f"[gen-scene-one] JSON parse failed for scene {idx}. Text: {raw[:200]}")
+                raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
 
-    # Ghép HTML
-    if is_first or not body.existingHtml:
-        base_css = render_base_css(theme)
-        html = _build_boilerplate(body.title, body.totalDuration, theme, base_css)
-        html = _append_scene_to_html(html, scene_html)
-    else:
-        html = _append_scene_to_html(body.existingHtml, scene_html)
+            if has_image:
+                json_content["IMAGE_URL"] = s.imageAsset
+                
+            scene_html = render_template(template_id, json_content, idx)
+            scene_html = sanitize_scene_wrapper(scene_html, idx)
 
-    print(f"[gen-scene-one] Scene {idx}/{total} done using template {template_id}: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
+        except Exception as e:
+            print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
 
-    return {
-        "html": html,
-        "sceneIndex": idx,
-        "totalScenes": total,
-        "done": is_last,
-        "provider": provider,
-        "model": model,
-        "layout": layout,
-        "visualPattern": visual_pattern,
-        "newContext": {
+        # Fallback nếu LLM thất bại
+        if not scene_html:
+            scene_html = fallback_scene_html(s, theme)
+
+        # Trích layout / pattern từ catalog
+        catalog = load_template_catalog()
+        tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+        layout = tpl_meta["layout"] if tpl_meta else "split"
+        visual_pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
+
+        # Ghép HTML
+        if is_first or not body.existingHtml:
+            base_css = render_base_css(theme)
+            html = _build_boilerplate(body.title, body.totalDuration, theme, base_css)
+            html = _append_scene_to_html(html, scene_html)
+        else:
+            html = _append_scene_to_html(body.existingHtml, scene_html)
+
+        print(f"[gen-scene-one] Scene {idx}/{total} done using template {template_id}: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
+
+        return {
+            "html": html,
+            "sceneIndex": idx,
+            "totalScenes": total,
+            "done": is_last,
+            "provider": provider,
+            "model": model,
             "layout": layout,
-            "visual_pattern": visual_pattern,
-            "used_layouts": (prev_ctx.get("used_layouts") or []) + ([layout] if layout else []),
-            "used_patterns": (prev_ctx.get("used_patterns") or []) + ([visual_pattern] if visual_pattern else []),
-            "used_templates": prev_ctx["used_templates"],
-        },
-    }
+            "visualPattern": visual_pattern,
+            "newContext": {
+                "layout": layout,
+                "visual_pattern": visual_pattern,
+                "used_layouts": (prev_ctx.get("used_layouts") or []) + ([layout] if layout else []),
+                "used_patterns": (prev_ctx.get("used_patterns") or []) + ([visual_pattern] if visual_pattern else []),
+                "used_templates": prev_ctx["used_templates"],
+            },
+        }
 
 
 # ─────────────────────────  TEMPLATE PREVIEW ENDPOINTS  ─────────────────────────
@@ -4063,7 +4416,7 @@ from fastapi.responses import HTMLResponse
 
 @router.get("/templates/gallery", response_class=HTMLResponse)
 async def templates_gallery():
-    """Expose a beautiful web interface to list and browse all 15 templates."""
+    """Expose a beautiful web interface to list and browse all 30 templates."""
     catalog = load_template_catalog()
     templates = catalog["templates"]
     
@@ -4165,7 +4518,7 @@ async def templates_gallery():
 </head>
 <body>
   <h1>HyperFrames Template Gallery</h1>
-  <p class="desc">Duyệt và xem trước toàn bộ 15 templates chất lượng cao được thiết kế chuẩn 1920x1080.</p>
+  <p class="desc">Duyệt và xem trước toàn bộ 30 templates chất lượng cao được thiết kế chuẩn 1920x1080.</p>
   <div class="grid">
 """)
 

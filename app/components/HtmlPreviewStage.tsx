@@ -273,6 +273,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           sceneIndex,
           existingHtml: scenePlanRef.current.compositionHtml ?? null,
           previousContext: prevContextRef.current,
+          sessionId: plan.sessionId,
         }),
       });
 
@@ -384,6 +385,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           sceneIndex: idx + 1,
           scene: sceneForRegen,
           theme: scenePlanRef.current.theme,
+          sessionId: scenePlanRef.current.sessionId,
         }),
       });
       if (!res.ok) {
@@ -837,7 +839,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 </div>
               </div>
             </div>
-            <ScenePreviewIframe fullHtml={html} sceneIndex={activeIdx + 1} showSubtitles={showSubtitles} />
+            <ScenePreviewIframe fullHtml={html} sceneIndex={activeIdx + 1} showSubtitles={showSubtitles} sessionId={scenePlan.sessionId} />
             <div style={{ marginTop: 8, fontSize: 11, color: "var(--gray-5)" }}>
               {active?.title}
             </div>

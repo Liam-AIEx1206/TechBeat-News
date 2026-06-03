@@ -1,0 +1,81 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      width: 100%;
+      max-width: 1600px;
+      margin-top: 30px;
+    }
+    #scene{{SCENE_NUM}} .service-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 24px;
+      padding: 40px 30px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      border-top: 5px solid var(--accent);
+      height: 300px;
+      justify-content: center;
+    }
+    #scene{{SCENE_NUM}} .service-card:nth-child(2) { border-top-color: var(--accent2); }
+    #scene{{SCENE_NUM}} .service-card:nth-child(3) { border-top-color: var(--accent3); }
+    
+    #scene{{SCENE_NUM}} .service-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent2);
+      box-shadow: 0 15px 45px rgba(var(--accent-rgb), 0.15);
+    }
+    #scene{{SCENE_NUM}} .service-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    #scene{{SCENE_NUM}} .service-desc {
+      font-size: 1.25rem;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+    #scene{{SCENE_NUM}} .service-icon {
+      font-size: 2.5rem;
+      color: var(--accent2);
+    }
+  </style>
+
+  <div class="layout" style="padding-top: 60px; gap: 40px;">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast" style="margin: 0 auto;">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text" style="font-size: 3.5rem;">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem; margin-top: -12px;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">✦</div>
+        <div class="service-title">{{CARD_1_TITLE}}</div>
+        <div class="service-desc">{{CARD_1_DESC}}</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🚀</div>
+        <div class="service-title">{{CARD_2_TITLE}}</div>
+        <div class="service-desc">{{CARD_2_DESC}}</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🔥</div>
+        <div class="service-title">{{CARD_3_TITLE}}</div>
+        <div class="service-desc">{{CARD_3_DESC}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

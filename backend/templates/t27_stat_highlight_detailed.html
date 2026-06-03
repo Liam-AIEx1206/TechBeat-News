@@ -1,0 +1,62 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .stat-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    #scene{{SCENE_NUM}} .stat-val {
+      font-size: 8.5rem;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 30px var(--glow));
+      animation: floating 6s ease-in-out infinite;
+    }
+    #scene{{SCENE_NUM}} .stat-label {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    #scene{{SCENE_NUM}} .stat-desc {
+      font-size: 1.45rem;
+      color: var(--text2);
+      max-width: 800px;
+      line-height: 1.6;
+    }
+    #scene{{SCENE_NUM}} .stat-tags {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+  </style>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem; margin-top: -8px;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="stat-wrapper">
+      <div class="stat-val">{{MEGA_NUMBER}}</div>
+      <div class="stat-label">{{STAT_LABEL}}</div>
+      <p class="stat-desc">{{STAT_EXPLANATION}}</p>
+      <div class="stat-tags">
+        <span class="badge" style="border-color: var(--accent2);">{{TAG_1}}</span>
+        <span class="badge" style="border-color: var(--accent3);">{{TAG_2}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

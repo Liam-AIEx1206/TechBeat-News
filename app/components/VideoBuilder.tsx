@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { ScenePlan } from "@/types/scene";
+import { useSession } from "next-auth/react";
 
 interface Props {
   scenePlan: ScenePlan;
@@ -29,6 +30,7 @@ function fmtMs(ms: number): string {
 }
 
 export function VideoBuilder({ scenePlan, onBack }: Props) {
+  const { data: session } = useSession();
   const [running, setRunning]         = useState(false);
   const [done, setDone]               = useState(false);
   const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({ composition:"pending", save:"pending", tts:"pending", whisper:"pending", render:"pending" });
@@ -113,8 +115,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
     try {
       const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
       const endpoint = isLocal ? `${API}/build-video` : `/api/proxy/build-video`;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.user?.email) {
+        headers["X-User-Email"] = session.user.email;
+      }
       const res = await fetch(endpoint, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers,
         body: JSON.stringify(scenePlan), signal: abort.signal,
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail ?? `HTTP ${res.status}`);
@@ -147,6 +153,10 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             setTimeout(() => compRef.current?.scrollTo(0, 99999), 30);
             return next.slice(-8000); // cap to avoid memory bloat
           });
+        } else if (ev.type === "queue") {
+          const msg = (ev.message as string) ?? "Đang chờ hàng đợi render...";
+          setStateOnly("render", "active", msg);
+          setRenderLog(p => [...p, msg]);
         } else if (ev.type === "warning") {
           const msg = (ev.message as string) ?? "";
           setRenderLog(p => [...p, `⚠ ${msg}`]);

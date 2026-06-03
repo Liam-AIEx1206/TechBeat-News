@@ -1,7 +1,8 @@
 """History router — extraction history."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from db.supabase import get_supabase
 from middleware.auth import get_current_user
+from typing import Optional
 
 router = APIRouter(prefix="/history", tags=["history"])
 
@@ -10,6 +11,28 @@ def _get_user_id(email: str) -> str:
     sb = get_supabase()
     res = sb.table("users").select("id").eq("email", email).single().execute()
     return res.data["id"] if res.data else None
+
+
+async def get_optional_user_email(request: Request) -> Optional[str]:
+    # Try custom header
+    email = request.headers.get("x-user-email")
+    if email:
+        return email
+    
+    # Try Authorization header
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        try:
+            from jose import jwt
+            import os
+            secret = os.getenv("NEXTAUTH_SECRET", "")
+            if secret:
+                payload = jwt.decode(token, secret, algorithms=["HS256"], options={"verify_aud": False})
+                return payload.get("email") or payload.get("sub")
+        except Exception:
+            pass
+    return None
 
 
 @router.get("")
@@ -28,12 +51,17 @@ async def list_history(user: dict = Depends(get_current_user)):
 
 
 @router.get("/local")
-async def list_local_history():
+async def list_local_history(request: Request):
     from routers.compositions import get_project_root
     import json
 
     project_root = get_project_root()
-    db_path = project_root / "history" / "db.json"
+    email = await get_optional_user_email(request)
+    if email:
+        safe_email = email
+        db_path = project_root / "history" / "users" / safe_email / "db.json"
+    else:
+        db_path = project_root / "history" / "db.json"
 
     if not db_path.exists():
         return {"history": []}
@@ -46,12 +74,18 @@ async def list_local_history():
 
 
 @router.delete("/local/{item_id}")
-async def delete_local_history(item_id: str):
+async def delete_local_history(item_id: str, request: Request):
     from routers.compositions import get_project_root
     import json
 
     project_root = get_project_root()
-    history_dir = project_root / "history"
+    email = await get_optional_user_email(request)
+    if email:
+        safe_email = email
+        history_dir = project_root / "history" / "users" / safe_email
+    else:
+        history_dir = project_root / "history"
+
     db_path = history_dir / "db.json"
 
     if not db_path.exists():
@@ -65,10 +99,14 @@ async def delete_local_history(item_id: str):
             return {"success": False, "message": "Item not found"}
 
         # Delete files if they exist
-        # html_url is like "/static-history/htmls/html_TIMESTAMP.html"
-        # video_url is like "/static-history/videos/video_TIMESTAMP.mp4"
-        html_rel = item["html_url"].replace("/static-history/", "")
-        video_rel = item["video_url"].replace("/static-history/", "")
+        if email:
+            safe_email = email
+            prefix = f"/static-history/users/{safe_email}/"
+        else:
+            prefix = "/static-history/"
+
+        html_rel = item["html_url"].replace(prefix, "")
+        video_rel = item["video_url"].replace(prefix, "")
 
         html_file = history_dir / html_rel
         video_file = history_dir / video_rel

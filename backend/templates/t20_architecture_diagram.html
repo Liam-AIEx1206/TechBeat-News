@@ -1,0 +1,73 @@
+<div class="scene data" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .arch-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      padding: 30px;
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    #scene{{SCENE_NUM}} .arch-layer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    #scene{{SCENE_NUM}} .arch-node {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+    #scene{{SCENE_NUM}} .arch-node.core-node {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border: 2px solid var(--accent2);
+      font-size: 1.4rem;
+      color: var(--accent2);
+    }
+    #scene{{SCENE_NUM}} .arch-arrow {
+      text-align: center;
+      font-size: 1.5rem;
+      color: var(--accent3);
+      margin: -10px 0;
+    }
+  </style>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+      <p id="s{{SCENE_NUM}}-desc" class="body-text">{{DESC}}</p>
+    </div>
+    
+    <div class="visual-col">
+      <div class="arch-container">
+        <div class="arch-layer">
+          <div class="arch-node">{{AGENT_1_ROLE}}</div>
+          <div class="arch-node">{{AGENT_2_ROLE}}</div>
+        </div>
+        <div class="arch-arrow">⇅</div>
+        <div class="arch-node core-node">{{CENTER_PILL_TEXT}}</div>
+        <div class="arch-arrow">⇅</div>
+        <div class="arch-layer">
+          <div class="arch-node" style="border-color: var(--accent3);">{{AGENT_3_ROLE}}</div>
+          <div class="arch-node" style="border-color: var(--accent3);">{{AGENT_4_ROLE}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

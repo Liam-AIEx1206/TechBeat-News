@@ -104,7 +104,7 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
       const res = await fetch(`${API}/save-composition`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html }),
+        body: JSON.stringify({ html, sessionId: scenePlan.sessionId }),
       });
       if (!res.ok) {
         const data = await res.json();

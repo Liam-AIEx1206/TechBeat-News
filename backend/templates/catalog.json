@@ -164,6 +164,171 @@
       "best_for": ["formula", "structure", "breakdown", "components"],
       "keywords": ["công thức", "cấu trúc", "thành phần", "phân tích", "phương pháp", "framework", "mô hình"],
       "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "PILL_1_ICON", "PILL_1_TEXT", "PILL_2_ICON", "PILL_2_TEXT", "PILL_3_ICON", "PILL_3_TEXT", "PILL_4_ICON", "PILL_4_TEXT", "FORMULA_LINE_1", "FORMULA_LINE_2", "FORMULA_LINE_3", "FORMULA_LINE_4"]
+    },
+    {
+      "id": "T16",
+      "file": "t16_gantt_roadmap.html",
+      "name": "Gantt Roadmap",
+      "layout": "data",
+      "visual_pattern": "B5 GANTT ROADMAP",
+      "category": "data",
+      "best_for": ["roadmap", "project_timeline", "phases", "milestones"],
+      "keywords": ["lộ trình", "tiến độ", "kế hoạch", "giai đoạn", "phát triển", "mục tiêu"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "TL_1_YEAR", "TL_1_EVENT", "TL_1_DESC", "TL_2_YEAR", "TL_2_EVENT", "TL_2_DESC", "TL_3_YEAR", "TL_3_EVENT", "TL_3_DESC"]
+    },
+    {
+      "id": "T17",
+      "file": "t17_pros_cons_grid.html",
+      "name": "Pros & Cons Grid",
+      "layout": "split",
+      "visual_pattern": "B4 PROS AND CONS",
+      "category": "content",
+      "best_for": ["comparison", "evaluation", "tradeoffs", "decision"],
+      "keywords": ["ưu nhược điểm", "so sánh", "lợi ích", "hạn chế", "đánh giá", "lựa chọn"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "COL_GOOD_TITLE", "COL_GOOD_1", "COL_GOOD_2", "COL_GOOD_3", "COL_BAD_TITLE", "COL_BAD_1", "COL_BAD_2", "COL_BAD_3"]
+    },
+    {
+      "id": "T18",
+      "file": "t18_kpi_dashboard_grid.html",
+      "name": "Bento KPI Grid",
+      "layout": "custom",
+      "visual_pattern": "B16 KPI DASHBOARD",
+      "category": "data",
+      "best_for": ["dashboard", "metrics", "stats", "kpi"],
+      "keywords": ["chỉ số", "bảng điều khiển", "kpi", "thống kê", "doanh thu", "tỷ lệ"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "MEGA_NUMBER", "STAT_NUMBER", "STAT_1_NUM", "STAT_2_NUM", "STAT_1_TITLE", "STAT_2_TITLE", "STAT_3_TITLE", "DESC"]
+    },
+    {
+      "id": "T19",
+      "file": "t19_mindmap_node_graph.html",
+      "name": "Mindmap Node Graph",
+      "layout": "centered",
+      "visual_pattern": "B17 MINDMAP NODE GRAPH",
+      "category": "special",
+      "best_for": ["brainstorming", "structure", "concepts", "mapping"],
+      "keywords": ["sơ đồ tư duy", "kết nối", "ý tưởng", "mối quan hệ", "cấu trúc", "khái niệm"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "CENTER_PILL_TEXT", "PILL_1_TEXT", "PILL_2_TEXT", "PILL_3_TEXT", "PILL_4_TEXT"]
+    },
+    {
+      "id": "T20",
+      "file": "t20_architecture_diagram.html",
+      "name": "Tech Architecture",
+      "layout": "data",
+      "visual_pattern": "B14 ARCHITECTURE DIAGRAM",
+      "category": "special",
+      "best_for": ["system_design", "architecture", "microservices", "infrastructure"],
+      "keywords": ["kiến trúc", "hệ thống", "thiết kế", "luồng dữ liệu", "kết nối", "infrastructure"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "AGENT_1_ROLE", "AGENT_2_ROLE", "AGENT_3_ROLE", "AGENT_4_ROLE", "CENTER_PILL_TEXT"]
+    },
+    {
+      "id": "T21",
+      "file": "t21_two_column_split.html",
+      "name": "Duo-Column Featured",
+      "layout": "split",
+      "visual_pattern": "B11 TWO COLUMN SPLIT",
+      "category": "content",
+      "best_for": ["product_feature", "focus", "introduction", "bullets"],
+      "keywords": ["giới thiệu", "chi tiết", "tính năng", "danh sách", "nổi bật"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "BULLET_1", "BULLET_2", "BULLET_3", "BRAND_NAME"]
+    },
+    {
+      "id": "T22",
+      "file": "t22_flow_process_diagram.html",
+      "name": "Flow Process Diagram",
+      "layout": "magazine",
+      "visual_pattern": "B19 STEP FLOW",
+      "category": "data",
+      "best_for": ["process", "workflow", "steps", "funnel"],
+      "keywords": ["luồng quy trình", "bước", "quy trình", "tuần tự", "phễu"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "STEP_1_ICON", "STEP_1_TEXT", "STEP_2_ICON", "STEP_2_TEXT", "STEP_3_ICON", "STEP_3_TEXT"]
+    },
+    {
+      "id": "T23",
+      "file": "t23_bento_feature_grid.html",
+      "name": "4-Card Bento Features",
+      "layout": "custom",
+      "visual_pattern": "B16 4-CARD BENTO GRID",
+      "category": "content",
+      "best_for": ["features", "pillars", "benefits", "grid"],
+      "keywords": ["tính năng", "4 cột mốc", "4 trụ cột", "lợi ích", "lưới"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "FEAT_1_TITLE", "FEAT_1_DESC", "FEAT_2_TITLE", "FEAT_2_DESC", "FEAT_3_TITLE", "FEAT_3_DESC", "FEAT_4_TITLE", "FEAT_4_DESC"]
+    },
+    {
+      "id": "T24",
+      "file": "t24_code_diff_versioning.html",
+      "name": "Code Diff Versioning",
+      "layout": "data",
+      "visual_pattern": "B2 CODE DIFF",
+      "category": "data",
+      "best_for": ["code_compare", "refactoring", "update", "developers"],
+      "keywords": ["code diff", "so sánh mã", "nâng cấp", "lập trình", "sửa lỗi"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "CODE_COMMENT", "CODE_VAL_1", "CODE_COMMENT_2", "CODE_VAL_2"]
+    },
+    {
+      "id": "T25",
+      "file": "t25_classic_checklist.html",
+      "name": "Classic Checklist",
+      "layout": "centered",
+      "visual_pattern": "B3 CHECKLIST",
+      "category": "content",
+      "best_for": ["checklist", "todos", "action_items", "summary"],
+      "keywords": ["danh sách việc", "nhiệm vụ", "cần làm", "kiểm tra", "tóm tắt"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "DESC", "BULLET_1", "BULLET_2", "BULLET_3"]
+    },
+    {
+      "id": "T26",
+      "file": "t26_three_column_services.html",
+      "name": "3-Column Services",
+      "layout": "split",
+      "visual_pattern": "B13 3-COLUMN SERVICES",
+      "category": "centered",
+      "best_for": ["services", "products", "pillars", "overview"],
+      "keywords": ["dịch vụ", "sản phẩm", "gói dịch vụ", "3 lựa chọn", "tổng quan"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "CARD_1_TITLE", "CARD_1_DESC", "CARD_2_TITLE", "CARD_2_DESC", "CARD_3_TITLE", "CARD_3_DESC"]
+    },
+    {
+      "id": "T27",
+      "file": "t27_stat_highlight_detailed.html",
+      "name": "Stat Highlight Detailed",
+      "layout": "centered",
+      "visual_pattern": "B1 STAT HIGHLIGHT DETAILED",
+      "category": "data",
+      "best_for": ["highlight_stat", "major_number", "metrics"],
+      "keywords": ["con số lớn", "đặc tả số liệu", "tăng trưởng", "chi tiết"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "MEGA_NUMBER", "STAT_LABEL", "STAT_EXPLANATION", "TAG_1", "TAG_2"]
+    },
+    {
+      "id": "T28",
+      "file": "t28_todo_status_tracker.html",
+      "name": "Todo Status Tracker",
+      "layout": "magazine",
+      "visual_pattern": "B3 STATUS TRACKER",
+      "category": "content",
+      "best_for": ["tasks", "progress", "project_status", "scrum"],
+      "keywords": ["tiến độ công việc", "nhiệm vụ", "status", "theo dõi", "hoàn thành"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "BULLET_1", "BULLET_2", "BULLET_3"]
+    },
+    {
+      "id": "T29",
+      "file": "t29_call_to_action_spotlight.html",
+      "name": "Call To Action Spotlight",
+      "layout": "centered",
+      "visual_pattern": "B14 CTA SPOTLIGHT",
+      "category": "hero",
+      "best_for": ["cta", "lead_generation", "signup", "contact"],
+      "keywords": ["kêu gọi hành động", "đăng ký", "liên hệ", "trải nghiệm ngay"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "BRAND_NAME", "META_INFO"]
+    },
+    {
+      "id": "T30",
+      "file": "t30_thanks_closing_slide.html",
+      "name": "Thanks & Closing",
+      "layout": "centered",
+      "visual_pattern": "B14 CLOSING SLIDE",
+      "category": "hero",
+      "best_for": ["closing", "qa", "conclusion", "contact"],
+      "keywords": ["kết thúc", "cảm ơn", "hỏi đáp", "chào kết"],
+      "placeholders": ["GHOST_WORD", "BADGE_TEXT", "TITLE", "SUBTITLE", "BRAND_NAME", "META_INFO"]
     }
   ]
 }

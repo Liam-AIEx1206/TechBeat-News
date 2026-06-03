@@ -1,0 +1,99 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .pc-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      width: 100%;
+      max-width: 1600px;
+      margin-top: 20px;
+    }
+    #scene{{SCENE_NUM}} .pc-card {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    #scene{{SCENE_NUM}} .pc-card.pro {
+      border-top: 5px solid var(--accent2);
+      box-shadow: 0 10px 30px rgba(0, 255, 128, 0.05);
+    }
+    #scene{{SCENE_NUM}} .pc-card.con {
+      border-top: 5px solid var(--accent);
+      box-shadow: 0 10px 30px rgba(255, 64, 0, 0.05);
+    }
+    #scene{{SCENE_NUM}} .pc-header {
+      font-size: 2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    #scene{{SCENE_NUM}} .pc-card.pro .pc-header { color: var(--accent2); }
+    #scene{{SCENE_NUM}} .pc-card.con .pc-header { color: var(--accent); }
+    
+    #scene{{SCENE_NUM}} .pc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      list-style: none;
+      padding: 0;
+    }
+    #scene{{SCENE_NUM}} .pc-item {
+      font-size: 1.4rem;
+      color: var(--text2);
+      line-height: 1.6;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    #scene{{SCENE_NUM}} .pc-bullet {
+      font-weight: 900;
+      font-size: 1.5rem;
+    }
+    #scene{{SCENE_NUM}} .pc-card.pro .pc-bullet { color: var(--accent2); }
+    #scene{{SCENE_NUM}} .pc-card.con .pc-bullet { color: var(--accent); }
+  </style>
+
+  <div class="layout" style="padding-top: 60px; gap: 40px;">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast" style="margin: 0 auto;">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text" style="font-size: 3.5rem;">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem; margin-top: -12px;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="pc-container">
+      <div class="pc-card pro">
+        <div class="pc-header">
+          <span class="pc-bullet">✓</span> {{COL_GOOD_TITLE}}
+        </div>
+        <ul class="pc-list">
+          <li class="pc-item"><span class="pc-bullet">✦</span> {{COL_GOOD_1}}</li>
+          <li class="pc-item"><span class="pc-bullet">✦</span> {{COL_GOOD_2}}</li>
+          <li class="pc-item"><span class="pc-bullet">✦</span> {{COL_GOOD_3}}</li>
+        </ul>
+      </div>
+      <div class="pc-card con">
+        <div class="pc-header">
+          <span class="pc-bullet">✗</span> {{COL_BAD_TITLE}}
+        </div>
+        <ul class="pc-list">
+          <li class="pc-item"><span class="pc-bullet">✦</span> {{COL_BAD_1}}</li>
+          <li class="pc-item"><span class="pc-bullet">✦</span> {{COL_BAD_2}}</li>
+          <li class="pc-item"><span class="pc-bullet">✦</span> {{COL_BAD_3}}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

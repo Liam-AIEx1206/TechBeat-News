@@ -28,6 +28,7 @@ export interface ScenePlan {
   /** Subtitle toggle — when false, the backend injects CSS to hide .techbeat-subtitles
    *  in the rendered video. Defaults to true (subtitles visible). */
   subtitlesEnabled?: boolean;
+  sessionId?: string;
 }
 
 export interface ExtractedContent {
@@ -46,7 +47,22 @@ export type ThemeId =
   | "crimson-broadcast"
   | "aurora-mint"
   | "y2k-magenta"
-  | "gold-editorial";
+  | "gold-editorial"
+  | "sunset-glow"
+  | "iceberg-tech"
+  | "retro-arcade"
+  | "monochrome-pro"
+  | "coffee-editorial"
+  | "ocean-depths"
+  | "space-odyssey"
+  | "copper-steampunk"
+  | "cyberpunk-glitch"
+  | "bento-minimal"
+  | "forest-eco"
+  | "brutalist-bold"
+  | "pop-candy"
+  | "royal-velvet"
+  | "neon-green-overdrive";
 
 export interface Theme {
   id: ThemeId;
@@ -176,6 +192,216 @@ export const THEMES: Theme[] = [
     text1: "#fefce8",
     text2: "#d6d3d1",
     vibe: "luxury magazine editorial vàng champagne trên đen sang trọng, serif accents, fine-line dividers",
+  },
+  {
+    id: "sunset-glow",
+    name: "Sunset Glow",
+    tagline: "Cozy warm sunset",
+    bg: "#0f050b",
+    bg2: "#1a0815",
+    surface: "#280f20",
+    accent: "#f43f5e",
+    accent2: "#f97316",
+    accent3: "#fef08a",
+    text1: "#fff1f2",
+    text2: "#fda4af",
+    vibe: "lãng mạn hoàng hôn ấm áp phong cách editorial, với sự pha trộn mềm mại của tone đỏ hồng, cam ấm và ánh sáng vàng nhạt",
+  },
+  {
+    id: "iceberg-tech",
+    name: "Iceberg Tech",
+    tagline: "Minimal cold glacial",
+    bg: "#02070f",
+    bg2: "#051220",
+    surface: "#0a1d33",
+    accent: "#38bdf8",
+    accent2: "#34d399",
+    accent3: "#cbd5e1",
+    text1: "#f0f9ff",
+    text2: "#93c5fd",
+    vibe: "công nghệ lạnh giá tối giản tinh khiết như băng đá, sắc nét với ánh sáng xanh lam và bạc mờ, kết hợp bento hoặc các ô trong suốt",
+  },
+  {
+    id: "retro-arcade",
+    name: "Retro Arcade",
+    tagline: "8-bit gaming console",
+    bg: "#0b020f",
+    bg2: "#150622",
+    surface: "#220c35",
+    accent: "#eab308",
+    accent2: "#c084fc",
+    accent3: "#22c55e",
+    text1: "#faf5ff",
+    text2: "#d8b4fe",
+    vibe: "phòng máy chơi game retro arcade 8-bit hoài cổ, rực rỡ sắc màu tím neon kết hợp vàng chanh và xanh lá, font monospace",
+  },
+  {
+    id: "monochrome-pro",
+    name: "Monochrome Pro",
+    tagline: "High contrast minimalism",
+    bg: "#050505",
+    bg2: "#121212",
+    surface: "#1e1e1e",
+    accent: "#ffffff",
+    accent2: "#a1a1aa",
+    accent3: "#52525b",
+    text1: "#ffffff",
+    text2: "#d4d4d8",
+    vibe: "tối giản mực đen trên giấy trắng và xám tro cao cấp, phong cách triển lãm thời trang hiện đại, typography đậm đà đối lập",
+  },
+  {
+    id: "coffee-editorial",
+    name: "Coffee Editorial",
+    tagline: "Cozy warm vintage",
+    bg: "#120e0a",
+    bg2: "#1f1812",
+    surface: "#2d241b",
+    accent: "#a16207",
+    accent2: "#fef08a",
+    accent3: "#ca8a04",
+    text1: "#fdf8f5",
+    text2: "#d7ccc8",
+    vibe: "không gian ấm áp mộc mạc của quán cà phê gỗ cổ điển, kết hợp tone kem oatmeal nhẹ và nâu đất terracotta trầm ấm",
+  },
+  {
+    id: "ocean-depths",
+    name: "Ocean Depths",
+    tagline: "Deep sea marine tech",
+    bg: "#020712",
+    bg2: "#051125",
+    surface: "#0a1c3b",
+    accent: "#0d9488",
+    accent2: "#06b6d4",
+    accent3: "#f43f5e",
+    text1: "#f0fdfa",
+    text2: "#99f6e4",
+    vibe: "đại dương sâu thẳm đầy bí ẩn công nghệ cao sinh học biển, màu nền xanh đen sâu thẳm kết hợp xanh teal điện tử và hồng san hô",
+  },
+  {
+    id: "space-odyssey",
+    name: "Space Odyssey",
+    tagline: "Nebula cosmic sci-fi",
+    bg: "#04020a",
+    bg2: "#0e051a",
+    surface: "#1b0b30",
+    accent: "#8b5cf6",
+    accent2: "#d946ef",
+    accent3: "#ec4899",
+    text1: "#faf5ff",
+    text2: "#e9d5ff",
+    vibe: "không gian vũ trụ cinematic sâu thẳm huyền bí với dải ngân hà nebula tím và supernova hồng rực rỡ",
+  },
+  {
+    id: "copper-steampunk",
+    name: "Copper Steampunk",
+    tagline: "Industrial gear rusty",
+    bg: "#0f0a07",
+    bg2: "#1c120c",
+    surface: "#2d1d13",
+    accent: "#b45309",
+    accent2: "#ea580c",
+    accent3: "#ca8a04",
+    text1: "#fffbeb",
+    text2: "#fde8d0",
+    vibe: "thời kỳ cơ khí hơi nước Steampunk cổ điển, chất liệu đồng đỏ xước bóng metallic phối màu gỉ sắt trầm mặc độc lạ",
+  },
+  {
+    id: "cyberpunk-glitch",
+    name: "Cyberpunk Glitch",
+    tagline: "Acid neon streets",
+    bg: "#0a010c",
+    bg2: "#15021a",
+    surface: "#24042d",
+    accent: "#f43f5e",
+    accent2: "#a3e635",
+    accent3: "#d946ef",
+    text1: "#fff1f2",
+    text2: "#fca5a5",
+    vibe: "cyberpunk đường phố neon lập loè chói tai dưới mưa đêm, tương phản cao giữa hồng sen, xanh lá acid và tím chớp giật",
+  },
+  {
+    id: "bento-minimal",
+    name: "Bento Minimal",
+    tagline: "Organized Japan tech",
+    bg: "#080808",
+    bg2: "#121212",
+    surface: "#181818",
+    accent: "#dc2626",
+    accent2: "#f9fafb",
+    accent3: "#a1a1aa",
+    text1: "#f9fafb",
+    text2: "#d4d4d8",
+    vibe: "phong cách thiết kế Bento Nhật Bản tối giản, cực kỳ ngăn nắp sạch sẽ, tone xám đen nhám tối giản điểm màu đỏ mặt trời mọc",
+  },
+  {
+    id: "forest-eco",
+    name: "Forest Eco",
+    tagline: "Nature green bio tech",
+    bg: "#020c08",
+    bg2: "#051a11",
+    surface: "#0a281c",
+    accent: "#10b981",
+    accent2: "#84cc16",
+    accent3: "#34d399",
+    text1: "#f0fdf4",
+    text2: "#bbf7d0",
+    vibe: "xanh sinh thái sinh học tự nhiên eco-tech thân thiện, màu xanh rừng rậm tươi mát phối với xanh đọt chuối ngọc bích",
+  },
+  {
+    id: "brutalist-bold",
+    name: "Brutalist Bold",
+    tagline: "Retro poster marquee",
+    bg: "#0c0c0e",
+    bg2: "#19191d",
+    surface: "#222227",
+    accent: "#ea580c",
+    accent2: "#facc15",
+    accent3: "#2563eb",
+    text1: "#ffffff",
+    text2: "#e4e4e7",
+    vibe: "nghệ thuật Brutalism nổi loạn phá cách với typography khổng lồ, viền đen dày, bóng đổ 45 độ sắc cạnh",
+  },
+  {
+    id: "pop-candy",
+    name: "Pop Candy",
+    tagline: "Sweet Kawaii pastels",
+    bg: "#0d0615",
+    bg2: "#180c29",
+    surface: "#23123c",
+    accent: "#fda4af",
+    accent2: "#a7f3d0",
+    accent3: "#c084fc",
+    text1: "#fdf4ff",
+    text2: "#f5d0fe",
+    vibe: "pastel ngọt ngào mộng mơ Kawaii tươi trẻ năng động, sự pha trộn dễ thương giữa đào mọng, soda bạc hà và oải hương",
+  },
+  {
+    id: "royal-velvet",
+    name: "Royal Velvet",
+    tagline: "Classic royal violet",
+    bg: "#0b030b",
+    bg2: "#1b071a",
+    surface: "#2b0d28",
+    accent: "#6b21a8",
+    accent2: "#ca8a04",
+    accent3: "#991b1b",
+    text1: "#fdf4ff",
+    text2: "#f3e8ff",
+    vibe: "nhung hoàng gia cổ điển quý tộc sang trọng, sự kết hợp giữa tím hoàng cung thâm sâu, vàng gold lá lánh và đỏ rượu vang quý phái",
+  },
+  {
+    id: "neon-green-overdrive",
+    name: "Neon Green Overdrive",
+    tagline: "eSports athletic energy",
+    bg: "#06080d",
+    bg2: "#0c111c",
+    surface: "#121b2d",
+    accent: "#a3e635",
+    accent2: "#22c55e",
+    accent3: "#0ea5e9",
+    text1: "#f0fdf4",
+    text2: "#bbf7d0",
+    vibe: "thể thao điện tử eSports cực kỳ phấn khích tốc độ cao, đen carbon bóng bọc viền xanh lá chói mắt phản quang",
   },
 ];
 

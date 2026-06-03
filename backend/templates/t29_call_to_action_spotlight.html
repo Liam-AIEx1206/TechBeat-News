@@ -1,0 +1,58 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .cta-box {
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 2px solid var(--accent);
+      border-radius: 30px;
+      padding: 50px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      max-width: 1000px;
+      width: 100%;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      animation: neon-glow 4s ease-in-out infinite;
+    }
+    #scene{{SCENE_NUM}} .cta-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 800;
+      padding: 18px 48px;
+      border-radius: 99px;
+      border: none;
+      box-shadow: 0 10px 30px rgba(var(--accent-rgb), 0.3);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    #scene{{SCENE_NUM}} .cta-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 40px rgba(var(--accent-rgb), 0.5);
+    }
+    #scene{{SCENE_NUM}} .cta-meta {
+      font-size: 1.35rem;
+      color: var(--accent3);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+  </style>
+
+  <div class="layout" style="padding-top: 100px; gap: 40px;">
+    <div class="cta-box">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BRAND_NAME}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-hero grad-text" style="text-align: center; line-height: 1.2;">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="text-align: center; max-width: 800px; font-size: 2rem;">{{SUBTITLE}}</p>
+      <button class="cta-btn breath">Trải Nghiệm Ngay</button>
+      <div class="cta-meta">🌐 {{META_INFO}}</div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

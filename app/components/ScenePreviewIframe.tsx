@@ -12,6 +12,8 @@ interface Props {
   height?: number;
   /** When false, injects CSS to hide .techbeat-subtitles in the preview. Default true. */
   showSubtitles?: boolean;
+  /** Optional session ID for isolating concurrent users' assets. */
+  sessionId?: string;
 }
 
 /** Carve scene #N out of the full composition, isolate it inside its own
@@ -19,7 +21,7 @@ interface Props {
  *  show that scene visible at frame 0 (no GSAP timeline running). The
  *  document is sized 1920×1080 and we apply a CSS transform on the iframe
  *  to fit it into the parent container. */
-function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string, showSubtitles: boolean): string {
+function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string, showSubtitles: boolean, sessionId?: string): string {
   let doc = fullHtml;
 
   // Strip ALL <script> tags — GSAP timeline must not run in preview mode.
@@ -36,7 +38,10 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string, 
   // /assets/ at the project's assets/ folder. Strip any existing <base> so
   // ours wins (rare but safe).
   doc = doc.replace(/<base\b[^>]*>/gi, "");
-  const baseTag = `<base href="${apiUrl.replace(/\/$/, "")}/">`;
+  const baseHref = sessionId
+    ? `${apiUrl.replace(/\/$/, "")}/sessions/${sessionId}/`
+    : `${apiUrl.replace(/\/$/, "")}/`;
+  const baseTag = `<base href="${baseHref}">`;
 
   // Hide all scenes, show only the target. Using both CSS and inline-style
   // removal (via the script below) to handle any leftover inline styles.
@@ -60,7 +65,7 @@ function buildIsolatedDoc(fullHtml: string, sceneIndex: number, apiUrl: string, 
   return doc;
 }
 
-export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height = 1080, showSubtitles = true }: Props) {
+export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height = 1080, showSubtitles = true, sessionId }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -77,7 +82,7 @@ export function ScenePreviewIframe({ fullHtml, sceneIndex, width = 1920, height 
     return () => ro.disconnect();
   }, [width]);
 
-  const doc = buildIsolatedDoc(fullHtml, sceneIndex, API, showSubtitles);
+  const doc = buildIsolatedDoc(fullHtml, sceneIndex, API, showSubtitles, sessionId);
 
   return (
     <div
