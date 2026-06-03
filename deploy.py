@@ -2,13 +2,20 @@ import paramiko
 import os
 import tarfile
 import sys
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 def make_tarfile(output_filename, source_dir):
     print(f"Creating archive {output_filename}...")
     def exclude_func(tarinfo):
         name = tarinfo.name.replace('\\\\', '/')
-        excludes = ['.git', 'node_modules', '.next', '__pycache__', '.venv', 'playwright_cache', 'renders', '.pytest_cache', '.conda', '.agents', '.gemini', '.cache', '.npm']
+        excludes = ['.git', 'node_modules', '.next', '__pycache__', '.venv', 'playwright_cache', 'renders', 'history', '.pytest_cache', '.conda', '.agents', '.gemini', '.cache', '.npm', 'scripts']
         if any(f"/{ex}/" in f"/{name}/" or name.endswith(f"/{ex}") for ex in excludes):
+            return None
+        if name.endswith('.tar.gz') or name.endswith('.zip'):
+            return None
+        # Exclude temporary diagnostic scripts
+        temp_scripts = ['find_large_files.py', 'check_my_video_subdirs.py', 'check_app_subdirs.py', 'check_remote_upload.py', 'check_build_logs.py', 'test_tar_size.py', 'check_logs_exists.py']
+        if any(name.endswith(s) for s in temp_scripts):
             return None
         return tarinfo
 

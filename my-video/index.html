@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VoxCPM2: Hệ Thống TTS Không Tokenizer cho Đa Ngôn Ngữ</title>
+<title>GitHub - OpenBMB/VoxCPM: VoxCPM2: TTS không cần tokenizer cho sinh tiếng nói đa ngôn ngữ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
@@ -1045,368 +1045,320 @@ body {
 </style>
 </head>
 <body>
-<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="112">
-  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="22" data-volume="1" data-title="Giới thiệu về VoxCPM2"></audio>
-  <audio id="v2" src="assets/p2.wav" data-start="22" data-duration="19" data-volume="1" data-title="Tính năng nổi bật của VoxCPM2"></audio>
-  <audio id="v3" src="assets/p3.wav" data-start="41" data-duration="18" data-volume="1" data-title="Khả năng nhân bản giọng nói"></audio>
-  <audio id="v4" src="assets/p4.wav" data-start="59" data-duration="18" data-volume="1" data-title="Chất lượng âm thanh và hiệu suất"></audio>
-  <audio id="v5" src="assets/p5.wav" data-start="77" data-duration="18" data-volume="1" data-title="Tính mở và khả năng thương mại"></audio>
-  <audio id="v6" src="assets/p6.wav" data-start="95" data-duration="17" data-volume="1" data-title="Tương lai của VoxCPM"></audio>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="152">
+  <audio id="v1" src="assets/p1.wav" data-start="0" data-duration="25" data-volume="1" data-title="Giới thiệu VoxCPM2"></audio>
+  <audio id="v2" src="assets/p2.wav" data-start="25" data-duration="22" data-volume="1" data-title="Thông số kỹ thuật nổi bật"></audio>
+  <audio id="v3" src="assets/p3.wav" data-start="47" data-duration="21" data-volume="1" data-title="Thiết kế giọng nói"></audio>
+  <audio id="v4" src="assets/p4.wav" data-start="68" data-duration="21" data-volume="1" data-title="Cloning giọng nói"></audio>
+  <audio id="v5" src="assets/p5.wav" data-start="89" data-duration="21" data-volume="1" data-title="Chất lượng âm thanh"></audio>
+  <audio id="v6" src="assets/p6.wav" data-start="110" data-duration="21" data-volume="1" data-title="API và triển khai"></audio>
+  <audio id="v7" src="assets/p7.wav" data-start="131" data-duration="21" data-volume="1" data-title="Kết luận"></audio>
 
   <div class="scanlines"></div>
 
-<div class="scene hero" id="scene1">
+<div class="scene hero" id="scene1" data-template-id="T01">
   <style>
-    @keyframes neon-glow {
+    @keyframes neon-glow-t01 {
       0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
-      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
+      50% { border-color: var(--accent2); box-shadow: 0 0 45px var(--accent); }
     }
-    @keyframes grad-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    #scene1 .tech-card { animation: neon-glow-t01 4s ease-in-out infinite; }
   </style>
-  
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
+
+  <div class="aurora-glow" style="top:-15%; left:-10%; background:radial-gradient(circle, var(--accent), transparent);"></div>
+  <div class="aurora-glow" style="bottom:-20%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
   <div class="\1" data-layout-ignore></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">VOX</div>
-  <span class="y2k-sparkle" style="top: 20%; left: 15%;"></span>
-  <span class="y2k-sparkle" style="bottom: 10%; right: 20%;"></span>
-  
+  <div class="particle-field"></div>
+  <div class="\1" data-layout-ignore style="bottom:-8%; right:-5%;">VOICE</div>
+  <span class="y2k-sparkle" style="top:12%; right:8%;"></span>
+  <span class="y2k-sparkle" style="bottom:18%; left:5%;"></span>
+
   <div class="layout">
     <div class="info-col">
-      <div id="s1-badge" class="status-pill">PHẦN 1</div>
-      <h1 id="s1-title" class="title-hero grad-text" style="font-weight: 900 !important;">Giới thiệu về VoxCPM2</h1>
-      <p id="s1-subtitle" class="subtitle">Bước tiến đột phá</p>
-      <p id="s1-desc" class="body-text">Giọng nói tự nhiên và biểu cảm</p>
+      <div id="s1-badge" class="badge shimmer-fast">🎙 PHẦN 1 · GIỚI THIỆU</div>
+      <h1 id="s1-title" class="title-hero grad-text" style="font-weight: 900 !important;" data-effect="typewriter">VoxCPM2: Tương lai giọng nói AI</h1><span class="cursor-blink">|</span>
+      <p id="s1-subtitle" class="subtitle">Công nghệ tổng hợp giọng nói</p>
+      <div id="s1-desc" style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px;">
+        <div class="badge">🌍 Đa ngôn ngữ</div>
+        <div class="badge">🎯 Chính xác cao</div>
+        <div class="badge">✨ Tự nhiên vượt trội</div>
+      </div>
     </div>
     <div class="visual-col">
-      <div class="compare">
-        <div class="col">
-          <h4>Phương pháp truyền thống</h4>
-          <ul>
-            <li>Thời gian xử lý lâu hơn</li>
-            <li>Độ chính xác thấp hơn</li>
-          </ul>
+      <div class="tech-card glow-card breath">
+        <div class="brand">TechBeat News</div>
+        <div class="meta">📅 Tháng 10 2023 · Việt Nam</div>
+        <div class="bullets">
+          <div>Không cần tokenizer khi tạo giọng nói.</div>
+          <div>Hỗ trợ hơn 30 ngôn ngữ toàn cầu.</div>
+          <div>Kiến trúc autoregressive diffusion tiên tiến.</div>
         </div>
-        <div class="col bad">
-          <h4>VoxCPM2</h4>
-          <ul>
-            <li>Thời gian xử lý giảm 30%</li>
-            <li>Độ chính xác cao hơn 20%</li>
-          </ul>
+        <div class="tags">
+          <span class="tag">Diffusion</span>
+          <span class="tag">Autoregressive</span>
+          <span class="tag">Continuous Speech</span>
         </div>
       </div>
     </div>
   </div>
-  
+
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">01</span>
 </div>
 
-<div class="scene data" id="scene2">
-  <style>
-    @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
-      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
-    }
-    @keyframes aurora-mesh {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(20px, -10px) scale(1.05); }
-    }
-    .stat-list-card {
-      text-align: left;
-      padding: 20px;
-      border-radius: 16px;
-      border: 2px solid var(--accent);
-      box-shadow: 0 0 20px var(--glow);
-      animation: neon-glow 3s infinite alternate;
-    }
-  </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="\1" data-layout-ignore></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">VOX</div>
+<div class="scene data" id="scene2" data-template-id="T15">
+  <div class="\1" data-layout-ignore style="top:-10%; left:-5%; background:var(--accent);"></div>
+  <div class="aurora-glow" style="bottom:-15%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+  <div class="\1" data-layout-ignore style="bottom:-8%; right:-5%;">VOICE</div>
+  <span class="y2k-sparkle" style="top:10%; right:12%;"></span>
+  <span class="y2k-sparkle" style="bottom:18%; left:48%;"></span>
 
   <div class="layout">
     <div class="info-col">
-      <div id="s2-badge" class="badge">PHẦN 2</div>
-      <h1 id="s2-title" class="title-xl grad-text">Tính năng nổi bật của VoxCPM2</h1>
-      <p id="s2-subtitle" class="subtitle">30 ngôn ngữ hỗ trợ</p>
-      <p id="s2-desc" class="body-text">Tạo giọng nói nhanh chóng</p>
+      <div id="s2-badge" class="badge">🌟 PHẦN 2 · DỮ LIỆU ÂM THANH</div>
+      <h1 id="s2-title" class="title-xl grad-text">VoxCPM2: Đỉnh cao công nghệ âm thanh</h1>
+      <p id="s2-subtitle" class="subtitle">Hỗ trợ 30 ngôn ngữ toàn cầu</p>
+      <p id="s2-desc" class="body-text">2 tỷ tham số, 2 triệu giờ, 48kHz</p>
     </div>
     <div class="visual-col">
-      <div class="stat-list">
-        <div class="stat-list-card shimmer-fast glow-card">
-          <div class="ic-wrap">🌍</div>
-          <div class="num">30+</div>
-          <div class="details">
-            <div class="title">Ngôn ngữ hỗ trợ</div>
-            <div class="desc">Bao gồm tiếng Việt, Anh, Pháp...</div>
-          </div>
+      <div class="visual-block glow-card" style="padding:40px;">
+        <div class="formula-stack">
+          <span class="formula-pill pink">🌍 30 ngôn ngữ</span>
+          <span class="formula-operator">+</span>
+          <span class="formula-pill yellow">🎙️ Chất lượng 48kHz</span>
+          <span class="formula-operator">+</span>
+          <span class="formula-pill green">📊 2 tỷ tham số</span>
+          <span class="formula-operator">+</span>
+          <span class="formula-pill blue">⏳ 2 triệu giờ dữ liệu</span>
         </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">⚡</div>
-          <div class="num">5s</div>
-          <div class="details">
-            <div class="title">Thời gian tạo giọng nói</div>
-            <div class="desc">Nhanh chóng & tiết kiệm</div>
-          </div>
-        </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;">
-          <div class="ic-wrap">🔊</div>
-          <div class="num">0</div>
-          <div class="details">
-            <div class="title">Không cần âm thanh tham khảo</div>
-            <div class="desc">Chỉ cần mô tả ngôn ngữ tự nhiên</div>
-          </div>
+        <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.06); padding:24px; border-radius:16px; font-family:'Be Vietnam Pro', sans-serif; font-size:1.25rem; line-height:1.7; text-align:left; margin-top:20px;">
+          <span style="color:#f472b6; font-weight:600;">2 tỷ tham số</span>
+          <span style="color:#fde047; font-weight:600;"> 2 triệu giờ âm thanh</span>
+          <span style="color:#4ade80; font-weight:600;"> 30 ngôn ngữ hỗ trợ</span>
+          <span style="color:#38bdf8; font-weight:600;"> Chất lượng đầu ra 48kHz</span>
         </div>
       </div>
     </div>
   </div>
+
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">02</span>
 </div>
 
-<div class="scene centered" id="scene3">
-  <style>
-    @keyframes neon-glow {
-      0%, 100% { border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }
-      50% { border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }
-    }
-    @keyframes grad-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-  </style>
-  <div class="aurora-glow" style="top:-15%; left:-10%;"></div>
-  <div class="\1" data-layout-ignore></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">VOICE</div>
+<div class="scene magazine" id="scene3" data-template-id="T05">
+  <div class="\1" data-layout-ignore style="top:-10%; left:-5%; background:var(--accent2);"></div>
+  <div class="aurora-glow" style="bottom:-15%; right:-10%; background:radial-gradient(circle, var(--accent3), transparent);"></div>
+  <div class="\1" data-layout-ignore style="top:-10%; left:-5%;">VOICE</div>
+  <span class="y2k-sparkle" style="top:8%; right:10%;"></span>
+  <span class="y2k-sparkle" style="bottom:15%; left:48%;"></span>
+
   <div class="layout">
     <div class="info-col">
-      <div id="s3-badge" class="badge">PHẦN 3</div>
-      <h1 id="s3-title" class="title-xl grad-text" data-effect="typewriter">Khả năng nhân bản giọng nói</h1>
-      <span class="cursor-blink">|</span>
-      <p id="s3-subtitle" class="subtitle">95% độ chính xác</p>
-      <p id="s3-desc" class="body-text">Tùy chỉnh cảm xúc và tốc độ</p>
+      <div id="s3-badge" class="badge">🎙️ PHẦN 3 · SÁNG TẠO</div>
+      <h1 id="s3-title" class="title-xl grad-text">Tạo giọng nói theo ý muốn</h1>
+      <p id="s3-subtitle" class="subtitle">Giọng nói độc đáo, tùy chỉnh dễ dàng</p>
+      <p id="s3-desc" class="body-text">Công cụ tạo giọng nói không giới hạn</p>
     </div>
     <div class="visual-col">
-      <div class="terminal glow-card breath">
-        <div class="dots"><i></i><i></i><i></i></div>
-        <div><span class="c">// Mã nguồn ví dụ</span></div>
-        <div><span class="k">const</span> voiceClone = <span class="s">"VoxCPM2"</span>;</div>
-        <div><span class="k">function</span> <span class="f">cloneVoice</span>(<span class="a">inputSample</span>) {'{'}</div>
-        <div>  <span class="k">return</span> <span class="s">"Cloned Voice with Emotions"</span>;</div>
-        <div>{'}'}</div>
-        <div>$ <span class="cursor"></span></div>
+      <div class="feat-grid">
+        <div class="feat-card glow-card">
+          <div class="ic">🗣️</div>
+          <div class="t">Mô tả ngôn ngữ tự nhiên</div>
+          <div class="d">Dễ dàng mô tả giới tính, độ tuổi, cảm xúc.</div>
+        </div>
+        <div class="feat-card glow-card" style="animation-delay: 0.3s;">
+          <div class="ic">🎧</div>
+          <div class="t">Không cần âm thanh mẫu</div>
+          <div class="d">Tạo giọng nói từ mô tả, không cần bản ghi.</div>
+        </div>
+        <div class="feat-card glow-card" style="animation-delay: 0.6s;">
+          <div class="ic">✨</div>
+          <div class="t">Cá nhân hóa sáng tạo</div>
+          <div class="d">Giọng nói phù hợp nhu cầu nội dung riêng.</div>
+        </div>
+        <div class="feat-card glow-card" style="animation-delay: 0.9s;">
+          <div class="ic">🚀</div>
+          <div class="t">Ứng dụng linh hoạt</div>
+          <div class="d">Phù hợp sản xuất video, podcast, game.</div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="corner-bracket tl"></div>
-  <div class="corner-bracket tr"></div>
-  <div class="corner-bracket bl"></div>
-  <div class="corner-bracket br"></div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">03</span>
 </div>
 
-<div class="scene centered" id="scene4">
-  <style>
-    @keyframes pulse-glow {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--glow); }
-      50% { transform: scale(1.05); box-shadow: 0 0 40px var(--accent); }
-    }
-    .stat-list-card {
-      animation: pulse-glow 3s infinite;
-    }
-  </style>
-  <div class="aurora-glow" style="top:-10%; left:5%;"></div>
-  <div class="aurora-glow" style="bottom:-15%; right:-10%;"></div>
-  <div class="particle-field"></div>
-  <div class="\1" data-layout-ignore></div>
-  <div class="\1" data-layout-ignore style="top:-8%; left:-5%;">AUDIO</div>
+<div class="scene split" id="scene4" data-template-id="T04">
+  <div class="aurora-glow" style="top:-15%; right:-10%; background:radial-gradient(circle, var(--accent), transparent);"></div>
+  <div class="\1" data-layout-ignore style="bottom:10%; left:5%; background:var(--accent3);"></div>
+  <div class="\1" data-layout-ignore style="bottom:-8%; right:-5%;">VOICE</div>
+  <span class="y2k-sparkle" style="top:10%; right:15%;"></span>
+  <span class="y2k-sparkle" style="bottom:20%; left:45%;"></span>
 
   <div class="layout">
     <div class="info-col">
-      <div id="s4-badge" class="badge">PHẦN 4</div>
-      <h1 id="s4-title" class="title-xl grad-text">Chất lượng âm thanh và hiệu suất</h1>
-      <p id="s4-subtitle" class="subtitle">Âm thanh chuẩn studio</p>
-      <p id="s4-desc" class="body-text">Tốc độ phản hồi: 0.3 giây</p>
+      <div id="s4-badge" class="badge">🎙️ PHẦN 4 · CÔNG NGHỆ</div>
+      <h1 id="s4-title" class="title-xl grad-text">Clone giọng nói đỉnh cao</h1>
+      <p id="s4-subtitle" class="subtitle">Tính năng vượt trội của VoxCPM2</p>
+      <p id="s4-desc" class="body-text">Clone giọng nói tự nhiên, hiệu quả</p>
     </div>
     <div class="visual-col">
       <div class="stat-list">
         <div class="stat-list-card shimmer-fast glow-card">
           <div class="ic-wrap">🎧</div>
-          <div class="num">48kHz</div>
+          <div class="num">10s</div>
           <div class="details">
-            <div class="title">Chất lượng studio</div>
-            <div class="desc">Âm thanh rõ ràng, sắc nét</div>
+            <div class="title">Thời gian mẫu tối thiểu</div>
+            <div class="desc">Chỉ cần 10 giây âm thanh</div>
           </div>
         </div>
         <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">⚡</div>
-          <div class="num">0.3s</div>
+          <div class="ic-wrap">⚙️</div>
+          <div class="num">3x</div>
           <div class="details">
-            <div class="title">Tốc độ phản hồi</div>
-            <div class="desc">NVIDIA RTX 4090</div>
+            <div class="title">Điều chỉnh linh hoạt</div>
+            <div class="desc">Cảm xúc, tốc độ, âm sắc</div>
           </div>
         </div>
         <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;">
-          <div class="ic-wrap">🚀</div>
-          <div class="num">Thời gian thực</div>
+          <div class="ic-wrap">🎬</div>
+          <div class="num">99%</div>
           <div class="details">
-            <div class="title">Phát trực tiếp</div>
-            <div class="desc">Hiệu suất tối ưu</div>
+            <div class="title">Ứng dụng đa dạng</div>
+            <div class="desc">Quảng cáo, phim hoạt hình, hơn nữa</div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">04</span>
 </div>
 
-<div class="scene centered" id="scene5">
-  <style>
-    @keyframes neon-pulse {
-      0%, 100% { box-shadow: 0 0 15px var(--glow); }
-      50% { box-shadow: 0 0 35px var(--accent); }
-    }
-    .license-card {
-      padding: 30px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      text-align: center;
-      animation: neon-pulse 2s infinite;
-    }
-    .badge { margin: 0 auto 16px; }
-    .license-card .title {
-      font-size: 2rem;
-      color: var(--accent2);
-      margin: 12px 0;
-    }
-    .license-card .desc {
-      font-size: 1.25rem;
-      color: var(--text2);
-      margin: 8px 0;
-    }
-    .stat-list .stat-list-card .num {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: var(--accent);
-    }
-  </style>
-  <div class="aurora-glow" style="top: -15%; left: -10%;"></div>
-  <div class="\1" data-layout-ignore style="bottom: -5%; right: -5%;">OPEN</div>
+<div class="scene data" id="scene5" data-template-id="T12">
+  <div class="\1" data-layout-ignore style="top:-10%; right:-5%; background:var(--accent);"></div>
+  <div class="aurora-glow" style="bottom:-15%; left:-10%; background:radial-gradient(circle, var(--accent3), transparent);"></div>
+  <div class="\1" data-layout-ignore style="top:-10%; left:-5%;">AUDIO</div>
+  <span class="y2k-sparkle" style="top:12%; right:10%;"></span>
+  <span class="y2k-sparkle" style="bottom:15%; left:48%;"></span>
 
   <div class="layout">
     <div class="info-col">
-      <div id="s5-badge" class="badge">PHẦN 5</div>
-      <h1 id="s5-title" class="title-xl grad-text">Tính mở và khả năng thương mại</h1>
-      <p id="s5-subtitle" class="subtitle">Tự do tích hợp</p>
-      <p id="s5-desc" class="body-text">Apache-2.0 mở rộng cơ hội</p>
+      <div id="s5-badge" class="badge">🎵 PHẦN 5 · ÂM THANH</div>
+      <h1 id="s5-title" class="title-xl grad-text">Âm thanh chuẩn studio 48kHz</h1>
+      <p id="s5-subtitle" class="subtitle">Công nghệ AudioVAE V2 tiên tiến</p>
+      <p id="s5-desc" class="body-text">Âm thanh sống động, nâng tầm trải nghiệm.</p>
     </div>
     <div class="visual-col">
-      <div class="license-card glow-card">
-        <div class="emoji">📜</div>
-        <div class="title">Apache-2.0</div>
-        <p class="desc">Giấy phép mã nguồn mở đáng tin cậy</p>
-        <p class="desc">Hỗ trợ toàn diện cho doanh nghiệp</p>
-      </div>
-      <div class="stat-list">
-        <div class="stat-list-card shimmer-fast glow-card">
-          <div class="ic-wrap">📥</div>
-          <div class="num">100k+</div>
-          <div class="details">
-            <div class="title">Lượt tải</div>
-            <div class="desc">Chỉ trong tháng đầu tiên</div>
-          </div>
+      <div class="compare breath">
+        <div class="col glow-card">
+          <h4>ƯU ĐIỂM</h4>
+          <ul>
+            <li>Đầu ra chất lượng studio 48kHz</li>
+            <li>Không cần bộ tăng cường ngoài</li>
+            <li>Âm thanh sống động, chân thực</li>
+          </ul>
         </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">🗣️</div>
-          <div class="num">Ứng dụng</div>
-          <div class="details">
-            <div class="title">AI Giọng nói</div>
-            <div class="desc">Trò chuyện tự động</div>
-          </div>
+        <div class="col bad glow-card">
+          <h4>NHƯỢC ĐIỂM</h4>
+          <ul>
+            <li>Yêu cầu đầu vào tối thiểu 16kHz</li>
+            <li>Chưa tối ưu cho thiết bị cũ</li>
+            <li>Phụ thuộc vào AudioVAE V2</li>
+          </ul>
         </div>
       </div>
     </div>
   </div>
+
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">05</span>
 </div>
 
-<div class="scene centered" id="scene6">
-  <style>
-    @keyframes neon-glow {
-      0%, 100% {
-        border-color: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 0 15px var(--glow);
-      }
-      50% {
-        border-color: var(--accent2);
-        box-shadow: 0 0 35px var(--accent);
-      }
-    }
-  </style>
-  <div class="\1" data-layout-ignore></div>
-  <div class="aurora-glow" style="top:-10%; left:-10%;"></div>
-  <div class="\1" data-layout-ignore style="bottom:-5%; right:-5%;">FUTURE</div>
+<div class="scene split" id="scene6" data-template-id="T11">
+  <div class="aurora-glow" style="top:-15%; left:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+  <div class="\1" data-layout-ignore style="bottom:15%; right:8%; background:var(--accent);"></div>
+  <div class="\1" data-layout-ignore style="bottom:-8%; right:-5%;">API</div>
+  <span class="y2k-sparkle" style="top:10%; right:48%;"></span>
+  <span class="y2k-sparkle" style="bottom:20%; left:8%;"></span>
+
   <div class="layout">
     <div class="info-col">
-      <div id="s6-badge" class="badge">PHẦN 6</div>
-      <h1 id="s6-title" class="title-xl grad-text" data-effect="typewriter">Tương lai của VoxCPM</h1><span class="cursor-blink">|</span>
-      <p id="s6-subtitle" class="subtitle">Dự đoán tăng trưởng</p>
-      <p id="s6-desc" class="body-text">Tăng gấp đôi trong 2 năm</p>
+      <div id="s6-badge" class="badge">🚀 PHẦN 6 · TÍCH HỢP</div>
+      <h1 id="s6-title" class="title-xl grad-text">API tối ưu cho nhà phát triển</h1>
+      <p id="s6-subtitle" class="subtitle">Tích hợp nhanh, hiệu suất cao</p>
+      <p id="s6-desc" class="body-text">Dễ dàng tích hợp, xử lý thời gian thực</p>
     </div>
     <div class="visual-col">
-      <div class="stat-list">
-        <div class="stat-list-card shimmer-fast glow-card">
-          <div class="ic-wrap">🚀</div>
-          <div class="num">2x</div>
-          <div class="details">
-            <div class="title">Người dùng</div>
-            <div class="desc">Dự đoán tăng trưởng</div>
-          </div>
+      <div class="tl-list breath">
+        <div class="tl-item">
+          <div class="y">2023</div>
+          <div class="t">Ra mắt API</div>
+          <div class="d">API tương thích OpenAI chính thức phát hành.</div>
         </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.4s;">
-          <div class="ic-wrap">🌍</div>
-          <div class="num">50+</div>
-          <div class="details">
-            <div class="title">Ngôn ngữ</div>
-            <div class="desc">Hỗ trợ toàn cầu</div>
-          </div>
+        <div class="tl-item">
+          <div class="y">2024</div>
+          <div class="t">Hỗ trợ đa ứng dụng</div>
+          <div class="d">Triển khai tích hợp trên nhiều nền tảng.</div>
         </div>
-        <div class="stat-list-card shimmer-fast glow-card" style="animation-delay: 0.8s;">
-          <div class="ic-wrap">📈</div>
-          <div class="num">100%</div>
-          <div class="details">
-            <div class="title">Hiệu suất</div>
-            <div class="desc">Tối ưu hóa công nghệ</div>
-          </div>
+        <div class="tl-item">
+          <div class="y">2025</div>
+          <div class="t">Tăng tốc xử lý</div>
+          <div class="d">Cải thiện tốc độ và khả năng đồng thời.</div>
         </div>
       </div>
     </div>
   </div>
+
   <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
   <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
   <div class="top-line"></div>
   <span class="scene-num">06</span>
 </div>
 
+<div class="scene centered" id="scene7" data-template-id="T09">
+  <div class="\1" data-layout-ignore style="top:-15%; left:30%; background:var(--accent);"></div>
+  <div class="aurora-glow" style="bottom:-20%; right:10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+  <div class="\1" data-layout-ignore style="top:-10%; left:-5%;">VOICE</div>
+  <span class="y2k-sparkle" style="top:12%; right:12%;"></span>
+  <span class="y2k-sparkle" style="bottom:18%; left:10%;"></span>
+  <span class="y2k-sparkle" style="top:30%; left:80%;"></span>
+
+  <div class="layout">
+    <div class="info-col" style="text-align:center;">
+      <div id="s7-badge" class="badge" style="align-self:center;">🎙️ PHẦN 7 · TƯƠNG LAI</div>
+      <h1 id="s7-title" class="title-xl grad-text">VoxCPM2 mở ra kỷ nguyên mới</h1>
+      <p id="s7-subtitle" class="subtitle">Công cụ giọng nói đột phá</p>
+    </div>
+    <div class="visual-col" style="display:flex; align-items:center; justify-content:center;">
+      <div class="quote-block breath">
+        <p class="quote-text">"VoxCPM2 không chỉ là công nghệ, mà là chìa khóa sáng tạo cho nội dung tương lai."</p>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">07</span>
+</div>
+
 <!-- __SCENES_PLACEHOLDER__ -->
 
+  
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js"></script>
@@ -1415,13 +1367,13 @@ body {
 // The LLM's original timeline script has been stripped server-side so this
 // is the ONLY timeline registered on window.__timelines["main"].
 (function() {
-  var starts    = [0, 22, 41, 59, 77, 95];
-  var durs      = [22, 19, 18, 18, 18, 17];
-  var actualDurs= [20.232, 17.064, 16.752, 16.176, 16.200, 15.048];
-  var narrations= ["Hệ thống VoxCPM2 là một bước tiến đột phá trong công nghệ Text-to-Speech (TTS), cho phép tạo ra giọng nói tự nhiên và biểu cảm mà không cần tới bước phân đoạn token. Điều này rất quan trọng vì nó giúp giảm thiểu độ phức tạp trong việc xử lý ngôn ngữ và làm cho việc tổng hợp giọng nói trở nên dễ dàng và nhanh chóng hơn.", "VoxCPM2 hỗ trợ 30 ngôn ngữ khác nhau và cho phép người dùng tạo ra giọng nói chỉ bằng mô tả ngôn ngữ tự nhiên. Đây là điểm mạnh nổi bật, bởi vì người dùng không cần cung cấp âm thanh tham khảo, giúp tiết kiệm thời gian và công sức trong quá trình tạo giọng nói.", "VoxCPM2 cho phép người dùng nhân bản giọng nói từ một đoạn âm thanh ngắn và tùy chỉnh cảm xúc, tốc độ và biểu hiện. Điều này mang lại khả năng tạo ra những giọng nói rất giống với giọng gốc, đồng thời tạo ra các giọng nói mới dựa trên những đặc điểm đã cho.", "VoxCPM2 cung cấp âm thanh chất lượng studio 48kHz và hỗ trợ phát trực tiếp thời gian thực với tốc độ phản hồi thấp. Điều này rất quan trọng cho các ứng dụng yêu cầu độ chính xác cao và thời gian thực, như trong lĩnh vực trò chuyện tự động và giải trí.", "VoxCPM2 được phát hành mã nguồn mở và sẵn sàng cho sử dụng thương mại, cung cấp cho các nhà phát triển và doanh nghiệp cơ hội tích hợp công nghệ tiên tiến này vào sản phẩm của họ. Điều này không chỉ mở rộng khả năng sáng tạo mà còn giúp cải thiện trải nghiệm người dùng.", "Với sự phát triển không ngừng, VoxCPM2 hứa hẹn sẽ mang lại nhiều cải tiến hơn nữa trong tương lai. Những kế hoạch mở rộng ngôn ngữ và tối ưu hóa công nghệ sẽ giúp VoxCPM2 trở thành lựa chọn hàng đầu cho các ứng dụng TTS trên toàn cầu."];
-  var total     = 112;
+  var starts    = [0, 25, 47, 68, 89, 110, 131];
+  var durs      = [25, 22, 21, 21, 21, 21, 21];
+  var actualDurs= [23.160, 20.232, 19.320, 19.512, 19.512, 19.512, 19.560];
+  var narrations= ["Hệ thống VoxCPM2 là một công nghệ tạo giọng nói không cần tokenizer, giúp sinh ra những bản ghi âm tự nhiên và biểu cảm. Với kiến trúc autoregressive diffusion, VoxCPM2 có thể tạo ra tiếng nói liên tục từ văn bản mà không cần chuyển đổi thành các token riêng lẻ. Điều này mang lại khả năng tổng hợp âm thanh tự nhiên hơn, điều rất quan trọng trong việc nâng cao trải nghiệm người dùng trong các ứng dụng đa ngôn ngữ.", "VoxCPM2 có 2 tỷ tham số và được đào tạo trên hơn 2 triệu giờ âm thanh đa ngôn ngữ. Mô hình này hỗ trợ 30 ngôn ngữ mà không cần gắn thẻ ngôn ngữ khi đầu vào. Điều này cho phép người dùng nhập văn bản trực tiếp và tạo ra âm thanh với chất lượng studio 48kHz, mở ra nhiều cơ hội cho việc phát triển ứng dụng sáng tạo và truyền thông.", "VoxCPM2 cho phép người dùng tạo ra giọng nói mới chỉ bằng sự mô tả bằng ngôn ngữ tự nhiên. Điều này có nghĩa là bạn có thể mô tả giới tính, độ tuổi, và cảm xúc mà không cần có âm thanh mẫu. Tính năng này mở ra khả năng sáng tạo vô hạn cho các nhà sản xuất nội dung, tạo ra những giọng nói độc đáo phù hợp với nhu cầu riêng.", "VoxCPM2 cung cấp tính năng clone giọng nói từ một đoạn âm thanh mẫu ngắn, cho phép điều chỉnh cảm xúc và tốc độ. Bằng cách này, người dùng có thể tạo ra những giọng nói gần gũi và tự nhiên, phù hợp với nội dung mà không mất quá nhiều thời gian. Thực tế, tính năng này có thể được ứng dụng trong nhiều lĩnh vực như quảng cáo hoặc phim hoạt hình.", "VoxCPM2 cho phép đầu vào âm thanh 16kHz và xuất ra âm thanh chất lượng studio 48kHz mà không cần bộ tăng cường bên ngoài. Điều này nhờ vào thiết kế encode/decode không đối xứng của AudioVAE V2. Chất lượng âm thanh cao giúp các sản phẩm âm thanh trở nên sống động và hấp dẫn hơn cho người nghe.", "VoxCPM2 cung cấp API tương thích với OpenAI, cho phép tích hợp dễ dàng vào các ứng dụng khác nhau. Với khả năng xử lý thời gian thực và hỗ trợ nhiều yêu cầu đồng thời, VoxCPM2 là giải pháp lý tưởng cho các ứng dụng yêu cầu sản xuất âm thanh nhanh chóng và hiệu quả. Điều này giúp tiết kiệm thời gian và nguồn lực cho các nhà phát triển.", "VoxCPM2 không chỉ đơn thuần là một hệ thống tạo giọng nói, mà còn mở ra nhiều khả năng sáng tạo cho các nhà phát triển và sản xuất nội dung. Với tính năng không cần tokenizer, khả năng clone giọng nói, và chất lượng âm thanh cao, VoxCPM2 hứa hẹn sẽ là một công cụ mạnh mẽ trong tương lai gần, giúp nâng cao trải nghiệm người dùng và tạo ra nội dung độc đáo."];
+  var total     = 152;
   // Word-level Whisper data. Each entry: [{word,start,end},...] or []
-  var wordData  = [[{"word":"Hệ","start":0.000,"end":0.180},{"word":"thống","start":0.180,"end":0.340},{"word":"VoxCPM2","start":0.340,"end":1.640},{"word":"là","start":1.640,"end":1.900},{"word":"một","start":1.900,"end":2.120},{"word":"bước","start":2.120,"end":2.200},{"word":"tiến","start":2.200,"end":2.420},{"word":"đột","start":2.420,"end":2.620},{"word":"phá","start":2.620,"end":2.800},{"word":"trong","start":2.800,"end":3.080},{"word":"công","start":3.080,"end":3.240},{"word":"nghệ","start":3.240,"end":3.340},{"word":"Text-to-Speech","start":3.340,"end":4.780},{"word":"(TTS),","start":4.780,"end":5.260},{"word":"cho","start":5.260,"end":5.740},{"word":"phép","start":5.740,"end":5.980},{"word":"tạo","start":5.980,"end":6.260},{"word":"ra","start":6.260,"end":6.640},{"word":"giọng","start":6.640,"end":6.840},{"word":"nói","start":6.840,"end":7.080},{"word":"tự","start":7.080,"end":7.380},{"word":"nhiên","start":7.380,"end":7.880},{"word":"và","start":7.880,"end":8.220},{"word":"biểu","start":8.220,"end":8.500},{"word":"cảm","start":8.500,"end":8.760},{"word":"mà","start":8.760,"end":9.200},{"word":"không","start":9.200,"end":9.440},{"word":"cần","start":9.440,"end":9.600},{"word":"tới","start":9.600,"end":9.840},{"word":"bước","start":9.840,"end":10.000},{"word":"phân","start":10.000,"end":10.240},{"word":"đoạn","start":10.240,"end":10.440},{"word":"token.","start":10.440,"end":10.880},{"word":"Điều","start":11.820,"end":11.820},{"word":"này","start":11.820,"end":11.980},{"word":"rất","start":11.980,"end":12.180},{"word":"quan","start":12.180,"end":12.380},{"word":"trọng","start":12.380,"end":12.680},{"word":"vì","start":12.680,"end":13.000},{"word":"nó","start":13.000,"end":13.340},{"word":"giúp","start":13.340,"end":13.400},{"word":"giảm","start":13.400,"end":13.720},{"word":"thiểu","start":13.720,"end":13.980},{"word":"độ","start":13.980,"end":14.140},{"word":"phức","start":14.140,"end":14.400},{"word":"tạp","start":14.400,"end":14.640},{"word":"trong","start":14.640,"end":14.860},{"word":"việc","start":14.860,"end":15.120},{"word":"xử","start":15.120,"end":15.260},{"word":"lý","start":15.260,"end":15.340},{"word":"ngôn","start":15.340,"end":15.560},{"word":"ngữ","start":15.560,"end":15.780},{"word":"và","start":15.960,"end":16.440},{"word":"làm","start":16.440,"end":16.640},{"word":"cho","start":16.640,"end":16.780},{"word":"việc","start":16.780,"end":16.980},{"word":"tổng","start":16.980,"end":17.160},{"word":"hợp","start":17.160,"end":17.280},{"word":"giọng","start":17.280,"end":17.500},{"word":"nói","start":17.500,"end":17.860},{"word":"trở","start":17.860,"end":18.320},{"word":"nên","start":18.320,"end":18.500},{"word":"dễ","start":18.500,"end":18.760},{"word":"dàng","start":18.760,"end":19.000},{"word":"và","start":19.000,"end":19.320},{"word":"nhanh","start":19.320,"end":19.480},{"word":"chóng","start":19.480,"end":19.660},{"word":"hơn.","start":19.660,"end":19.840}],[{"word":"VoxCPM2","start":0.000,"end":1.300},{"word":"hỗ","start":1.300,"end":1.560},{"word":"trợ","start":1.560,"end":1.700},{"word":"30","start":1.700,"end":2.120},{"word":"ngôn","start":2.120,"end":2.200},{"word":"ngữ","start":2.200,"end":2.380},{"word":"khác","start":2.380,"end":2.620},{"word":"nhau","start":2.620,"end":2.900},{"word":"và","start":2.900,"end":3.540},{"word":"cho","start":3.540,"end":3.720},{"word":"phép","start":3.720,"end":3.860},{"word":"người","start":3.860,"end":4.060},{"word":"dùng","start":4.060,"end":4.240},{"word":"tạo","start":4.240,"end":4.500},{"word":"ra","start":4.500,"end":4.920},{"word":"giọng","start":4.920,"end":4.920},{"word":"nói","start":4.920,"end":5.200},{"word":"chỉ","start":5.200,"end":5.560},{"word":"bằng","start":5.560,"end":5.740},{"word":"mô","start":5.740,"end":6.000},{"word":"tả","start":6.000,"end":6.180},{"word":"ngôn","start":6.180,"end":6.560},{"word":"ngữ","start":6.560,"end":6.700},{"word":"tự","start":6.700,"end":6.940},{"word":"nhiên.","start":6.940,"end":7.200},{"word":"Đây","start":8.260,"end":8.320},{"word":"là","start":8.320,"end":8.460},{"word":"điểm","start":8.460,"end":8.580},{"word":"mạnh","start":8.580,"end":8.740},{"word":"nổi","start":8.740,"end":8.960},{"word":"bật,","start":8.960,"end":9.140},{"word":"bởi","start":9.140,"end":9.560},{"word":"vì","start":9.560,"end":9.700},{"word":"người","start":9.700,"end":9.840},{"word":"dùng","start":9.840,"end":10.020},{"word":"không","start":10.020,"end":10.260},{"word":"cần","start":10.260,"end":10.500},{"word":"cung","start":10.500,"end":10.700},{"word":"cấp","start":10.700,"end":10.780},{"word":"âm","start":10.780,"end":10.940},{"word":"thanh","start":10.940,"end":11.160},{"word":"tham","start":11.160,"end":11.320},{"word":"khảo,","start":11.320,"end":11.620},{"word":"giúp","start":12.420,"end":12.420},{"word":"tiết","start":12.420,"end":12.600},{"word":"kiệm","start":12.600,"end":12.840},{"word":"thời","start":12.840,"end":13.020},{"word":"gian","start":13.020,"end":13.220},{"word":"và","start":13.220,"end":13.440},{"word":"công","start":13.440,"end":13.660},{"word":"sức","start":13.660,"end":13.800},{"word":"trong","start":13.800,"end":14.080},{"word":"quá","start":14.080,"end":14.240},{"word":"trình","start":14.240,"end":14.380},{"word":"tạo","start":14.380,"end":14.620},{"word":"giọng","start":14.620,"end":14.800},{"word":"nói.","start":14.800,"end":15.020}],[{"word":"VoxCPM2","start":0.000,"end":1.380},{"word":"cho","start":1.380,"end":1.660},{"word":"phép","start":1.660,"end":1.800},{"word":"người","start":1.800,"end":2.040},{"word":"dùng","start":2.040,"end":2.280},{"word":"nhân","start":2.280,"end":2.660},{"word":"bản","start":2.660,"end":2.860},{"word":"giọng","start":2.860,"end":3.120},{"word":"nói","start":3.120,"end":3.440},{"word":"từ","start":3.440,"end":3.880},{"word":"một","start":3.880,"end":4.040},{"word":"đoạn","start":4.040,"end":4.240},{"word":"âm","start":4.240,"end":4.380},{"word":"thanh","start":4.380,"end":4.680},{"word":"ngắn","start":4.680,"end":4.880},{"word":"và","start":4.880,"end":5.480},{"word":"tùy","start":5.480,"end":5.800},{"word":"chỉnh","start":5.800,"end":6.080},{"word":"cảm","start":6.080,"end":6.340},{"word":"xúc,","start":6.340,"end":6.520},{"word":"tốc","start":7.020,"end":7.020},{"word":"độ","start":7.020,"end":7.200},{"word":"và","start":7.200,"end":7.440},{"word":"biểu","start":7.440,"end":7.620},{"word":"hiện.","start":7.620,"end":8.460},{"word":"Điều","start":8.720,"end":8.720},{"word":"này","start":8.720,"end":9.020},{"word":"mang","start":9.020,"end":9.240},{"word":"lại","start":9.240,"end":9.500},{"word":"khả","start":9.500,"end":9.660},{"word":"năng","start":9.660,"end":9.820},{"word":"tạo","start":9.820,"end":10.040},{"word":"ra","start":10.040,"end":10.260},{"word":"những","start":10.260,"end":10.460},{"word":"giọng","start":10.460,"end":10.560},{"word":"nói","start":10.560,"end":10.900},{"word":"rất","start":10.900,"end":11.380},{"word":"giống","start":11.380,"end":11.560},{"word":"với","start":11.560,"end":11.820},{"word":"giọng","start":11.820,"end":11.980},{"word":"gốc,","start":11.980,"end":12.240},{"word":"đồng","start":12.960,"end":13.120},{"word":"thời","start":13.120,"end":13.360},{"word":"tạo","start":13.360,"end":13.660},{"word":"ra","start":13.660,"end":13.980},{"word":"các","start":13.980,"end":14.220},{"word":"giọng","start":14.220,"end":14.380},{"word":"nói","start":14.380,"end":14.580},{"word":"mới","start":14.580,"end":14.900},{"word":"dựa","start":14.900,"end":15.200},{"word":"trên","start":15.200,"end":15.400},{"word":"những","start":15.400,"end":15.600},{"word":"đặc","start":15.600,"end":15.760},{"word":"điểm","start":15.760,"end":15.980},{"word":"đã","start":15.980,"end":16.220},{"word":"cho.","start":16.220,"end":16.540}],[{"word":"VoxCPM2","start":0.000,"end":1.520},{"word":"cung","start":1.520,"end":1.740},{"word":"cấp","start":1.740,"end":1.880},{"word":"âm","start":1.880,"end":2.040},{"word":"thanh","start":2.040,"end":2.300},{"word":"chất","start":2.300,"end":2.460},{"word":"lượng","start":2.460,"end":2.620},{"word":"studio","start":2.620,"end":3.200},{"word":"48kHz","start":3.200,"end":4.340},{"word":"và","start":4.340,"end":4.780},{"word":"hỗ","start":4.780,"end":4.980},{"word":"trợ","start":4.980,"end":5.160},{"word":"phát","start":5.160,"end":5.380},{"word":"trực","start":5.380,"end":5.580},{"word":"tiếp","start":5.580,"end":5.780},{"word":"thời","start":5.780,"end":5.960},{"word":"gian","start":5.960,"end":6.100},{"word":"thực","start":6.100,"end":6.360},{"word":"với","start":6.360,"end":6.760},{"word":"tốc","start":6.760,"end":6.900},{"word":"độ","start":6.900,"end":7.140},{"word":"phản","start":7.140,"end":7.400},{"word":"hồi","start":7.400,"end":7.580},{"word":"thấp.","start":7.580,"end":8.300},{"word":"Điều","start":8.700,"end":8.700},{"word":"này","start":8.700,"end":8.900},{"word":"rất","start":8.900,"end":9.140},{"word":"quan","start":9.140,"end":9.340},{"word":"trọng","start":9.340,"end":9.640},{"word":"cho","start":9.640,"end":9.800},{"word":"các","start":9.800,"end":9.980},{"word":"ứng","start":9.980,"end":10.060},{"word":"dụng","start":10.060,"end":10.300},{"word":"yêu","start":10.300,"end":10.480},{"word":"cầu","start":10.480,"end":10.600},{"word":"độ","start":10.600,"end":10.800},{"word":"chính","start":10.800,"end":11.020},{"word":"xác","start":11.020,"end":11.200},{"word":"cao","start":11.200,"end":11.560},{"word":"và","start":11.560,"end":12.040},{"word":"thời","start":12.040,"end":12.200},{"word":"gian","start":12.200,"end":12.360},{"word":"thực,","start":12.360,"end":12.620},{"word":"như","start":13.280,"end":13.280},{"word":"trong","start":13.280,"end":13.460},{"word":"lĩnh","start":13.460,"end":13.620},{"word":"vực","start":13.620,"end":13.740},{"word":"trò","start":13.740,"end":14.020},{"word":"chuyện","start":14.020,"end":14.220},{"word":"tự","start":14.220,"end":14.500},{"word":"động","start":14.500,"end":14.680},{"word":"và","start":14.680,"end":14.980},{"word":"giải","start":14.980,"end":15.140},{"word":"trí.","start":15.140,"end":15.380}],[{"word":"VoxCPM2","start":0.000,"end":1.380},{"word":"được","start":1.380,"end":1.660},{"word":"phát","start":1.660,"end":1.780},{"word":"hành","start":1.780,"end":2.000},{"word":"mã","start":2.000,"end":2.220},{"word":"nguồn","start":2.220,"end":2.420},{"word":"mở","start":2.420,"end":2.640},{"word":"và","start":2.640,"end":2.960},{"word":"sẵn","start":2.960,"end":3.140},{"word":"sàng","start":3.140,"end":3.300},{"word":"cho","start":3.300,"end":3.560},{"word":"sử","start":3.560,"end":3.720},{"word":"dụng","start":3.720,"end":3.880},{"word":"thương","start":3.880,"end":4.080},{"word":"mại,","start":4.080,"end":4.300},{"word":"cung","start":4.920,"end":4.960},{"word":"cấp","start":4.960,"end":5.100},{"word":"cho","start":5.100,"end":5.280},{"word":"các","start":5.280,"end":5.420},{"word":"nhà","start":5.420,"end":5.620},{"word":"phát","start":5.620,"end":5.780},{"word":"triển","start":5.780,"end":6.040},{"word":"và","start":6.040,"end":6.260},{"word":"doanh","start":6.260,"end":6.440},{"word":"nghiệp","start":6.440,"end":6.680},{"word":"cơ","start":6.680,"end":6.840},{"word":"hội","start":6.840,"end":7.100},{"word":"tích","start":7.360,"end":7.800},{"word":"hợp","start":7.800,"end":8.020},{"word":"công","start":8.020,"end":8.180},{"word":"nghệ","start":8.180,"end":8.340},{"word":"tiên","start":8.340,"end":8.700},{"word":"tiến","start":8.700,"end":8.840},{"word":"này","start":8.840,"end":9.180},{"word":"vào","start":9.180,"end":9.420},{"word":"sản","start":9.420,"end":9.600},{"word":"phẩm","start":9.600,"end":9.780},{"word":"của","start":9.780,"end":10.020},{"word":"họ.","start":10.020,"end":10.200},{"word":"Điều","start":10.980,"end":10.980},{"word":"này","start":10.980,"end":11.260},{"word":"không","start":11.260,"end":11.440},{"word":"chỉ","start":11.440,"end":11.660},{"word":"mở","start":11.660,"end":11.880},{"word":"rộng","start":11.880,"end":12.060},{"word":"khả","start":12.060,"end":12.260},{"word":"năng","start":12.260,"end":12.380},{"word":"sáng","start":12.380,"end":12.700},{"word":"tạo","start":12.700,"end":12.920},{"word":"mà","start":12.920,"end":13.200},{"word":"còn","start":13.200,"end":13.480},{"word":"giúp","start":13.480,"end":13.620},{"word":"cải","start":13.620,"end":13.800},{"word":"thiện","start":13.800,"end":14.020},{"word":"trải","start":14.020,"end":14.280},{"word":"nghiệm","start":14.280,"end":14.460},{"word":"người","start":14.460,"end":14.680},{"word":"dùng.","start":14.680,"end":14.820}],[{"word":"Với","start":0.000,"end":0.200},{"word":"sự","start":0.200,"end":0.400},{"word":"phát","start":0.400,"end":0.500},{"word":"triển","start":0.500,"end":0.720},{"word":"không","start":0.720,"end":0.980},{"word":"ngừng,","start":0.980,"end":1.180},{"word":"VoxCPM2","start":1.180,"end":2.800},{"word":"hứa","start":2.800,"end":3.080},{"word":"hẹn","start":3.080,"end":3.280},{"word":"sẽ","start":3.280,"end":3.460},{"word":"mang","start":3.460,"end":3.640},{"word":"lại","start":3.640,"end":3.860},{"word":"nhiều","start":3.860,"end":4.080},{"word":"cải","start":4.080,"end":4.260},{"word":"tiến","start":4.260,"end":4.480},{"word":"hơn","start":4.480,"end":4.700},{"word":"nữa","start":4.700,"end":4.980},{"word":"trong","start":4.980,"end":5.160},{"word":"tương","start":5.160,"end":5.340},{"word":"lai.","start":5.340,"end":6.160},{"word":"Những","start":6.440,"end":6.440},{"word":"kế","start":6.440,"end":6.640},{"word":"hoạch","start":6.640,"end":6.820},{"word":"mở","start":6.820,"end":7.100},{"word":"rộng","start":7.100,"end":7.280},{"word":"ngôn","start":7.280,"end":7.480},{"word":"ngữ","start":7.480,"end":7.700},{"word":"và","start":7.700,"end":8.020},{"word":"tối","start":8.020,"end":8.200},{"word":"ưu","start":8.200,"end":8.460},{"word":"hóa","start":8.460,"end":8.600},{"word":"công","start":8.600,"end":8.740},{"word":"nghệ","start":8.740,"end":8.960},{"word":"sẽ","start":8.960,"end":9.440},{"word":"giúp","start":9.440,"end":9.600},{"word":"VoxCPM2","start":9.600,"end":10.900},{"word":"trở","start":10.900,"end":11.080},{"word":"thành","start":11.080,"end":11.260},{"word":"lựa","start":11.260,"end":11.480},{"word":"chọn","start":11.480,"end":11.660},{"word":"hàng","start":11.660,"end":12.060},{"word":"đầu","start":12.060,"end":12.260},{"word":"cho","start":12.260,"end":12.580},{"word":"các","start":12.580,"end":12.800},{"word":"ứng","start":12.800,"end":12.900},{"word":"dụng","start":12.900,"end":13.180},{"word":"TTS","start":13.180,"end":13.840},{"word":"trên","start":13.840,"end":14.280},{"word":"toàn","start":14.280,"end":14.480},{"word":"cầu.","start":14.480,"end":14.660}]];
+  var wordData  = [[{"word":"Hệ","start":0.000,"end":0.400},{"word":"thống","start":0.400,"end":0.640},{"word":"VoxCPM2","start":0.640,"end":1.020},{"word":"là","start":1.020,"end":1.220},{"word":"một","start":1.220,"end":1.460},{"word":"công","start":1.460,"end":1.540},{"word":"nghệ","start":1.540,"end":1.700},{"word":"tạo","start":1.700,"end":1.940},{"word":"giọng","start":1.940,"end":2.140},{"word":"nói","start":2.140,"end":2.320},{"word":"không","start":2.320,"end":2.600},{"word":"cần","start":2.600,"end":2.780},{"word":"tokenizer,","start":2.780,"end":3.920},{"word":"giúp","start":3.920,"end":3.920},{"word":"sinh","start":3.920,"end":4.160},{"word":"ra","start":4.160,"end":4.380},{"word":"những","start":4.380,"end":4.560},{"word":"bản","start":4.560,"end":4.740},{"word":"ghi","start":4.740,"end":4.960},{"word":"âm","start":4.960,"end":5.160},{"word":"tự","start":5.160,"end":5.440},{"word":"nhiên","start":5.440,"end":5.640},{"word":"và","start":5.640,"end":5.860},{"word":"biểu","start":5.860,"end":6.120},{"word":"cảm.","start":6.120,"end":6.560},{"word":"Với","start":7.600,"end":7.600},{"word":"kiến","start":7.600,"end":7.860},{"word":"trúc","start":7.860,"end":8.000},{"word":"autoregressive","start":8.000,"end":8.780},{"word":"diffusion,","start":8.780,"end":9.400},{"word":"VoxCPM2","start":9.400,"end":10.160},{"word":"có","start":10.160,"end":10.340},{"word":"thể","start":10.340,"end":10.480},{"word":"tạo","start":10.480,"end":10.640},{"word":"ra","start":10.640,"end":10.880},{"word":"tiếng","start":10.880,"end":11.060},{"word":"nói","start":11.060,"end":11.220},{"word":"liên","start":11.220,"end":11.420},{"word":"tục","start":11.420,"end":11.540},{"word":"từ","start":11.540,"end":11.780},{"word":"văn","start":11.780,"end":11.940},{"word":"bản","start":11.940,"end":12.120},{"word":"mà","start":12.120,"end":12.400},{"word":"không","start":12.400,"end":12.580},{"word":"cần","start":12.580,"end":12.780},{"word":"chuyển","start":12.780,"end":12.960},{"word":"đổi","start":12.960,"end":13.140},{"word":"thành","start":13.140,"end":13.360},{"word":"các","start":13.360,"end":13.580},{"word":"token","start":13.580,"end":13.880},{"word":"riêng","start":13.880,"end":14.140},{"word":"lẻ.","start":14.140,"end":14.360},{"word":"Điều","start":15.620,"end":15.620},{"word":"này","start":15.620,"end":15.840},{"word":"mang","start":15.840,"end":16.020},{"word":"lại","start":16.020,"end":16.240},{"word":"khả","start":16.240,"end":16.380},{"word":"năng","start":16.380,"end":16.500},{"word":"tổng","start":16.500,"end":16.800},{"word":"hợp","start":16.800,"end":16.940},{"word":"âm","start":16.940,"end":17.140},{"word":"thanh","start":17.140,"end":17.360},{"word":"tự","start":17.360,"end":17.580},{"word":"nhiên","start":17.580,"end":17.740},{"word":"hơn,","start":17.740,"end":17.940},{"word":"điều","start":18.440,"end":18.460},{"word":"rất","start":18.460,"end":18.680},{"word":"quan","start":18.680,"end":18.880},{"word":"trọng","start":18.880,"end":19.100},{"word":"trong","start":19.100,"end":19.300},{"word":"việc","start":19.300,"end":19.520},{"word":"nâng","start":19.520,"end":19.700},{"word":"cao","start":19.700,"end":19.960},{"word":"trải","start":19.960,"end":20.120},{"word":"nghiệm","start":20.120,"end":20.320},{"word":"người","start":20.320,"end":20.560},{"word":"dùng","start":20.560,"end":20.740},{"word":"trong","start":20.740,"end":20.980},{"word":"các","start":20.980,"end":21.220},{"word":"ứng","start":21.220,"end":21.340},{"word":"dụng","start":21.340,"end":21.580},{"word":"đa","start":21.580,"end":21.880},{"word":"ngôn","start":21.880,"end":22.000},{"word":"ngữ.","start":22.000,"end":22.220}],[{"word":"VoxCPM2","start":0.000,"end":0.680},{"word":"có","start":0.680,"end":0.860},{"word":"2","start":0.860,"end":1.080},{"word":"tỷ","start":1.080,"end":1.200},{"word":"tham","start":1.200,"end":1.560},{"word":"số","start":1.560,"end":1.720},{"word":"và","start":1.720,"end":1.940},{"word":"được","start":1.940,"end":2.120},{"word":"đào","start":2.120,"end":2.280},{"word":"tạo","start":2.280,"end":2.500},{"word":"trên","start":2.500,"end":2.740},{"word":"hơn","start":2.740,"end":2.920},{"word":"2","start":2.920,"end":3.200},{"word":"triệu","start":3.200,"end":3.380},{"word":"giờ","start":3.380,"end":3.640},{"word":"âm","start":3.640,"end":3.860},{"word":"thanh","start":3.860,"end":4.020},{"word":"đa","start":4.020,"end":4.280},{"word":"ngôn","start":4.280,"end":4.420},{"word":"ngữ.","start":4.420,"end":4.620},{"word":"Mô","start":6.020,"end":6.020},{"word":"hình","start":6.020,"end":6.120},{"word":"này","start":6.120,"end":6.380},{"word":"hỗ","start":6.380,"end":6.600},{"word":"trợ","start":6.600,"end":6.700},{"word":"30","start":6.700,"end":7.160},{"word":"ngôn","start":7.160,"end":7.340},{"word":"ngữ","start":7.340,"end":7.560},{"word":"mà","start":7.560,"end":7.860},{"word":"không","start":7.860,"end":8.060},{"word":"cần","start":8.060,"end":8.240},{"word":"gắn","start":8.240,"end":8.420},{"word":"thẻ","start":8.420,"end":8.580},{"word":"ngôn","start":8.580,"end":8.880},{"word":"ngữ","start":8.880,"end":9.060},{"word":"khi","start":9.060,"end":9.280},{"word":"đầu","start":9.280,"end":9.460},{"word":"vào.","start":9.460,"end":9.700},{"word":"Điều","start":10.820,"end":10.820},{"word":"này","start":10.820,"end":11.040},{"word":"cho","start":11.040,"end":11.200},{"word":"phép","start":11.200,"end":11.340},{"word":"người","start":11.340,"end":11.560},{"word":"dùng","start":11.560,"end":11.740},{"word":"nhập","start":11.740,"end":11.940},{"word":"văn","start":11.940,"end":12.140},{"word":"bản","start":12.140,"end":12.300},{"word":"trực","start":12.300,"end":12.580},{"word":"tiếp","start":12.580,"end":12.780},{"word":"và","start":12.780,"end":13.080},{"word":"tạo","start":13.080,"end":13.200},{"word":"ra","start":13.200,"end":13.560},{"word":"âm","start":13.560,"end":13.580},{"word":"thanh","start":13.580,"end":13.800},{"word":"với","start":13.800,"end":14.000},{"word":"chất","start":14.000,"end":14.120},{"word":"lượng","start":14.120,"end":14.300},{"word":"studio","start":14.300,"end":15.350},{"word":"48kHz,","start":15.350,"end":16.400},{"word":"mở","start":16.400,"end":16.400},{"word":"ra","start":16.400,"end":16.620},{"word":"nhiều","start":16.620,"end":16.800},{"word":"cơ","start":16.800,"end":16.980},{"word":"hội","start":16.980,"end":17.120},{"word":"cho","start":17.120,"end":17.280},{"word":"việc","start":17.280,"end":17.480},{"word":"phát","start":17.480,"end":17.620},{"word":"triển","start":17.620,"end":17.840},{"word":"ứng","start":17.840,"end":18.080},{"word":"dụng","start":18.080,"end":18.340},{"word":"sáng","start":18.340,"end":18.600},{"word":"tạo","start":18.600,"end":18.780},{"word":"và","start":18.780,"end":19.020},{"word":"truyền","start":19.020,"end":19.200},{"word":"thông.","start":19.200,"end":19.320}],[{"word":"VoxCPM2","start":0.000,"end":0.660},{"word":"cho","start":0.660,"end":0.880},{"word":"phép","start":0.880,"end":1.020},{"word":"người","start":1.020,"end":1.280},{"word":"dùng","start":1.280,"end":1.480},{"word":"tạo","start":1.480,"end":1.640},{"word":"ra","start":1.640,"end":2.040},{"word":"giọng","start":2.040,"end":2.040},{"word":"nói","start":2.040,"end":2.240},{"word":"mới","start":2.240,"end":2.480},{"word":"chỉ","start":2.480,"end":2.680},{"word":"bằng","start":2.680,"end":2.860},{"word":"sự","start":2.860,"end":3.120},{"word":"mô","start":3.120,"end":3.300},{"word":"tả","start":3.300,"end":3.480},{"word":"bằng","start":3.480,"end":3.800},{"word":"ngôn","start":3.800,"end":4.020},{"word":"ngữ","start":4.020,"end":4.160},{"word":"tự","start":4.160,"end":4.480},{"word":"nhiên.","start":4.480,"end":4.700},{"word":"Điều","start":5.880,"end":5.880},{"word":"này","start":5.880,"end":6.060},{"word":"có","start":6.060,"end":6.240},{"word":"nghĩa","start":6.240,"end":6.480},{"word":"là","start":6.480,"end":6.600},{"word":"bạn","start":6.600,"end":6.720},{"word":"có","start":6.720,"end":6.900},{"word":"thể","start":6.900,"end":7.020},{"word":"mô","start":7.020,"end":7.260},{"word":"tả","start":7.260,"end":7.400},{"word":"giới","start":7.400,"end":7.700},{"word":"tính,","start":7.700,"end":7.840},{"word":"độ","start":8.360,"end":8.420},{"word":"tuổi,","start":8.420,"end":8.680},{"word":"và","start":8.960,"end":9.480},{"word":"cảm","start":9.480,"end":9.480},{"word":"xúc","start":9.480,"end":9.640},{"word":"mà","start":9.640,"end":10.000},{"word":"không","start":10.000,"end":10.180},{"word":"cần","start":10.180,"end":10.360},{"word":"có","start":10.360,"end":10.620},{"word":"âm","start":10.620,"end":10.740},{"word":"thanh","start":10.740,"end":11.080},{"word":"mẫu.","start":11.080,"end":11.240},{"word":"Tính","start":12.340,"end":12.340},{"word":"năng","start":12.340,"end":12.480},{"word":"này","start":12.480,"end":12.740},{"word":"mở","start":12.740,"end":12.900},{"word":"ra","start":12.900,"end":13.120},{"word":"khả","start":13.120,"end":13.240},{"word":"năng","start":13.240,"end":13.400},{"word":"sáng","start":13.400,"end":13.720},{"word":"tạo","start":13.720,"end":13.900},{"word":"vô","start":13.900,"end":14.160},{"word":"hạn","start":14.160,"end":14.280},{"word":"cho","start":14.280,"end":14.480},{"word":"các","start":14.480,"end":14.660},{"word":"nhà","start":14.660,"end":14.860},{"word":"sản","start":14.860,"end":15.020},{"word":"xuất","start":15.020,"end":15.160},{"word":"nội","start":15.160,"end":15.380},{"word":"dung,","start":15.380,"end":15.520},{"word":"tạo","start":16.080,"end":16.080},{"word":"ra","start":16.080,"end":16.300},{"word":"những","start":16.300,"end":16.540},{"word":"giọng","start":16.540,"end":16.660},{"word":"nói","start":16.660,"end":16.840},{"word":"độc","start":16.840,"end":17.100},{"word":"đáo","start":17.100,"end":17.220},{"word":"phù","start":17.220,"end":17.500},{"word":"hợp","start":17.500,"end":17.620},{"word":"với","start":17.620,"end":17.900},{"word":"nhu","start":17.900,"end":18.020},{"word":"cầu","start":18.020,"end":18.180},{"word":"riêng.","start":18.180,"end":18.420}],[{"word":"VoxCPM2","start":0.000,"end":0.760},{"word":"cung","start":0.760,"end":0.940},{"word":"cấp","start":0.940,"end":1.060},{"word":"tính","start":1.060,"end":1.300},{"word":"năng","start":1.300,"end":1.480},{"word":"clone","start":1.480,"end":1.780},{"word":"giọng","start":1.780,"end":1.980},{"word":"nói","start":1.980,"end":2.200},{"word":"từ","start":2.200,"end":2.440},{"word":"một","start":2.440,"end":2.680},{"word":"đoạn","start":2.680,"end":2.840},{"word":"âm","start":2.840,"end":3.040},{"word":"thanh","start":3.040,"end":3.280},{"word":"mẫu","start":3.280,"end":3.460},{"word":"ngắn,","start":3.460,"end":3.660},{"word":"cho","start":4.080,"end":4.200},{"word":"phép","start":4.200,"end":4.400},{"word":"điều","start":4.400,"end":4.660},{"word":"chỉnh","start":4.660,"end":4.920},{"word":"cảm","start":4.920,"end":5.120},{"word":"xúc","start":5.120,"end":5.280},{"word":"và","start":5.280,"end":5.560},{"word":"tốc","start":5.560,"end":5.700},{"word":"độ.","start":5.700,"end":5.900},{"word":"Bằng","start":7.080,"end":7.080},{"word":"cách","start":7.080,"end":7.240},{"word":"này,","start":7.240,"end":7.520},{"word":"người","start":7.900,"end":7.960},{"word":"dùng","start":7.960,"end":8.080},{"word":"có","start":8.080,"end":8.260},{"word":"thể","start":8.260,"end":8.360},{"word":"tạo","start":8.360,"end":8.540},{"word":"ra","start":8.540,"end":8.760},{"word":"những","start":8.760,"end":9.000},{"word":"giọng","start":9.000,"end":9.140},{"word":"nói","start":9.140,"end":9.320},{"word":"gần","start":9.320,"end":9.580},{"word":"gũi","start":9.580,"end":9.800},{"word":"và","start":9.800,"end":10.000},{"word":"tự","start":10.000,"end":10.200},{"word":"nhiên,","start":10.200,"end":10.380},{"word":"phù","start":10.940,"end":10.960},{"word":"hợp","start":10.960,"end":11.120},{"word":"với","start":11.120,"end":11.340},{"word":"nội","start":11.340,"end":11.480},{"word":"dung","start":11.480,"end":11.640},{"word":"mà","start":11.640,"end":12.020},{"word":"không","start":12.020,"end":12.240},{"word":"mất","start":12.240,"end":12.340},{"word":"quá","start":12.340,"end":12.580},{"word":"nhiều","start":12.580,"end":12.820},{"word":"thời","start":12.820,"end":12.980},{"word":"gian.","start":12.980,"end":13.140},{"word":"Thực","start":14.360,"end":14.360},{"word":"tế,","start":14.360,"end":14.560},{"word":"tính","start":15.060,"end":15.060},{"word":"năng","start":15.060,"end":15.180},{"word":"này","start":15.180,"end":15.400},{"word":"có","start":15.400,"end":15.580},{"word":"thể","start":15.580,"end":15.680},{"word":"được","start":15.680,"end":16.000},{"word":"ứng","start":16.000,"end":16.060},{"word":"dụng","start":16.060,"end":16.300},{"word":"trong","start":16.300,"end":16.520},{"word":"nhiều","start":16.520,"end":16.720},{"word":"lĩnh","start":16.720,"end":16.900},{"word":"vực","start":16.900,"end":17.040},{"word":"như","start":17.040,"end":17.360},{"word":"quảng","start":17.360,"end":17.580},{"word":"cáo","start":17.580,"end":17.820},{"word":"hoặc","start":17.820,"end":18.080},{"word":"phim","start":18.080,"end":18.260},{"word":"hoạt","start":18.260,"end":18.480},{"word":"hình.","start":18.480,"end":18.620}],[{"word":"VoxCPM2","start":0.000,"end":0.680},{"word":"cho","start":0.680,"end":0.860},{"word":"phép","start":0.860,"end":1.040},{"word":"đầu","start":1.040,"end":1.220},{"word":"vào","start":1.220,"end":1.460},{"word":"âm","start":1.460,"end":1.620},{"word":"thanh","start":1.620,"end":1.740},{"word":"16kHz","start":1.740,"end":2.580},{"word":"và","start":2.580,"end":3.020},{"word":"xuất","start":3.020,"end":3.200},{"word":"ra","start":3.200,"end":3.420},{"word":"âm","start":3.420,"end":3.580},{"word":"thanh","start":3.580,"end":3.780},{"word":"chất","start":3.780,"end":3.960},{"word":"lượng","start":3.960,"end":4.120},{"word":"studio","start":4.120,"end":4.720},{"word":"48kHz","start":4.720,"end":6.160},{"word":"mà","start":6.160,"end":6.280},{"word":"không","start":6.280,"end":6.500},{"word":"cần","start":6.500,"end":6.680},{"word":"bộ","start":6.680,"end":6.920},{"word":"tăng","start":6.920,"end":7.060},{"word":"cường","start":7.060,"end":7.280},{"word":"bên","start":7.280,"end":7.540},{"word":"ngoài.","start":7.540,"end":7.720},{"word":"Điều","start":8.920,"end":8.920},{"word":"này","start":8.920,"end":9.140},{"word":"nhờ","start":9.140,"end":9.320},{"word":"vào","start":9.320,"end":9.540},{"word":"thiết","start":9.540,"end":9.720},{"word":"kế","start":9.720,"end":9.840},{"word":"encode/decode","start":9.840,"end":11.160},{"word":"không","start":11.160,"end":11.480},{"word":"đối","start":11.480,"end":11.660},{"word":"xứng","start":11.660,"end":11.820},{"word":"của","start":11.820,"end":12.160},{"word":"AudioVAE","start":12.160,"end":12.720},{"word":"V2.","start":12.720,"end":13.280},{"word":"Chất","start":14.380,"end":14.380},{"word":"lượng","start":14.380,"end":14.580},{"word":"âm","start":14.580,"end":14.780},{"word":"thanh","start":14.780,"end":14.980},{"word":"cao","start":14.980,"end":15.200},{"word":"giúp","start":15.200,"end":15.340},{"word":"các","start":15.340,"end":15.580},{"word":"sản","start":15.580,"end":15.740},{"word":"phẩm","start":15.740,"end":15.940},{"word":"âm","start":15.940,"end":16.160},{"word":"thanh","start":16.160,"end":16.340},{"word":"trở","start":16.340,"end":16.580},{"word":"nên","start":16.580,"end":16.760},{"word":"sống","start":16.760,"end":17.020},{"word":"động","start":17.020,"end":17.200},{"word":"và","start":17.200,"end":17.460},{"word":"hấp","start":17.460,"end":17.600},{"word":"dẫn","start":17.600,"end":17.800},{"word":"hơn","start":17.800,"end":18.060},{"word":"cho","start":18.060,"end":18.240},{"word":"người","start":18.240,"end":18.440},{"word":"nghe.","start":18.440,"end":18.620}],[{"word":"VoxCPM2","start":0.000,"end":0.680},{"word":"cung","start":0.680,"end":0.900},{"word":"cấp","start":0.900,"end":1.020},{"word":"API","start":1.020,"end":1.580},{"word":"tương","start":1.580,"end":1.880},{"word":"thích","start":1.880,"end":2.000},{"word":"với","start":2.000,"end":2.300},{"word":"OpenAI,","start":2.300,"end":3.420},{"word":"cho","start":3.420,"end":3.440},{"word":"phép","start":3.440,"end":3.680},{"word":"tích","start":3.680,"end":3.860},{"word":"hợp","start":3.860,"end":4.080},{"word":"dễ","start":4.080,"end":4.300},{"word":"dàng","start":4.300,"end":4.480},{"word":"vào","start":4.480,"end":4.700},{"word":"các","start":4.700,"end":5.020},{"word":"ứng","start":5.020,"end":5.060},{"word":"dụng","start":5.060,"end":5.240},{"word":"khác","start":5.240,"end":5.520},{"word":"nhau.","start":5.520,"end":6.000},{"word":"Với","start":6.900,"end":6.900},{"word":"khả","start":6.900,"end":7.100},{"word":"năng","start":7.100,"end":7.240},{"word":"xử","start":7.240,"end":7.460},{"word":"lý","start":7.460,"end":7.600},{"word":"thời","start":7.600,"end":7.820},{"word":"gian","start":7.820,"end":8.000},{"word":"thực","start":8.000,"end":8.240},{"word":"và","start":8.240,"end":8.400},{"word":"hỗ","start":8.400,"end":8.580},{"word":"trợ","start":8.580,"end":8.740},{"word":"nhiều","start":8.740,"end":9.060},{"word":"yêu","start":9.060,"end":9.280},{"word":"cầu","start":9.280,"end":9.360},{"word":"đồng","start":9.360,"end":9.600},{"word":"thời,","start":9.600,"end":9.780},{"word":"VoxCPM2","start":9.780,"end":10.540},{"word":"là","start":10.540,"end":10.740},{"word":"giải","start":10.740,"end":10.860},{"word":"pháp","start":10.860,"end":11.040},{"word":"lý","start":11.040,"end":11.220},{"word":"tưởng","start":11.220,"end":11.440},{"word":"cho","start":11.440,"end":11.660},{"word":"các","start":11.660,"end":11.880},{"word":"ứng","start":11.880,"end":12.000},{"word":"dụng","start":12.000,"end":12.240},{"word":"yêu","start":12.240,"end":12.480},{"word":"cầu","start":12.480,"end":12.600},{"word":"sản","start":12.600,"end":12.880},{"word":"xuất","start":12.880,"end":13.040},{"word":"âm","start":13.040,"end":13.240},{"word":"thanh","start":13.240,"end":13.460},{"word":"nhanh","start":13.460,"end":13.660},{"word":"chóng","start":13.660,"end":13.860},{"word":"và","start":13.860,"end":14.100},{"word":"hiệu","start":14.100,"end":14.260},{"word":"quả.","start":14.260,"end":14.520},{"word":"Điều","start":15.740,"end":15.740},{"word":"này","start":15.740,"end":15.940},{"word":"giúp","start":15.940,"end":16.140},{"word":"tiết","start":16.140,"end":16.320},{"word":"kiệm","start":16.320,"end":16.540},{"word":"thời","start":16.540,"end":16.740},{"word":"gian","start":16.740,"end":16.940},{"word":"và","start":16.940,"end":17.220},{"word":"nguồn","start":17.220,"end":17.420},{"word":"lực","start":17.420,"end":17.560},{"word":"cho","start":17.560,"end":17.780},{"word":"các","start":17.780,"end":17.960},{"word":"nhà","start":17.960,"end":18.140},{"word":"phát","start":18.140,"end":18.320},{"word":"triển.","start":18.320,"end":18.540}],[{"word":"VoxCPM2","start":0.000,"end":0.640},{"word":"không","start":0.640,"end":0.880},{"word":"chỉ","start":0.880,"end":1.040},{"word":"đơn","start":1.040,"end":1.220},{"word":"thuần","start":1.220,"end":1.400},{"word":"là","start":1.400,"end":1.660},{"word":"một","start":1.660,"end":1.900},{"word":"hệ","start":1.900,"end":1.960},{"word":"thống","start":1.960,"end":2.120},{"word":"tạo","start":2.120,"end":2.340},{"word":"giọng","start":2.340,"end":2.540},{"word":"nói,","start":2.540,"end":2.800},{"word":"mà","start":3.160,"end":3.280},{"word":"còn","start":3.280,"end":3.500},{"word":"mở","start":3.500,"end":3.620},{"word":"ra","start":3.620,"end":3.880},{"word":"nhiều","start":3.880,"end":4.080},{"word":"khả","start":4.080,"end":4.260},{"word":"năng","start":4.260,"end":4.360},{"word":"sáng","start":4.360,"end":4.660},{"word":"tạo","start":4.660,"end":4.880},{"word":"cho","start":4.880,"end":5.060},{"word":"các","start":5.060,"end":5.240},{"word":"nhà","start":5.240,"end":5.420},{"word":"phát","start":5.420,"end":5.580},{"word":"triển","start":5.580,"end":5.800},{"word":"và","start":5.800,"end":6.100},{"word":"sản","start":6.100,"end":6.240},{"word":"xuất","start":6.240,"end":6.400},{"word":"nội","start":6.400,"end":6.620},{"word":"dung.","start":6.620,"end":6.760},{"word":"Với","start":8.020,"end":8.020},{"word":"tính","start":8.020,"end":8.260},{"word":"năng","start":8.260,"end":8.440},{"word":"không","start":8.440,"end":8.720},{"word":"cần","start":8.720,"end":8.860},{"word":"tokenizer,","start":8.860,"end":10.060},{"word":"khả","start":10.060,"end":10.060},{"word":"năng","start":10.060,"end":10.180},{"word":"clone","start":10.180,"end":10.500},{"word":"giọng","start":10.500,"end":10.720},{"word":"nói,","start":10.720,"end":10.960},{"word":"và","start":11.300,"end":11.560},{"word":"chất","start":11.560,"end":11.620},{"word":"lượng","start":11.620,"end":11.840},{"word":"âm","start":11.840,"end":12.020},{"word":"thanh","start":12.020,"end":12.320},{"word":"cao,","start":12.320,"end":12.440},{"word":"VoxCPM2","start":12.440,"end":13.320},{"word":"hứa","start":13.320,"end":13.360},{"word":"hẹn","start":13.360,"end":13.600},{"word":"sẽ","start":13.600,"end":13.740},{"word":"là","start":13.740,"end":13.880},{"word":"một","start":13.880,"end":14.140},{"word":"công","start":14.140,"end":14.200},{"word":"cụ","start":14.200,"end":14.280},{"word":"mạnh","start":14.280,"end":14.500},{"word":"mẽ","start":14.500,"end":14.720},{"word":"trong","start":14.720,"end":14.960},{"word":"tương","start":14.960,"end":15.100},{"word":"lai","start":15.100,"end":15.360},{"word":"gần,","start":15.360,"end":15.560},{"word":"giúp","start":16.040,"end":16.040},{"word":"nâng","start":16.040,"end":16.220},{"word":"cao","start":16.220,"end":16.520},{"word":"trải","start":16.520,"end":16.660},{"word":"nghiệm","start":16.660,"end":16.880},{"word":"người","start":16.880,"end":17.140},{"word":"dùng","start":17.140,"end":17.280},{"word":"và","start":17.280,"end":17.560},{"word":"tạo","start":17.560,"end":17.660},{"word":"ra","start":17.660,"end":17.920},{"word":"nội","start":17.920,"end":18.060},{"word":"dung","start":18.060,"end":18.220},{"word":"độc","start":18.220,"end":18.480},{"word":"đáo.","start":18.480,"end":18.640}]];
   var WLINE     = 4; // words per subtitle line
 
   function backspaceWord(tl, el, word, startTime, cps) {

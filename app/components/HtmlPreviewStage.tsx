@@ -260,7 +260,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
     setGenError(null);
 
     try {
-      const res = await fetch(`${API}/gen-scene-one`, {
+      const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
+      const endpoint = isLocal ? `${API}/gen-scene-one` : `/api/proxy/gen-scene-one`;
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
