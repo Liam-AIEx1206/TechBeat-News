@@ -1,0 +1,71 @@
+<div class="scene data" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .diff-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 30px;
+      background: #0d0e15;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      font-family: 'Courier New', Courier, monospace;
+      width: 100%;
+    }
+    #scene{{SCENE_NUM}} .diff-pane {
+      padding: 20px;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 1.15rem;
+    }
+    #scene{{SCENE_NUM}} .diff-pane.old {
+      background: rgba(239, 68, 68, 0.05);
+      border-left: 4px solid #ef4444;
+    }
+    #scene{{SCENE_NUM}} .diff-pane.new {
+      background: rgba(16, 185, 129, 0.05);
+      border-left: 4px solid #10b981;
+    }
+    #scene{{SCENE_NUM}} .diff-label {
+      font-size: 1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+    }
+    #scene{{SCENE_NUM}} .diff-pane.old .diff-label { color: #ef4444; }
+    #scene{{SCENE_NUM}} .diff-pane.new .diff-label { color: #10b981; }
+    #scene{{SCENE_NUM}} .diff-line {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    #scene{{SCENE_NUM}} .diff-line.del { color: #f87171; }
+    #scene{{SCENE_NUM}} .diff-line.add { color: #34d399; }
+  </style>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="visual-col">
+      <div class="diff-container">
+        <div class="diff-pane old">
+          <div class="diff-label">- {{CODE_COMMENT}}</div>
+          <div class="diff-line del">{{CODE_VAL_1}}</div>
+        </div>
+        <div class="diff-pane new">
+          <div class="diff-label">+ {{CODE_COMMENT_2}}</div>
+          <div class="diff-line add">{{CODE_VAL_2}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

@@ -1,0 +1,55 @@
+<div class="scene split" id="scene{{SCENE_NUM}}">
+  <div class="animated-grid"></div>
+  <div class="float-orb-md" style="top:-10%; left:40%; background:var(--accent);"></div>
+  <div class="aurora-glow" style="bottom:-15%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+  <div class="ghost-text" style="top:-10%; right:-5%;">{{GHOST_WORD}}</div>
+  <span class="y2k-sparkle" style="top:12%; left:48%;"></span>
+  <span class="y2k-sparkle" style="bottom:15%; right:8%;"></span>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+      <p id="s{{SCENE_NUM}}-desc" class="body-text">{{DESC}}</p>
+    </div>
+    <div class="visual-col">
+      <div class="agent-grid">
+        <div class="agent-card glow-card">
+          <div class="header-wrap">
+            <span class="icon">{{AGENT_1_ICON}}</span>
+            <div class="role">{{AGENT_1_ROLE}}</div>
+          </div>
+          <div class="desc">{{AGENT_1_DESC}}</div>
+        </div>
+        <div class="agent-card glow-card" style="animation-delay: 0.3s;">
+          <div class="header-wrap">
+            <span class="icon">{{AGENT_2_ICON}}</span>
+            <div class="role">{{AGENT_2_ROLE}}</div>
+          </div>
+          <div class="desc">{{AGENT_2_DESC}}</div>
+        </div>
+        <div class="agent-card glow-card" style="animation-delay: 0.6s;">
+          <div class="header-wrap">
+            <span class="icon">{{AGENT_3_ICON}}</span>
+            <div class="role">{{AGENT_3_ROLE}}</div>
+          </div>
+          <div class="desc">{{AGENT_3_DESC}}</div>
+        </div>
+        <div class="agent-card glow-card" style="animation-delay: 0.9s;">
+          <div class="header-wrap">
+            <span class="icon">{{AGENT_4_ICON}}</span>
+            <div class="role">{{AGENT_4_ROLE}}</div>
+          </div>
+          <div class="desc">{{AGENT_4_DESC}}</div>
+        </div>
+        <div class="agent-grid-center-pill">{{CENTER_PILL_TEXT}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

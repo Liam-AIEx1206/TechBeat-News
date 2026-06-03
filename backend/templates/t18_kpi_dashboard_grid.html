@@ -1,0 +1,93 @@
+<div class="scene custom" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .bento-dashboard {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      height: 480px;
+    }
+    #scene{{SCENE_NUM}} .bento-box {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    #scene{{SCENE_NUM}} .bento-box:hover {
+      border-color: var(--accent2);
+      transform: translateY(-2px);
+    }
+    #scene{{SCENE_NUM}} .bento-box.hero-box {
+      grid-row: span 2;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border-left: 4px solid var(--accent);
+    }
+    #scene{{SCENE_NUM}} .bento-val {
+      font-size: 4rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    #scene{{SCENE_NUM}} .bento-box.hero-box .bento-val {
+      font-size: 6.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #scene{{SCENE_NUM}} .bento-lbl {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    #scene{{SCENE_NUM}} .bento-desc {
+      font-size: 1.2rem;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+  </style>
+
+  <div class="layout" style="padding-top: 80px; gap: 32px;">
+    <div class="info-col" style="align-items: center; text-align: center;">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem; margin-top: -8px;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="bento-dashboard">
+      <div class="bento-box hero-box">
+        <div class="bento-val">{{MEGA_NUMBER}}</div>
+        <div>
+          <div class="bento-lbl">{{STAT_1_TITLE}}</div>
+          <p class="bento-desc" style="margin-top: 10px;">{{DESC}}</p>
+        </div>
+      </div>
+      <div class="bento-box" style="border-top: 4px solid var(--accent2);">
+        <div class="bento-val" style="color: var(--accent2);">{{STAT_NUMBER}}%</div>
+        <div class="bento-lbl">{{STAT_2_TITLE}}</div>
+      </div>
+      <div class="bento-box" style="border-top: 4px solid var(--accent3);">
+        <div class="bento-val" style="color: var(--accent3);">{{STAT_1_NUM}}</div>
+        <div class="bento-lbl">{{STAT_3_TITLE}}</div>
+      </div>
+      <div class="bento-box" style="grid-column: span 2; display: flex; flex-direction: row; align-items: center; gap: 20px; justify-content: flex-start;">
+        <div class="bento-val" style="margin-bottom: 0; font-size: 3rem; color: var(--accent2);">{{STAT_2_NUM}}</div>
+        <div class="bento-desc">Hiệu suất và độ trễ được tối ưu hóa toàn diện</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

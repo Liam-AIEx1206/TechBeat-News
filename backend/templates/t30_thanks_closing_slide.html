@@ -1,0 +1,57 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .thanks-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      margin-top: 40px;
+    }
+    #scene{{SCENE_NUM}} .thanks-title {
+      font-size: 7.5rem;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 40px var(--glow));
+      animation: floating 6s ease-in-out infinite;
+      letter-spacing: -0.02em;
+    }
+    #scene{{SCENE_NUM}} .thanks-subtitle {
+      font-size: 2.2rem;
+      color: var(--accent2);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    #scene{{SCENE_NUM}} .thanks-brand {
+      font-size: 1.5rem;
+      color: var(--text2);
+      font-weight: 600;
+    }
+    #scene{{SCENE_NUM}} .thanks-meta {
+      font-size: 1.25rem;
+      color: var(--accent3);
+      border: 1px solid rgba(255,255,255,0.05);
+      background: var(--surface);
+      padding: 10px 24px;
+      border-radius: 99px;
+      letter-spacing: 0.05em;
+    }
+  </style>
+
+  <div class="layout" style="padding-top: 120px;">
+    <div class="thanks-box">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BRAND_NAME}}</div>
+      <div class="thanks-title">{{TITLE}}</div>
+      <div class="thanks-subtitle">{{SUBTITLE}}</div>
+      <div class="thanks-meta">✉ {{META_INFO}}</div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

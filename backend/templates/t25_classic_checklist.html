@@ -1,0 +1,72 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .checklist-box {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 24px;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+      backdrop-filter: blur(15px);
+      text-align: left;
+    }
+    #scene{{SCENE_NUM}} .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 1.45rem;
+      color: var(--text1);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      padding-bottom: 16px;
+    }
+    #scene{{SCENE_NUM}} .checklist-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    #scene{{SCENE_NUM}} .check-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid #10b981;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.1rem;
+    }
+  </style>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem; margin-top: -8px;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="checklist-box">
+      <div class="checklist-item">
+        <div class="check-icon">✓</div>
+        <span>{{BULLET_1}}</span>
+      </div>
+      <div class="checklist-item">
+        <div class="check-icon">✓</div>
+        <span>{{BULLET_2}}</span>
+      </div>
+      <div class="checklist-item">
+        <div class="check-icon">✓</div>
+        <span>{{BULLET_3}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

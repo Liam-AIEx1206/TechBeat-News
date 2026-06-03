@@ -28,9 +28,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 # Cài đặt Font Be Vietnam Pro để render phụ đề tiếng Việt chuẩn đẹp
 RUN mkdir -p /usr/share/fonts/truetype/be-vietnam-pro \
-    && curl -L -o /tmp/be-vietnam-pro.zip "https://fonts.google.com/download?family=Be%20Vietnam%20Pro" \
-    && unzip /tmp/be-vietnam-pro.zip -d /usr/share/fonts/truetype/be-vietnam-pro \
-    && rm /tmp/be-vietnam-pro.zip \
+    && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Regular.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-Regular.ttf" \
+    && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Medium.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-Medium.ttf" \
+    && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-SemiBold.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-SemiBold.ttf" \
+    && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Bold.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-Bold.ttf" \
     && fc-cache -f -v
 
 # Thiết lập thư mục làm việc
@@ -47,9 +48,9 @@ RUN mkdir -p /ms-playwright \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt hyperframes package globally để cache npx và chạy thử doctor để test môi trường
-RUN npm install -g hyperframes@0.6.20 \
-    && hyperframes doctor || true
+# Cài đặt hyperframes package locally trong /app để tránh lỗi global hoisting của npm
+RUN npm init -y && npm install hyperframes@0.6.20 \
+    && npx hyperframes doctor || true
 
 # Copy toàn bộ code backend vào container
 COPY . .

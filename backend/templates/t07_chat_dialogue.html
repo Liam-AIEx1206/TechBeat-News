@@ -1,0 +1,34 @@
+<div class="scene split" id="scene{{SCENE_NUM}}">
+  <div class="float-orb-md" style="top:-10%; right:-5%; background:var(--accent2);"></div>
+  <div class="aurora-glow" style="bottom:-15%; left:-10%; background:radial-gradient(circle, var(--accent), transparent);"></div>
+  <div class="ghost-text" style="top:-10%; right:-5%;">{{GHOST_WORD}}</div>
+  <span class="y2k-sparkle" style="top:15%; left:48%;"></span>
+  <span class="y2k-sparkle" style="bottom:12%; right:10%;"></span>
+
+  <div class="layout">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+      <p id="s{{SCENE_NUM}}-desc" class="body-text">{{DESC}}</p>
+    </div>
+    <div class="visual-col">
+      <div class="chat-box breath">
+        <div class="chat-bubble user">
+          <div class="sender-tag">{{USER_LABEL}}</div>
+          {{CHAT_USER_MSG}}
+        </div>
+        <div class="chat-bubble ai">
+          <div class="sender-tag">{{AI_LABEL}}</div>
+          {{CHAT_AI_MSG}}
+        </div>
+        <div class="chat-footer-pill">{{CHAT_FOOTER}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

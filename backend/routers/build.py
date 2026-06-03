@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import re
+import shutil
 from pathlib import Path
 
 # Tự động dọn dẹp các biến môi trường proxy lỗi/placeholder để tránh làm hỏng kết nối của các thư viện (httpx, aiohttp, requests)
@@ -13,7 +14,7 @@ for var in ["HTTP_PROXY", "HTTPS_PROXY", "EDGE_TTS_PROXY", "http_proxy", "https_
         os.environ.pop(var, None)
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -1128,7 +1129,7 @@ def patch_html_timing(
   var total     = {total};
   // Word-level Whisper data. Each entry: [{{word,start,end}},...] or []
   var wordData  = {word_data_js};
-  var WLINE     = 7; // words per subtitle line
+  var WLINE     = 4; // words per subtitle line
 
   function backspaceWord(tl, el, word, startTime, cps) {{
     var interval = 1 / cps;
@@ -1140,6 +1141,30 @@ def patch_html_timing(
       }})(k);
     }}
     return word.length * interval;
+  }}
+
+  function splitTextIntoWords(el) {{
+    if (!el || el._isWordSplit) return;
+    var text = el.innerText.trim();
+    if (!text) return;
+
+    // Giữ nguyên các class grad-text, outline-text, glow-text ở phần tử cha (h1)
+    // để tránh lỗi dựng hình (Chrome background-clip rendering bug khi kết hợp compositing/will-change)
+    var classesToTransfer = [];
+    var activeClasses = [];
+    classesToTransfer.forEach(function(cls) {{
+      if (el.classList.contains(cls)) {{
+        activeClasses.push(cls);
+        el.classList.remove(cls);
+      }}
+    }});
+
+    var words = text.split(/\\s+/).filter(Boolean);
+    el.innerHTML = words.map(function(word) {{
+      var classAttr = activeClasses.length > 0 ? 'class="title-word ' + activeClasses.join(' ') + '"' : 'class="title-word"';
+      return '<span ' + classAttr + ' style="display:inline-block;opacity:0;">' + word + '</span>';
+    }}).join(' ');
+    el._isWordSplit = true;
   }}
 
   function compileTextEffects(sceneId, sceneStart, tl) {{
@@ -1260,7 +1285,7 @@ def patch_html_timing(
   // Chunk fallback: split text into uniform 6-word groups (natural reading pace).
   function chunkText(text) {{
     if (!text) return [];
-    var maxWords = 6;
+    var maxWords = 4;
     var words = text.trim().split(/\\s+/).filter(Boolean);
     var chunks = [];
     for (var i = 0; i < words.length; i += maxWords) {{
@@ -1366,7 +1391,14 @@ def patch_html_timing(
         gsap.set(el, {{ opacity: 0, visibility: "hidden", position: "absolute", inset: 0 }});
       }}
       // Preset animatable children to opacity:0 for ALL scenes to prevent FOUC and ensure deterministic animation
-      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-title'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
+      gsap.set(el.querySelectorAll("[id$='-badge'],[id$='-subtitle'],[id$='-desc']"), {{ opacity: 0 }});
+      
+      var titleEl = el.querySelector("[id$='-title']");
+      if (titleEl) {{
+        gsap.set(titleEl, {{ opacity: 1 }}); // Ensure title container stays visible
+        splitTextIntoWords(titleEl);
+        gsap.set(titleEl.querySelectorAll(".title-word"), {{ opacity: 0 }});
+      }}
       var presetEls = [];
       el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)").forEach(function(item) {{
         if (item.classList.contains("visual-block")) {{
@@ -1565,7 +1597,29 @@ def patch_html_timing(
       // Content entry — start IMMEDIATELY at t=s, tight stagger so the first
       // 0.5s is filled with motion instead of an empty stationary frame.
       safeFromTo(sceneId + " [id$='-badge']",    {{ y: -20, opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }}, s);
-      safeFromTo(sceneId + " [id$='-title']",    {{ y: 40,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.7, ease: "power4.out"   }}, s + 0.12);
+
+      var titleWordsCount = 0;
+      var titleEl = document.querySelector(sceneId + " [id$='-title']");
+      if (titleEl) {{
+        splitTextIntoWords(titleEl);
+        var words = titleEl.querySelectorAll(".title-word");
+        titleWordsCount = words.length;
+        if (words.length > 0) {{
+          tl.fromTo(words,
+            {{ opacity: 0, y: 15 }},
+            {{ opacity: 1, y: 0, duration: 0.35, stagger: 0.08, ease: "power2.out", immediateRender: false }},
+            s + 0.12
+          );
+        }} else {{
+          tl.fromTo(titleEl,
+            {{ opacity: 0, y: 30 }},
+            {{ opacity: 1, y: 0, duration: 0.7, ease: "power4.out", immediateRender: false }},
+            s + 0.12
+          );
+        }}
+      }}
+      var titleEndTime = s + 0.12 + 0.35 + (titleWordsCount * 0.08) + 0.1;
+
       safeFromTo(sceneId + " [id$='-subtitle']", {{ y: 30,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.6, ease: "power3.out"   }}, s + 0.25);
       safeFromTo(sceneId + " [id$='-desc']",     {{ y: 20,  opacity: 0 }}, {{ y: 0, opacity: 1, duration: 0.5, ease: "power2.out"   }}, s + 0.38);
       var containerExclude = ":not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)";
@@ -1596,19 +1650,61 @@ def patch_html_timing(
         }});
       }});
 
+      function normalizeStr(str) {{
+        return (str || "").toLowerCase()
+          .replace(/[.,\\/#!$%\\^&\\*;:{{}}=\\-_`~()?"']/g, "")
+          .trim();
+      }}
+
       // 3. Animate each block at its corresponding subtitle start timestamp!
       if (blocks.length > 0) {{
+        var lastBlockStart = titleEndTime;
         blocks.forEach(function(blockEl, bi) {{
           var blockStart;
-          if (subtitleTimes.length > 0) {{
-            // Map block index to subtitle time index proportionally
-            var subIdx = Math.floor((bi / blocks.length) * subtitleTimes.length);
-            blockStart = subtitleTimes[subIdx];
-          }} else {{
-            // Fallback stagger if no subtitles exist
-            blockStart = s + 0.2 + (bi * 0.45);
+          var scWd = wordData[i];
+          var matchedStart = -1;
+
+          // Attempt keyword matching if wordData is present
+          if (scWd && scWd.length > 0) {{
+            var textEls = blockEl.querySelectorAll(".num, .title, .t, .d, h4, h3, li, p");
+            var blockText = "";
+            if (textEls.length > 0) {{
+              var parts = [];
+              textEls.forEach(function(te) {{ parts.push(te.innerText); }});
+              blockText = parts.join(" ");
+            }} else {{
+              blockText = blockEl.innerText;
+            }}
+
+            var blockWords = normalizeStr(blockText).split(/\\s+/).filter(function(w) {{
+              return w.length > 2;
+            }});
+
+            if (blockWords.length > 0) {{
+              for (var k = 0; k < scWd.length; k++) {{
+                var voiceWord = normalizeStr(scWd[k].word);
+                if (voiceWord.length > 2 && blockWords.indexOf(voiceWord) !== -1) {{
+                  matchedStart = s + scWd[k].start;
+                  break;
+                }}
+              }}
+            }}
           }}
+
+          var fallbackTime;
+          if (subtitleTimes.length > 0) {{
+            var subIdx = Math.min(Math.floor((bi / blocks.length) * subtitleTimes.length), subtitleTimes.length - 1);
+            fallbackTime = subtitleTimes[subIdx];
+          }} else {{
+            fallbackTime = s + 0.35 + (bi * 0.45);
+          }}
+
+          blockStart = (matchedStart !== -1) ? matchedStart : fallbackTime;
           
+          // Force blocks to appear only after title animation has completed, and in sequential order!
+          blockStart = Math.max(blockStart, lastBlockStart);
+          lastBlockStart = blockStart + 0.15; // 0.15s minimum stagger between consecutive blocks
+
           // Animate the block dynamically at the exact timestamp!
           tl.fromTo(blockEl,
             {{ y: 28, opacity: 0 }},
@@ -1681,7 +1777,7 @@ async def run_render(project_root: Path, on_log) -> Path:
             cmd = ["npx.cmd", "--yes", "hyperframes@0.6.20", "render"]
             kwargs = {"shell": False}
         else:
-            cmd = ["npx", "--yes", "hyperframes@0.6.20", "render"]
+            cmd = ["/app/node_modules/.bin/hyperframes", "render"]
             kwargs = {}
 
         proc = subprocess.Popen(
@@ -1733,6 +1829,7 @@ class BuildRequest(BaseModel):
     scenes: list[ScenePayload]
     totalDuration: int
     projectPath: str | None = None
+    sessionId: str | None = None
     skipTts: bool = False
     theme: str | None = None
     voiceId: str | None = None
@@ -1743,10 +1840,10 @@ class BuildRequest(BaseModel):
     subtitlesEnabled: bool = True
 
 
-async def build_pipeline(req: BuildRequest):
+async def build_pipeline(req: BuildRequest, user_email: str | None = None):
     """Yield SSE events for the full pipeline."""
 
-    project_root = get_project_root(req.projectPath)
+    project_root = get_project_root(req.projectPath, req.sessionId)
     if not project_root.exists():
         yield sse({"type": "error", "message": f"Project path không tồn tại: {project_root}"})
         return
@@ -1863,70 +1960,71 @@ async def build_pipeline(req: BuildRequest):
     yield sse({"type": "stage", "stage": "save", "status": "done", "path": str(target_html)})
 
     # ---- Stage 3: TTS ----
+    from middleware.concurrency import limiter
     if not req.skipTts:
-        pass
-        engines_used: dict[str, int] = {}
-        yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
-        wav_paths: list[Path] = []
-        for s in req.scenes:
-            wav_path = assets_dir / f"p{s.index + 1}.wav"
-            wav_paths.append(wav_path)
-            yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
-            try:
-                engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
-                engines_used[engine] = engines_used.get(engine, 0) + 1
-            except Exception as e:
-                yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
-                return
+        async with limiter._tts_sem:
+            engines_used: dict[str, int] = {}
+            yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
+            wav_paths: list[Path] = []
+            for s in req.scenes:
+                wav_path = assets_dir / f"p{s.index + 1}.wav"
+                wav_paths.append(wav_path)
+                yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
+                try:
+                    engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
+                    engines_used[engine] = engines_used.get(engine, 0) + 1
+                except Exception as e:
+                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
+                    return
 
-        engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
-        build_log.append(f"🎙 TTS: {engine_summary}")
-        print(f"[tts] engines: {engine_summary}")
+            engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
+            build_log.append(f"🎙 TTS: {engine_summary}")
+            print(f"[tts] engines: {engine_summary}")
 
-        # Measure actual audio durations
-        durations = [get_audio_duration_s(p) for p in wav_paths]
-        measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
-        print(f"[tts] Measured durations: {', '.join(measured)}")
+            # Measure actual audio durations
+            durations = [get_audio_duration_s(p) for p in wav_paths]
+            measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
+            print(f"[tts] Measured durations: {', '.join(measured)}")
 
-        # ── Whisper word-level transcription ────────────────────────────
-        yield sse({"type": "stage", "stage": "whisper", "status": "start",
-                   "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
-        word_data: list[list[dict]] = []
-        whisper_engines_used: dict[str, int] = {}
-        for idx, p in enumerate(wav_paths):
-            yield sse({"type": "stage", "stage": "whisper", "status": "progress",
-                       "scene": idx + 1, "of": len(wav_paths)})
-            words, w_engine = await transcribe_audio_whisper(p)
-            
-            # Keep original script text (case & punctuation), align using Whisper timestamps
-            aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
-            word_data.append(aligned_words)
-            whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
-        whisper_ok = sum(1 for w in word_data if w)
-        whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
-        build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
-        yield sse({"type": "stage", "stage": "whisper", "status": "done",
-                   "engine": whisper_engine_summary,
-                   "message": f"Hoàn tất: {whisper_engine_summary}"
-                               + (" — chunk fallback cho scene còn lại" if whisper_ok < len(wav_paths) else "")})
+            # ── Whisper word-level transcription ────────────────────────────
+            yield sse({"type": "stage", "stage": "whisper", "status": "start",
+                       "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
+            word_data: list[list[dict]] = []
+            whisper_engines_used: dict[str, int] = {}
+            for idx, p in enumerate(wav_paths):
+                yield sse({"type": "stage", "stage": "whisper", "status": "progress",
+                           "scene": idx + 1, "of": len(wav_paths)})
+                words, w_engine = await transcribe_audio_whisper(p)
+                
+                # Keep original script text (case & punctuation), align using Whisper timestamps
+                aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
+                word_data.append(aligned_words)
+                whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+            whisper_ok = sum(1 for w in word_data if w)
+            whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
+            build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
+            yield sse({"type": "stage", "stage": "whisper", "status": "done",
+                       "engine": whisper_engine_summary,
+                       "message": f"Hoàn tất: {whisper_engine_summary}"
+                                   + (" — chunk fallback cho scene còn lại" if whisper_ok < len(wav_paths) else "")})
 
-        scene_titles = [s.title for s in req.scenes]
-        scene_narrations = [s.narration for s in req.scenes]
-        html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
-        # ── Subtitle toggle: hide .techbeat-subtitles if user disabled them ─
-        if not req.subtitlesEnabled:
-            hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
-            html = html.replace("</head>", hide_css + "</head>", 1)
-        target_html.write_text(html, encoding="utf-8")
-        # Total composition duration after timing patch (ceil(d) + 1 buffer per scene)
-        import math as _math
-        actual_total = sum(max(1, _math.ceil(d) + 1) for d in durations)
-        yield sse({
-            "type": "stage", "stage": "tts", "status": "done",
-            "engine": engine_summary,
-            "actualDuration": actual_total,
-            "audioDurations": [round(d, 1) for d in durations],
-        })
+            scene_titles = [s.title for s in req.scenes]
+            scene_narrations = [s.narration for s in req.scenes]
+            html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
+            # ── Subtitle toggle: hide .techbeat-subtitles if user disabled them ─
+            if not req.subtitlesEnabled:
+                hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+                html = html.replace("</head>", hide_css + "</head>", 1)
+            target_html.write_text(html, encoding="utf-8")
+            # Total composition duration after timing patch (ceil(d) + 1 buffer per scene)
+            import math as _math
+            actual_total = sum(max(1, _math.ceil(d) + 1) for d in durations)
+            yield sse({
+                "type": "stage", "stage": "tts", "status": "done",
+                "engine": engine_summary,
+                "actualDuration": actual_total,
+                "audioDurations": [round(d, 1) for d in durations],
+            })
     else:
         # skipTts path — still apply subtitle toggle to already-saved index.html
         if not req.subtitlesEnabled:
@@ -1940,26 +2038,37 @@ async def build_pipeline(req: BuildRequest):
     # ---- Stage 4: Render ----
     yield sse({"type": "stage", "stage": "render", "status": "start", "message": "Đang render MP4..."})
 
+    limiter._render_queue += 1
+    queue_pos = limiter._render_queue
+    if limiter._render_sem.locked():
+        yield sse({
+            "type": "queue",
+            "position": queue_pos,
+            "message": f"Đang chờ slot render ({queue_pos} trong hàng đợi)..."
+        })
+
     log_buffer: list[str] = []
-    log_queue: asyncio.Queue[str] = asyncio.Queue()
-
-    async def on_log(line: str):
-        log_buffer.append(line)
-        print(f"[render] {line}")
-        await log_queue.put(line)
-
-    render_task = asyncio.create_task(run_render(project_root, on_log))
-
     try:
-        while not render_task.done() or not log_queue.empty():
-            try:
-                line = await asyncio.wait_for(log_queue.get(), timeout=1.5)
-                yield sse({"type": "stage", "stage": "render", "status": "log", "line": line})
-            except asyncio.TimeoutError:
-                if render_task.done():
-                    break
-                continue
-        mp4_path = await render_task
+        async with limiter._render_sem:
+            limiter._render_queue -= 1
+            log_queue: asyncio.Queue[str] = asyncio.Queue()
+
+            async def on_log(line: str):
+                log_buffer.append(line)
+                print(f"[render] {line}")
+                await log_queue.put(line)
+
+            render_task = asyncio.create_task(run_render(project_root, on_log))
+
+            while not render_task.done() or not log_queue.empty():
+                try:
+                    line = await asyncio.wait_for(log_queue.get(), timeout=1.5)
+                    yield sse({"type": "stage", "stage": "render", "status": "log", "line": line})
+                except asyncio.TimeoutError:
+                    if render_task.done():
+                        break
+                    continue
+            mp4_path = await render_task
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -1972,20 +2081,35 @@ async def build_pipeline(req: BuildRequest):
         })
         return
 
+    # If session-isolated, copy to global renders directory so it is served by /renders
+    if req.sessionId:
+        global_renders_dir = get_project_root() / "renders"
+        global_renders_dir.mkdir(exist_ok=True)
+        shutil.copy2(mp4_path, global_renders_dir / mp4_path.name)
+
     rel_url = f"/renders/{mp4_path.name}"
 
-    # Save to history automatically
+    # Save to history automatically (session / user isolated)
     try:
         import datetime
-        import shutil
+        import urllib.parse
 
         # 1. Ensure history directory structures
-        history_dir = project_root / "history"
+        global_root = get_project_root()
+        if user_email:
+            safe_email = user_email
+            history_dir = global_root / "history" / "users" / safe_email
+            prefix = f"/static-history/users/{safe_email}/"
+        else:
+            history_dir = global_root / "history"
+            prefix = "/static-history/"
+
         htmls_dir = history_dir / "htmls"
         videos_dir = history_dir / "videos"
-        history_dir.mkdir(exist_ok=True)
-        htmls_dir.mkdir(exist_ok=True)
-        videos_dir.mkdir(exist_ok=True)
+        
+        history_dir.mkdir(parents=True, exist_ok=True)
+        htmls_dir.mkdir(parents=True, exist_ok=True)
+        videos_dir.mkdir(parents=True, exist_ok=True)
 
         # 2. Generate timestamp
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -2010,14 +2134,14 @@ async def build_pipeline(req: BuildRequest):
         new_entry = {
             "id": timestamp,
             "title": req.title,
-            "html_url": f"/static-history/htmls/{hist_html_name}",
-            "video_url": f"/static-history/videos/{hist_video_name}",
+            "html_url": f"{prefix}htmls/{hist_html_name}",
+            "video_url": f"{prefix}videos/{hist_video_name}",
             "duration": actual_total if ('actual_total' in locals() and actual_total) else req.totalDuration,
             "created_at": datetime.datetime.now().isoformat()
         }
         history_list.insert(0, new_entry) # newest first
         db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"[history] Saved snapshot {timestamp} successfully!")
+        print(f"[history] Saved snapshot {timestamp} successfully under {history_dir}!")
     except Exception as he:
         print(f"[history ERROR] Failed to save history snapshot: {he}")
 
@@ -2038,9 +2162,404 @@ async def build_pipeline(req: BuildRequest):
 
 
 @router.post("/build-video")
-async def build_video(body: BuildRequest):
+async def build_video(body: BuildRequest, request: Request):
+    from routers.history import get_optional_user_email
+    user_email = await get_optional_user_email(request)
     return StreamingResponse(
-        build_pipeline(body),
+        build_pipeline(body, user_email=user_email),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Client-Side Rendering Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+# /build-assets  — run LLM + TTS + Whisper, skip render, return JSON
+# /upload-render — receive finished MP4 from browser, save to history
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None):
+    """Same as build_pipeline but STOPS before Stage 4 (render).
+    Yields SSE events for stages 0-3, then a final 'assets_ready' event
+    with the compositionHtml + audio URLs for client-side rendering."""
+
+    project_root = get_project_root(req.projectPath, req.sessionId)
+    if not project_root.exists():
+        yield sse({"type": "error", "message": f"Project path không tồn tại: {project_root}"})
+        return
+
+    assets_dir = project_root / "assets"
+    assets_dir.mkdir(exist_ok=True)
+
+    # ---- Stage 0: Download / decode chosen illustration images ----
+    import base64 as _b64
+    import re as _re
+
+    scenes_with_assets: list[ScenePayload] = []
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as http:
+        for s in req.scenes:
+            asset_rel: str | None = None
+            url = s.imageUrl or ""
+
+            if url.startswith("data:image/"):
+                m = _re.match(r"^data:image/([a-z0-9+.-]+);base64,(.+)$", url, _re.IGNORECASE)
+                if m:
+                    ext_raw = m.group(1).lower()
+                    ext = {"jpeg": "jpg", "svg+xml": "svg"}.get(ext_raw, ext_raw)
+                    if ext not in ("jpg", "png", "webp", "gif", "svg"):
+                        ext = "jpg"
+                    try:
+                        raw = _b64.b64decode(m.group(2))
+                        local = assets_dir / f"scene{s.index + 1}.{ext}"
+                        local.write_bytes(raw)
+                        asset_rel = f"assets/{local.name}"
+                    except Exception as e:
+                        print(f"[build-assets] Decode data URL scene {s.index + 1} lỗi: {e}")
+
+            elif url.startswith(("http://", "https://")):
+                ext = ".jpg"
+                low = url.lower().split("?")[0]
+                for cand in (".png", ".webp", ".jpeg", ".jpg", ".gif"):
+                    if low.endswith(cand):
+                        ext = ".jpg" if cand == ".jpeg" else cand
+                        break
+                local = assets_dir / f"scene{s.index + 1}{ext}"
+                try:
+                    resp = await http.get(
+                        url,
+                        headers={
+                            "User-Agent": "Mozilla/5.0",
+                            "Referer": "https://duckduckgo.com/",
+                        },
+                    )
+                    if resp.status_code == 200 and resp.content:
+                        local.write_bytes(resp.content)
+                        asset_rel = f"assets/{local.name}"
+                except Exception as e:
+                    print(f"[build-assets] Tải ảnh scene {s.index + 1} lỗi: {e}")
+
+            scenes_with_assets.append(s.model_copy(update={"imageAsset": asset_rel}))
+
+    build_log: list[str] = []
+
+    # ---- Stage 1: Composition (LLM) ----
+    if req.compositionHtml and "<html" in req.compositionHtml.lower():
+        yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Sử dụng HTML từ bước xem trước..."})
+        html = req.compositionHtml
+        build_log.append("🎨 HTML: cache (từ bước xem trước — không gọi LLM)")
+        yield sse({"type": "stage", "stage": "composition", "status": "done", "message": "Bỏ qua sinh HTML — dùng cache"})
+    else:
+        yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Đang sinh composition HTML..."})
+
+        comp_req = CompositionRequest(
+            title=req.title,
+            scenes=scenes_with_assets,
+            totalDuration=req.totalDuration,
+            theme=req.theme,
+        )
+        html = ""
+        char_count = 0
+        async for ev in stream_composition_events(comp_req):
+            if ev["type"] == "chunk":
+                char_count += len(ev["text"])
+                yield sse({"type": "comp_chunk", "text": ev["text"]})
+                if char_count % 500 < 50:
+                    yield sse({"type": "stage", "stage": "composition", "status": "progress", "chars": char_count})
+            elif ev["type"] == "model_info":
+                build_log.append(f"🎨 HTML: {ev['provider']} / {ev['model']}")
+                yield sse({"type": "stage", "stage": "composition", "status": "progress",
+                           "message": f"LLM: {ev['provider']} ({ev['model']})"})
+            elif ev["type"] == "done":
+                html = ev["html"]
+            elif ev["type"] == "error":
+                yield sse({"type": "error", "stage": "composition", "message": ev["message"]})
+                return
+
+    if not html:
+        yield sse({"type": "error", "stage": "composition", "message": "Không nhận được HTML"})
+        return
+
+    # ---- Stage 2: Save ----
+    yield sse({"type": "stage", "stage": "save", "status": "start", "message": "Đang lưu index.html..."})
+    target_html = project_root / "index.html"
+    target_html.write_text(html, encoding="utf-8")
+    yield sse({"type": "stage", "stage": "save", "status": "done", "path": str(target_html)})
+
+    # ---- Stage 3: TTS + Whisper ----
+    actual_total = req.totalDuration
+    audio_urls: list[str] = []
+    audio_durations: list[float] = []
+
+    from middleware.concurrency import limiter
+    if not req.skipTts:
+        async with limiter._tts_sem:
+            engines_used: dict[str, int] = {}
+            yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
+            wav_paths: list[Path] = []
+            for s in req.scenes:
+                wav_path = assets_dir / f"p{s.index + 1}.wav"
+                wav_paths.append(wav_path)
+                yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
+                try:
+                    engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
+                    engines_used[engine] = engines_used.get(engine, 0) + 1
+                except Exception as e:
+                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
+                    return
+
+            engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
+            build_log.append(f"🎙 TTS: {engine_summary}")
+
+            durations = [get_audio_duration_s(p) for p in wav_paths]
+            audio_durations = [round(d, 2) for d in durations]
+
+            # Build audio URLs — relative to backend static serving
+            session_prefix = f"/sessions/{req.sessionId}" if req.sessionId else ""
+            for s in req.scenes:
+                audio_urls.append(f"{session_prefix}/assets/p{s.index + 1}.wav")
+
+            # ── Whisper word-level transcription ────────────────────────────
+            yield sse({"type": "stage", "stage": "whisper", "status": "start",
+                       "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
+            word_data: list[list[dict]] = []
+            whisper_engines_used: dict[str, int] = {}
+            for idx, p in enumerate(wav_paths):
+                yield sse({"type": "stage", "stage": "whisper", "status": "progress",
+                           "scene": idx + 1, "of": len(wav_paths)})
+                words, w_engine = await transcribe_audio_whisper(p)
+                aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
+                word_data.append(aligned_words)
+                whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+            whisper_ok = sum(1 for w in word_data if w)
+            whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
+            build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
+            yield sse({"type": "stage", "stage": "whisper", "status": "done",
+                       "engine": whisper_engine_summary,
+                       "message": f"Hoàn tất: {whisper_engine_summary}"
+                                   + (" — chunk fallback cho scene còn lại" if whisper_ok < len(wav_paths) else "")})
+
+            scene_titles = [s.title for s in req.scenes]
+            scene_narrations = [s.narration for s in req.scenes]
+            html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
+
+            if not req.subtitlesEnabled:
+                hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+                html = html.replace("</head>", hide_css + "</head>", 1)
+            target_html.write_text(html, encoding="utf-8")
+
+            import math as _math
+            actual_total = sum(max(1, _math.ceil(d) + 1) for d in durations)
+            yield sse({
+                "type": "stage", "stage": "tts", "status": "done",
+                "engine": engine_summary,
+                "actualDuration": actual_total,
+                "audioDurations": [round(d, 1) for d in durations],
+            })
+    else:
+        if not req.subtitlesEnabled:
+            existing_html = target_html.read_text(encoding="utf-8")
+            hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+            if 'id="tb-subtitle-hide"' not in existing_html:
+                existing_html = existing_html.replace("</head>", hide_css + "</head>", 1)
+                target_html.write_text(existing_html, encoding="utf-8")
+        yield sse({"type": "stage", "stage": "tts", "status": "skipped"})
+
+    # ── Print build summary ──────────────────────────────────────────────
+    print("\n" + "=" * 55)
+    print(f"[BUILD-ASSETS SUMMARY] {req.title}")
+    for line in build_log:
+        print(f"  {line}")
+    print("=" * 55 + "\n")
+
+    # ── SKIP Stage 4 (Render) — emit assets_ready instead ──────────────
+    yield sse({
+        "type": "assets_ready",
+        "compositionHtml": html,
+        "audioUrls": audio_urls,
+        "audioDurations": audio_durations,
+        "totalDuration": actual_total,
+        "sessionId": req.sessionId,
+        "buildLog": build_log,
+    })
+
+
+@router.post("/build-assets")
+async def build_assets(body: BuildRequest, request: Request):
+    """Pipeline giống /build-video nhưng KHÔNG render.
+    Client sẽ tự render bằng WebCodecs."""
+    from routers.history import get_optional_user_email
+    user_email = await get_optional_user_email(request)
+    return StreamingResponse(
+        build_assets_pipeline(body, user_email=user_email),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ── Upload rendered MP4 from client ──────────────────────────────────────
+
+from fastapi import File, UploadFile, Form
+
+
+@router.post("/upload-render")
+async def upload_render(
+    file: UploadFile = File(...),
+    title: str = Form("Untitled"),
+    session_id: str = Form(""),
+    composition_html: str = Form(""),
+    duration: int = Form(0),
+    logs: str = Form(""),
+    request: Request = None,  # type: ignore
+):
+    """Nhận MP4 từ client-side render, lưu vào renders/ và history, kèm theo log."""
+    import datetime
+
+    from routers.history import get_optional_user_email
+
+    user_email = await get_optional_user_email(request) if request else None
+
+    global_root = get_project_root()
+    renders_dir = global_root / "renders"
+    renders_dir.mkdir(exist_ok=True)
+
+    # Generate filename
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = re.sub(r'[^\w\s-]', '', title)[:50].strip().replace(' ', '_') or "video"
+    mp4_name = f"{safe_title}_{timestamp}.mp4"
+    mp4_path = renders_dir / mp4_name
+
+    # Save uploaded file
+    content = await file.read()
+    mp4_path.write_bytes(content)
+    file_size_mb = len(content) / (1024 * 1024)
+    print(f"[upload-render] Saved {mp4_name} ({file_size_mb:.1f} MB)")
+
+    rel_url = f"/renders/{mp4_name}"
+
+    # Save to history
+    try:
+        if user_email:
+            history_dir = global_root / "history" / "users" / user_email
+            prefix = f"/static-history/users/{user_email}/"
+        else:
+            history_dir = global_root / "history"
+            prefix = "/static-history/"
+
+        htmls_dir = history_dir / "htmls"
+        videos_dir = history_dir / "videos"
+        logs_dir = history_dir / "logs"
+        history_dir.mkdir(parents=True, exist_ok=True)
+        htmls_dir.mkdir(parents=True, exist_ok=True)
+        videos_dir.mkdir(parents=True, exist_ok=True)
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        hist_html_name = f"html_{timestamp}.html"
+        hist_video_name = f"video_{timestamp}.mp4"
+        hist_log_name = f"log_{timestamp}.txt"
+
+        if composition_html:
+            (htmls_dir / hist_html_name).write_text(composition_html, encoding="utf-8")
+        shutil.copy2(mp4_path, videos_dir / hist_video_name)
+
+        if logs:
+            (logs_dir / hist_log_name).write_text(logs, encoding="utf-8")
+
+        db_path = history_dir / "db.json"
+        history_list = []
+        if db_path.exists():
+            try:
+                history_list = json.loads(db_path.read_text(encoding="utf-8"))
+            except Exception:
+                history_list = []
+
+        new_entry = {
+            "id": timestamp,
+            "title": title,
+            "html_url": f"{prefix}htmls/{hist_html_name}" if composition_html else "",
+            "video_url": f"{prefix}videos/{hist_video_name}",
+            "log_url": f"{prefix}logs/{hist_log_name}" if logs else "",
+            "duration": duration,
+            "created_at": datetime.datetime.now().isoformat(),
+            "rendered_by": "client",
+        }
+        history_list.insert(0, new_entry)
+        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[upload-render] Saved to history with logs: {timestamp}")
+    except Exception as he:
+        print(f"[upload-render ERROR] Failed to save history: {he}")
+
+    return {
+        "success": True,
+        "videoUrl": rel_url,
+        "videoPath": str(mp4_path),
+        "fileSize": round(file_size_mb, 1),
+    }
+
+
+class ErrorLogRequest(BaseModel):
+    title: str
+    sessionId: str
+    error: str
+    logs: str
+    duration: int = 0
+
+
+@router.post("/save-error-log")
+async def save_error_log(
+    body: ErrorLogRequest,
+    request: Request,
+):
+    """Lưu log lỗi khi tạo video thất bại để phản hồi/troubleshoot."""
+    import datetime
+    from routers.history import get_optional_user_email
+
+    user_email = await get_optional_user_email(request)
+
+    global_root = get_project_root()
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    try:
+        if user_email:
+            history_dir = global_root / "history" / "users" / user_email
+            prefix = f"/static-history/users/{user_email}/"
+        else:
+            history_dir = global_root / "history"
+            prefix = "/static-history/"
+
+        logs_dir = history_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        hist_log_name = f"error_{timestamp}.txt"
+        
+        # Combine error message and logs
+        full_content = f"ERROR: {body.error}\n\n=== RUNTIME LOGS ===\n{body.logs}"
+        (logs_dir / hist_log_name).write_text(full_content, encoding="utf-8")
+
+        # Append to db.json as a failed status entry
+        db_path = history_dir / "db.json"
+        history_list = []
+        if db_path.exists():
+            try:
+                history_list = json.loads(db_path.read_text(encoding="utf-8"))
+            except Exception:
+                history_list = []
+
+        new_entry = {
+            "id": timestamp,
+            "title": f"{body.title} (Lỗi)",
+            "status": "failed",
+            "error": body.error,
+            "log_url": f"{prefix}logs/{hist_log_name}",
+            "duration": body.duration,
+            "created_at": datetime.datetime.now().isoformat(),
+        }
+        history_list.insert(0, new_entry)
+        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[save-error-log] Saved failed attempt log: {timestamp}")
+        return {"success": True, "logUrl": f"{prefix}logs/{hist_log_name}"}
+    except Exception as he:
+        print(f"[save-error-log ERROR] Failed to save error log: {he}")
+        return {"success": False, "error": str(he)}
+

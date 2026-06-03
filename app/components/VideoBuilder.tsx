@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { ScenePlan } from "@/types/scene";
+import { useSession } from "next-auth/react";
+import { useClientRender, uploadRenderedVideo, saveErrorLog } from "./ClientRenderer";
 
 interface Props {
   scenePlan: ScenePlan;
@@ -29,6 +31,7 @@ function fmtMs(ms: number): string {
 }
 
 export function VideoBuilder({ scenePlan, onBack }: Props) {
+  const { data: session } = useSession();
   const [running, setRunning]         = useState(false);
   const [done, setDone]               = useState(false);
   const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({ composition:"pending", save:"pending", tts:"pending", whisper:"pending", render:"pending" });
@@ -51,6 +54,32 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
   const logRef   = useRef<HTMLPreElement>(null);
   const compRef  = useRef<HTMLPreElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+  const [renderMode, setRenderMode] = useState<"client" | "server">("client");
+  const [supported, setSupported] = useState<boolean>(true);
+
+  const { startRender, cancelRender, progress: clientProgress, isRendering: clientRendering } = useClientRender();
+
+  // Detect WebCodecs capabilities
+  useEffect(() => {
+    import("@/lib/browserCapabilities").then(async ({ canRenderClientSide }) => {
+      const isOk = await canRenderClientSide();
+      setSupported(isOk);
+      if (!isOk) {
+        setRenderMode("server");
+      }
+    });
+  }, []);
+
+  // Sync client rendering progress messages and percentage to stage states
+  useEffect(() => {
+    if (renderMode === "client" && clientRendering) {
+      setProgress(clientProgress.percent);
+      if (clientProgress.message) {
+        setStageDetail(p => ({ ...p, render: clientProgress.message }));
+      }
+    }
+  }, [clientProgress, clientRendering, renderMode]);
 
   // Tick interval for live timer display (only while running)
   useEffect(() => {
@@ -99,6 +128,9 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
 
   async function build() {
     const startNow = performance.now();
+    const localRenderLog: string[] = ["Bắt đầu quá trình dựng hình trên trình duyệt..."];
+    let assetsData: any = null;
+
     setRunning(true); setDone(false); setError(""); setVideoUrl(""); setVideoPath("");
     setRenderLog([]); setCompStream(""); setCompChars(0); setProgress(0); setTtsEngine(""); setBuildLog([]);
     setActualDuration(null);
@@ -111,76 +143,227 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
 
     const abort = new AbortController(); abortRef.current = abort;
     try {
-      const res = await fetch(`${API}/build-video`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scenePlan), signal: abort.signal,
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail ?? `HTTP ${res.status}`);
-      const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = "";
+      const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.user?.email) {
+        headers["X-User-Email"] = session.user.email;
+      }
 
-      const handle = (ev: Record<string, unknown>) => {
-        if (ev.type === "stage" && ev.stage) {
-          const k = ev.stage as StageKey;
-          if (ev.status === "start") startStage(k, (ev.message as string) ?? "");
-          else if (ev.status === "progress") {
-            if (k === "composition" && ev.chars) {
-              setCompChars(ev.chars as number);
-              setStateOnly(k, "active", `${(ev.chars as number).toLocaleString()} ký tự...`);
+      if (renderMode === "client") {
+        const endpoint = isLocal ? `${API}/build-assets` : `/api/proxy/build-assets`;
+        const res = await fetch(endpoint, {
+          method: "POST", headers,
+          body: JSON.stringify(scenePlan), signal: abort.signal,
+        });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail ?? `HTTP ${res.status}`);
+        const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = "";
+
+        const handle = (ev: Record<string, unknown>) => {
+          if (ev.type === "stage" && ev.stage) {
+            const k = ev.stage as StageKey;
+            if (k === "render") return; // don't start render stage from server events
+            if (ev.status === "start") startStage(k, (ev.message as string) ?? "");
+            else if (ev.status === "progress") {
+              if (k === "composition" && ev.chars) {
+                setCompChars(ev.chars as number);
+                setStateOnly(k, "active", `${(ev.chars as number).toLocaleString()} ký tự...`);
+              }
+              else if (k === "tts" && ev.scene) setStateOnly(k, "active", `Phân cảnh ${ev.scene}/${ev.of}...`);
+            } else if (ev.status === "done") {
+              finishStage(k, "done", ev.path ? `✓ ${(ev.path as string).split(/[\\/]/).pop()}` : "✓ Hoàn tất");
+              if (k === "tts") {
+                if (ev.engine) setTtsEngine(ev.engine as string);
+                if (ev.actualDuration) setActualDuration(ev.actualDuration as number);
+              }
             }
-            else if (k === "tts" && ev.scene) setStateOnly(k, "active", `Phân cảnh ${ev.scene}/${ev.of}...`);
-          } else if (ev.status === "log" && ev.line) {
-            setRenderLog(p => { const n = [...p.slice(-100), ev.line as string]; setTimeout(() => logRef.current?.scrollTo(0, 99999), 50); return n; });
-            const m = (ev.line as string).match(/(\d+)%/); if (m) setProgress(parseInt(m[1], 10));
-          } else if (ev.status === "done") {
-            finishStage(k, "done", ev.path ? `✓ ${(ev.path as string).split(/[\\/]/).pop()}` : "✓ Hoàn tất");
-            if (k === "tts") {
-              if (ev.engine) setTtsEngine(ev.engine as string);
-              if (ev.actualDuration) setActualDuration(ev.actualDuration as number);
-            }
+            else if (ev.status === "skipped") finishStage(k, "skipped", "Bỏ qua");
+          } else if (ev.type === "comp_chunk" && ev.text) {
+            setCompStream(p => {
+              const next = p + (ev.text as string);
+              setTimeout(() => compRef.current?.scrollTo(0, 99999), 30);
+              return next.slice(-8000);
+            });
+          } else if (ev.type === "assets_ready") {
+            assetsData = ev;
+          } else if (ev.type === "error") {
+            finishStage((ev.stage as StageKey) ?? "composition", "error", (ev.message as string) ?? "Lỗi");
+            throw new Error((ev.message as string) ?? "Pipeline thất bại");
           }
-          else if (ev.status === "skipped") finishStage(k, "skipped", "Bỏ qua");
-        } else if (ev.type === "comp_chunk" && ev.text) {
-          setCompStream(p => {
-            const next = p + (ev.text as string);
-            setTimeout(() => compRef.current?.scrollTo(0, 99999), 30);
-            return next.slice(-8000); // cap to avoid memory bloat
-          });
-        } else if (ev.type === "warning") {
-          const msg = (ev.message as string) ?? "";
-          setRenderLog(p => [...p, `⚠ ${msg}`]);
-          setStateOnly("composition", "active", msg.slice(0, 80));
-        } else if (ev.type === "done") {
-          finishStage("render", "done", "✓ Hoàn tất");
-          setProgress(100);
-          if (ev.videoUrl) setVideoUrl(ev.videoUrl as string);
-          if (ev.videoPath) setVideoPath(ev.videoPath as string);
-          if (ev.buildLog) setBuildLog(ev.buildLog as string[]);
-          setDone(true);
-          setTotalElapsed(performance.now() - startNow);
-        } else if (ev.type === "error") {
-          finishStage((ev.stage as StageKey) ?? "composition", "error", (ev.message as string) ?? "Lỗi");
-          if (ev.log) setRenderLog(p => [...p, "── error ──", ev.log as string]);
-          throw new Error((ev.message as string) ?? "Pipeline thất bại");
-        }
-      };
+        };
 
-      const processLines = (raw: string) => {
-        for (const line of raw.split("\n\n")) {
-          if (!line.startsWith("data: ")) continue;
-          try { handle(JSON.parse(line.slice(6))); } catch { /* skip */ }
-        }
-      };
+        const processLines = (raw: string) => {
+          for (const line of raw.split("\n\n")) {
+            if (!line.startsWith("data: ")) continue;
+            try { handle(JSON.parse(line.slice(6))); } catch { /* skip */ }
+          }
+        };
 
-      while (true) {
-        const { done: sd, value } = await reader.read();
-        if (sd) { if (buf.trim()) processLines(buf); break; }
-        buf += decoder.decode(value, { stream: true });
-        const split = buf.split("\n\n"); buf = split.pop() ?? "";
-        processLines(split.join("\n\n") + "\n\n");
+        while (true) {
+          const { done: sd, value } = await reader.read();
+          if (sd) { if (buf.trim()) processLines(buf); break; }
+          buf += decoder.decode(value, { stream: true });
+          const split = buf.split("\n\n"); buf = split.pop() ?? "";
+          processLines(split.join("\n\n") + "\n\n");
+        }
+
+        if (abort.signal.aborted) return;
+        if (!assetsData) throw new Error("Không nhận được dữ liệu assets từ server");
+
+        // Bắt đầu render trên Client
+        startStage("render", "Đang dựng video trên trình duyệt...");
+        
+        const blob = await startRender({
+          compositionHtml: assetsData.compositionHtml,
+          audioUrls: assetsData.audioUrls,
+          audioDurations: assetsData.audioDurations,
+          totalDuration: assetsData.totalDuration,
+          sessionId: assetsData.sessionId,
+          fps: 30,
+          width: 1920,
+          height: 1080,
+          onLog: (msg) => {
+            localRenderLog.push(msg);
+            setRenderLog(p => {
+              const next = [...p.slice(-100), msg];
+              setTimeout(() => logRef.current?.scrollTo(0, 99999), 50);
+              return next;
+            });
+          }
+        });
+
+        if (!blob) throw new Error("Dựng video trên trình duyệt thất bại");
+        if (abort.signal.aborted) return;
+
+        // Upload video lên server
+        setStateOnly("render", "active", "Đang tải video lên server để lưu lịch sử...");
+        const logsText = [
+          "=== BACKEND BUILD LOGS ===",
+          ...(assetsData?.buildLog || []),
+          "",
+          "=== CLIENT RENDER LOGS ===",
+          ...localRenderLog,
+        ].join("\n");
+        const uploadRes = await uploadRenderedVideo(blob, {
+          title: scenePlan.title,
+          sessionId: assetsData.sessionId,
+          compositionHtml: assetsData.compositionHtml,
+          duration: assetsData.totalDuration,
+          userEmail: session?.user?.email ?? undefined,
+          logs: logsText,
+        });
+
+        if (!uploadRes.success) throw new Error("Lưu video trên server thất bại");
+
+        finishStage("render", "done", `✓ Hoàn tất (${uploadRes.fileSize} MB)`);
+        setProgress(100);
+        if (uploadRes.videoUrl) setVideoUrl(uploadRes.videoUrl);
+        if (uploadRes.videoPath) setVideoPath(uploadRes.videoPath);
+        if (assetsData.buildLog) setBuildLog(assetsData.buildLog);
+        setDone(true);
+        setTotalElapsed(performance.now() - startNow);
+
+      } else {
+        // Server mode (Original)
+        const endpoint = isLocal ? `${API}/build-video` : `/api/proxy/build-video`;
+        const res = await fetch(endpoint, {
+          method: "POST", headers,
+          body: JSON.stringify(scenePlan), signal: abort.signal,
+        });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail ?? `HTTP ${res.status}`);
+        const reader = res.body!.getReader(); const decoder = new TextDecoder(); let buf = "";
+
+        const handle = (ev: Record<string, unknown>) => {
+          if (ev.type === "stage" && ev.stage) {
+            const k = ev.stage as StageKey;
+            if (ev.status === "start") startStage(k, (ev.message as string) ?? "");
+            else if (ev.status === "progress") {
+              if (k === "composition" && ev.chars) {
+                setCompChars(ev.chars as number);
+                setStateOnly(k, "active", `${(ev.chars as number).toLocaleString()} ký tự...`);
+              }
+              else if (k === "tts" && ev.scene) setStateOnly(k, "active", `Phân cảnh ${ev.scene}/${ev.of}...`);
+            } else if (ev.status === "log" && ev.line) {
+              setRenderLog(p => { const n = [...p.slice(-100), ev.line as string]; setTimeout(() => logRef.current?.scrollTo(0, 99999), 50); return n; });
+              const m = (ev.line as string).match(/(\d+)%/); if (m) setProgress(parseInt(m[1], 10));
+            } else if (ev.status === "done") {
+              finishStage(k, "done", ev.path ? `✓ ${(ev.path as string).split(/[\\/]/).pop()}` : "✓ Hoàn tất");
+              if (k === "tts") {
+                if (ev.engine) setTtsEngine(ev.engine as string);
+                if (ev.actualDuration) setActualDuration(ev.actualDuration as number);
+              }
+            }
+            else if (ev.status === "skipped") finishStage(k, "skipped", "Bỏ qua");
+          } else if (ev.type === "comp_chunk" && ev.text) {
+            setCompStream(p => {
+              const next = p + (ev.text as string);
+              setTimeout(() => compRef.current?.scrollTo(0, 99999), 30);
+              return next.slice(-8000);
+            });
+          } else if (ev.type === "queue") {
+            const msg = (ev.message as string) ?? "Đang chờ hàng đợi render...";
+            setStateOnly("render", "active", msg);
+            setRenderLog(p => [...p, msg]);
+          } else if (ev.type === "warning") {
+            const msg = (ev.message as string) ?? "";
+            setRenderLog(p => [...p, `⚠ ${msg}`]);
+            setStateOnly("composition", "active", msg.slice(0, 80));
+          } else if (ev.type === "done") {
+            finishStage("render", "done", "✓ Hoàn tất");
+            setProgress(100);
+            if (ev.videoUrl) setVideoUrl(ev.videoUrl as string);
+            if (ev.videoPath) setVideoPath(ev.videoPath as string);
+            if (ev.buildLog) setBuildLog(ev.buildLog as string[]);
+            setDone(true);
+            setTotalElapsed(performance.now() - startNow);
+          } else if (ev.type === "error") {
+            finishStage((ev.stage as StageKey) ?? "composition", "error", (ev.message as string) ?? "Lỗi");
+            if (ev.log) setRenderLog(p => [...p, "── error ──", ev.log as string]);
+            throw new Error((ev.message as string) ?? "Pipeline thất bại");
+          }
+        };
+
+        const processLines = (raw: string) => {
+          for (const line of raw.split("\n\n")) {
+            if (!line.startsWith("data: ")) continue;
+            try { handle(JSON.parse(line.slice(6))); } catch { /* skip */ }
+          }
+        };
+
+        while (true) {
+          const { done: sd, value } = await reader.read();
+          if (sd) { if (buf.trim()) processLines(buf); break; }
+          buf += decoder.decode(value, { stream: true });
+          const split = buf.split("\n\n"); buf = split.pop() ?? "";
+          processLines(split.join("\n\n") + "\n\n");
+        }
       }
     } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "Build thất bại");
+      if (abort.signal.aborted) return;
+      const errMsg = err instanceof Error ? err.message : "Build thất bại";
+      setError(errMsg);
+      setStateOnly("render", "error", errMsg);
+
+      // Save error log to server
+      try {
+        const logsText = [
+          "=== BACKEND BUILD LOGS ===",
+          ...(assetsData?.buildLog || []),
+          "",
+          "=== CLIENT RENDER LOGS ===",
+          ...localRenderLog,
+        ].join("\n");
+
+        await saveErrorLog({
+          title: scenePlan.title,
+          sessionId: (assetsData && assetsData.sessionId) || scenePlan.sessionId || "",
+          error: errMsg,
+          logs: logsText,
+          duration: (assetsData && assetsData.totalDuration) || scenePlan.totalDuration || 0,
+          userEmail: session?.user?.email ?? undefined,
+        });
+      } catch (logErr) {
+        console.error("Failed to save error log:", logErr);
+      }
     } finally {
       setRunning(false);
       setTotalElapsed(performance.now() - startNow);
@@ -210,12 +393,6 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             </h2>
             <p style={{ fontSize: 12, color: "var(--gray-5)" }}>
               <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{scenePlan.scenes.length} phân cảnh</span>
-              {actualDuration && (
-                <>
-                  {" · "}
-                  <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{actualDuration}s</span>
-                </>
-              )}
               {" · "}1920×1080 · 30fps
               {ttsEngine && (<>{" · "}<span style={{ color: "#67e8f9", fontWeight: 700 }}>TTS: {ttsEngine}</span></>)}
             </p>
@@ -236,6 +413,57 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                 </span>
               </div>
             )}
+
+            {!running && !done && (
+              <div className="segmented-control" style={{
+                display: "flex",
+                background: "var(--gray-2)",
+                border: "1px solid var(--gray-3)",
+                borderRadius: "99px",
+                padding: 3,
+                gap: 4
+              }}>
+                <button
+                  onClick={() => setRenderMode("client")}
+                  disabled={!supported}
+                  className={`btn-segment ${renderMode === "client" ? "active" : ""}`}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "99px",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    border: "none",
+                    cursor: supported ? "pointer" : "not-allowed",
+                    background: renderMode === "client" ? "var(--accent)" : "transparent",
+                    color: renderMode === "client" ? "var(--black)" : (supported ? "var(--gray-5)" : "var(--gray-3)"),
+                    transition: "all 0.25s ease",
+                    opacity: supported ? 1 : 0.5,
+                  }}
+                  title={!supported ? "Trình duyệt không hỗ trợ WebCodecs" : "Dựng trực tiếp trên máy của bạn (WebCodecs - Nhanh, không đợi hàng đợi)"}
+                >
+                  ⚡ Client
+                </button>
+                <button
+                  onClick={() => setRenderMode("server")}
+                  className={`btn-segment ${renderMode === "server" ? "active" : ""}`}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "99px",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    border: "none",
+                    cursor: "pointer",
+                    background: renderMode === "server" ? "var(--accent)" : "transparent",
+                    color: renderMode === "server" ? "var(--black)" : "var(--gray-5)",
+                    transition: "all 0.25s ease",
+                  }}
+                  title="Dựng trên máy chủ VPS (Playwright + FFmpeg - Dành cho máy yếu hoặc di động)"
+                >
+                  ☁ Server
+                </button>
+              </div>
+            )}
+
             {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
             {!running && (
               <button onClick={build} className="btn-primary magnetic">
@@ -243,7 +471,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
               </button>
             )}
             {running && (
-              <button onClick={() => { abortRef.current?.abort(); setRunning(false); }} className="btn-ghost"
+              <button onClick={() => { abortRef.current?.abort(); cancelRender(); setRunning(false); }} className="btn-ghost"
                 style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}>
                 Huỷ
               </button>
@@ -255,7 +483,9 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
           {STAGES.map((s, idx) => {
             const state = stageStates[s.key];
-            const detail = stageDetail[s.key];
+            const detail = s.key === "render" && renderMode === "client" && !stageDetail[s.key]
+              ? "Dựng trên trình duyệt (WebCodecs)"
+              : stageDetail[s.key] || s.detail;
             const elapsed = stageElapsed[s.key];
             return (
               <div key={s.key} className={`stage-card ${state === "active" ? "stage-active" : state === "done" ? "stage-done" : state === "error" ? "stage-error" : ""}`}>

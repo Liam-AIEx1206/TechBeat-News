@@ -56,10 +56,13 @@ project_path = os.getenv("HYPERFRAMES_PROJECT") or str(Path(__file__).resolve().
 project_dir = Path(project_path)
 renders_dir = project_dir / "renders"
 assets_dir = project_dir / "assets"
+sessions_dir = project_dir / "sessions"
 renders_dir.mkdir(parents=True, exist_ok=True)
 assets_dir.mkdir(parents=True, exist_ok=True)
+sessions_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/renders", StaticFiles(directory=str(renders_dir)), name="renders")
 app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+app.mount("/sessions", StaticFiles(directory=str(sessions_dir)), name="sessions")
 
 # Serve static history
 history_dir = project_dir / "history"
@@ -72,3 +75,41 @@ app.mount("/static-history", StaticFiles(directory=str(history_dir)), name="stat
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/status")
+def system_status():
+    from middleware.concurrency import limiter
+    return {
+        "render_slots_total": limiter.max_renders,
+        "render_slots_available": limiter._render_sem._value,
+        "render_queue": limiter.render_queue_size,
+        "llm_slots_total": limiter.max_llm_calls,
+        "llm_slots_available": limiter._llm_sem._value,
+    }
+
+
+import asyncio
+import time
+import shutil
+
+async def cleanup_old_sessions():
+    """Xoá thư mục session quá 30 phút."""
+    while True:
+        await asyncio.sleep(600)  # chạy mỗi 10 phút
+        s_dir = Path(project_path) / "sessions"
+        if not s_dir.exists():
+            continue
+        cutoff = time.time() - 1800  # 30 phút
+        for d in s_dir.iterdir():
+            if d.is_dir() and d.stat().st_mtime < cutoff:
+                try:
+                    shutil.rmtree(d, ignore_errors=True)
+                    print(f"[cleanup] Deleted old session directory: {d.name}")
+                except Exception as e:
+                    print(f"[cleanup ERROR] Failed to delete {d.name}: {e}")
+
+
+@app.on_event("startup")
+async def startup():
+    asyncio.create_task(cleanup_old_sessions())

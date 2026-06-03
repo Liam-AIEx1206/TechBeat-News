@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import { InputPanel } from "@/components/InputPanel";
 import { SceneList } from "@/components/SceneList";
 import { VideoBuilder } from "@/components/VideoBuilder";
@@ -54,9 +55,12 @@ export default function Home() {
     const abort = new AbortController();
     abortRef.current = abort;
     const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const endpoint = process.env.NODE_ENV === "development"
+      ? `${API}/generate-scenes`
+      : `/api/proxy/generate-scenes`;
 
     try {
-      const res = await fetch(`${API}/generate-scenes`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +81,7 @@ export default function Home() {
       const processLines = (raw: string) => {
         for (const line of raw.split("\n\n")) {
           if (!line.startsWith("data: ")) continue;
-          let event: { type: string; text?: string; scenePlan?: unknown; message?: string };
+          let event: { type: string; text?: string; scenePlan?: unknown; message?: string; llmProvider?: string; llmModel?: string; };
           try { event = JSON.parse(line.slice(6)); } catch { continue; }
           if (event.type === "chunk" && event.text) {
             setStreamBuffer((prev) => prev + event.text);
@@ -249,6 +253,7 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
 /* ─────────────────────────  DASHBOARD  ───────────────────────── */
 
 function Dashboard({ onStart }: { onStart: () => void }) {
+  const { data: session } = useSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [now, setNow] = useState<string>("");
   const [history, setHistory] = useState<any[]>([]);
@@ -257,7 +262,11 @@ function Dashboard({ onStart }: { onStart: () => void }) {
 
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-    fetch(`${API}/history/local`)
+    const headers: Record<string, string> = {};
+    if (session?.user?.email) {
+      headers["X-User-Email"] = session.user.email;
+    }
+    fetch(`${API}/history/local`, { headers })
       .then(res => res.json())
       .then(data => {
         if (data.history) {
@@ -265,7 +274,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
         }
       })
       .catch(err => console.error("Error loading local history:", err));
-  }, []);
+  }, [session?.user?.email]);
 
   // Animated star/galaxy field
   useEffect(() => {

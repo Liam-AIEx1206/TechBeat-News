@@ -1,0 +1,113 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      width: 100%;
+      max-width: 1600px;
+      margin-top: 30px;
+    }
+    #scene{{SCENE_NUM}} .kanban-col {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 280px;
+    }
+    #scene{{SCENE_NUM}} .kanban-header {
+      font-size: 1.2rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #scene{{SCENE_NUM}} .kanban-col.todo .kanban-header { color: var(--accent); border-bottom-color: var(--accent); }
+    #scene{{SCENE_NUM}} .kanban-col.doing .kanban-header { color: var(--accent2); border-bottom-color: var(--accent2); }
+    #scene{{SCENE_NUM}} .kanban-col.done .kanban-header { color: var(--accent3); border-bottom-color: var(--accent3); }
+    
+    #scene{{SCENE_NUM}} .status-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #scene{{SCENE_NUM}} .status-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent2);
+    }
+    #scene{{SCENE_NUM}} .status-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.5;
+    }
+    #scene{{SCENE_NUM}} .status-meta {
+      font-size: 0.95rem;
+      color: var(--text2);
+    }
+  </style>
+
+  <div class="layout" style="padding-top: 60px; gap: 40px;">
+    <div class="info-col">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast" style="margin: 0 auto;">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text" style="font-size: 3.5rem;">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem; margin-top: -12px;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="kanban-board">
+      <!-- To Do Column -->
+      <div class="kanban-col todo">
+        <div class="kanban-header">
+          <span>● Cần làm</span>
+          <span style="font-size: 0.9rem; opacity: 0.6;">(1)</span>
+        </div>
+        <div class="status-card">
+          <div class="status-title">{{BULLET_1}}</div>
+          <div class="status-meta">⏳ Priority: High</div>
+        </div>
+      </div>
+      
+      <!-- In Progress Column -->
+      <div class="kanban-col doing">
+        <div class="kanban-header">
+          <span>⚡ Đang chạy</span>
+          <span style="font-size: 0.9rem; opacity: 0.6;">(1)</span>
+        </div>
+        <div class="status-card">
+          <div class="status-title">{{BULLET_2}}</div>
+          <div class="status-meta">⚙ Active iteration</div>
+        </div>
+      </div>
+      
+      <!-- Completed Column -->
+      <div class="kanban-col done">
+        <div class="kanban-header">
+          <span>✓ Hoàn thành</span>
+          <span style="font-size: 0.9rem; opacity: 0.6;">(1)</span>
+        </div>
+        <div class="status-card">
+          <div class="status-title">{{BULLET_3}}</div>
+          <div class="status-meta">✅ Verified stable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

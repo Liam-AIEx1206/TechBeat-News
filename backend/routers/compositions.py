@@ -81,9 +81,432 @@ THEMES: dict[str, dict] = {
         "vibe": "luxury magazine editorial vàng champagne trên đen sang trọng, serif accents, fine-line dividers",
         "fx": "serif drop-cap, gold leaf shimmer, fine-line dividers, refined fade",
     },
+    "sunset-glow": {
+        "name": "Sunset Glow",
+        "bg": "#0f050b", "bg2": "#1a0815", "surface": "#280f20",
+        "accent": "#f43f5e", "accent2": "#f97316", "accent3": "#fef08a",
+        "text1": "#fff1f2", "text2": "#fda4af",
+        "vibe": "lãng mạn hoàng hôn ấm áp phong cách editorial, với sự pha trộn mềm mại của tone đỏ hồng, cam ấm và ánh sáng vàng nhạt",
+        "fx": "light leak drift, warm dust floating particles, smooth round borders, background gradient flow",
+    },
+    "iceberg-tech": {
+        "name": "Iceberg Tech",
+        "bg": "#02070f", "bg2": "#051220", "surface": "#0a1d33",
+        "accent": "#38bdf8", "accent2": "#34d399", "accent3": "#cbd5e1",
+        "text1": "#f0f9ff", "text2": "#93c5fd",
+        "vibe": "công nghệ lạnh giá tối giản tinh khiết như băng đá, sắc nét với ánh sáng xanh lam và bạc mờ, kết hợp bento hoặc các ô trong suốt",
+        "fx": "frosted glass reflection, paper thin border grids, cold ice ambient pulse, crisp typographic fades",
+    },
+    "retro-arcade": {
+        "name": "Retro Arcade",
+        "bg": "#0b020f", "bg2": "#150622", "surface": "#220c35",
+        "accent": "#eab308", "accent2": "#c084fc", "accent3": "#22c55e",
+        "text1": "#faf5ff", "text2": "#d8b4fe",
+        "vibe": "phòng máy chơi game retro arcade 8-bit hoài cổ, rực rỡ sắc màu tím neon kết hợp vàng chanh và xanh lá, font monospace cá tính",
+        "fx": "CRT scanlines scanning, brutalist solid drop shadows, pixel particle fall, retro flash accents",
+    },
+    "monochrome-pro": {
+        "name": "Monochrome Pro",
+        "bg": "#050505", "bg2": "#121212", "surface": "#1e1e1e",
+        "accent": "#ffffff", "accent2": "#a1a1aa", "accent3": "#52525b",
+        "text1": "#ffffff", "text2": "#d4d4d8",
+        "vibe": "tối giản mực đen trên giấy trắng và xám tro cao cấp, phong cách triển lãm thời trang hiện đại, typography đậm đà đối lập, khoảng trắng lớn",
+        "fx": "stark contrast fade-in, thin hand-drawn separators, organic bento lines, elegant slide transitions",
+    },
+    "coffee-editorial": {
+        "name": "Coffee Editorial",
+        "bg": "#120e0a", "bg2": "#1f1812", "surface": "#2d241b",
+        "accent": "#a16207", "accent2": "#fef08a", "accent3": "#ca8a04",
+        "text1": "#fdf8f5", "text2": "#d7ccc8",
+        "vibe": "không gian ấm áp mộc mạc của quán cà phê gỗ cổ điển, kết hợp tone kem oatmeal nhẹ và nâu đất terracotta trầm ấm",
+        "fx": "paper noise grain overlay, rounded soft card corners, sepia vintage color wash, warm breathing glows",
+    },
+    "ocean-depths": {
+        "name": "Ocean Depths",
+        "bg": "#020712", "bg2": "#051125", "surface": "#0a1c3b",
+        "accent": "#0d9488", "accent2": "#06b6d4", "accent3": "#f43f5e",
+        "text1": "#f0fdfa", "text2": "#99f6e4",
+        "vibe": "đại dương sâu thẳm đầy bí ẩn công nghệ cao sinh học biển, màu nền xanh đen sâu thẳm kết hợp xanh teal điện tử và hồng san hô rực sáng",
+        "fx": "caustic water wave grids, slow bubble rising particles, soft undersea depth fog, glowing reef line edges",
+    },
+    "space-odyssey": {
+        "name": "Space Odyssey",
+        "bg": "#04020a", "bg2": "#0e051a", "surface": "#1b0b30",
+        "accent": "#8b5cf6", "accent2": "#d946ef", "accent3": "#ec4899",
+        "text1": "#faf5ff", "text2": "#e9d5ff",
+        "vibe": "không gian vũ trụ cinematic sâu thẳm huyền bí với dải ngân hà nebula tím và supernova hồng rực rỡ giữa nền không gian tối đặc",
+        "fx": "twinkling stars, nebula particle drift, cosmic dust float, celestial gravity waves, gradient texts",
+    },
+    "copper-steampunk": {
+        "name": "Copper Steampunk",
+        "bg": "#0f0a07", "bg2": "#1c120c", "surface": "#2d1d13",
+        "accent": "#b45309", "accent2": "#ea580c", "accent3": "#ca8a04",
+        "text1": "#fffbeb", "text2": "#fde8d0",
+        "vibe": "thời kỳ cơ khí hơi nước Steampunk cổ điển, chất liệu đồng đỏ xước bóng metallic phối màu gỉ sắt trầm mặc độc lạ",
+        "fx": "revolving gears (CSS keyframes rotation), steam exhaust animation, brushed metal textures, industrial frame borders",
+    },
+    "cyberpunk-glitch": {
+        "name": "Cyberpunk Glitch",
+        "bg": "#0a010c", "bg2": "#15021a", "surface": "#24042d",
+        "accent": "#f43f5e", "accent2": "#a3e635", "accent3": "#d946ef",
+        "text1": "#fff1f2", "text2": "#fca5a5",
+        "vibe": "cyberpunk đường phố neon lập loè chói tai dưới mưa đêm, tương phản cao giữa hồng sen, xanh lime acid và tím chớp giật",
+        "fx": "RGB glitch text distortion, scanning hazard stripes flashing, neon buzz effect, visual noise, raw cyber grids",
+    },
+    "bento-minimal": {
+        "name": "Bento Minimal",
+        "bg": "#080808", "bg2": "#121212", "surface": "#181818",
+        "accent": "#dc2626", "accent2": "#f9fafb", "accent3": "#a1a1aa",
+        "text1": "#f9fafb", "text2": "#d4d4d8",
+        "vibe": "phong cách thiết kế Bento Nhật Bản tối giản, cực kỳ ngăn nắp sạch sẽ, tone xám đen nhám tối giản điểm màu đỏ mặt trời mọc",
+        "fx": "bento grid alignments, ultra-fine boundary grids, Zen transition slide, soft shadows, sharp corners",
+    },
+    "forest-eco": {
+        "name": "Forest Eco",
+        "bg": "#020c08", "bg2": "#051a11", "surface": "#0a281c",
+        "accent": "#10b981", "accent2": "#84cc16", "accent3": "#34d399",
+        "text1": "#f0fdf4", "text2": "#bbf7d0",
+        "vibe": "xanh sinh thái sinh học tự nhiên eco-tech thân thiện, màu xanh rừng rậm tươi mát phối với xanh đọt chuối ngọc bích",
+        "fx": "falling leaves simulation, sun ray light leaks (god rays), organic curved borders, biological grid nodes",
+    },
+    "brutalist-bold": {
+        "name": "Brutalist Bold",
+        "bg": "#0c0c0e", "bg2": "#19191d", "surface": "#222227",
+        "accent": "#ea580c", "accent2": "#facc15", "accent3": "#2563eb",
+        "text1": "#ffffff", "text2": "#e4e4e7",
+        "vibe": "nghệ thuật Brutalism nổi loạn phá cách với typography khổng lồ, viền đen dày, bóng đổ 45 độ sắc cạnh và bảng màu chói cực đoan",
+        "fx": "scrolling endless marquee text, 45deg sharp solid shadows, retro halftone screen grid, blocky layout jumps",
+    },
+    "pop-candy": {
+        "name": "Pop Candy",
+        "bg": "#0d0615", "bg2": "#180c29", "surface": "#23123c",
+        "accent": "#fda4af", "accent2": "#a7f3d0", "accent3": "#c084fc",
+        "text1": "#fdf4ff", "text2": "#f5d0fe",
+        "vibe": "pastel ngọt ngào mộng mơ Kawaii tươi trẻ năng động, sự pha trộn dễ thương giữa đào mọng, soda bạc hà và oải hương",
+        "fx": "confetti falling sparkles, rising soap bubbles, heart pop shapes, round bouncing card entrances",
+    },
+    "royal-velvet": {
+        "name": "Royal Velvet",
+        "bg": "#0b030b", "bg2": "#1b071a", "surface": "#2b0d28",
+        "accent": "#6b21a8", "accent2": "#ca8a04", "accent3": "#991b1b",
+        "text1": "#fdf4ff", "text2": "#f3e8ff",
+        "vibe": "nhung hoàng gia cổ điển quý tộc sang trọng, sự kết hợp giữa tím hoàng cung thâm sâu, vàng gold lá lánh và đỏ rượu vang quý phái",
+        "fx": "velvet cloth shimmer, delicate gold ornament frames, slow cinematic dissolving transitions",
+    },
+    "neon-green-overdrive": {
+        "name": "Neon Green Overdrive",
+        "bg": "#06080d", "bg2": "#0c111c", "surface": "#121b2d",
+        "accent": "#a3e635", "accent2": "#22c55e", "accent3": "#0ea5e9",
+        "text1": "#f0fdf4", "text2": "#bbf7d0",
+        "vibe": "thể thao điện tử eSports cực kỳ phấn khích tốc độ cao, đen carbon bóng bọc viền xanh lá chói mắt phản quang tràn trề năng lượng",
+        "fx": "lightning energy sparks, high-speed motion blur lines, sharp angular borders, neon wireframe glowing rims",
+    },
 }
 
 DEFAULT_THEME = "cyber-orange"
+
+ENTRANCE_ANIMATION_SCRIPT = """  <script>
+    window.__timelines = window.__timelines || {};
+    const master = gsap.timeline({ paused: true });
+    
+    const scenes = document.querySelectorAll(".scene");
+    scenes.forEach((sceneEl) => {
+        const idStr = sceneEl.id;
+        const num = idStr.replace("scene", "");
+        const audioEl = document.getElementById("v" + num);
+        
+        const start = audioEl ? (parseFloat(audioEl.getAttribute("data-start")) || 0) : 0;
+        const duration = audioEl ? (parseFloat(audioEl.getAttribute("data-duration")) || 5) : 5;
+        
+        const sceneTl = gsap.timeline();
+        
+        // Select elements inside this scene
+        const title = sceneEl.querySelector("h1");
+        const badge = sceneEl.querySelector(".badge");
+        const statusPill = sceneEl.querySelector(".status-pill");
+        
+        // Combined query selector covering cards/elements across all 30 templates
+        const cards = sceneEl.querySelectorAll(
+            ".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare .col, .step-item, .agent-card, .formula-pill, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper"
+        );
+        
+        // Filter out text elements inside visual card blocks to animate them in the second phase
+        const rawDescs = sceneEl.querySelectorAll(".subtitle, .body-text, p, .desc, .caption");
+        const descs = Array.from(rawDescs).filter(el => {
+            return !el.closest(".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare, .step-item, .agent-card, .formula-pill, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper");
+        });
+        
+        // Split title into words for staggered word-by-word animation from top-left (left-to-right, top-to-bottom)
+        if (title) {
+            const text = title.innerText.trim();
+            const words = text.split(/\s+/);
+            title.innerHTML = words.map(word => `<span class="title-word" style="display:inline-block; opacity:0; transform:translate(-15px, -15px);">${word}</span>`).join(" ");
+        }
+        
+        const titleWords = title ? title.querySelectorAll(".title-word") : [];
+        
+        // Initial states: offset elements top-left (negative x and negative y) at absolute time 0
+        sceneTl.set(sceneEl, { autoAlpha: 0 }, 0);
+        if (descs.length > 0) sceneTl.set(descs, { opacity: 0, x: -25, y: -25 }, 0);
+        if (badge) sceneTl.set(badge, { opacity: 0, scale: 0.8 }, 0);
+        if (statusPill) sceneTl.set(statusPill, { opacity: 0, y: -20 }, 0);
+        
+        // Entrance animations
+        sceneTl.to(sceneEl, { autoAlpha: 1, duration: 0.1 });
+        
+        let t = 0.1;
+        if (statusPill) {
+            sceneTl.to(statusPill, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, t);
+            t += 0.15;
+        }
+        if (badge) {
+            sceneTl.to(badge, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, t);
+            t += 0.15;
+        }
+        
+        // Word-by-word typewriter staggered entrance
+        if (titleWords.length > 0) {
+            sceneTl.to(titleWords, {
+                opacity: 1,
+                y: 0,
+                x: 0,
+                duration: 0.6,
+                stagger: 0.06,
+                ease: "power2.out"
+            }, t);
+            t += 0.06 * titleWords.length + 0.15;
+        } else if (title) {
+            sceneTl.to(title, { opacity: 1, y: 0, x: 0, duration: 0.6, ease: "power2.out" }, t);
+            t += 0.4;
+        }
+        
+        // Sequential reveal of description texts (subtitle, body-text, paragraphs)
+        if (descs.length > 0) {
+            sceneTl.to(descs, {
+                opacity: 1,
+                x: 0,
+                y: 0,
+                duration: 0.5,
+                stagger: 0.15,
+                ease: "power2.out"
+            }, t);
+            t += 0.5 + 0.15 * (descs.length - 1);
+        }
+        
+        // Cards/Boxes custom layouts and voiceover duration-aligned animations
+        const templateId = sceneEl.getAttribute("data-template-id") || "";
+        let hasCustomCardAnim = false;
+        
+        if (templateId === "T03" || templateId === "T18" || templateId === "T23") {
+            // Bento layouts: Grid cascade spring scale
+            hasCustomCardAnim = true;
+            sceneTl.set(cards, { opacity: 0, scale: 0.7, x: 0, y: 0 }, 0);
+            sceneTl.to(cards, {
+                opacity: 1,
+                scale: 1,
+                duration: 0.8,
+                stagger: 0.15,
+                ease: "back.out(1.4)"
+            }, t);
+        }
+        else if (templateId === "T06" || templateId === "T24") {
+            // Terminal & Code Diff: Window fade, then line-by-line reveal
+            hasCustomCardAnim = true;
+            const container = sceneEl.querySelector(".terminal, .diff-container");
+            if (container) {
+                sceneTl.set(container, { opacity: 0, y: 30, x: 0 }, 0);
+                sceneTl.to(container, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, t);
+                
+                const codeLines = sceneEl.querySelectorAll("pre, .diff-pane, code, .diff-line");
+                if (codeLines.length > 0) {
+                    sceneTl.set(codeLines, { opacity: 0, x: -10, y: 0 }, 0);
+                    sceneTl.to(codeLines, {
+                        opacity: 1,
+                        x: 0,
+                        duration: 0.5,
+                        stagger: 0.2,
+                        ease: "power1.out"
+                    }, t + 0.4);
+                }
+            }
+        }
+        else if (templateId === "T07") {
+            // Chat Dialogue: message conversation thread simulation
+            hasCustomCardAnim = true;
+            const bubbles = sceneEl.querySelectorAll(".chat-bubble, .chat-box > div");
+            if (bubbles.length > 0) {
+                sceneTl.set(bubbles, { opacity: 0, y: 20, x: 0, scale: 0.95 }, 0);
+                bubbles.forEach((bubble, idx) => {
+                    sceneTl.to(bubble, {
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        duration: 0.6,
+                        ease: "back.out(1.2)"
+                    }, t + idx * 1.2);
+                });
+            }
+        }
+        else if (templateId === "T12" || templateId === "T17") {
+            // Comparison / Pros & Cons: Debating split slide-in from opposite sides
+            hasCustomCardAnim = true;
+            const leftCol = sceneEl.querySelector(".compare .col:first-child, .pc-card.pro");
+            const rightCol = sceneEl.querySelector(".compare .col:last-child, .pc-card.con");
+            
+            if (leftCol && rightCol) {
+                sceneTl.set(leftCol, { opacity: 0, x: -80, y: 0, rotateY: 10 }, 0);
+                sceneTl.set(rightCol, { opacity: 0, x: 80, y: 0, rotateY: -10 }, 0);
+                
+                sceneTl.to(leftCol, { opacity: 1, x: 0, rotateY: 0, duration: 0.8, ease: "power2.out" }, t);
+                sceneTl.to(rightCol, { opacity: 1, x: 0, rotateY: 0, duration: 0.8, ease: "power2.out" }, t + 0.5);
+            }
+        }
+        else if (templateId === "T19") {
+            // Mindmap Node Graph: core node first, draw paths, leaf nodes pop
+            hasCustomCardAnim = true;
+            const coreNode = sceneEl.querySelector(".node.core");
+            const leafNodes = sceneEl.querySelectorAll(".node:not(.core)");
+            const paths = sceneEl.querySelectorAll(".mm-svg path");
+            
+            if (coreNode) {
+                sceneTl.set(coreNode, { opacity: 0, scale: 0.5, x: 0, y: 0 }, 0);
+                sceneTl.to(coreNode, { opacity: 1, scale: 1, duration: 0.7, ease: "back.out(1.5)" }, t);
+                
+                if (paths.length > 0) {
+                    sceneTl.set(paths, { strokeDashoffset: 1000, opacity: 0 }, 0);
+                    sceneTl.to(paths, { opacity: 0.5, strokeDashoffset: 0, duration: 1.0, ease: "power1.inOut" }, t + 0.3);
+                }
+                
+                if (leafNodes.length > 0) {
+                    sceneTl.set(leafNodes, { opacity: 0, scale: 0.7, x: 0, y: 15 }, 0);
+                    sceneTl.to(leafNodes, {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                        duration: 0.6,
+                        stagger: 0.2,
+                        ease: "back.out(1.2)"
+                    }, t + 0.6);
+                }
+            }
+        }
+        else if (templateId === "T11" || templateId === "T16") {
+            // Timeline / Gantt Roadmap: progress bar growth
+            hasCustomCardAnim = true;
+            const rows = sceneEl.querySelectorAll(".gantt-row, .tl-item");
+            const bars = sceneEl.querySelectorAll(".gantt-bar");
+            
+            if (rows.length > 0) {
+                sceneTl.set(rows, { opacity: 0, x: -30, y: -30 }, 0);
+                if (bars.length > 0) {
+                    sceneTl.set(bars, { scaleX: 0, transformOrigin: "left center" }, 0);
+                }
+                
+                rows.forEach((row, idx) => {
+                    sceneTl.to(row, {
+                        opacity: 1,
+                        x: 0,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "power2.out"
+                    }, t + idx * 0.7);
+                    
+                    const bar = row.querySelector(".gantt-bar");
+                    if (bar) {
+                        sceneTl.to(bar, {
+                            scaleX: 1,
+                            duration: 0.8,
+                            ease: "power2.out"
+                        }, t + idx * 0.7 + 0.2);
+                    }
+                });
+            }
+        }
+        else if (templateId === "T20") {
+            // Architecture: nodes fade-in layer-by-layer, arrows pulse/draw
+            hasCustomCardAnim = true;
+            const layers = sceneEl.querySelectorAll(".arch-layer, .arch-node.core-node");
+            const arrows = sceneEl.querySelectorAll(".arch-arrow");
+            
+            if (layers.length > 0) {
+                sceneTl.set(layers, { opacity: 0, scale: 0.9, y: 15, x: 0 }, 0);
+                sceneTl.set(arrows, { opacity: 0 }, 0);
+                
+                layers.forEach((layer, idx) => {
+                    sceneTl.to(layer, { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "back.out(1.2)" }, t + idx * 0.5);
+                    if (arrows[idx]) {
+                        sceneTl.to(arrows[idx], { opacity: 0.6, duration: 0.4, ease: "power1.out" }, t + idx * 0.5 + 0.3);
+                    }
+                });
+            }
+        }
+        else if (templateId === "T13" || templateId === "T22" || templateId === "T28") {
+            // Step flow: sequential slide-in from left to right or top to bottom
+            hasCustomCardAnim = true;
+            const steps = sceneEl.querySelectorAll(".step-item, .flow-step, .status-card");
+            if (steps.length > 0) {
+                sceneTl.set(steps, { opacity: 0, x: -40, y: 0 }, 0);
+                steps.forEach((step, idx) => {
+                    sceneTl.to(step, {
+                        opacity: 1,
+                        x: 0,
+                        duration: 0.7,
+                        ease: "back.out(1.2)"
+                    }, t + idx * 0.5);
+                });
+            }
+        }
+        else if (templateId === "T29" || templateId === "T30") {
+            // CTA / Closing: centered box zoom-in, buttons bounce
+            hasCustomCardAnim = true;
+            const ctaBox = sceneEl.querySelector(".cta-box, .thanks-box");
+            const btn = sceneEl.querySelector(".cta-btn");
+            const meta = sceneEl.querySelector(".cta-meta, .thanks-meta");
+            
+            if (ctaBox) {
+                sceneTl.set(ctaBox, { opacity: 0, scale: 0.8, y: 30, x: 0 }, 0);
+                sceneTl.to(ctaBox, { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: "back.out(1.4)" }, t);
+                
+                if (btn) {
+                    sceneTl.set(btn, { opacity: 0, scale: 0.5 }, 0);
+                    sceneTl.to(btn, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, t + 0.5);
+                }
+                
+                if (meta) {
+                    sceneTl.set(meta, { opacity: 0, y: 10 }, 0);
+                    sceneTl.to(meta, { opacity: 1, y: 0, duration: 0.4, ease: "power1.out" }, t + 0.7);
+                }
+            }
+        }
+        
+        // Fallback: Dynamic staggering reveal based on speech duration
+        if (!hasCustomCardAnim && cards.length > 0) {
+            sceneTl.set(cards, { opacity: 0, x: -35, y: -35 }, 0);
+            const timeLeft = Math.max(duration - t - 0.8, 1.0);
+            const interval = timeLeft / cards.length;
+            cards.forEach((card, index) => {
+                sceneTl.to(card, {
+                    opacity: 1,
+                    x: 0,
+                    y: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                }, t + index * interval);
+            });
+        }
+        
+        master.add(sceneTl, start);
+    });
+    
+    const compId = document.getElementById("root").getAttribute("data-composition-id") || "main";
+    window.__timelines[compId] = master;
+    
+    if (compId === "preview") {
+        setTimeout(() => {
+            master.play();
+        }, 500);
+    }
+  </script>"""
 
 
 def get_theme(theme_id: str | None) -> dict:
@@ -119,6 +542,7 @@ body {{
   min-height: 100vh;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
+  color: var(--text1, #e8e8f0);
 }}
 
 #root {{
@@ -158,6 +582,11 @@ body {{
   position: absolute; inset: 0;
   opacity: 0; visibility: hidden; z-index: 10;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text1, #e8e8f0);
+}}
+.scene pre,
+.scene code {{
+  color: var(--text1, #e8e8f0);
 }}
 
 /* Frame-0 fallback */
@@ -165,15 +594,25 @@ body {{
   opacity: 1; visibility: visible;
 }}
 
-/* Standard layout patterns — expanded for video canvas */
+/* Standard layout patterns — bounded height to guarantee no subtitle overlap */
 .scene .layout {{
-  display: grid; gap: 40px; height: 100%;
-  padding: 50px 120px 240px; align-items: center;
+  display: grid; gap: 40px;
+  height: 920px; /* Bounded height to guarantee no subtitle overlap while maximizing content space */
+  padding: 60px 120px 0;
+  align-items: center;
   position: relative; z-index: 10;
+  overflow: hidden; /* Force clipping to protect the subtitle area */
 }}
 .scene.split .layout    {{ grid-template-columns: 1fr 1fr; }}
 .scene.hero .layout     {{ grid-template-columns: 1.1fr 0.9fr; }}
-.scene.centered .layout {{ grid-template-columns: 1fr; justify-items: center; text-align: center; }}
+.scene.centered .layout {{
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  align-content: flex-start;
+  gap: 24px;
+  padding-top: 80px;
+}}
 /* Bug2 fix: cascade text-align into info-col and all its direct children so body-text/caption inherit centering */
 .scene.centered .info-col {{ align-items: center; text-align: center; }}
 .scene.centered .info-col > * {{ text-align: center; }}
@@ -213,16 +652,16 @@ body {{
 
 .scene-num {{
   position: absolute; bottom: 24px; right: 40px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8rem; font-weight: 800;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 8rem; font-weight: 900;
   color: var(--accent); opacity: 0.06; line-height: 1;
   pointer-events: none; z-index: 5;
 }}
 
 .status-pill {{
   position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.0rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1.0rem; font-weight: 800;
   color: var(--accent3); background: {accent3}1a;
   border: 2px solid {accent3}4d;
   border-radius: 99px; padding: 8px 24px;
@@ -232,8 +671,8 @@ body {{
 /* Typography utilities — scaled up */
 .badge {{
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.0rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1.0rem; font-weight: 800;
   color: var(--accent2); background: var(--surface);
   border: 2px solid var(--accent);
   border-radius: 99px; padding: 10px 24px;
@@ -242,12 +681,12 @@ body {{
 }}
 
 .title-xl {{
-  font-size: clamp(4.0rem, 6.5vw, 6.5rem);
+  font-size: clamp(2.8rem, 3.8vw, 3.8rem);
   font-weight: 900; line-height: 1.32; letter-spacing: -0.04em;
   color: var(--text1);
 }}
 .title-hero {{
-  font-size: clamp(5.5rem, 8.5vw, 8.5rem);
+  font-size: clamp(3.2rem, 4.5vw, 4.5rem);
   font-weight: 900; line-height: 1.32; letter-spacing: -0.05em;
   color: var(--text1);
 }}
@@ -261,9 +700,9 @@ body {{
   word-break: break-word;
 }}
 .caption {{
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 1.2rem; color: var(--text2);
-  letter-spacing: 0.1em; text-transform: uppercase;
+  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
 }}
 
 .grad-text {{
@@ -273,6 +712,19 @@ body {{
   /* Bug1 fix: force independent GPU layer to prevent parent blur bleeding into text rasterisation */
   will-change: transform; isolation: isolate; transform: translateZ(0);
   padding-bottom: 0.18em; margin-bottom: -0.18em;
+}}
+/* Bug6 fix: children of grad-text (e.g. .title-word spans from splitTextIntoWords)
+   must inherit transparent fill so the parent's background-clip:text gradient shows through */
+.grad-text .title-word,
+.grad-text span {{
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  background: none !important;
+}}
+.title-word {{
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  will-change: auto !important;
+  transform: none !important;
 }}
 .outline-text {{
   -webkit-text-stroke: 2px var(--accent); color: transparent;
@@ -333,16 +785,16 @@ body {{
 
 .img-caption {{
   position: absolute; bottom: 24px; left: 24px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 1.1rem; color: var(--text1);
   background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
   border: 1px solid {accent}55;
   padding: 10px 20px; border-radius: 99px; z-index: 2;
 }}
 
-/* Terminal block — for B2 CODE pattern */
+/* Terminal block — for B2 CODE pattern — using highly compatible standard system monospace fonts */
 .terminal {{
-  font-family: 'JetBrains Mono', monospace;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   background: rgba(0,0,0,0.65); border: 2px solid {accent}44;
   border-radius: 24px; padding: 24px 32px;
   font-size: 1.25rem; line-height: 1.8; color: var(--text2);
@@ -373,15 +825,15 @@ body {{
   box-shadow: 0 15px 40px -10px var(--glow);
 }}
 .feat-card .ic {{ font-size: 3rem; margin-bottom: 16px; }}
-.feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.5rem; }}
-.feat-card .d  {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
+.feat-card .t  {{ font-weight: 700; color: var(--text1); margin-bottom: 8px; font-size: 1.75rem; }}
+.feat-card .d  {{ font-size: 1.55rem; color: var(--text2); line-height: 1.6; word-break: break-word; }}
 
 /* Comparison — for B4 */
 .compare {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; width: 100%; }}
 .compare .col {{ padding: 24px 28px; border-radius: 28px; border: 2px solid {accent}33; background: var(--surface); transition: all 0.3s ease; overflow: visible; word-break: break-word; }}
 .compare .col:hover {{ border-color: var(--accent2); transform: scale(1.02); }}
-.compare .col h4 {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
-.compare .col li {{ list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.4rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
+.compare .col h4 {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 16px; }}
+.compare .col li {{ list-style: none; padding: 8px 0; color: var(--text2); font-size: 1.55rem; line-height: 1.6; word-break: break-word; overflow-wrap: anywhere; }}
 .compare .col li::before {{ content: '✓ '; color: var(--accent3); font-weight: 700; }}
 .compare .col.bad li::before {{ content: '✗ '; color: #ef4444; }}
 
@@ -390,9 +842,9 @@ body {{
 .tl-list::before {{ content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), {accent}33); }}
 .tl-item {{ position: relative; padding: 8px 0 16px; }}
 .tl-item::before {{ content: ''; position: absolute; left: -41px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px {accent}33; }}
-.tl-item .y {{ font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--accent2); letter-spacing: 0.1em; }}
-.tl-item .t {{ font-size: 1.6rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
-.tl-item .d {{ color: var(--text2); font-size: 1.2rem; line-height: 1.6; word-break: break-word; }}
+.tl-item .y {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent2); letter-spacing: 0.1em; }}
+.tl-item .t {{ font-size: 1.8rem; font-weight: 700; color: var(--text1); margin: 4px 0; }}
+.tl-item .d {{ color: var(--text2); font-size: 1.45rem; line-height: 1.6; word-break: break-word; }}
 
 /* Quote — for B6 */
 .quote-block {{ position: relative; padding: 20px 40px; width: 100%; }}
@@ -402,7 +854,7 @@ body {{
   opacity: 0.18; font-family: Georgia, serif;
 }}
 .quote-text {{ font-size: 2.0rem; font-style: italic; line-height: 1.6; color: var(--text1); max-width: 800px; word-break: break-word; }}
-.quote-attr {{ font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--accent2); margin-top: 16px; letter-spacing: 0.1em; }}
+.quote-attr {{ font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--accent2); margin-top: 16px; letter-spacing: 0.1em; }}
 .quote-attr::before {{ content: '— '; }}
 
 .scene.centered .quote-block {{
@@ -457,7 +909,7 @@ body {{
 }}
 .stat-list-card .num {{
   font-size: 3.0rem; font-weight: 900;
-  color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  color: var(--accent); font-family: 'Be Vietnam Pro', sans-serif;
   line-height: 1; min-width: 90px; text-shadow: 0 0 10px var(--glow);
   flex-shrink: 0;
 }}
@@ -466,10 +918,10 @@ body {{
   min-width: 0; flex: 1;
 }}
 .stat-list-card .title {{
-  font-size: 1.45rem; font-weight: 700; color: var(--text1); line-height: 1.3;
+  font-size: 1.65rem; font-weight: 700; color: var(--text1); line-height: 1.3;
 }}
 .stat-list-card .desc {{
-  font-size: 1.35rem; color: var(--text2); opacity: 0.85;
+  font-size: 1.45rem; color: var(--text2); opacity: 0.85;
 }}
 
 /* ───────────────── PREMIUM COMPONENT EXTENSIONS (FROM IMAGE REFERENCE) ───────────────── */
@@ -494,13 +946,13 @@ body {{
   border-color: {accent}4d;
 }}
 .chat-bubble .sender-tag {{
-  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.9rem; font-weight: 800;
   margin-bottom: 8px; letter-spacing: 0.1em; text-transform: uppercase;
 }}
 .chat-bubble.user .sender-tag {{ color: var(--accent2); }}
 .chat-bubble.ai .sender-tag {{ color: var(--accent3); }}
 .chat-footer-pill {{
-  align-self: center; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+  align-self: center; font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.1rem; font-weight: 700;
   padding: 12px 28px; border-radius: 99px; background: rgba(0,0,0,0.45);
   border: 1px solid rgba(255,255,255,0.08); color: var(--text2); text-align: center;
   width: 100%; margin-top: 12px;
@@ -521,8 +973,8 @@ body {{
   box-shadow: 0 25px 60px -10px var(--glow);
 }}
 .glass-card .emoji {{ font-size: 3.5rem; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
-.glass-card .title {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }}
-.glass-card .desc {{ font-size: 1.5rem; color: var(--text2); line-height: 1.6; }}
+.glass-card .title {{ font-size: 1.75rem; font-weight: 700; color: var(--text1); margin-bottom: 12px; }}
+.glass-card .desc {{ font-size: 1.55rem; color: var(--text2); line-height: 1.6; }}
 
 /* Google I/O tech card (Scene 3) */
 .tech-card {{
@@ -536,7 +988,7 @@ body {{
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }}
 .tech-card .meta {{
-  display: flex; align-items: center; gap: 12px; font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 12px; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700;
   font-size: 1.15rem; color: var(--accent3); margin-bottom: 28px;
 }}
 .tech-card .bullets {{
@@ -547,7 +999,7 @@ body {{
   display: flex; flex-wrap: wrap; gap: 12px;
 }}
 .tech-card .tag {{
-  font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.95rem; font-weight: 700;
   padding: 8px 18px; border-radius: 99px;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
   color: var(--text1);
@@ -567,15 +1019,15 @@ body {{
 }}
 .agent-card .icon {{ font-size: 2.8rem; filter: drop-shadow(0 0 6px var(--glow)); }}
 .agent-card .role {{
-  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.35rem; font-weight: 800;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2);
 }}
 .agent-card .desc {{
-  font-size: 1.25rem; color: var(--text2); line-height: 1.6;
+  font-size: 1.45rem; color: var(--text2); line-height: 1.6;
 }}
 .agent-grid-center-pill {{
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
   color: #000; background: var(--accent3); border: 2px solid var(--accent);
   padding: 10px 24px; border-radius: 99px; z-index: 5;
   box-shadow: 0 0 25px var(--accent3);
@@ -695,7 +1147,7 @@ body {{
 }}
 .marquee-strip .pill {{
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 1.05rem; font-weight: 800;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--accent2); background: rgba(255,255,255,0.04);
   border: 1px solid {accent}33; border-radius: 99px;
@@ -759,8 +1211,8 @@ body {{
 .bento-cell:nth-child(4) {{ border-top-color: #4ade80; }}
 .bento-cell:nth-child(5) {{ border-top-color: #f472b6; }}
 .bento-cell .ic  {{ font-size: 3.2rem; margin-bottom: 14px; display: block; filter: drop-shadow(0 0 8px var(--glow)); }}
-.bento-cell .t   {{ font-size: 1.55rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }}
-.bento-cell .d   {{ font-size: 1.5rem; color: var(--text2); line-height: 1.5; }}
+.bento-cell .t   {{ font-size: 1.75rem; font-weight: 700; color: var(--text1); margin-bottom: 8px; }}
+.bento-cell .d   {{ font-size: 1.55rem; color: var(--text2); line-height: 1.5; }}
 .bento-cell.wide {{ grid-column: span 2; }}
 .bento-cell.tall {{ grid-row: span 2; }}
 .bento-cell.hero {{ grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, var(--surface), {accent}1a); border-color: {accent}66; border-top-color: {accent}; }}
@@ -854,11 +1306,11 @@ body {{
 }}
 .formula-stack {{
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin: 32px 0; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  margin: 32px 0; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 800;
 }}
 .formula-pill {{
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 24px; border-radius: 99px; font-size: 1.2rem;
+  padding: 10px 24px; border-radius: 99px; font-size: 1.45rem;
   border: 2px solid rgba(255,255,255,0.1);
   color: var(--text1); text-transform: uppercase;
 }}
@@ -872,21 +1324,21 @@ body {{
 .command-pill {{
   display: flex; align-items: center; gap: 16px;
   background: rgba(253,224,71,0.06); border: 2px solid rgba(253,224,71,0.25);
-  padding: 18px 32px; border-radius: 16px; font-size: 1.35rem;
+  padding: 18px 32px; border-radius: 16px; font-size: 1.55rem;
   color: #fde047; font-weight: 600; margin-bottom: 24px; width: 100%;
 }}
 .step-list {{
   display: flex; flex-direction: column; gap: 10px; width: 100%;
 }}
 .step-item {{
-  display: flex; align-items: flex-start; gap: 12px; font-size: 1.4rem; line-height: 1.6;
+  display: flex; align-items: flex-start; gap: 12px; font-size: 1.55rem; line-height: 1.6;
   color: var(--text1, #e8e8f0);
 }}
 .step-circle {{
   display: flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 50%;
   background: var(--accent); color: #fff; font-weight: 800;
-  font-size: 1.1rem; flex-shrink: 0; margin-top: 2px;
+  font-size: 1.25rem; flex-shrink: 0; margin-top: 2px;
 }}
 .bento-3x2 {{
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%;
@@ -917,7 +1369,7 @@ body {{
 .scene .formula-pill,
 .scene p,
 .scene li,
-.scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix) {{
+.scene span:not(.scene-num):not(.icon):not(.cursor):not([class*="bracket"]):not(.badge):not(.stat-suffix):not(.title-word) {{
   color: var(--text1, #e8e8f0) !important;
   text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }}
@@ -960,10 +1412,22 @@ body {{
   text-shadow: 0 1px 6px rgba(0,0,0,0.7) !important;
 }}
 
+/* Prevent horizontal overflow clipping inside cards (Bug 5) */
+.glass-card, .feat-card, .bento-cell, .stat-list-card, .terminal, .visual-block, .compare .col, .agent-card, .tech-card {{
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}}
+.glass-card *, .feat-card *, .bento-cell *, .stat-list-card *, .terminal *, .visual-block *, .compare .col *, .agent-card *, .tech-card * {{
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}}
+
+
 /* Chunked Subtitle Styles — one short line at a time, fades in/out */
 .techbeat-subtitles {{
   position: absolute;
-  bottom: 72px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   width: auto;
@@ -975,21 +1439,21 @@ body {{
 .sub-scene {{
   display: none;
   position: relative;
-  min-height: 80px;
+  min-height: 50px;
 }}
 .sub-chunk {{
   display: none;
   opacity: 0;
   position: relative;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 600;
   color: #ffffff;
   text-shadow: 0 0 14px rgba(0, 0, 0, 0.95), 0 4px 12px rgba(0, 0, 0, 0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: normal;
-  padding: 14px 36px;
+  white-space: nowrap;
+  padding: 10px 24px;
   border-radius: 14px;
   background: transparent;
   backdrop-filter: none;
@@ -1017,14 +1481,14 @@ body {{
   opacity: 0;
   position: relative;
   font-family: 'Be Vietnam Pro', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 600;
   color: rgba(255,255,255,0.75);
   text-shadow: 0 0 14px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.8);
   letter-spacing: -0.01em;
   line-height: 1.3;
-  white-space: normal;
-  padding: 14px 36px;
+  white-space: nowrap;
+  padding: 10px 24px;
   border-radius: 14px;
   background: transparent;
   backdrop-filter: none;
@@ -1056,6 +1520,401 @@ def render_base_css(theme: dict) -> str:
     )})
 
 
+# ─────────────────────────  TEMPLATE ENGINE  ─────────────────────────
+# Fixed HTML templates eliminate layout bugs. The LLM only fills content.
+
+import functools
+
+_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+
+
+@functools.lru_cache(maxsize=1)
+def load_template_catalog() -> dict:
+    """Load catalog.json once and cache it."""
+    catalog_path = _TEMPLATES_DIR / "catalog.json"
+    with open(catalog_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@functools.lru_cache(maxsize=16)
+def load_template_html(filename: str) -> str:
+    """Load a single template HTML file and cache it."""
+    tpl_path = _TEMPLATES_DIR / filename
+    with open(tpl_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def render_template(template_id: str, content: dict, scene_num: int) -> str:
+    """Replace {{PLACEHOLDER}} markers in a template with actual content.
+    
+    Always injects SCENE_NUM and SCENE_NUM_PADDED automatically.
+    Missing placeholders are replaced with empty string to avoid broken HTML.
+    """
+    catalog = load_template_catalog()
+    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    if not tpl_meta:
+        raise ValueError(f"Template {template_id} not found in catalog")
+    
+    html = load_template_html(tpl_meta["file"])
+    
+    # Auto-inject scene number fields
+    content["SCENE_NUM"] = str(scene_num)
+    content["SCENE_NUM_PADDED"] = f"{scene_num:02d}"
+    
+    # Inject data-template-id attribute into root element
+    import re as _re
+    tag_match = _re.match(r'^(<div\b[^>]*>)', html, _re.IGNORECASE)
+    if tag_match:
+        tag = tag_match.group(1)
+        if "data-template-id" not in tag:
+            tag = tag.rstrip('>').rstrip('/') + f' data-template-id="{template_id}">'
+            html = tag + html[tag_match.end():]
+    
+    # If content contains an illustration image, dynamically inject the img-frame inside visual-col
+    if "IMAGE_URL" in content and content["IMAGE_URL"]:
+        img_html = f'''<div class="img-frame breath">
+          <img src="{content["IMAGE_URL"]}" alt="">
+          <span class="img-caption">{content.get("IMAGE_CAPTION", "")}</span>
+        </div>'''
+        html = _re.sub(
+            r'(<div\s+class="visual-col"[^>]*>)([\s\S]*?)(</div>)',
+            rf'\g<1>\n        {img_html}\n      \g<3>',
+            html,
+            count=1
+        )
+    
+    # Replace all {{PLACEHOLDER}} markers
+    def _replacer(m):
+        key = m.group(1)
+        return content.get(key, "")
+    
+    return _re.sub(r"\{\{(\w+)\}\}", _replacer, html)
+
+
+def auto_select_template(
+    scene: "ScenePayload",
+    scene_index: int,
+    total_scenes: int,
+    used_templates: list[str],
+    has_image: bool = False,
+) -> str:
+    """Auto-select the best template for a scene based on content analysis.
+    
+    Strategy:
+    1. Scene 1 always picks from hero templates (T01-T03)
+    2. Last scene prefers closing templates (T09 quote, T08 glass cards)
+    3. Middle scenes: keyword-match narration/visualDescription against catalog
+    4. Avoid repeating the same template as the previous scene
+    5. Ensure layout diversity
+    6. If has_image is True, we must select a template that has a visual-col (layout is NOT centered and NOT custom)
+    """
+    catalog = load_template_catalog()
+    templates = catalog["templates"]
+    
+    # Build searchable text from scene content
+    search_text = f"{scene.title} {scene.narration} {scene.visualDescription}".lower()
+    
+    # Filter templates based on image requirement: must have visual-col
+    if has_image:
+        # Templates with visual-col have layout split, magazine, data, or hero (specifically T01)
+        templates = [t for t in templates if t["layout"] in ("split", "magazine", "data", "hero")]
+        if not templates:
+            # Fallback to all templates if filtered is somehow empty
+            templates = catalog["templates"]
+            
+    # ── Scene 1: Hero templates only ──
+    if scene_index == 1:
+        hero_templates = [t for t in templates if t["category"] == "hero"]
+        if not hero_templates:
+            # Fallback if no hero template has visual-col (e.g. T01 is layout "hero" so it is included if has_image is True)
+            hero_templates = [t for t in catalog["templates"] if t["category"] == "hero"]
+        # Score by keyword match
+        scored = []
+        for t in hero_templates:
+            score = sum(1 for kw in t["keywords"] if kw.lower() in search_text)
+            # Bonus for T01 (most versatile hero)
+            if t["id"] == "T01":
+                score += 2
+            scored.append((score, t["id"]))
+        scored.sort(reverse=True)
+        return scored[0][1] if scored else "T01"
+    
+    # ── Last scene: prefer closing templates ──
+    if scene_index == total_scenes:
+        closing_candidates = ["T30", "T09", "T08", "T10"]  # Thanks, Quote, Glass cards, Big stat
+        # If has_image, these are centered (no visual-col), so we might prefer T11 (timeline split) or T12 (comparison)
+        if has_image:
+            closing_candidates = ["T11", "T12", "T13"]
+        for cand in closing_candidates:
+            if cand not in used_templates:
+                # Make sure the candidate is actually in our templates list
+                if any(t["id"] == cand for t in templates):
+                    return cand
+    
+    # ── Middle scenes: keyword scoring ──
+    # Filter out hero-only templates for middle scenes
+    candidates = [t for t in templates if t["category"] != "hero"]
+    if not candidates:
+        candidates = [t for t in catalog["templates"] if t["category"] != "hero"]
+    
+    scored = []
+    for t in candidates:
+        score = 0
+        # Keyword matching
+        for kw in t["keywords"]:
+            if kw.lower() in search_text:
+                score += 3
+        
+        # Penalize if same template was used recently
+        if t["id"] in used_templates:
+            score -= 10
+        
+        # Penalize if same layout was used in the previous scene
+        if used_templates and len(used_templates) > 0:
+            prev_id = used_templates[-1]
+            prev_meta = next((pt for pt in catalog["templates"] if pt["id"] == prev_id), None)
+            if prev_meta and prev_meta["layout"] == t["layout"]:
+                score -= 5
+        
+        scored.append((score, t["id"]))
+    
+    scored.sort(reverse=True)
+    
+    # If best score is negative (all penalized), pick least-used non-hero
+    if scored and scored[0][0] < 0:
+        # Pick the template that appears least in used_templates
+        from collections import Counter
+        usage_count = Counter(used_templates)
+        scored.sort(key=lambda x: (usage_count.get(x[1], 0), -x[0]))
+    
+    return scored[0][1] if scored else "T04"
+
+
+def build_template_content_prompt(
+    template_id: str,
+    scene: "ScenePayload",
+    scene_index: int,
+    theme: dict,
+) -> str:
+    """Build a focused prompt asking the LLM to return JSON content for template placeholders.
+    
+    This is MUCH simpler than the old free-form prompt because the LLM doesn't need to
+    worry about layout, CSS, overflow, or decoratives — just content.
+    """
+    catalog = load_template_catalog()
+    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    if not tpl_meta:
+        raise ValueError(f"Template {template_id} not found")
+    
+    placeholders = list(tpl_meta["placeholders"])
+    
+    has_image = bool(scene.imageAsset)
+    if has_image:
+        if "IMAGE_CAPTION" not in placeholders:
+            placeholders.append("IMAGE_CAPTION")
+    
+    # Build placeholder descriptions based on template type
+    placeholder_hints = _get_placeholder_hints(template_id, placeholders)
+    if has_image and "IMAGE_CAPTION" not in placeholder_hints:
+        placeholder_hints += "\n- IMAGE_CAPTION: Chú thích ảnh minh họa (tiếng Việt ngắn gọn ≤10 từ)"
+    
+    image_info = ""
+    if has_image:
+        image_info = f"\n- IllustrationImage: {scene.imageAsset}\n⚠️ Cảnh này có ảnh minh họa. Bạn BẮT BUỘC phải điền trường IMAGE_CAPTION trong JSON để làm chú thích ảnh."
+    
+    return f"""Bạn là chuyên gia nội dung video TechBeat News. Nhiệm vụ: điền nội dung tiếng Việt vào các placeholder của template scene.
+
+⚠️ QUY TẮC BẮT BUỘC:
+- Trả về DUY NHẤT một JSON object hợp lệ (không markdown, không giải thích, không code fence).
+- Mọi giá trị phải là STRING tiếng Việt có dấu đầy đủ (trừ các trường icon/emoji).
+- TUYỆT ĐỐI KHÔNG copy nguyên văn narration vào TITLE hoặc SUBTITLE — hãy tóm tắt sáng tạo.
+- GHOST_WORD: chỉ 1 từ tiếng Anh 3-6 ký tự (ví dụ: "TECH", "DATA", "SPEED", "AI").
+- BADGE_TEXT: bắt đầu bằng emoji + "PHẦN {scene_index}" (ví dụ: "⚡ PHẦN {scene_index}").
+- TITLE: ≤ 8 từ, ngắn gọn ấn tượng WOW.
+- SUBTITLE: ≤ 8 từ, cụm danh từ ngắn (KHÔNG phải câu hoàn chỉnh).
+- Các trường DESC/mô tả: ≤ 2 dòng, cực kỳ súc tích.
+- Các trường ICON: chỉ 1 emoji duy nhất (ví dụ: "⚡", "🚀", "💰").
+- Nội dung phải DỰA TRÊN kịch bản scene, KHÔNG bịa đặt số liệu.
+
+═══════ THÔNG TIN SCENE ═══════
+Scene {scene_index}:
+- Title: {scene.title}
+- Narration: {scene.narration}
+- Visual: {scene.visualDescription}{image_info}
+
+═══════ TEMPLATE: {tpl_meta['name']} ({template_id}) ═══════
+{placeholder_hints}
+
+Trả về JSON object với các key sau (TẤT CẢ là string):
+{json.dumps(placeholders, ensure_ascii=False)}
+"""
+
+
+def _get_placeholder_hints(template_id: str, placeholders: list[str]) -> str:
+    """Generate human-readable hints for each placeholder based on template type."""
+    hints = []
+    for p in placeholders:
+        hint = _PLACEHOLDER_HINT_MAP.get(p, f"{p}: Nội dung phù hợp")
+        hints.append(f"- {p}: {hint}")
+    return "\n".join(hints)
+
+
+_PLACEHOLDER_HINT_MAP = {
+    "GHOST_WORD": "1 từ tiếng Anh 3-6 ký tự làm watermark nền (VD: 'TECH', 'AI', 'SPEED')",
+    "BADGE_TEXT": "Nhãn badge (VD: '⚡ PHẦN 2 · HIỆU SUẤT')",
+    "TITLE": "Tiêu đề chính ≤ 8 từ, ấn tượng WOW",
+    "SUBTITLE": "Phụ đề ≤ 8 từ, cụm danh từ ngắn",
+    "DESC": "Tagline metadata ≤ 12 từ hoặc chuỗi tags",
+    "TAG_1": "Badge tag #1 (VD: '🚀 Edge AI')",
+    "TAG_2": "Badge tag #2 (VD: '🔒 Privacy First')",
+    "TAG_3": "Badge tag #3 (VD: '⚡ Real-time')",
+    "BRAND_NAME": "Tên thương hiệu/sự kiện (VD: 'Google I/O')",
+    "META_INFO": "Thông tin meta (VD: 'Tháng 6 2026 · Hà Nội')",
+    "BULLET_1": "Điểm nổi bật #1 (1 dòng)",
+    "BULLET_2": "Điểm nổi bật #2 (1 dòng)",
+    "BULLET_3": "Điểm nổi bật #3 (1 dòng)",
+    "TECH_TAG_1": "Tag kỹ thuật #1 (VD: 'Transformer')",
+    "TECH_TAG_2": "Tag kỹ thuật #2",
+    "TECH_TAG_3": "Tag kỹ thuật #3",
+    "MEGA_NUMBER": "Số liệu lớn (VD: '9x', '150%', '2.5B')",
+    "STAT_1_ICON": "Emoji cho stat #1",
+    "STAT_1_NUM": "Số liệu stat #1 (VD: '4x')",
+    "STAT_1_TITLE": "Tiêu đề stat #1 (≤ 10 từ)",
+    "STAT_1_DESC": "Mô tả stat #1 (≤ 8 từ)",
+    "STAT_2_ICON": "Emoji cho stat #2",
+    "STAT_2_NUM": "Số liệu stat #2",
+    "STAT_2_TITLE": "Tiêu đề stat #2",
+    "STAT_2_DESC": "Mô tả stat #2",
+    "STAT_3_ICON": "Emoji cho stat #3",
+    "STAT_3_NUM": "Số liệu stat #3",
+    "STAT_3_TITLE": "Tiêu đề stat #3",
+    "STAT_3_DESC": "Mô tả stat #3",
+    "FEAT_1_ICON": "Emoji tính năng #1",
+    "FEAT_1_TITLE": "Tên tính năng #1",
+    "FEAT_1_DESC": "Mô tả tính năng #1 (≤ 2 dòng)",
+    "FEAT_2_ICON": "Emoji tính năng #2",
+    "FEAT_2_TITLE": "Tên tính năng #2",
+    "FEAT_2_DESC": "Mô tả tính năng #2",
+    "FEAT_3_ICON": "Emoji tính năng #3",
+    "FEAT_3_TITLE": "Tên tính năng #3",
+    "FEAT_3_DESC": "Mô tả tính năng #3",
+    "FEAT_4_ICON": "Emoji tính năng #4",
+    "FEAT_4_TITLE": "Tên tính năng #4",
+    "FEAT_4_DESC": "Mô tả tính năng #4",
+    "CODE_COMMENT": "Comment code (VD: '// Khởi tạo AI model')",
+    "CODE_KW_1": "Keyword code #1 (VD: 'const')",
+    "CODE_VAR_1": "Tên biến #1 (VD: 'model')",
+    "CODE_VAL_1": "Giá trị #1 (VD: 'gpt-4o')",
+    "CODE_KW_2": "Keyword #2 (VD: 'function')",
+    "CODE_FUNC": "Tên hàm (VD: 'processData')",
+    "CODE_BODY": "Thân hàm ngắn (VD: 'model.generate(input)')",
+    "CODE_COMMENT_2": "Comment code #2",
+    "CODE_KW_3": "Keyword #3",
+    "CODE_VAR_2": "Tên biến #2",
+    "CODE_VAL_2": "Giá trị #2",
+    "USER_LABEL": "Nhãn người dùng (VD: 'NGƯỜI DÙNG')",
+    "CHAT_USER_MSG": "Câu hỏi của người dùng (1-2 câu)",
+    "AI_LABEL": "Nhãn AI (VD: 'GEMINI')",
+    "CHAT_AI_MSG": "Câu trả lời AI (2-3 câu ngắn)",
+    "CHAT_FOOTER": "Chú thích chân trang chat (VD: 'Gemini 2.5 Pro · Tháng 6/2026')",
+    "CARD_1_ICON": "Emoji card #1",
+    "CARD_1_TITLE": "Tiêu đề card #1",
+    "CARD_1_DESC": "Mô tả card #1 (≤ 2 dòng)",
+    "CARD_2_ICON": "Emoji card #2",
+    "CARD_2_TITLE": "Tiêu đề card #2",
+    "CARD_2_DESC": "Mô tả card #2",
+    "CARD_3_ICON": "Emoji card #3",
+    "CARD_3_TITLE": "Tiêu đề card #3",
+    "CARD_3_DESC": "Mô tả card #3",
+    "QUOTE_TEXT": "Trích dẫn (1-3 câu ấn tượng)",
+    "QUOTE_ATTR_HTML": 'Thẻ tác giả HTML (VD: \'<p class="quote-attr">Sundar Pichai · CEO Google</p>\') hoặc chuỗi rỗng "" nếu không có',
+    "STAT_NUMBER": "Số liệu lớn (VD: '90')",
+    "STAT_SUFFIX": "Hậu tố (VD: '%', 'x', 'M')",
+    "STAT_LABEL": "Nhãn số liệu (VD: 'Độ chính xác AI')",
+    "STAT_EXPLANATION": "Giải thích 1-2 câu về số liệu",
+    "TL_1_YEAR": "Mốc thời gian #1 (VD: '2023')",
+    "TL_1_EVENT": "Sự kiện #1 (≤ 6 từ)",
+    "TL_1_DESC": "Mô tả sự kiện #1 (1 câu)",
+    "TL_2_YEAR": "Mốc thời gian #2",
+    "TL_2_EVENT": "Sự kiện #2",
+    "TL_2_DESC": "Mô tả sự kiện #2",
+    "TL_3_YEAR": "Mốc thời gian #3",
+    "TL_3_EVENT": "Sự kiện #3",
+    "TL_3_DESC": "Mô tả sự kiện #3",
+    "COL_GOOD_TITLE": "Tiêu đề cột tốt (VD: 'ƯU ĐIỂM')",
+    "COL_GOOD_1": "Điểm tốt #1",
+    "COL_GOOD_2": "Điểm tốt #2",
+    "COL_GOOD_3": "Điểm tốt #3",
+    "COL_BAD_TITLE": "Tiêu đề cột xấu (VD: 'NHƯỢC ĐIỂM')",
+    "COL_BAD_1": "Điểm xấu #1",
+    "COL_BAD_2": "Điểm xấu #2",
+    "COL_BAD_3": "Điểm xấu #3",
+    "STEP_HEADER": "Tiêu đề nhóm bước (VD: '🎮 THỰC HÀNH')",
+    "STEP_1_ICON": "Emoji bước 1 (VD: '📂')",
+    "STEP_1_TEXT": "Nội dung bước 1 (1 câu)",
+    "STEP_2_ICON": "Emoji bước 2",
+    "STEP_2_TEXT": "Nội dung bước 2",
+    "STEP_3_ICON": "Emoji bước 3",
+    "STEP_3_TEXT": "Nội dung bước 3",
+    "AGENT_1_ICON": "Emoji agent #1 (VD: '🧠')",
+    "AGENT_1_ROLE": "Vai trò agent #1 (VD: 'PHÂN TÍCH')",
+    "AGENT_1_DESC": "Mô tả nhiệm vụ #1 (1-2 câu)",
+    "AGENT_2_ICON": "Emoji agent #2",
+    "AGENT_2_ROLE": "Vai trò agent #2",
+    "AGENT_2_DESC": "Mô tả nhiệm vụ #2",
+    "AGENT_3_ICON": "Emoji agent #3",
+    "AGENT_3_ROLE": "Vai trò agent #3",
+    "AGENT_3_DESC": "Mô tả nhiệm vụ #3",
+    "AGENT_4_ICON": "Emoji agent #4",
+    "AGENT_4_ROLE": "Vai trò agent #4",
+    "AGENT_4_DESC": "Mô tả nhiệm vụ #4",
+    "CENTER_PILL_TEXT": "Text pill trung tâm (VD: '⚡ PHỐI HỢP')",
+    "PILL_1_ICON": "Emoji pill #1 (VD: '🎭')",
+    "PILL_1_TEXT": "Text pill #1 (VD: 'VAI TRÒ')",
+    "PILL_2_ICON": "Emoji pill #2",
+    "PILL_2_TEXT": "Text pill #2",
+    "PILL_3_ICON": "Emoji pill #3",
+    "PILL_3_TEXT": "Text pill #3",
+    "PILL_4_ICON": "Emoji pill #4",
+    "PILL_4_TEXT": "Text pill #4",
+    "FORMULA_LINE_1": "Dòng công thức #1 (màu hồng)",
+    "FORMULA_LINE_2": "Dòng công thức #2 (màu vàng)",
+    "FORMULA_LINE_3": "Dòng công thức #3 (màu xanh lá)",
+    "FORMULA_LINE_4": "Dòng công thức #4 (màu xanh dương)",
+    "BENTO_HERO_ICON": "Emoji ô hero bento (VD: '🚀')",
+    "BENTO_HERO_TITLE": "Tiêu đề ô hero bento",
+    "BENTO_HERO_DESC": "Mô tả ô hero bento (1-2 câu)",
+    "BENTO_1_ICON": "Emoji ô bento #1",
+    "BENTO_1_TITLE": "Tiêu đề ô bento #1",
+    "BENTO_1_DESC": "Mô tả ô bento #1",
+    "BENTO_2_ICON": "Emoji ô bento #2",
+    "BENTO_2_TITLE": "Tiêu đề ô bento #2",
+    "BENTO_2_DESC": "Mô tả ô bento #2",
+    "BENTO_3_ICON": "Emoji ô bento #3",
+    "BENTO_3_TITLE": "Tiêu đề ô bento #3",
+    "BENTO_3_DESC": "Mô tả ô bento #3",
+}
+
+
+def parse_llm_json_content(raw_text: str) -> dict | None:
+    """Parse JSON from LLM response, handling common issues like markdown fences."""
+    text = raw_text.strip()
+    # Strip markdown code fences
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```\s*$", "", text)
+    # Try to extract JSON object
+    # Find first { and last }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except json.JSONDecodeError:
+            pass
+    return None
+
+
 # ─────────────────────────────  PROMPT  ─────────────────────────────
 
 def build_system_prompt_compact(theme: dict) -> str:
@@ -1071,7 +1930,7 @@ NGÔN NGỮ: tiếng Việt có dấu. Giữ nguyên văn narration/title/visual
 - KHÔNG viết <script> chứa gsap.timeline (sẽ bị strip server-side).
 - KHÔNG redeclare CSS class đã có sẵn.
 
-CSS framework + GSAP timeline + Inter/JetBrains Mono font đã được inject server-side.
+CSS framework + GSAP timeline + font Inter đã được inject server-side (phông JetBrains Mono đã bị loại bỏ hoàn toàn để chống lỗi chữ tiếng Việt).
 
 Class có sẵn (DÙNG, không tự viết):
 LAYOUT: .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col
@@ -1120,8 +1979,10 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
     Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
   • Cấm tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ):
+⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VÙNG PHỤ ĐỀ):
+- **Tuyệt đối cấm sử dụng phông chữ JetBrains Mono hay phông monospace cho chữ tiếng Việt:** Không sử dụng phông chữ monospace cho tiêu đề, nhãn, số, phụ đề, trích dẫn, v.v. (như `.badge`, `.compare .col h4`, `.caption`...) vì gây lỗi chữ tiếng Việt nghiêm trọng (lỗi hiển thị ư, ô, Đ, ê, ơ). BẮT BUỘC sử dụng phông chữ `'Be Vietnam Pro'` hoặc sans-serif hệ thống. Chỉ đối với các khối code thật trong `.terminal` mới sử dụng `Consolas, monospace`.
 - **Cấm đặt Decoratives sai chỗ (Lỗi nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để tránh đè lên các cột chữ chính.
+- **Chống tràn xuống vùng phụ đề (BẮT BUỘC):** Phụ đề chiếm vùng đáy màn hình sát viền cao 160px. Tất cả nội dung trong `.visual-col` và `.info-col` phải giới hạn tổng chiều cao tối đa không quá 780px để không chạm đến phụ đề. Rút ngắn danh sách/số liệu xuống tối đa 3-4 mục cực kỳ ngắn gọn, súc tích. CẤM TUYỆT ĐỐI xếp chồng nhiều khối trực quan khác nhau trong visual-col (ví dụ: cấm chèn cả .stat-list và .step-list hoặc .feat-grid trên cùng một slide). Cột visual-col chỉ được chứa DUY NHẤT một khối trực quan.
 - **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
   * Chỉ được chứa **MỘT từ đơn cực ngắn từ 3-6 ký tự** (Ví dụ: "GSAP", "CORE", "FUTURE", "SPEED", "DATA"). Cấm tuyệt đối viết các cụm từ dài (như "Future of Animation") làm ghost-text vì kích thước chữ cực to sẽ tràn màn hình che sạch nội dung chính của slide.
   * Bắt buộc phải đặt ở góc lề ngoài qua inline style, ví dụ: style="bottom: -8%; right: -5%;" hoặc style="top: -10%; left: -5%;". CẤM đặt ở giữa màn hình hoặc các tọa độ 20%, 30%, 40% vì sẽ che khuất văn bản.
@@ -1150,7 +2011,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 
 📝 THÊM VÍ DỤ NỘI DUNG THỰC TẾ (REAL-WORLD PREVIEWS / CODE / DATA):
 - Để các khối trực quan không bị đơn điệu chỉ có chữ và icon, hãy chèn thêm các khối ví dụ nội dung thực tế (mock previews) bên dưới mô tả để lấp đầy không gian trống cực kỳ cinematic và chân thực:
-  - Nếu nói về Code / Tech Stack: Chèn một khối `<pre style="font-family:'JetBrains Mono';font-size:0.9rem;opacity:0.85;margin-top:10px;">` hoặc `.terminal` có code React/TypeScript/JSON thực tế (ví dụ: code config, function export, dependency tag).
+  - Nếu nói về Code / Tech Stack: Chèn một khối `<pre style="font-family:'JetBrains Mono';font-size:0.9rem;color:var(--text1);opacity:0.85;margin-top:10px;">` hoặc `.terminal` có code React/TypeScript/JSON thực tế (ví dụ: code config, function export, dependency tag).
   - Nếu nói về Community / GitHub: Chèn mockup danh sách commit log mini, contributor list, contributors avatars mockup, pull request status pill hoặc tags `#github #pull-request`.
   - Nếu nói về Performance / Stats / Features: Chèn thanh tiến trình `<div class="progress-bar" style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:10px;overflow:hidden;"><div class="fill" style="width:85%;height:100%;background:var(--accent2);"></div></div>` hoặc các tag badge mini `<span class="badge-mini" style="font-size:0.8rem;padding:2px 8px;background:rgba(255,255,255,0.06);border-radius:4px;margin-right:6px;">#feature</span>` stack ngang.
 
@@ -1164,7 +2025,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
   </div>
 
 
-- Toàn bộ nội dung mỗi scene PHẢI vừa trong viewport 1920×1080. KHÔNG được để content dài hơn chiều cao 880px (sau khi trừ padding).
+- Toàn bộ nội dung mỗi scene PHẢI vừa trong viewport 1920×1080. KHÔNG được để content dài hơn chiều cao 920px (sau khi trừ padding).
 - Nếu danh sách bullet/feature dài hơn 4 dòng → CẮT GỌN xuống tối đa 4 mục, mỗi mục ngắn gọn.
 - Title trong visual-block không lấy font-size > 2rem; bullet list không > 1.2rem để tránh tràn xuống.
 
@@ -1176,7 +2037,7 @@ ANIMATIONS: .breath, .shimmer-fast, .glow-card, .glow-border, .glow-text
 <title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>/* override tối đa 60 dòng */</style>
 </head><body>
@@ -1250,7 +2111,7 @@ def build_system_prompt_full(theme: dict, scene_count: int = 0) -> str:
 HỆ THỐNG ĐÃ LO SẴN — KHÔNG CẦN BẠN VIẾT LẠI:
 ✅ CSS framework đầy đủ (variables theme, layouts, typography, decorative chrome) đã được inject server-side trước HTML của bạn.
 ✅ GSAP timeline với fade in/out scene, audio sync, scene visibility lifecycle sẽ được inject server-side với duration thật từ TTS.
-✅ Font Inter + JetBrains Mono đã link sẵn.
+✅ Font Inter + Be Vietnam Pro đã link sẵn. Phông JetBrains Mono đã bị loại bỏ hoàn toàn để chống lỗi hiển thị tiếng Việt.
 
 ⚠️ TUYỆT ĐỐI KHÔNG VIẾT `<script>` chứa `gsap.timeline`.
 
@@ -1270,7 +2131,7 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
 ═══════════════════════════════════════
 - ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
   • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
-  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung (ví dụ các card tính năng "Tạm dừng cập nhật", "Chọn ngày cập nhật", "Giảm thiểu lỗi cập nhật" ở Scene 2), CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge "Phần 2" hoặc bị cắt xén ở trên.
+  • SCENE 2 VÀ CÁC LAYOUT CHIA CỘT (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung (ví dụ các card tính năng "Tạm dừng cập nhật", "Chọn ngày cập nhật", "Giảm thiểu lỗi cập nhật" ở Scene 2), CẤM TUYỆT ĐỐI xếp hàng ngang trong các layout chia cột như .split, .magazine, .data. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge "Phần 2" hoặc bị cắt xén ở trên. Chỉ sử dụng hàng ngang 3 cột (.feat-row hoặc 3 glass-card ngang) trong layout .centered hoặc layout chiếm toàn màn hình để tránh bị bóp nghẹt và tràn lề phải màn hình.
   • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
 
 - ⚠️ QUY TẮC TUYỆT ĐỐI CHỐNG THIẾU ẢNH (BẮT BUỘC):
@@ -1313,10 +2174,11 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
     Ví dụ: `<span class="grad-text" data-effect="word-rotate" data-words="Tốc độ, Tiết kiệm, Bảo mật">Tốc độ</span><span class="cursor-blink">|</span>`
   • Cấm tuyệt đối việc tạo con trỏ nhấp nháy mà không có thuộc tính `data-effect` đi kèm.
 
-- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
+- ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VÙNG PHỤ ĐỀ):
   • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
+  • **Tuyệt đối cấm sử dụng phông JetBrains Mono hay phông monospace cho tiếng Việt:** Không sử dụng phông monospace cho tiêu đề, nhãn, số, trích dẫn, tag, v.v. (như `.badge`, `.compare .col h4`, `.caption`, `.quote-attr`...) vì gây lỗi chữ tiếng Việt nghiêm trọng (lỗi hiển thị ư, ô, Đ, ê, ơ). BẮT BUỘC sử dụng phông `'Be Vietnam Pro'` hoặc sans-serif hệ thống. Chỉ đối với các khối code trong `.terminal` mới sử dụng `Consolas, monospace`.
   • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
-    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng từ đỉnh xuống, giới hạn tổng chiều cao tối đa của toàn bộ các khối nội dung trong `.visual-col` và `.info-col` không quá 780px để chừa đúng 160px trống phía dưới hoàn toàn cho phụ đề sát viền. Rút ngắn các danh sách/số liệu xuống tối đa 3-4 mục cực kỳ ngắn gọn, súc tích để không bao giờ bị cắt xén hay che bởi phụ đề. CẤM TUYỆT ĐỐI xếp chồng nhiều khối trực quan khác nhau trong visual-col (ví dụ: cấm chèn cả .stat-list và .step-list hoặc .feat-grid trên cùng một slide). Cột visual-col chỉ được chứa DUY NHẤT một khối trực quan.
     * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
     * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tối đa 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
   • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
@@ -1325,6 +2187,11 @@ CSS variables đã có (DÙNG var(--xxx), KHÔNG hardcode hex):
     * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
   • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
     * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * **QUY TẮC PHẢI THUỘC LÒNG VỀ THẨM MỸ CARD & KHỐI TRỰC QUAN:**
+      - **CẤM TUYỆT ĐỐI** tự tạo hoặc vẽ các ô/hộp bằng thẻ `<div>` tự viết `style` viền hay nền. BẮT BUỘC tận dụng 100% các class premium thiết kế sẵn: `.feat-card`, `.glass-card`, `.stat-list-card`, hoặc `.bento-cell` để đảm bảo tính mỹ thuật tối cao của Awwwards.
+      - **BẮT BUỘC chèn hình ảnh emoji/icon lớn minh họa sinh động** ở góc trên cùng hoặc đầu của mỗi khối/ô nội dung (ví dụ: `<div class="ic">⚡</div>` hoặc `<div class="ic-wrap">⚡</div>` cho `.feat-card` / `.stat-list-card`, hoặc `<span class="emoji">⚡</span>` cho `.glass-card`). CẤM để các card trơn tuột chỉ có chữ mà thiếu đi icon/emoji nhận diện trực quan!
+      - **CẤM TUYỆT ĐỐI sắp xếp lệch lạc để thừa nhiều khoảng trống vô nghĩa**: Phải phân bổ số lượng card hợp lý (ví dụ: 2-3 card dọc với `.stat-list`, 4 card với `.feat-grid` 2x2, 3 card ngang `.feat-row` trong layout centered) để lấp đầy không gian một cách trực quan, cân đối, hài hòa.
+      - **Không tự ý override làm cỡ chữ trong card bị bé tí khó nhìn**: Cỡ chữ tiêu đề của các card phải lớn, nổi bật (tiêu đề $\ge 1.6rem$, mô tả $\ge 1.45rem$) và tương phản cực tốt để người xem dễ dàng đọc được.
     * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch. Đặc biệt đối với step-list (B19), bắt buộc chèn thêm các emoji tương ứng trước nội dung text của từng bước (ví dụ: "📂 Liệt kê file", "📝 Mô tả thay đổi") để tạo điểm nhấn thị giác sống động và tránh đơn điệu.
     * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene (Ví dụ: nếu nói về GSAP thì phải có các thư viện thật như TweenLite, TweenMax, hoặc benchmark thật. Cấm bê nguyên văn placeholder "Benchmark 2024", "cost efficiency" của hệ thống vào).
   • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
@@ -1730,7 +2597,7 @@ HEAD BOILERPLATE (copy nguyên xi):
 <title>{{title video}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* CHỈ override scene-specific. KHÔNG redeclare class đã sẵn.
@@ -1860,7 +2727,7 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 - ⚖️ QUY TẮC CÂN BẰNG THỊ GIÁC & CỐT LÕI BỐ CỤC (CHỐNG CHE KHUẤT CHỮ & TRÀN VIỀN):
   • **Cấm đặt Decoratives sai chỗ (Lỗi cực kỳ nghiêm trọng):** Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) **CẤM TUYỆT ĐỐI** đặt bên trong `.visual-col` hoặc `.info-col`. Chúng **PHẢI** được đặt làm con trực tiếp của thẻ `.scene` (ngay trước thẻ đóng `</div>` của `.scene`) để làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ.
   • **Chống tràn dọc và che khuất bởi phụ đề (BẮT BUỘC):**
-    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình (cách đáy 150px).
+    * **Mật độ nội dung:** Mọi nội dung của slide bắt buộc phải nằm gọn gàng trong chiều cao viewport khả dụng để không bao giờ đè lên phụ đề ở vùng dưới đáy màn hình sát viền (cách đáy 160px). CẤM TUYỆT ĐỐI xếp chồng nhiều khối trực quan khác nhau trong visual-col (ví dụ: cấm chèn cả .stat-list và .step-list hoặc .feat-grid trên cùng một slide). Cột visual-col chỉ được chứa DUY NHẤT một khối trực quan.
     * **Quy tắc tuyệt đối cho `.scene.centered` (layout căn giữa):** CẤM TUYỆT ĐỐI nhồi nhét đồng thời cả khối trích dẫn `.quote-block` và các thẻ card tính năng khác (`.stat-list`, `.feat-row`, `.compare`, `.bento-grid`, `.step-list`...) trên cùng một scene căn giữa. Bạn bắt buộc phải chọn 1 trong 2: hoặc là 1 khối `.quote-block` duy nhất cực kỳ trang trọng, hoặc là 1 nhóm card trực quan được căn giữa ngăn nắp. Việc chèn cả hai sẽ làm tràn dọc màn hình và bị phụ đề che khuất hoàn toàn!
     * **Quy tắc cho `.stat-list` và nhóm card dọc:** Chỉ được phép chứa tốiã 2 đến 3 thẻ con. Mỗi thẻ con mô tả cực kỳ ngắn gọn (không quá 2 dòng) để tránh làm chiều cao thẻ quá lớn gây tràn dọc.
   • **Quy định nghiêm ngặt về `.ghost-text` (Watermark nền):**
@@ -1885,7 +2752,7 @@ CSS framework + GSAP timeline + font Inter/JetBrains Mono đã được inject s
 <title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* Override scene-specific (≤80 dòng): keyframes shimmer/pulse cho visual,
@@ -2164,6 +3031,7 @@ class CompositionRequest(BaseModel):
     scenes: list[ScenePayload]
     totalDuration: int
     theme: str | None = None  # ThemeId from frontend; falls back to DEFAULT_THEME
+    sessionId: str | None = None
 
 
 def sse(data: dict) -> str:
@@ -2236,7 +3104,7 @@ def build_user_prompt(req: CompositionRequest) -> str:
         if is_last:
             lines.append(
                 "  📐 SCENE CUỐI — CHỐNG OVERFLOW & BẮT BUỘC ĐỘC ĐÁO:"
-                "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG. Cấm tuyệt đối chỉ nhồi ambient decoratives hay bỏ trống."
+                "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI chọn 1 trong 2 bố cục để tránh tràn dọc: HOẶC là 1 khối .quote-block duy nhất cực kỳ trang trọng, HOẶC là một nhóm card trực quan ngăn nắp (như 1 .stat-list có 2-3 stat-list-card, hoặc 1 .feat-row có 3 glass-card). CẤM TUYỆT ĐỐI nhồi nhét cả trích dẫn và card tính năng trên cùng slide."
                 "\n  ⚠️ CẤM ĐẶT DECORATIVES TRONG .visual-col hoặc .info-col: Tất cả background decoratives (.float-orb-*, .aurora-glow, .animated-grid, .retro-grid, .light-rays, .ghost-text, .particle-field) PHẢI là con trực tiếp của thẻ .scene (ngay trước thẻ đóng </div> của .scene) làm nền phía sau, không được chen vào các cột nội dung làm đè và che khuất chữ."
                 "\n  ⚠️ Toàn bộ content visual-col PHẢI vừa trong khung 1920×1080 (chiều cao usable ~880px sau padding)."
                 "\n  ⚠️ Nếu có danh sách bullet/feature > 4 mục → CẮT XUỐNG tối đa 4 mục."
@@ -2393,7 +3261,7 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
 ═══════════════════════════════════════
 - ⚠️ QUY TẮC BỐ CỤC CHỐNG ĐÈ CHỮ & CHE KHUẤT SCENE (BẮT BUỘC):
   • SCENE 1 (Opening/Intro): BẮT BUỘC bọc toàn bộ nội dung mô tả, chữ trắng trong cột trực quan của Scene 1 vào các khối card thiết kế cao cấp (như `.tech-card B14`, `.feat-card`, hoặc `.glass-card`) có nền màu tối/kính mờ để làm nổi bật và chống đè chữ. Hãy dùng hiệu ứng xuất hiện lần lượt bằng animation delay để lấp đầy không gian.
-  • SCENE 2 (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung, CẤM TUYỆT ĐỐI xếp hàng ngang. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge hoặc bị cắt xén ở trên.
+  • SCENE 2 VÀ CÁC LAYOUT CHIA CỘT (Xếp chồng dọc 3 ô): Nếu có 3 ô/thẻ nội dung, CẤM TUYỆT ĐỐI xếp hàng ngang trong các layout chia cột như .split, .magazine, .data. BẮT BUỘC xếp chồng dọc từ trên xuống dưới sử dụng `.stat-list` (với các `.stat-list-card shimmer-fast glow-card` có delay tăng dần) hoặc hàng dọc `.feat-column`. Điều này giúp tận dụng không gian dọc hoàn hảo, không bao giờ bị che khuất Badge hoặc bị cắt xén ở trên. Chỉ sử dụng hàng ngang 3 cột (.feat-row hoặc 3 glass-card ngang) trong layout .centered hoặc layout chiếm toàn màn hình để tránh bị bóp nghẹt và tràn lề phải màn hình.
   • SCENE 3, 4, 5 (Cấm chữ trắng trần & dùng hoạt ảnh lần lượt): CẤM TUYỆT ĐỐI viết các dòng chữ trắng trần/đơn điệu (naked text lines) trực tiếp trong `.visual-col` cho Scene 3, Scene 4 và Scene 5. Bắt buộc phải bọc mọi dòng mô tả/thành phần vào trong các ô có cấu trúc đẹp mắt có nền như `.glass-card`, `.feat-card`, `.stat-list-card`, hoặc `.step-item` và thiết lập thuộc tính `style="animation-delay: X.Xs"` để chúng xuất hiện tuần tự/lần lượt (staggered entrance) cực kỳ lung linh, chuyên nghiệp.
 
 - 🛡️ CHỐNG ĐÈ CHỮ / MẤT NÉT GLOW:
@@ -2435,6 +3303,11 @@ Nhiệm vụ của bạn là sinh ra duy nhất mã HTML của block `<div class
     * **CẤM override font-size quá to:** Mặc định class `.ghost-text` đã được định nghĩa font-size siêu lớn trong hệ thống. Cấm tuyệt đối dùng inline style để chỉnh font-size to hơn hoặc đặt vị trí đè lên các cột văn bản chính.
   • **Chống Slide Trống & Nội Dung Đơn Điệu (Scene 3 & Scene 4):**
     * Khi dùng Mock Visual biểu đồ hoặc danh sách (B1-B8, B11-B20), **cấm** để cột chữ (info-col) trống trải chỉ có Title và Subtitle. Bắt buộc chèn thêm các tag mini stack ngang hoặc các khối bổ trợ ngăn nắp bên dưới mô tả.
+    * **QUY TẮC PHẢI THUỘC LÒNG VỀ THẨM MỸ CARD & KHỐI TRỰC QUAN:**
+      - **CẤM TUYỆT ĐỐI** tự tạo hoặc vẽ các ô/hộp bằng thẻ `<div>` tự viết `style` viền hay nền. BẮT BUỘC tận dụng 100% các class premium thiết kế sẵn: `.feat-card`, `.glass-card`, `.stat-list-card`, hoặc `.bento-cell` để đảm bảo tính mỹ thuật tối cao của Awwwards.
+      - **BẮT BUỘC chèn hình ảnh emoji/icon lớn minh họa sinh động** ở góc trên cùng hoặc đầu của mỗi khối/ô nội dung (ví dụ: `<div class="ic">⚡</div>` hoặc `<div class="ic-wrap">⚡</div>` cho `.feat-card` / `.stat-list-card`, hoặc `<span class="emoji">⚡</span>` cho `.glass-card`). CẤM để các card trơn tuột chỉ có chữ mà thiếu đi icon/emoji nhận diện trực quan!
+      - **CẤM TUYỆT ĐỐI sắp xếp lệch lạc để thừa nhiều khoảng trống vô nghĩa**: Phải phân bổ số lượng card hợp lý (ví dụ: 2-3 card dọc với `.stat-list`, 4 card với `.feat-grid` 2x2, 3 card ngang `.feat-row` trong layout centered) để lấp đầy không gian một cách trực quan, cân đối, hài hòa.
+      - **Không tự ý override làm cỡ chữ trong card bị bé tí khó nhìn**: Cỡ chữ tiêu đề của các card phải lớn, nổi bật (tiêu đề $\ge 1.6rem$, mô tả $\ge 1.45rem$) và tương phản cực tốt để người xem dễ dàng đọc được.
     * Mỗi phần tử trong feature grid, bento grid, hay step list phải cực kỳ giàu chi tiết: bắt buộc có emoji sinh động + tiêu đề màu nổi bật + mô tả ít nhất 2 dòng + ví dụ nội dung thực tế (mock code, progress bar, tags), xếp ngăn nắp, đối xứng, đồng đều, không bị lệch.
     * **CẤM TUYỆT ĐỐI sử dụng placeholder mặc định hoặc copy-paste vô căn cứ:** Mỗi khối trực quan trong `.visual-col` phải mang thông tin/số liệu/dữ liệu thực tiễn được trích xuất trực tiếp từ kịch bản của scene.
   • **Cân bằng khi có Ảnh Minh Họa (Scene 5 fix):** Khi dùng ảnh minh họa (`.img-frame`), cấm để cột chữ (`info-col`) trống trải chỉ có Title và Desc 1 dòng đơn điệu. Bắt buộc chèn thêm các thành phần bổ trợ ở dưới cột chữ như: một nhóm 2-3 badge mini stack ngang (`.badge`) chứa các tag kỹ thuật, hoặc một `.stat-list-card` mini hiển thị chỉ số liên quan đến ảnh, hoặc một timeline ngắn 2 mốc (`.tl-list`).
@@ -2491,15 +3364,8 @@ QUY TẮC HTML BẮT BUỘC CHO SCENE {scene_index} (QUYẾT ĐỊNH VẺ ĐẸP
 3. 🎬 NẾU LÀ SCENE MỞ ĐẦU (SCENE 1) - BẮT BUỘC WOW HERO:
    - Đây là phân cảnh giới thiệu nội dung chính của cả buổi thuyết trình. Tiêu đề chính (Title) của Scene 1 BẮT BUỘC PHẢI cực kỳ lớn, in đậm và nổi bật để tạo tác động mạnh mẽ (WOW effect) ngay lập tức.
    - BẮT BUỘC dùng class `.title-hero.grad-text` cho thẻ h1 của Scene 1 (không dùng `.title-xl`), và thêm CSS inline style `style="font-weight: 900 !important;"` để in đậm tối đa tiêu đề.
-   - Hãy chọn 1 trong các TEMPLATES sau (tự do, đừng dùng .split):
-   ▸ TEMPLATE A — FULL-BLEED HERO (intro):
-     `<div class="scene hero" id="scene1">` có các background đầy đủ, status-pill, badges, particle-field và tech-card B14 hoặc bento-grid B16 lấp đầy không gian.
-   ▸ TEMPLATE B — MEGA-NUM HERO (intro stats):
-     `<div class="scene centered" id="scene1">` có mega-num cực lớn và hero-stat-banner.
-   ▸ TEMPLATE C — RETRO/SYNTHWAVE HERO (intro theme y2k):
-     `<div class="scene centered" id="scene1">` có retro-grid và outline-text.
-   ▸ TEMPLATE D — BENTO HERO (tech showcase):
-     `<div class="scene" id="scene1" style="padding:80px;">` có bento-grid 4 ô cực đẹp.
+   - Layout nên ưu tiên `.scene.hero` hoặc `.scene.centered`.
+   - BẮT BUỘC CHỌN 1 TRONG CÁC VISUAL PATTERN CHI TIẾT NHƯ (B1, B13, B14, B17) VÀO TRONG `.visual-col` ĐỂ LẤP ĐẦY KHÔNG GIAN, KHÔNG ĐƯỢC ĐỂ TRỐNG.
 
 4. 🌌 DECORATIVE DENSITY (CHỐNG SLIDE TRỐNG):
    - MỖI scene BẮT BUỘC có 2-5 ambient decoratives lấp đầy không gian trống:
@@ -2713,7 +3579,7 @@ def build_user_prompt_single_scene(s: ScenePayload, previous_context: dict, is_f
     elif is_last:
         lines.append(
             "\n  📐 SCENE CUỐI — CHỐNG OVERFLOW & BẮT BUỘC ĐỘC ĐÁO:"
-            "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI có: 1 .quote-block VÀ ít nhất 2-3 .feat-row/.agent-card hoặc 1 .stat-list với 2 stat-list-card ĐỂ KHÔNG TRỐNG."
+            "\n  ⚠️ visual-col CỦA SCENE CUỐI PHẢI chọn 1 trong 2 bố cục để tránh tràn dọc: HOẶC là 1 khối .quote-block duy nhất cực kỳ trang trọng, HOẶC là một nhóm card trực quan ngăn nắp (như 1 .stat-list có 2-3 stat-list-card, hoặc 1 .feat-row có 3 glass-card). CẤM TUYỆT ĐỐI nhồi nhét cả trích dẫn và card tính năng trên cùng slide."
         )
         
     lines.append(
@@ -2877,94 +3743,121 @@ def inject_missing_scene_placeholders(html: str, scenes: list[ScenePayload], mis
 
 async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[dict, None]:
     """Yield raw event dicts: {type:'chunk',text} | {type:'done',html,scenes?} | {type:'error',message}"""
-    import os as _os
-    theme = get_theme(req.theme)
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        import os as _os
+        theme = get_theme(req.theme)
 
-    # ── Materialise images FIRST so the LLM gets real file paths ────────
-    try:
-        materialised = await _materialise_scene_images(req.scenes, get_project_root())
-        req = req.model_copy(update={"scenes": materialised})
-    except Exception as e:
-        print(f"[preview] image materialisation skipped: {e}")
+        # ── Materialise images FIRST so the LLM gets real file paths ────────
+        try:
+            materialised = await _materialise_scene_images(req.scenes, get_project_root(session_id=req.sessionId))
+            req = req.model_copy(update={"scenes": materialised})
+        except Exception as e:
+            print(f"[preview] image materialisation skipped: {e}")
 
-    try:
-        scenes_html = []
-        previous_context = {
-            "layout": None,
-            "visual_pattern": None,
-            "used_layouts": [],
-            "used_patterns": []
-        }
+        try:
+            scenes_html = []
+            previous_context = {
+                "layout": None,
+                "visual_pattern": None,
+                "used_layouts": [],
+                "used_patterns": []
+            }
 
-        for idx_zero, s in enumerate(req.scenes):
-            idx = idx_zero + 1
-            is_first = (idx == 1)
-            is_last = (idx == len(req.scenes))
+            for idx_zero, s in enumerate(req.scenes):
+                idx = idx_zero + 1
+                is_first = (idx == 1)
+                is_last = (idx == len(req.scenes))
 
-            sys_single = build_system_prompt_single_scene(theme, idx, len(req.scenes), previous_context)
-            prompt_single = build_user_prompt_single_scene(s, previous_context, is_first, is_last)
-
-            def _kwargs(provider_name: str) -> dict:
-                return {
-                    "messages": [
-                        {"role": "system", "content": sys_single},
-                        {"role": "user", "content": prompt_single},
-                    ],
-                    "temperature": 0.7 if provider_name == "primary" else 0.75,
-                    "max_tokens": 4000,
-                    "stream": True,
-                }
-
-            try:
-                stream, provider, model = await chat_completions_with_fallback(
-                    model_kind="composition",
-                    kwargs_factory=_kwargs,
+                # Auto-select the template ID
+                if "used_templates" not in previous_context:
+                    previous_context["used_templates"] = []
+                
+                has_image = bool(s.imageAsset)
+                template_id = auto_select_template(
+                    scene=s,
+                    scene_index=idx,
+                    total_scenes=len(req.scenes),
+                    used_templates=previous_context["used_templates"],
+                    has_image=has_image
                 )
+                previous_context["used_templates"].append(template_id)
 
-                yield {"type": "model_info", "provider": provider, "model": model}
+                sys_single = build_template_content_prompt(template_id, s, idx, theme)
+                prompt_single = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
-                scene_text = ""
-                async for chunk in stream:
-                    if not chunk.choices:
-                        continue
-                    choice = chunk.choices[0]
-                    delta = choice.delta
-                    text = getattr(delta, "content", None)
-                    if text:
-                        scene_text += text
-                        yield {"type": "chunk", "text": text}
+                def _kwargs(provider_name: str) -> dict:
+                    return {
+                        "messages": [
+                            {"role": "system", "content": sys_single},
+                            {"role": "user", "content": prompt_single},
+                        ],
+                        "temperature": 0.7 if provider_name == "primary" else 0.75,
+                        "max_tokens": 4000,
+                        "stream": True,
+                    }
 
-                scene_html = strip_fences(scene_text).strip()
-                if not scene_html.lower().startswith("<div"):
-                    m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html)
-                    if m:
-                        scene_html = m.group(0)
+                try:
+                    stream, provider, model = await chat_completions_with_fallback(
+                        model_kind="composition",
+                        kwargs_factory=_kwargs,
+                    )
 
-                layout, pattern = extract_scene_layout_and_pattern(scene_html)
-                previous_context["layout"] = layout
-                previous_context["visual_pattern"] = pattern
-                if layout:
-                    previous_context["used_layouts"].append(layout)
-                if pattern:
-                    previous_context["used_patterns"].append(pattern)
+                    yield {"type": "model_info", "provider": provider, "model": model}
 
-                scenes_html.append(scene_html)
-                print(f"[composition] Scene {idx}/{len(req.scenes)} generated: layout={layout}, pattern={pattern} ({provider}/{model})")
+                    scene_text = ""
+                    async for chunk in stream:
+                        if not chunk.choices:
+                            continue
+                        choice = chunk.choices[0]
+                        delta = choice.delta
+                        text = getattr(delta, "content", None)
+                        if text:
+                            scene_text += text
+                            yield {"type": "chunk", "text": text}
 
-            except Exception as e:
-                print(f"[composition] Scene {idx}/{len(req.scenes)} generation failed: {e}. Using fallback.")
-                yield {
-                    "type": "warning",
-                    "message": f"Scene {idx} sinh thất bại ({e}). Đã dùng fallback HTML.",
-                }
-                fb_html = fallback_scene_html(s, theme)
-                scenes_html.append(fb_html)
+                    # Parse JSON content
+                    json_content = parse_llm_json_content(scene_text)
+                    if not json_content:
+                        print(f"[composition] JSON parse failed for scene {idx}. Text: {scene_text[:200]}")
+                        raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
 
-        # Assemble the full HTML boilerplate
-        scenes_combined = "\n\n  ".join(scenes_html)
-        base_css = render_base_css(theme)
+                    if has_image:
+                        json_content["IMAGE_URL"] = s.imageAsset
+                        
+                    scene_html = render_template(template_id, json_content, idx)
 
-        html = f"""<!doctype html>
+                    # Get layout/pattern from catalog for previous_context
+                    catalog = load_template_catalog()
+                    tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+                    layout = tpl_meta["layout"] if tpl_meta else "split"
+                    pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
+
+                    previous_context["layout"] = layout
+                    previous_context["visual_pattern"] = pattern
+                    if layout:
+                        previous_context["used_layouts"].append(layout)
+                    if pattern:
+                        previous_context["used_patterns"].append(pattern)
+
+                    scenes_html.append(scene_html)
+                    print(f"[composition] Scene {idx}/{len(req.scenes)} generated using template {template_id}: layout={layout}, pattern={pattern} ({provider}/{model})")
+
+                except Exception as e:
+                    print(f"[composition] Scene {idx}/{len(req.scenes)} generation failed: {e}. Using fallback.")
+                    yield {
+                        "type": "warning",
+                        "message": f"Scene {idx} sinh thất bại ({e}). Đã dùng fallback HTML.",
+                    }
+                    fb_html = fallback_scene_html(s, theme)
+                    scenes_html.append(fb_html)
+
+            # Assemble the full HTML boilerplate
+            scenes_combined = "\n\n  ".join(scenes_html)
+            base_css = render_base_css(theme)
+
+            html = f"""<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -2972,7 +3865,7 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
 <title>{req.title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */
@@ -3024,15 +3917,16 @@ async def stream_composition_events(req: CompositionRequest) -> AsyncGenerator[d
   
   {scenes_combined}
   
+{ENTRANCE_ANIMATION_SCRIPT}
 </div>
 </body>
 </html>"""
 
-        html = inject_base_css(html, theme)
-        yield {"type": "done", "html": html}
+            html = inject_base_css(html, theme)
+            yield {"type": "done", "html": html}
 
-    except Exception as e:
-        yield {"type": "error", "message": str(e)}
+        except Exception as e:
+            yield {"type": "error", "message": str(e)}
 
 
 async def stream_composition(req: CompositionRequest):
@@ -3052,21 +3946,38 @@ async def generate_composition(body: CompositionRequest):
 class SaveRequest(BaseModel):
     html: str
     projectPath: str | None = None
+    sessionId: str | None = None
 
 
-def get_project_root(override: str | None = None) -> Path:
+def get_project_root(override: str | None = None, session_id: str | None = None) -> Path:
     import os
     if override:
-        return Path(override)
-    env_path = os.getenv("HYPERFRAMES_PROJECT")
-    if env_path:
-        return Path(env_path)
-    return Path(__file__).resolve().parents[2] / "my-video"
+        base = Path(override)
+    else:
+        env_path = os.getenv("HYPERFRAMES_PROJECT")
+        if env_path:
+            base = Path(env_path)
+        else:
+            base = Path(__file__).resolve().parents[2] / "my-video"
+            
+    if session_id:
+        session_dir = base / "sessions" / session_id
+        if not session_dir.exists():
+            session_dir.mkdir(parents=True, exist_ok=True)
+            (session_dir / "assets").mkdir(exist_ok=True)
+            (session_dir / "renders").mkdir(exist_ok=True)
+            hf_json = base / "hyperframes.json"
+            if hf_json.exists():
+                import shutil
+                shutil.copy2(hf_json, session_dir / "hyperframes.json")
+        return session_dir
+        
+    return base
 
 
 @router.post("/save-composition")
 async def save_composition(body: SaveRequest):
-    project_root = get_project_root(body.projectPath)
+    project_root = get_project_root(body.projectPath, body.sessionId)
     if not project_root.exists():
         raise HTTPException(status_code=404, detail=f"Project path không tồn tại: {project_root}")
 
@@ -3187,6 +4098,7 @@ class RegenSceneRequest(BaseModel):
     sceneIndex: int  # 1-based
     scene: ScenePayload  # the (possibly edited) scene the LLM should re-render
     theme: str | None = None
+    sessionId: str | None = None
 
 
 @router.post("/regen-scene")
@@ -3196,43 +4108,49 @@ async def regen_scene(body: RegenSceneRequest):
     The user has edited a scene's title/narration/image and wants to see
     the change reflected in the preview. We ask the LLM for ONLY the scene
     block, then splice it into the cached full HTML."""
-    theme = get_theme(body.theme)
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        theme = get_theme(body.theme)
 
-    # Find the existing scene's bounds so we can replace it
-    bounds = find_scene_block(body.fullHtml, body.sceneIndex)
-    if bounds is None:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Không tìm thấy #scene{body.sceneIndex} trong HTML đã có.",
-        )
+        # Find the existing scene's bounds so we can replace it
+        bounds = find_scene_block(body.fullHtml, body.sceneIndex)
+        if bounds is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Không tìm thấy #scene{body.sceneIndex} trong HTML đã có.",
+            )
 
-    # ── Resolve image source ─────────────────────────────────────────────
-    # Reuse the shared image materialiser so data URLs (upload) AND https
-    # URLs (Openverse) both get downloaded/decoded to assets/sceneN.<ext>
-    # before the LLM is told about them. Without this, the regen call ends
-    # up sending the raw imageUrl (megabytes for data URLs, or unfetched
-    # https for search results) and the LLM either explodes on token limit
-    # or skips the image entirely.
-    materialised_scenes = await _materialise_scene_images([body.scene], get_project_root())
+        # ── Resolve image source ─────────────────────────────────────────────
+        # Reuse the shared image materialiser so data URLs (upload) AND https
+        # URLs (Openverse) both get downloaded/decoded to assets/sceneN.<ext>
+        # before the LLM is told about them. Without this, the regen call ends
+        # up sending the raw imageUrl (megabytes for data URLs, or unfetched
+        # https for search results) and the LLM either explodes on token limit
+        # or skips the image entirely.
+        materialised_scenes = await _materialise_scene_images([body.scene], get_project_root(session_id=body.sessionId))
     effective_asset = materialised_scenes[0].imageAsset if materialised_scenes else body.scene.imageAsset
-
-    image_clause = ""
-    if effective_asset:
-        image_clause = (
-            f"\n  IllustrationImage: {effective_asset}"
-            f"\n  ⚠️ BẮT BUỘC dùng EXACT HTML: <div class=\"img-frame\"><img src=\"{effective_asset}\" alt=\"\"><span class=\"img-caption\">[caption ≤10 chữ]</span></div>"
-            f"\n  ⚠️ Layout PHẢI là .scene.split hoặc .scene.magazine — KHÔNG .hero/.centered/.bento."
-            f"\n  ✗ TUYỆT ĐỐI KHÔNG full-bleed background image, position:absolute trên <img>, hay background-image url(...) lên #root/.scene."
-        )
+    has_image = bool(effective_asset)
 
     total_scenes = len(re.findall(r'id=["\']scene\d+["\']', body.fullHtml)) or body.sceneIndex
-    sys_msg = build_system_prompt_single_scene(theme, body.sceneIndex, total_scenes, {})
-    user_msg = build_user_prompt_single_scene(
-        body.scene,
-        {},
-        body.sceneIndex == 1,
-        body.sceneIndex == total_scenes
-    )
+    
+    # Try to find data-template-id in the existing scene block
+    existing_block = body.fullHtml[bounds[0]:bounds[1]]
+    tpl_match = re.search(r'data-template-id=["\'](T\d+)["\']', existing_block)
+    if tpl_match:
+        template_id = tpl_match.group(1)
+    else:
+        # Fallback to auto-select
+        template_id = auto_select_template(
+            scene=body.scene,
+            scene_index=body.sceneIndex,
+            total_scenes=total_scenes,
+            used_templates=[],
+            has_image=has_image
+        )
+
+    sys_msg = build_template_content_prompt(template_id, body.scene, body.sceneIndex, theme)
+    user_msg = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
 
     try:
         resp, provider, model = await chat_completions_with_fallback(
@@ -3248,20 +4166,18 @@ async def regen_scene(body: RegenSceneRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM regen scene thất bại: {e}")
 
-    new_block = strip_fences(resp.choices[0].message.content or "").strip()
-    # Sanity: must start with <div and reference the right id
-    if not new_block.lower().startswith("<div"):
-        # LLM might have wrapped it — try to extract first div block
-        m = re.search(r"<div\b[\s\S]*</div>\s*$", new_block)
-        if m:
-            new_block = m.group(0)
-        else:
-            raise HTTPException(
-                status_code=502,
-                detail="LLM không trả về block <div> hợp lệ.",
-            )
-            
-    # Normalize wrapper class and id programmatically before validation
+    raw_response = resp.choices[0].message.content or ""
+    json_content = parse_llm_json_content(raw_response)
+    if not json_content:
+        raise HTTPException(
+            status_code=502,
+            detail=f"LLM không trả về JSON content hợp lệ cho template {template_id}."
+        )
+
+    if has_image:
+        json_content["IMAGE_URL"] = effective_asset
+
+    new_block = render_template(template_id, json_content, body.sceneIndex)
     new_block = sanitize_scene_wrapper(new_block, body.sceneIndex)
     
     if f'scene{body.sceneIndex}' not in new_block:
@@ -3286,6 +4202,7 @@ class GenSceneOneRequest(BaseModel):
     sceneIndex: int  # 1-based — scene cần gen lần này
     existingHtml: str | None = None  # HTML đã có (từ scene 1..N-1), None nếu là scene 1
     previousContext: dict | None = None  # layout/pattern của scene trước
+    sessionId: str | None = None
 
 
 def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css: str) -> str:
@@ -3298,7 +4215,7 @@ def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css:
 <title>{title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400;1,600;1,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
 /* === techbeat:base-css === */
@@ -3350,6 +4267,7 @@ def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css:
 
 <!-- __SCENES_PLACEHOLDER__ -->
 
+{ENTRANCE_ANIMATION_SCRIPT}
 </div>
 </body>
 </html>"""
@@ -3378,96 +4296,445 @@ async def gen_scene_one(body: GenSceneOneRequest):
 
     Response: { html, sceneIndex, totalScenes, done, provider, model, layout, visualPattern }
     """
-    theme = get_theme(body.theme)
-    total = len(body.scenes)
-    idx = body.sceneIndex  # 1-based
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        theme = get_theme(body.theme)
+        total = len(body.scenes)
+        idx = body.sceneIndex  # 1-based
 
-    if idx < 1 or idx > total:
-        raise HTTPException(status_code=400, detail=f"sceneIndex={idx} ngoài phạm vi 1..{total}")
+        if idx < 1 or idx > total:
+            raise HTTPException(status_code=400, detail=f"sceneIndex={idx} ngoài phạm vi 1..{total}")
 
-    # 0-based index trong mảng scenes
-    s = body.scenes[idx - 1]
-    is_first = idx == 1
-    is_last = idx == total
+        # 0-based index trong mảng scenes
+        s = body.scenes[idx - 1]
+        is_first = idx == 1
+        is_last = idx == total
 
-    # Materialise ảnh cho scene này
-    try:
-        materialised = await _materialise_scene_images([s], get_project_root())
-        s = materialised[0]
-    except Exception as e:
-        print(f"[gen-scene-one] image materialise failed for scene {idx}: {e}")
+        # Materialise ảnh cho scene này
+        try:
+            materialised = await _materialise_scene_images([s], get_project_root(session_id=body.sessionId))
+            s = materialised[0]
+        except Exception as e:
+            print(f"[gen-scene-one] image materialise failed for scene {idx}: {e}")
 
-    # Lấy previous context từ body hoặc mặc định
-    prev_ctx = body.previousContext or {"layout": None, "visual_pattern": None, "used_layouts": [], "used_patterns": []}
+        # Lấy previous context từ body hoặc mặc định
+        prev_ctx = body.previousContext or {"layout": None, "visual_pattern": None, "used_layouts": [], "used_patterns": []}
+        if "used_templates" not in prev_ctx:
+            prev_ctx["used_templates"] = []
 
-    sys_prompt = build_system_prompt_single_scene(theme, idx, total, prev_ctx)
-    user_prompt = build_user_prompt_single_scene(s, prev_ctx, is_first, is_last)
+        has_image = bool(s.imageAsset)
+        template_id = auto_select_template(
+            scene=s,
+            scene_index=idx,
+            total_scenes=total,
+            used_templates=prev_ctx["used_templates"],
+            has_image=has_image
+        )
+        prev_ctx["used_templates"].append(template_id)
 
-    def _kwargs(provider_name: str) -> dict:
+        sys_prompt = build_template_content_prompt(template_id, s, idx, theme)
+        user_prompt = f"Hãy trả về JSON object hợp lệ điền placeholders cho template {template_id}."
+
+        def _kwargs(provider_name: str) -> dict:
+            return {
+                "messages": [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": 0.7 if provider_name == "primary" else 0.75,
+                "max_tokens": 4000,
+                "stream": False,
+            }
+
+        scene_html: str | None = None
+        provider = "unknown"
+        model = "unknown"
+
+        try:
+            resp, provider, model = await chat_completions_with_fallback(
+                model_kind="composition",
+                kwargs_factory=_kwargs,
+            )
+            raw = resp.choices[0].message.content or ""
+            json_content = parse_llm_json_content(raw)
+            if not json_content:
+                print(f"[gen-scene-one] JSON parse failed for scene {idx}. Text: {raw[:200]}")
+                raise ValueError(f"LLM không trả về JSON content hợp lệ cho template {template_id}")
+
+            if has_image:
+                json_content["IMAGE_URL"] = s.imageAsset
+                
+            scene_html = render_template(template_id, json_content, idx)
+            scene_html = sanitize_scene_wrapper(scene_html, idx)
+
+        except Exception as e:
+            print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
+
+        # Fallback nếu LLM thất bại
+        if not scene_html:
+            scene_html = fallback_scene_html(s, theme)
+
+        # Trích layout / pattern từ catalog
+        catalog = load_template_catalog()
+        tpl_meta = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+        layout = tpl_meta["layout"] if tpl_meta else "split"
+        visual_pattern = tpl_meta["visual_pattern"] if tpl_meta else "B11 STAT-LIST"
+
+        # Ghép HTML
+        if is_first or not body.existingHtml:
+            base_css = render_base_css(theme)
+            html = _build_boilerplate(body.title, body.totalDuration, theme, base_css)
+            html = _append_scene_to_html(html, scene_html)
+        else:
+            html = _append_scene_to_html(body.existingHtml, scene_html)
+
+        print(f"[gen-scene-one] Scene {idx}/{total} done using template {template_id}: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
+
         return {
-            "messages": [
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": 0.7 if provider_name == "primary" else 0.75,
-            "max_tokens": 4000,
-            "stream": False,
+            "html": html,
+            "sceneIndex": idx,
+            "totalScenes": total,
+            "done": is_last,
+            "provider": provider,
+            "model": model,
+            "layout": layout,
+            "visualPattern": visual_pattern,
+            "newContext": {
+                "layout": layout,
+                "visual_pattern": visual_pattern,
+                "used_layouts": (prev_ctx.get("used_layouts") or []) + ([layout] if layout else []),
+                "used_patterns": (prev_ctx.get("used_patterns") or []) + ([visual_pattern] if visual_pattern else []),
+                "used_templates": prev_ctx["used_templates"],
+            },
         }
 
-    scene_html: str | None = None
-    provider = "unknown"
-    model = "unknown"
 
-    try:
-        resp, provider, model = await chat_completions_with_fallback(
-            model_kind="composition",
-            kwargs_factory=_kwargs,
-        )
-        raw = resp.choices[0].message.content or ""
-        scene_html = strip_fences(raw).strip()
-        if not scene_html.lower().startswith("<div"):
-            m = re.search(r"<div\b[\s\S]*</div>\s*$", scene_html)
-            if m:
-                scene_html = m.group(0)
-            else:
-                scene_html = None
-                
-        # Normalize wrapper class and id programmatically
-        if scene_html:
-            scene_html = sanitize_scene_wrapper(scene_html, idx)
-    except Exception as e:
-        print(f"[gen-scene-one] LLM failed for scene {idx}: {e}")
+# ─────────────────────────  TEMPLATE PREVIEW ENDPOINTS  ─────────────────────────
 
-    # Fallback nếu LLM thất bại
-    if not scene_html:
-        scene_html = fallback_scene_html(s, theme)
+from fastapi.responses import HTMLResponse
 
-    # Trích layout / pattern để trả về cho frontend (dùng làm previousContext lần sau)
-    layout, visual_pattern = extract_scene_layout_and_pattern(scene_html)
+@router.get("/templates/gallery", response_class=HTMLResponse)
+async def templates_gallery():
+    """Expose a beautiful web interface to list and browse all 30 templates."""
+    catalog = load_template_catalog()
+    templates = catalog["templates"]
+    
+    html_lines = []
+    html_lines.append("""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>HyperFrames Template Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  body {
+    background: #080810;
+    color: #e2e8f0;
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    padding: 40px;
+  }
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fb923c, #f43f5e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .desc {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: #111122;
+    border: 1px solid #22223b;
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: #fb923c;
+    box-shadow: 0 10px 25px rgba(251, 146, 60, 0.1);
+  }
+  .tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+  }
+  .tag.hero { background: rgba(234, 88, 12, 0.13); color: #ff7849; border: 1px solid rgba(234, 88, 12, 0.27); }
+  .tag.content { background: rgba(2, 132, 199, 0.13); color: #38bdf8; border: 1px solid rgba(2, 132, 199, 0.27); }
+  .tag.centered { background: rgba(124, 58, 237, 0.13); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.27); }
+  .tag.data { background: rgba(22, 163, 74, 0.13); color: #4ade80; border: 1px solid rgba(22, 163, 74, 0.27); }
+  .tag.special { background: rgba(219, 39, 119, 0.13); color: #f472b6; border: 1px solid rgba(219, 39, 119, 0.27); }
+  
+  .name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 8px 0;
+  }
+  .meta {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+  .meta span {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .btn {
+    display: block;
+    text-align: center;
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    color: #fff;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn:hover {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+  }
+</style>
+</head>
+<body>
+  <h1>HyperFrames Template Gallery</h1>
+  <p class="desc">Duyệt và xem trước toàn bộ 30 templates chất lượng cao được thiết kế chuẩn 1920x1080.</p>
+  <div class="grid">
+""")
 
-    # Ghép HTML
-    if is_first or not body.existingHtml:
-        base_css = render_base_css(theme)
-        html = _build_boilerplate(body.title, body.totalDuration, theme, base_css)
-        html = _append_scene_to_html(html, scene_html)
-    else:
-        html = _append_scene_to_html(body.existingHtml, scene_html)
+    for t in templates:
+        cat_class = t["category"]
+        html_lines.append(f"""
+    <div class="card">
+      <div>
+        <span class="tag {cat_class}">{t["category"]}</span>
+        <h3 class="name">{t["name"]} ({t["id"]})</h3>
+        <div class="meta">
+          <span><strong>Layout:</strong> {t["layout"]}</span>
+          <span><strong>Visual Pattern:</strong> {t["visual_pattern"]}</span>
+          <span><strong>Phù hợp cho:</strong> {', '.join(t["best_for"])}</span>
+        </div>
+      </div>
+      <a href="/templates/preview/{t["id"]}" class="btn" target="_blank">Xem Thử Trình Duyệt ↗</a>
+    </div>
+""")
 
-    print(f"[gen-scene-one] Scene {idx}/{total} done: layout={layout}, pattern={visual_pattern} ({provider}/{model})")
+    html_lines.append("""
+  </div>
+</body>
+</html>
+""")
+    return "".join(html_lines)
 
-    return {
-        "html": html,
-        "sceneIndex": idx,
-        "totalScenes": total,
-        "done": is_last,
-        "provider": provider,
-        "model": model,
-        "layout": layout,
-        "visualPattern": visual_pattern,
-        "newContext": {
-            "layout": layout,
-            "visual_pattern": visual_pattern,
-            "used_layouts": (prev_ctx.get("used_layouts") or []) + ([layout] if layout else []),
-            "used_patterns": (prev_ctx.get("used_patterns") or []) + ([visual_pattern] if visual_pattern else []),
-        },
+
+@router.get("/templates/preview/{template_id}", response_class=HTMLResponse)
+async def template_preview(template_id: str, theme: str | None = None):
+    """Render a template with mock/dummy data to preview it perfectly in the browser."""
+    catalog = load_template_catalog()
+    t = next((t for t in catalog["templates"] if t["id"] == template_id), None)
+    if not t:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy template {template_id}")
+        
+    theme_dict = get_theme(theme)
+    
+    # Generate premium dummy mock data based on placeholders
+    mock_data = {
+        "GHOST_WORD": "TECH",
+        "BADGE_TEXT": f"⚡ SCENE PREVIEW · {template_id}",
+        "TITLE": "Giải Pháp Đột Phá Cho Tương Lai",
+        "SUBTITLE": "Công nghệ AI thế hệ mới dẫn đầu xu hướng toàn cầu",
+        "DESC": "Khám phá sức mạnh xử lý ngôn ngữ thời gian thực trên thiết bị biên.",
+        "TAG_1": "🚀 Edge AI",
+        "TAG_2": "🔒 Bảo Mật Cao",
+        "TAG_3": "⚡ Real-time",
+        "BRAND_NAME": "TechBeat AI Summit 2026",
+        "META_INFO": "Tháng 6 2026 · Hà Nội",
+        "BULLET_1": "Tốc độ xử lý nhanh hơn 4 lần so với GPT-4",
+        "BULLET_2": "Hoạt động offline hoàn toàn không phụ thuộc cloud",
+        "BULLET_3": "Chi phí vận hành tiết kiệm đến 80% ngân sách",
+        "TECH_TAG_1": "Transformers",
+        "TECH_TAG_2": "ONNX Runtime",
+        "TECH_TAG_3": "WebGPU",
+        "MEGA_NUMBER": "4.5x",
+        "STAT_1_ICON": "⚡",
+        "STAT_1_NUM": "4.5x",
+        "STAT_1_TITLE": "Hiệu suất xử lý",
+        "STAT_1_DESC": "So với các giải pháp cloud hiện tại",
+        "STAT_2_ICON": "🔒",
+        "STAT_2_NUM": "100%",
+        "STAT_2_TITLE": "Bảo mật dữ liệu",
+        "STAT_2_DESC": "Không gửi thông tin lên máy chủ ngoại vi",
+        "STAT_3_ICON": "💰",
+        "STAT_3_NUM": "80%",
+        "STAT_3_TITLE": "Tiết kiệm chi phí",
+        "STAT_3_DESC": "Giảm thiểu lưu lượng băng thông truyền tải",
+        "FEAT_1_ICON": "🧠",
+        "FEAT_1_TITLE": "Mô hình siêu nhẹ",
+        "FEAT_1_DESC": "Tối ưu hóa chỉ dung lượng 1.2GB hoạt động mượt mà.",
+        "FEAT_2_ICON": "🔋",
+        "FEAT_2_TITLE": "Tiết kiệm pin",
+        "FEAT_2_DESC": "Giảm thiểu 60% điện năng tiêu thụ trên thiết bị di động.",
+        "FEAT_3_ICON": "🌍",
+        "FEAT_3_TITLE": "Đa ngôn ngữ",
+        "FEAT_3_DESC": "Hỗ trợ dịch thuật trực tiếp hơn 100 quốc gia khác nhau.",
+        "FEAT_4_ICON": "📈",
+        "FEAT_4_TITLE": "Tự động tối ưu",
+        "FEAT_4_DESC": "Tự học hỏi và thích nghi theo thói quen của người dùng.",
+        "CODE_COMMENT": "// Khởi tạo mô hình ngôn ngữ lớn trực tiếp trên trình duyệt",
+        "CODE_KW_1": "const",
+        "CODE_VAR_1": "model",
+        "CODE_VAL_1": "await Kokoro.load('vn-voice-v2')",
+        "CODE_KW_2": "function",
+        "CODE_FUNC": "processVoice",
+        "CODE_BODY": "return model.speak(text, { speed: 1.0 })",
+        "CODE_COMMENT_2": "/* Kết nối thành công */",
+        "CODE_KW_3": "let",
+        "CODE_VAR_2": "status",
+        "CODE_VAL_2": "'CONNECTED'",
+        "USER_LABEL": "NGƯỜI DÙNG",
+        "CHAT_USER_MSG": "Làm thế nào để chạy mô hình AI offline trên thiết bị của tôi?",
+        "CHAT_AI_MSG": "Bạn chỉ cần tích hợp thư viện và tải trọng lượng mô hình 1.2GB. Toàn bộ quá trình tính toán và suy luận sẽ chạy trực tiếp qua WebGPU của thiết bị.",
+        "CHAT_FOOTER": "Gemini 2.5 Pro · Edge AI Architecture 2026",
+        "CARD_1_ICON": "🚀",
+        "CARD_1_TITLE": "Tăng Tốc Vượt Trội",
+        "CARD_1_DESC": "Hiệu suất xử lý phần cứng tối đa.",
+        "CARD_2_ICON": "🔐",
+        "CARD_2_TITLE": "Bảo Mật Tuyệt Đối",
+        "CARD_2_DESC": "Dữ liệu cá nhân luôn được giữ an toàn.",
+        "CARD_3_ICON": "🔌",
+        "CARD_3_TITLE": "Offline Hoàn Toàn",
+        "CARD_3_DESC": "Hoạt động độc lập không cần kết nối mạng.",
+        "QUOTE_TEXT": "Sự kết hợp giữa AI thế hệ mới và tính toán biên sẽ định hình lại cách chúng ta tương tác với thế giới kỹ thuật số xung quanh.",
+        "QUOTE_ATTR_HTML": '<p class="quote-attr">Sundar Pichai · CEO Google</p>',
+        "STAT_NUMBER": "98",
+        "STAT_SUFFIX": "%",
+        "STAT_LABEL": "Độ chính xác nhận diện",
+        "STAT_EXPLANATION": "Đạt mốc ấn tượng trong môi trường nhiều tạp âm nhiễu sóng.",
+        "TL_1_YEAR": "2024",
+        "TL_1_EVENT": "Nghiên cứu cốt lõi",
+        "TL_1_DESC": "Phát triển thuật toán nén mô hình biên.",
+        "TL_2_YEAR": "2025",
+        "TL_2_EVENT": "Phát hành Alpha",
+        "TL_2_DESC": "Kiểm thử trên 100k thiết bị di động.",
+        "TL_3_YEAR": "2026",
+        "TL_3_EVENT": "Ra mắt Toàn cầu",
+        "TL_3_DESC": "Tích hợp sẵn trong các hệ điều hành lớn.",
+        "COL_GOOD_TITLE": "LỢI ÍCH VƯỢT TRỘI",
+        "COL_GOOD_1": "Xử lý tức thì không trễ mạng",
+        "COL_GOOD_2": "An toàn riêng tư tuyệt đối",
+        "COL_GOOD_3": "Vận hành không tốn chi phí băng thông",
+        "COL_BAD_TITLE": "HẠN CHẾ CLOUD",
+        "COL_BAD_1": "Độ trễ cao phụ thuộc đường truyền",
+        "COL_BAD_2": "Rò rỉ dữ liệu cá nhân lên cloud",
+        "COL_BAD_3": "Chi phí thuê server đắt đỏ hàng tháng",
+        "STEP_HEADER": "3 BƯỚC TRIỂN KHAI NHANH CHÓNG",
+        "STEP_1_ICON": "1",
+        "STEP_1_TEXT": "Tải thư viện NPM SDK vào ứng dụng của bạn",
+        "STEP_2_ICON": "2",
+        "STEP_2_TEXT": "Khởi tạo mô hình cấu hình nhẹ 1.2GB",
+        "STEP_3_ICON": "3",
+        "STEP_3_TEXT": "Nhận kết quả suy luận AI offline tức thì",
+        "AGENT_1_ICON": "🤖",
+        "AGENT_1_ROLE": "Analyst Agent",
+        "AGENT_1_DESC": "Thu thập và xử lý thô dữ liệu đầu vào",
+        "AGENT_2_ICON": "📝",
+        "AGENT_2_ROLE": "Writer Agent",
+        "AGENT_2_DESC": "Biên soạn nội dung chuẩn SEO ấn tượng",
+        "AGENT_3_ICON": "🎨",
+        "AGENT_3_ROLE": "Designer Agent",
+        "AGENT_3_DESC": "Bố cục trực quan màu sắc hài hòa",
+        "AGENT_4_ICON": "🚀",
+        "AGENT_4_ROLE": "Publisher Agent",
+        "AGENT_4_DESC": "Đóng gói và phân phối đa nền tảng",
+        "CENTER_PILL_TEXT": "AI COLLABORATION WORKFLOW",
+        "PILL_1_ICON": "⚙️",
+        "PILL_1_TEXT": "Input",
+        "PILL_2_ICON": "🧠",
+        "PILL_2_TEXT": "Processing",
+        "PILL_3_ICON": "⚖️",
+        "PILL_3_TEXT": "Refining",
+        "PILL_4_ICON": "📦",
+        "PILL_4_TEXT": "Output",
+        "FORMULA_LINE_1": "Efficiency = (Output / Input) * Quality",
+        "FORMULA_LINE_2": "Cost_Savings = Cloud_Cost - Local_Resource",
+        "FORMULA_LINE_3": "Latency = Local_Processing_Time (≈5ms)",
+        "FORMULA_LINE_4": "Privacy_Factor = 1.0 (Strict Offline)",
+        "BENTO_HERO_ICON": "⚡",
+        "BENTO_HERO_TITLE": "Edge AI",
+        "BENTO_HERO_DESC": "Tương lai của tính toán",
+        "BENTO_1_ICON": "🔒",
+        "BENTO_1_TITLE": "Bảo mật",
+        "BENTO_1_DESC": "Offline 100%",
+        "BENTO_2_ICON": "🚀",
+        "BENTO_2_TITLE": "Tốc độ",
+        "BENTO_2_DESC": "Độ trễ 5ms",
+        "BENTO_3_ICON": "💰",
+        "BENTO_3_TITLE": "Chi phí",
+        "BENTO_3_DESC": "Tiết kiệm 80%"
     }
+    
+    rendered_scene = render_template(template_id, mock_data, 1)
+    base_css = render_base_css(theme_dict)
+    
+    html = f"""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview Template {template_id}</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100;300;400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+{base_css}
+
+/* Extra decorative animations used in templates */
+@keyframes neon-glow {{
+  0%, 100% {{ border-color: rgba(255,255,255,0.08); box-shadow: 0 0 15px var(--glow); }}
+  50% {{ border-color: var(--accent2); box-shadow: 0 0 35px var(--accent); }}
+}}
+@keyframes aurora-mesh {{
+  0%, 100% {{ transform: translate(0, 0) scale(1) rotate(0deg); }}
+  50% {{ transform: translate(30px, -20px) scale(1.05) rotate(5deg); }}
+}}
+@keyframes star-blink {{
+  0%, 100% {{ opacity: 0.2; transform: scale(0.7) rotate(0deg); }}
+  50% {{ opacity: 1; transform: scale(1.2) rotate(45deg); }}
+}}
+@keyframes grad-shift {{
+  0% {{ background-position: 0% 50%; }}
+  50% {{ background-position: 100% 50%; }}
+  100% {{ background-position: 0% 50%; }}
+}}
+</style>
+</head>
+<body style="margin:0; padding:0; background:#000; overflow:hidden; display:flex; justify-content:center; align-items:center; min-height:100vh;">
+  <div id="root" data-composition-id="preview" data-start="0" data-width="1920" data-height="1080" data-duration="5" style="transform: scale(0.8); transform-origin: center;">
+    <div class="scanlines"></div>
+    {rendered_scene}
+    {ENTRANCE_ANIMATION_SCRIPT}
+  </div>
+</body>
+</html>"""
+    
+    html = inject_base_css(html, theme_dict)
+    return html

@@ -211,91 +211,97 @@ def sse(data: dict) -> str:
 
 
 async def stream_scenes(content: str, title: str, video_duration: int | None = None):
-    full_text = ""
-    groq_max = int(os.getenv("GROQ_MAX_SCENES", "5"))
+    from middleware.concurrency import limiter
+    
+    async with limiter._llm_sem:
+        full_text = ""
+        groq_max = int(os.getenv("GROQ_MAX_SCENES", "5"))
 
-    try:
-        prompt = f"Tạo kế hoạch scene video.\n\nTiêu đề: {title}\n\nNội dung:\n{content}"
-        if video_duration and video_duration > 0:
-            if video_duration <= 60:
-                n_scenes = "exactly 4"
-                words_per_scene = "45-55"
-                secs_per_scene = "15"
-            elif video_duration <= 120:
-                n_scenes = "5-6"
-                words_per_scene = "65-75"
-                secs_per_scene = "20-25"
-            else:
-                n_scenes = "7-8"
-                words_per_scene = "70-85"
-                secs_per_scene = "22-28"
-            prompt += (
-                f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT VỀ THỜI LƯỢNG (BẮT BUỘC): "
-                f"Target video = {video_duration} giây. "
-                f"Tạo đúng {n_scenes} scene, mỗi scene {secs_per_scene}s, tổng totalDuration = {video_duration}. "
-                f"QUAN TRỌNG NHẤT: Mỗi narration BẮT BUỘC phải dài {words_per_scene} từ tiếng Việt (tương đương {secs_per_scene} giây đọc). "
-                f"Narration súc tích nhưng đầy đủ thông tin, KHÔNG lan man, viết vừa đủ dài để đạt đúng thời lượng yêu cầu. "
-                f"Nếu viết quá ngắn, video sẽ bị thiếu thời lượng trầm trọng (ví dụ 1 phút but chỉ có 35s). Đây là yêu cầu TUYỆT ĐỐI."
-            )
-        elif video_duration == -1:
-            prompt += (
-                f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT (KHÔNG TÓM TẮT - KHÔNG GIỚI HẠN THỜI LƯỢNG):\n"
-                f"- BẮT BUỘC tạo Phân cảnh 1 (Scene 1) là Phân cảnh Intro (Giới thiệu/Khái quát) dài khoảng 1-2 phút (từ 150 đến 250 từ narration) khái quát toàn bộ nội dung chính sẽ nói trong video được sinh ra từ tư liệu người dùng. Kịch bản phần intro này do AI tự thiết kế, viết một cách lôi cuốn, sinh động nhất.\n"
-                f"- Từ Phân cảnh 2 trở đi, hãy chia kịch bản thành số lượng scene tự do (không giới hạn) để diễn đạt đầy đủ, chi tiết 100% nội dung bài viết gốc.\n"
-                f"- Tuyệt đối KHÔNG tóm tắt sơ sài, KHÔNG lược bỏ các thông số, mốc thời gian, tên gọi hoặc số liệu quan trọng.\n"
-                f"- Mỗi scene viết narration dài khoảng 60-90 từ tiếng Việt (đọc trong khoảng 20-30 giây)."
-            )
+        try:
+            prompt = f"Tạo kế hoạch scene video.\n\nTiêu đề: {title}\n\nNội dung:\n{content}"
+            if video_duration and video_duration > 0:
+                if video_duration <= 60:
+                    n_scenes = "exactly 4"
+                    words_per_scene = "45-55"
+                    secs_per_scene = "15"
+                elif video_duration <= 120:
+                    n_scenes = "5-6"
+                    words_per_scene = "65-75"
+                    secs_per_scene = "20-25"
+                else:
+                    n_scenes = "7-8"
+                    words_per_scene = "70-85"
+                    secs_per_scene = "22-28"
+                prompt += (
+                    f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT VỀ THỜI LƯỢNG (BẮT BUỘC): "
+                    f"Target video = {video_duration} giây. "
+                    f"Tạo đúng {n_scenes} scene, mỗi scene {secs_per_scene}s, tổng totalDuration = {video_duration}. "
+                    f"QUAN TRỌNG NHẤT: Mỗi narration BẮT BUỘC phải dài {words_per_scene} từ tiếng Việt (tương đương {secs_per_scene} giây đọc). "
+                    f"Narration súc tích nhưng đầy đủ thông tin, KHÔNG lan man, viết vừa đủ dài để đạt đúng thời lượng yêu cầu. "
+                    f"Nếu viết quá ngắn, video sẽ bị thiếu thời lượng trầm trọng (ví dụ 1 phút but chỉ có 35s). Đây là yêu cầu TUYỆT ĐỐI."
+                )
+            elif video_duration == -1:
+                prompt += (
+                    f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT (KHÔNG TÓM TẮT - KHÔNG GIỚI HẠN THỜI LƯỢNG):\n"
+                    f"- BẮT BUỘC tạo Phân cảnh 1 (Scene 1) là Phân cảnh Intro (Giới thiệu/Khái quát) dài khoảng 1-2 phút (từ 150 đến 250 từ narration) khái quát toàn bộ nội dung chính sẽ nói trong video được sinh ra từ tư liệu người dùng. Kịch bản phần intro này do AI tự thiết kế, viết một cách lôi cuốn, sinh động nhất.\n"
+                    f"- Từ Phân cảnh 2 trở đi, hãy chia kịch bản thành số lượng scene tự do (không giới hạn) để diễn đạt đầy đủ, chi tiết 100% nội dung bài viết gốc.\n"
+                    f"- Tuyệt đối KHÔNG tóm tắt sơ sài, KHÔNG lược bỏ các thông số, mốc thời gian, tên gọi hoặc số liệu quan trọng.\n"
+                    f"- Mỗi scene viết narration dài khoảng 60-90 từ tiếng Việt (đọc trong khoảng 20-30 giây)."
+                )
 
-        def _kwargs(provider_name: str) -> dict:
-            if provider_name in ("groq", "groq-fast"):
+            def _kwargs(provider_name: str) -> dict:
+                if provider_name in ("groq", "groq-fast"):
+                    return {
+                        "messages": [
+                            {"role": "system", "content": build_system_prompt_groq(groq_max, video_duration)},
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 4000,
+                        "stream": True,
+                    }
                 return {
                     "messages": [
-                        {"role": "system", "content": build_system_prompt_groq(groq_max, video_duration)},
+                        {"role": "system", "content": build_system_prompt_full(video_duration)},
                         {"role": "user", "content": prompt},
                     ],
                     "temperature": 0.7,
-                    "max_tokens": 4000,
+                    "max_tokens": 12000,
                     "stream": True,
                 }
-            return {
-                "messages": [
-                    {"role": "system", "content": build_system_prompt_full(video_duration)},
-                    {"role": "user", "content": prompt},
-                ],
-                "temperature": 0.7,
-                "max_tokens": 12000,
-                "stream": True,
-            }
 
-        stream, provider, model = await chat_completions_with_fallback(
-            model_kind="scenes",
-            kwargs_factory=_kwargs,
-        )
-        if provider != "primary":
-            yield sse({
-                "type": "warning",
-                "message": f"Primary LLM hết quota — đã chuyển sang {provider} ({model}).",
-            })
+            stream, provider, model = await chat_completions_with_fallback(
+                model_kind="scenes",
+                kwargs_factory=_kwargs,
+            )
+            if provider != "primary":
+                yield sse({
+                    "type": "warning",
+                    "message": f"Primary LLM hết quota — đã chuyển sang {provider} ({model}).",
+                })
 
-        async for chunk in stream:
-            if not chunk.choices:
-                continue
-            delta = chunk.choices[0].delta
-            text = getattr(delta, "content", None)
-            if text:
-                full_text += text
-                yield sse({"type": "chunk", "text": text})
+            async for chunk in stream:
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                text = getattr(delta, "content", None)
+                if text:
+                    full_text += text
+                    yield sse({"type": "chunk", "text": text})
 
-        match = re.search(r"\{[\s\S]*\}", full_text)
-        if match:
-            scene_plan = json.loads(match.group())
-            yield sse({"type": "done", "scenePlan": scene_plan,
-                       "llmProvider": provider, "llmModel": model})
-        else:
-            yield sse({"type": "error", "message": "Không tìm thấy JSON hợp lệ trong response"})
+            match = re.search(r"\{[\s\S]*\}", full_text)
+            if match:
+                scene_plan = json.loads(match.group())
+                import uuid
+                session_id = uuid.uuid4().hex[:12]
+                scene_plan["sessionId"] = session_id
+                yield sse({"type": "done", "scenePlan": scene_plan,
+                           "llmProvider": provider, "llmModel": model})
+            else:
+                yield sse({"type": "error", "message": "Không tìm thấy JSON hợp lệ trong response"})
 
-    except Exception as e:
-        yield sse({"type": "error", "message": str(e)})
+        except Exception as e:
+            yield sse({"type": "error", "message": str(e)})
 
 
 @router.post("/generate-scenes")

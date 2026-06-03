@@ -1,0 +1,108 @@
+<div class="scene custom" id="scene{{SCENE_NUM}}">
+  <style>
+    #scene{{SCENE_NUM}} .mm-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 40px;
+      width: 100%;
+      height: 860px;
+      padding: 60px 100px 0;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+    #scene{{SCENE_NUM}} .mindmap-canvas {
+      position: relative;
+      width: 100%;
+      height: 680px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 30px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+      overflow: hidden;
+      backdrop-filter: blur(5px);
+    }
+    #scene{{SCENE_NUM}} .mm-svg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #scene{{SCENE_NUM}} .mm-svg path {
+      stroke: var(--accent2);
+      stroke-width: 3px;
+      fill: none;
+      opacity: 0.4;
+      stroke-dasharray: 8 4;
+      animation: dash-move 30s linear infinite;
+    }
+    @keyframes dash-move {
+      to { stroke-dashoffset: -1000; }
+    }
+    #scene{{SCENE_NUM}} .node {
+      position: absolute;
+      background: var(--surface);
+      border: 2px solid var(--accent3);
+      border-radius: 16px;
+      padding: 16px 28px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+    #scene{{SCENE_NUM}} .node:hover {
+      border-color: var(--accent2);
+      transform: scale(1.05);
+    }
+    #scene{{SCENE_NUM}} .node.core {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: 3px solid #fff;
+      font-size: 1.5rem;
+      padding: 24px 40px;
+      border-radius: 20px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+    #scene{{SCENE_NUM}} .node.n1 { top: 15%; left: 12%; border-color: var(--accent); }
+    #scene{{SCENE_NUM}} .node.n2 { top: 15%; right: 12%; border-color: var(--accent2); }
+    #scene{{SCENE_NUM}} .node.n3 { bottom: 15%; left: 12%; border-color: var(--accent3); }
+    #scene{{SCENE_NUM}} .node.n4 { bottom: 15%; right: 12%; border-color: var(--accent2); }
+  </style>
+
+  <div class="mm-layout">
+    <div class="info-col" style="gap: 24px;">
+      <div id="s{{SCENE_NUM}}-badge" class="badge shimmer-fast">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text" style="font-size: 3.2rem; line-height: 1.25;">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle" style="font-size: 1.8rem;">{{SUBTITLE}}</p>
+    </div>
+    
+    <div class="mindmap-canvas">
+      <svg class="mm-svg" viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lines from core (500, 340) to nodes -->
+        <path d="M500,340 C350,340 250,130 180,130" />
+        <path d="M500,340 C650,340 750,130 820,130" />
+        <path d="M500,340 C350,340 250,550 180,550" />
+        <path d="M500,340 C650,340 750,550 820,550" />
+      </svg>
+      
+      <div class="node core" style="top: calc(50% - 48px); left: calc(50% - 130px);">{{CENTER_PILL_TEXT}}</div>
+      <div class="node n1">{{PILL_1_TEXT}}</div>
+      <div class="node n2">{{PILL_2_TEXT}}</div>
+      <div class="node n3">{{PILL_3_TEXT}}</div>
+      <div class="node n4">{{PILL_4_TEXT}}</div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

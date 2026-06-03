@@ -1,0 +1,27 @@
+<div class="scene centered" id="scene{{SCENE_NUM}}">
+  <div class="float-orb-lg" style="top:-15%; left:30%; background:var(--accent);"></div>
+  <div class="aurora-glow" style="bottom:-20%; right:10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
+  <div class="ghost-text" style="top:-10%; left:-5%;">{{GHOST_WORD}}</div>
+  <span class="y2k-sparkle" style="top:12%; right:12%;"></span>
+  <span class="y2k-sparkle" style="bottom:18%; left:10%;"></span>
+  <span class="y2k-sparkle" style="top:30%; left:80%;"></span>
+
+  <div class="layout">
+    <div class="info-col" style="text-align:center;">
+      <div id="s{{SCENE_NUM}}-badge" class="badge" style="align-self:center;">{{BADGE_TEXT}}</div>
+      <h1 id="s{{SCENE_NUM}}-title" class="title-xl grad-text">{{TITLE}}</h1>
+      <p id="s{{SCENE_NUM}}-subtitle" class="subtitle">{{SUBTITLE}}</p>
+    </div>
+    <div class="visual-col" style="display:flex; align-items:center; justify-content:center;">
+      <div class="quote-block breath">
+        <p class="quote-text">"{{QUOTE_TEXT}}"</p>
+        {{QUOTE_ATTR_HTML}}
+      </div>
+    </div>
+  </div>
+
+  <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
+  <div class="top-line"></div>
+  <span class="scene-num">{{SCENE_NUM_PADDED}}</span>
+</div>

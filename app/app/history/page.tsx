@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useSession } from "next-auth/react";
 
 interface HistoryItem {
   id: string;
@@ -13,6 +14,7 @@ interface HistoryItem {
 }
 
 export default function HistoryPage() {
+  const { data: session } = useSession();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,11 @@ export default function HistoryPage() {
 
   function fetchHistory() {
     setLoading(true);
-    fetch(`${API}/history/local`)
+    const headers: Record<string, string> = {};
+    if (session?.user?.email) {
+      headers["X-User-Email"] = session.user.email;
+    }
+    fetch(`${API}/history/local`, { headers })
       .then((res) => {
         if (!res.ok) throw new Error("Không thể tải lịch sử dựng video.");
         return res.json();
@@ -50,7 +56,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [session?.user?.email]);
 
   // Fetch HTML source code when viewer is opened
   useEffect(() => {
@@ -80,8 +86,13 @@ export default function HistoryPage() {
     }
 
     try {
+      const headers: Record<string, string> = {};
+      if (session?.user?.email) {
+        headers["X-User-Email"] = session.user.email;
+      }
       const res = await fetch(`${API}/history/local/${id}`, {
         method: "DELETE",
+        headers,
       });
       const data = await res.json();
       if (data.success) {
