@@ -219,8 +219,8 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           totalDuration: assetsData.totalDuration,
           sessionId: assetsData.sessionId,
           fps: 30,
-          width: 1920,
-          height: 1080,
+          width: 1280,
+          height: 720,
           onLog: (msg) => {
             localRenderLog.push(msg);
             setRenderLog(p => {
@@ -393,7 +393,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             </h2>
             <p style={{ fontSize: 12, color: "var(--gray-5)" }}>
               <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{scenePlan.scenes.length} phân cảnh</span>
-              {" · "}1920×1080 · 30fps
+              {" · "}{renderMode === "client" ? "1280×720" : "1920×1080"} · 30fps
               {ttsEngine && (<>{" · "}<span style={{ color: "#67e8f9", fontWeight: 700 }}>TTS: {ttsEngine}</span></>)}
             </p>
           </div>

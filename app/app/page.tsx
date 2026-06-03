@@ -569,7 +569,8 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {history.map((h) => {
                 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-                const videoFullUrl = h.video_url.startsWith("http") ? h.video_url : `${API}${h.video_url}`;
+                const videoUrl = h.video_url || "";
+                const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
                 
                 return (
                   <div

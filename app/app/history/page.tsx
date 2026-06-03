@@ -267,7 +267,8 @@ export default function HistoryPage() {
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map((item, idx) => {
-                    const videoFullUrl = item.video_url.startsWith("http") ? item.video_url : `${API}${item.video_url}`;
+                    const videoUrl = item.video_url || "";
+                    const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
                     
                     return (
                       <motion.div
