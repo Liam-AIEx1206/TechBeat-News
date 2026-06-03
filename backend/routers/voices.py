@@ -152,7 +152,7 @@ async def list_elevenlabs_voices() -> dict[str, Any]:
     ElevenLabs has been completely deprecated in favor of Microsoft Edge, Google Gemini, and OpenAI.
     """
     return {
-        "default_voice_id": "edge-vi-VN-NamMinhNeural",
+        "default_voice_id": "openai-onyx",
         "premade": DEFAULT_PREMADE_VOICES,
         "custom": [],
         "has_api_key": False,

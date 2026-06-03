@@ -53,11 +53,11 @@ def deploy():
         print("Upload complete!")
         
         commands = [
-            f"rm -rf TechBeat-News",
-            f"mkdir -p TechBeat-News",
+            "if [ -d TechBeat-News ]; then find TechBeat-News -mindepth 1 -maxdepth 1 ! -name 'my-video' -exec rm -rf {} +; else mkdir -p TechBeat-News; fi",
             f"tar -xzf {tar_name} -C TechBeat-News --strip-components=1",
             f"rm {tar_name}",
             "cd TechBeat-News && cp .env.compose.example .env",
+            "cd TechBeat-News && sed -i 's|NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=https://techbeat.aiteamxg.io.vn|g' .env",
             "cd TechBeat-News && echo 'TUNNEL_TOKEN=eyJhIjoiNzYyNjcxZWQxMWNiZDE0NmE1ZWRlNTQ4ZWRkOTA1MmUiLCJ0IjoiOTdhZTdmYWItMTZmZC00NTZkLWFkNGEtMmUzMWI0MmIxNzljIiwicyI6IllqRXpPR0UzTldJdE56RmtZeTAwWW1VeUxXRTBOalV0TkdFMVlqTTFOalF4TVRZdyJ9' >> .env",
             f"cd TechBeat-News && echo '{password}' | sudo -S docker compose up -d --build"
         ]
@@ -75,7 +75,11 @@ def deploy():
             else:
                 print("Command succeeded.")
                 
-        print("\\nDeployment completed successfully!")
+        print("\nDeployment completed successfully!")
+        
+        print("\nSyncing local environment variables to the remote server...")
+        from scripts.update_remote_env import run as update_remote_env
+        update_remote_env()
         
     except Exception as e:
         print(f"Error: {e}")

@@ -1,12 +1,14 @@
 import asyncio
 from dataclasses import dataclass, field
 
+import os
+
 @dataclass
 class ConcurrencyLimiter:
     """Giới hạn số tác vụ nặng chạy đồng thời."""
-    max_renders: int = 2        # Playwright render (nặng nhất)
-    max_llm_calls: int = 5      # LLM API calls (scenes/composition/gen-scene-one)
-    max_tts: int = 3            # TTS synthesis
+    max_renders: int = int(os.getenv("CONCURRENCY_MAX_RENDERS", "30"))
+    max_llm_calls: int = int(os.getenv("CONCURRENCY_MAX_LLM_CALLS", "20"))
+    max_tts: int = int(os.getenv("CONCURRENCY_MAX_TTS", "20"))
 
     _render_sem: asyncio.Semaphore = field(init=False)
     _llm_sem: asyncio.Semaphore = field(init=False)

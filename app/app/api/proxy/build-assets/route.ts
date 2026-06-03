@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  // Always proxy directly to the internal backend container in prod, or localhost in dev
   const isDev = process.env.NODE_ENV === "development";
-  const backendUrl = isDev ? "http://localhost:8000/build-video" : "http://backend:8000/build-video";
+  const backendUrl = isDev ? "http://localhost:8000/build-assets" : "http://backend:8000/build-assets";
   
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

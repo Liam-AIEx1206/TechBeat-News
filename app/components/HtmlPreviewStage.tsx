@@ -91,7 +91,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
     setPreviewLoading(true);
     try {
       const firstSceneText = scenePlan.scenes[0]?.narration ?? "";
-      const currentVoiceId = scenePlan.voiceId ?? "edge-vi-VN-NamMinhNeural";
+      const currentVoiceId = scenePlan.voiceId ?? "openai-onyx";
       
       const res = await fetch(`${API}/voices/preview-5s`, {
         method: "POST",

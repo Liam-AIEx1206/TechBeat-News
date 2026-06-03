@@ -2170,3 +2170,396 @@ async def build_video(body: BuildRequest, request: Request):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Client-Side Rendering Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+# /build-assets  — run LLM + TTS + Whisper, skip render, return JSON
+# /upload-render — receive finished MP4 from browser, save to history
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None):
+    """Same as build_pipeline but STOPS before Stage 4 (render).
+    Yields SSE events for stages 0-3, then a final 'assets_ready' event
+    with the compositionHtml + audio URLs for client-side rendering."""
+
+    project_root = get_project_root(req.projectPath, req.sessionId)
+    if not project_root.exists():
+        yield sse({"type": "error", "message": f"Project path không tồn tại: {project_root}"})
+        return
+
+    assets_dir = project_root / "assets"
+    assets_dir.mkdir(exist_ok=True)
+
+    # ---- Stage 0: Download / decode chosen illustration images ----
+    import base64 as _b64
+    import re as _re
+
+    scenes_with_assets: list[ScenePayload] = []
+    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as http:
+        for s in req.scenes:
+            asset_rel: str | None = None
+            url = s.imageUrl or ""
+
+            if url.startswith("data:image/"):
+                m = _re.match(r"^data:image/([a-z0-9+.-]+);base64,(.+)$", url, _re.IGNORECASE)
+                if m:
+                    ext_raw = m.group(1).lower()
+                    ext = {"jpeg": "jpg", "svg+xml": "svg"}.get(ext_raw, ext_raw)
+                    if ext not in ("jpg", "png", "webp", "gif", "svg"):
+                        ext = "jpg"
+                    try:
+                        raw = _b64.b64decode(m.group(2))
+                        local = assets_dir / f"scene{s.index + 1}.{ext}"
+                        local.write_bytes(raw)
+                        asset_rel = f"assets/{local.name}"
+                    except Exception as e:
+                        print(f"[build-assets] Decode data URL scene {s.index + 1} lỗi: {e}")
+
+            elif url.startswith(("http://", "https://")):
+                ext = ".jpg"
+                low = url.lower().split("?")[0]
+                for cand in (".png", ".webp", ".jpeg", ".jpg", ".gif"):
+                    if low.endswith(cand):
+                        ext = ".jpg" if cand == ".jpeg" else cand
+                        break
+                local = assets_dir / f"scene{s.index + 1}{ext}"
+                try:
+                    resp = await http.get(
+                        url,
+                        headers={
+                            "User-Agent": "Mozilla/5.0",
+                            "Referer": "https://duckduckgo.com/",
+                        },
+                    )
+                    if resp.status_code == 200 and resp.content:
+                        local.write_bytes(resp.content)
+                        asset_rel = f"assets/{local.name}"
+                except Exception as e:
+                    print(f"[build-assets] Tải ảnh scene {s.index + 1} lỗi: {e}")
+
+            scenes_with_assets.append(s.model_copy(update={"imageAsset": asset_rel}))
+
+    build_log: list[str] = []
+
+    # ---- Stage 1: Composition (LLM) ----
+    if req.compositionHtml and "<html" in req.compositionHtml.lower():
+        yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Sử dụng HTML từ bước xem trước..."})
+        html = req.compositionHtml
+        build_log.append("🎨 HTML: cache (từ bước xem trước — không gọi LLM)")
+        yield sse({"type": "stage", "stage": "composition", "status": "done", "message": "Bỏ qua sinh HTML — dùng cache"})
+    else:
+        yield sse({"type": "stage", "stage": "composition", "status": "start", "message": "Đang sinh composition HTML..."})
+
+        comp_req = CompositionRequest(
+            title=req.title,
+            scenes=scenes_with_assets,
+            totalDuration=req.totalDuration,
+            theme=req.theme,
+        )
+        html = ""
+        char_count = 0
+        async for ev in stream_composition_events(comp_req):
+            if ev["type"] == "chunk":
+                char_count += len(ev["text"])
+                yield sse({"type": "comp_chunk", "text": ev["text"]})
+                if char_count % 500 < 50:
+                    yield sse({"type": "stage", "stage": "composition", "status": "progress", "chars": char_count})
+            elif ev["type"] == "model_info":
+                build_log.append(f"🎨 HTML: {ev['provider']} / {ev['model']}")
+                yield sse({"type": "stage", "stage": "composition", "status": "progress",
+                           "message": f"LLM: {ev['provider']} ({ev['model']})"})
+            elif ev["type"] == "done":
+                html = ev["html"]
+            elif ev["type"] == "error":
+                yield sse({"type": "error", "stage": "composition", "message": ev["message"]})
+                return
+
+    if not html:
+        yield sse({"type": "error", "stage": "composition", "message": "Không nhận được HTML"})
+        return
+
+    # ---- Stage 2: Save ----
+    yield sse({"type": "stage", "stage": "save", "status": "start", "message": "Đang lưu index.html..."})
+    target_html = project_root / "index.html"
+    target_html.write_text(html, encoding="utf-8")
+    yield sse({"type": "stage", "stage": "save", "status": "done", "path": str(target_html)})
+
+    # ---- Stage 3: TTS + Whisper ----
+    actual_total = req.totalDuration
+    audio_urls: list[str] = []
+    audio_durations: list[float] = []
+
+    from middleware.concurrency import limiter
+    if not req.skipTts:
+        async with limiter._tts_sem:
+            engines_used: dict[str, int] = {}
+            yield sse({"type": "stage", "stage": "tts", "status": "start", "message": f"Đang sinh giọng đọc cho {len(req.scenes)} scene..."})
+            wav_paths: list[Path] = []
+            for s in req.scenes:
+                wav_path = assets_dir / f"p{s.index + 1}.wav"
+                wav_paths.append(wav_path)
+                yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
+                try:
+                    engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
+                    engines_used[engine] = engines_used.get(engine, 0) + 1
+                except Exception as e:
+                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
+                    return
+
+            engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
+            build_log.append(f"🎙 TTS: {engine_summary}")
+
+            durations = [get_audio_duration_s(p) for p in wav_paths]
+            audio_durations = [round(d, 2) for d in durations]
+
+            # Build audio URLs — relative to backend static serving
+            session_prefix = f"/sessions/{req.sessionId}" if req.sessionId else ""
+            for s in req.scenes:
+                audio_urls.append(f"{session_prefix}/assets/p{s.index + 1}.wav")
+
+            # ── Whisper word-level transcription ────────────────────────────
+            yield sse({"type": "stage", "stage": "whisper", "status": "start",
+                       "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
+            word_data: list[list[dict]] = []
+            whisper_engines_used: dict[str, int] = {}
+            for idx, p in enumerate(wav_paths):
+                yield sse({"type": "stage", "stage": "whisper", "status": "progress",
+                           "scene": idx + 1, "of": len(wav_paths)})
+                words, w_engine = await transcribe_audio_whisper(p)
+                aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
+                word_data.append(aligned_words)
+                whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+            whisper_ok = sum(1 for w in word_data if w)
+            whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
+            build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
+            yield sse({"type": "stage", "stage": "whisper", "status": "done",
+                       "engine": whisper_engine_summary,
+                       "message": f"Hoàn tất: {whisper_engine_summary}"
+                                   + (" — chunk fallback cho scene còn lại" if whisper_ok < len(wav_paths) else "")})
+
+            scene_titles = [s.title for s in req.scenes]
+            scene_narrations = [s.narration for s in req.scenes]
+            html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
+
+            if not req.subtitlesEnabled:
+                hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+                html = html.replace("</head>", hide_css + "</head>", 1)
+            target_html.write_text(html, encoding="utf-8")
+
+            import math as _math
+            actual_total = sum(max(1, _math.ceil(d) + 1) for d in durations)
+            yield sse({
+                "type": "stage", "stage": "tts", "status": "done",
+                "engine": engine_summary,
+                "actualDuration": actual_total,
+                "audioDurations": [round(d, 1) for d in durations],
+            })
+    else:
+        if not req.subtitlesEnabled:
+            existing_html = target_html.read_text(encoding="utf-8")
+            hide_css = '<style id="tb-subtitle-hide">.techbeat-subtitles{display:none!important}</style>'
+            if 'id="tb-subtitle-hide"' not in existing_html:
+                existing_html = existing_html.replace("</head>", hide_css + "</head>", 1)
+                target_html.write_text(existing_html, encoding="utf-8")
+        yield sse({"type": "stage", "stage": "tts", "status": "skipped"})
+
+    # ── Print build summary ──────────────────────────────────────────────
+    print("\n" + "=" * 55)
+    print(f"[BUILD-ASSETS SUMMARY] {req.title}")
+    for line in build_log:
+        print(f"  {line}")
+    print("=" * 55 + "\n")
+
+    # ── SKIP Stage 4 (Render) — emit assets_ready instead ──────────────
+    yield sse({
+        "type": "assets_ready",
+        "compositionHtml": html,
+        "audioUrls": audio_urls,
+        "audioDurations": audio_durations,
+        "totalDuration": actual_total,
+        "sessionId": req.sessionId,
+        "buildLog": build_log,
+    })
+
+
+@router.post("/build-assets")
+async def build_assets(body: BuildRequest, request: Request):
+    """Pipeline giống /build-video nhưng KHÔNG render.
+    Client sẽ tự render bằng WebCodecs."""
+    from routers.history import get_optional_user_email
+    user_email = await get_optional_user_email(request)
+    return StreamingResponse(
+        build_assets_pipeline(body, user_email=user_email),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ── Upload rendered MP4 from client ──────────────────────────────────────
+
+from fastapi import File, UploadFile, Form
+
+
+@router.post("/upload-render")
+async def upload_render(
+    file: UploadFile = File(...),
+    title: str = Form("Untitled"),
+    session_id: str = Form(""),
+    composition_html: str = Form(""),
+    duration: int = Form(0),
+    logs: str = Form(""),
+    request: Request = None,  # type: ignore
+):
+    """Nhận MP4 từ client-side render, lưu vào renders/ và history, kèm theo log."""
+    import datetime
+
+    from routers.history import get_optional_user_email
+
+    user_email = await get_optional_user_email(request) if request else None
+
+    global_root = get_project_root()
+    renders_dir = global_root / "renders"
+    renders_dir.mkdir(exist_ok=True)
+
+    # Generate filename
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = re.sub(r'[^\w\s-]', '', title)[:50].strip().replace(' ', '_') or "video"
+    mp4_name = f"{safe_title}_{timestamp}.mp4"
+    mp4_path = renders_dir / mp4_name
+
+    # Save uploaded file
+    content = await file.read()
+    mp4_path.write_bytes(content)
+    file_size_mb = len(content) / (1024 * 1024)
+    print(f"[upload-render] Saved {mp4_name} ({file_size_mb:.1f} MB)")
+
+    rel_url = f"/renders/{mp4_name}"
+
+    # Save to history
+    try:
+        if user_email:
+            history_dir = global_root / "history" / "users" / user_email
+            prefix = f"/static-history/users/{user_email}/"
+        else:
+            history_dir = global_root / "history"
+            prefix = "/static-history/"
+
+        htmls_dir = history_dir / "htmls"
+        videos_dir = history_dir / "videos"
+        logs_dir = history_dir / "logs"
+        history_dir.mkdir(parents=True, exist_ok=True)
+        htmls_dir.mkdir(parents=True, exist_ok=True)
+        videos_dir.mkdir(parents=True, exist_ok=True)
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        hist_html_name = f"html_{timestamp}.html"
+        hist_video_name = f"video_{timestamp}.mp4"
+        hist_log_name = f"log_{timestamp}.txt"
+
+        if composition_html:
+            (htmls_dir / hist_html_name).write_text(composition_html, encoding="utf-8")
+        shutil.copy2(mp4_path, videos_dir / hist_video_name)
+
+        if logs:
+            (logs_dir / hist_log_name).write_text(logs, encoding="utf-8")
+
+        db_path = history_dir / "db.json"
+        history_list = []
+        if db_path.exists():
+            try:
+                history_list = json.loads(db_path.read_text(encoding="utf-8"))
+            except Exception:
+                history_list = []
+
+        new_entry = {
+            "id": timestamp,
+            "title": title,
+            "html_url": f"{prefix}htmls/{hist_html_name}" if composition_html else "",
+            "video_url": f"{prefix}videos/{hist_video_name}",
+            "log_url": f"{prefix}logs/{hist_log_name}" if logs else "",
+            "duration": duration,
+            "created_at": datetime.datetime.now().isoformat(),
+            "rendered_by": "client",
+        }
+        history_list.insert(0, new_entry)
+        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[upload-render] Saved to history with logs: {timestamp}")
+    except Exception as he:
+        print(f"[upload-render ERROR] Failed to save history: {he}")
+
+    return {
+        "success": True,
+        "videoUrl": rel_url,
+        "videoPath": str(mp4_path),
+        "fileSize": round(file_size_mb, 1),
+    }
+
+
+class ErrorLogRequest(BaseModel):
+    title: str
+    sessionId: str
+    error: str
+    logs: str
+    duration: int = 0
+
+
+@router.post("/save-error-log")
+async def save_error_log(
+    body: ErrorLogRequest,
+    request: Request,
+):
+    """Lưu log lỗi khi tạo video thất bại để phản hồi/troubleshoot."""
+    import datetime
+    from routers.history import get_optional_user_email
+
+    user_email = await get_optional_user_email(request)
+
+    global_root = get_project_root()
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    try:
+        if user_email:
+            history_dir = global_root / "history" / "users" / user_email
+            prefix = f"/static-history/users/{user_email}/"
+        else:
+            history_dir = global_root / "history"
+            prefix = "/static-history/"
+
+        logs_dir = history_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        hist_log_name = f"error_{timestamp}.txt"
+        
+        # Combine error message and logs
+        full_content = f"ERROR: {body.error}\n\n=== RUNTIME LOGS ===\n{body.logs}"
+        (logs_dir / hist_log_name).write_text(full_content, encoding="utf-8")
+
+        # Append to db.json as a failed status entry
+        db_path = history_dir / "db.json"
+        history_list = []
+        if db_path.exists():
+            try:
+                history_list = json.loads(db_path.read_text(encoding="utf-8"))
+            except Exception:
+                history_list = []
+
+        new_entry = {
+            "id": timestamp,
+            "title": f"{body.title} (Lỗi)",
+            "status": "failed",
+            "error": body.error,
+            "log_url": f"{prefix}logs/{hist_log_name}",
+            "duration": body.duration,
+            "created_at": datetime.datetime.now().isoformat(),
+        }
+        history_list.insert(0, new_entry)
+        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[save-error-log] Saved failed attempt log: {timestamp}")
+        return {"success": True, "logUrl": f"{prefix}logs/{hist_log_name}"}
+    except Exception as he:
+        print(f"[save-error-log ERROR] Failed to save error log: {he}")
+        return {"success": False, "error": str(he)}
+
