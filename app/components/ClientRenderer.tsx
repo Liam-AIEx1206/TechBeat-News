@@ -117,34 +117,8 @@ export function useClientRender() {
     // ── Pre-cache and inline scene images to Base64 ──
     setProgress({ stage: "init", percent: 3, message: "Đang chuyển đổi và nén ảnh sang Base64..." });
     try {
-      const srcMatches = Array.from(finalHtml.matchAll(/src=["'](assets\/[^"']+)["']/g));
-      const uniqueSrcs = Array.from(new Set(srcMatches.map(m => m[1])));
-
-      onLog?.(`[DEBUG] Found unique images to inline: ${JSON.stringify(uniqueSrcs)}`);
-
-      for (const src of uniqueSrcs) {
-        if (cancelRef.current) break;
-        try {
-          const fullUrl = `${baseHref}${src}`;
-          onLog?.(`[DEBUG] Inlining image to Base64: ${fullUrl}`);
-          const resp = await fetch(fullUrl);
-          if (!resp.ok) throw new Error(`HTTP status ${resp.status}`);
-          const blob = await resp.blob();
-          
-          const reader = new FileReader();
-          const base64Promise = new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-          });
-          reader.readAsDataURL(blob);
-          const base64Data = await base64Promise;
-          
-          finalHtml = finalHtml.replaceAll(src, base64Data);
-          onLog?.(`[DEBUG] Successfully inlined: ${src}`);
-        } catch (err) {
-          onLog?.(`[WARNING] Failed to inline image ${src}: ${err}`);
-        }
-      }
+      finalHtml = await inlineHtmlAssets(finalHtml, API, sessionId);
+      onLog?.(`[DEBUG] Successfully completed inlineHtmlAssets helper.`);
     } catch (err) {
       onLog?.(`[WARNING] Image inlining pre-process error: ${err}`);
     }
@@ -583,6 +557,96 @@ export async function saveErrorLog(opts: {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
+
+async function inlineHtmlAssets(html: string, apiBase: string, sessionId?: string): Promise<string> {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  
+  // 1. Inline thẻ <img>
+  const imgs = doc.querySelectorAll("img");
+  const imgPromises = Array.from(imgs).map(async (img) => {
+    const src = img.getAttribute("src");
+    if (src && !src.startsWith("data:") && !src.startsWith("http:") && !src.startsWith("https:")) {
+      const fullUrl = sessionId 
+        ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${src}`
+        : `${apiBase.replace(/\/$/, "")}/${src}`;
+      try {
+        const resp = await fetch(fullUrl);
+        const blob = await resp.blob();
+        const dataUrl = await blobToDataURL(blob);
+        img.setAttribute("src", dataUrl);
+      } catch (e) {
+        console.warn(`[ClientRenderer] Failed to inline image: ${src}`, e);
+      }
+    }
+  });
+
+  // 2. Inline background-image trong inline styles
+  const styledEls = doc.querySelectorAll("[style*='url']");
+  const stylePromises = Array.from(styledEls).map(async (el) => {
+    const style = el.getAttribute("style") || "";
+    const urlRegex = /url\(['"]?([^'"]+)['"]?\)/g;
+    let match;
+    let newStyle = style;
+    while ((match = urlRegex.exec(style)) !== null) {
+      const src = match[1];
+      if (src && !src.startsWith("data:") && !src.startsWith("http:") && !src.startsWith("https:")) {
+        const fullUrl = sessionId 
+          ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${src}`
+          : `${apiBase.replace(/\/$/, "")}/${src}`;
+        try {
+          const resp = await fetch(fullUrl);
+          const blob = await resp.blob();
+          const dataUrl = await blobToDataURL(blob);
+          newStyle = newStyle.replace(match[0], `url("${dataUrl}")`);
+        } catch (e) {
+          console.warn(`[ClientRenderer] Failed to inline style image: ${src}`, e);
+        }
+      }
+    }
+    el.setAttribute("style", newStyle);
+  });
+
+  // 3. Inline background-image trong thẻ <style>
+  const styleTags = doc.querySelectorAll("style");
+  const styleTagPromises = Array.from(styleTags).map(async (tag) => {
+    let content = tag.textContent || "";
+    const urlRegex = /url\(['"]?([^'"]+)['"]?\)/g;
+    let match;
+    const matches: { original: string; url: string }[] = [];
+    while ((match = urlRegex.exec(content)) !== null) {
+      matches.push({ original: match[0], url: match[1] });
+    }
+    for (const m of matches) {
+      if (m.url && !m.url.startsWith("data:") && !m.url.startsWith("http:") && !m.url.startsWith("https:")) {
+        const fullUrl = sessionId 
+          ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${m.url}`
+          : `${apiBase.replace(/\/$/, "")}/${m.url}`;
+        try {
+          const resp = await fetch(fullUrl);
+          const blob = await resp.blob();
+          const dataUrl = await blobToDataURL(blob);
+          content = content.replace(m.original, `url("${dataUrl}")`);
+        } catch (e) {
+          console.warn(`[ClientRenderer] Failed to inline stylesheet image: ${m.url}`, e);
+        }
+      }
+    }
+    tag.textContent = content;
+  });
+
+  await Promise.all([...imgPromises, ...stylePromises, ...styleTagPromises]);
+  return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+}
+
+function blobToDataURL(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
