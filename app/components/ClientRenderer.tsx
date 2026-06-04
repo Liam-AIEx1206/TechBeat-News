@@ -308,6 +308,29 @@ export function useClientRender() {
         console.warn("[ClientRenderer] Error pre-extracting font CSS:", err);
       }
 
+      // Remove external stylesheet link tags from all iframes to prevent html-to-image from fetching them on every frame
+      try {
+        iframes.forEach((iframe) => {
+          const doc = iframe.contentDocument;
+          if (doc) {
+            const links = doc.querySelectorAll("link[rel='stylesheet']");
+            links.forEach((link) => {
+              link.remove();
+            });
+            
+            // Inject local pre-extracted font CSS so the iframe document still has the font definitions
+            if (fontEmbedCSS) {
+              const style = doc.createElement("style");
+              style.textContent = fontEmbedCSS;
+              doc.head.appendChild(style);
+            }
+          }
+        });
+        onLog?.(`[DEBUG] Removed external link stylesheets and injected pre-extracted font CSS to avoid redundant fetches.`);
+      } catch (err) {
+        console.warn("[ClientRenderer] Error optimizing iframe stylesheets:", err);
+      }
+
       let nextFrameToCapture = 0;
       let nextFrameToEncode = 0;
       const capturedFrames = new Map<number, ImageBitmap>();
