@@ -416,6 +416,10 @@ export function useClientRender() {
             const bitmap = await createImageBitmap(capturedCanvas);
             capturedFrames.set(frameIdx, bitmap);
 
+            // Force Chromium to immediately discard the canvas backing store graphics memory
+            capturedCanvas.width = 0;
+            capturedCanvas.height = 0;
+
             while (frameIdx - nextFrameToEncode > 30 && !cancelRef.current && !workerError) {
               await sleep(10);
             }

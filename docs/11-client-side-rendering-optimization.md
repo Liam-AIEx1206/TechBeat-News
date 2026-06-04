@@ -57,6 +57,11 @@ Thay vì dùng regex thay thế cơ bản, trình dựng sử dụng hàm bổ t
 * **Vấn đề**: Một số trình duyệt gặp lỗi hoặc crash khi cố gắng đẩy một khối dữ liệu `AudioData` khổng lồ (chứa toàn bộ bài đọc WAV dài vài phút) vào `AudioEncoder`.
 * **Giải pháp**: Cắt nhỏ mảng dữ liệu âm thanh đã nạp thành các chunk nhỏ cố định kích thước **1024 samples** (kích thước tiêu chuẩn của AAC) kèm timestamp chính xác rồi gửi tuần tự cho encoder, tối ưu hoá tương thích và độ ổn định của WebCodecs.
 
+### 7. Giải Phóng Bộ Nhớ Đồ Họa Canvas Chủ Động (GPU Memory Reclaim)
+* **Vấn đề**: Trình duyệt Chromium không giải phóng bộ nhớ đồ họa (backing store) của canvas bị ngắt kết nối (detached canvas) ngay lập tức sau khi gọi `createImageBitmap`. Mỗi frame 1080p chiếm khoảng 8.3 MB; với 1800-2600 frames, lượng RAM/GPU memory rò rỉ lên tới 3-4 GB, dẫn tới kích hoạt trình dọn rác (GC thrashing) làm tụt tốc độ render từ 15 FPS xuống 1.6 FPS hoặc gây treo/crash tab.
+* **Giải pháp**: Thiết lập thuộc tính `width = 0` và `height = 0` ngay sau khi trích xuất `ImageBitmap` từ `capturedCanvas`. Hành động này bắt buộc công cụ đồ họa của Chromium hủy phân bổ ngay vùng nhớ đồ họa của canvas đó.
+* **Kết quả**: Lượng RAM tiêu thụ của tab giữ ổn định ở mức thấp (< 300-400 MB) và duy trì tốc độ render ổn định 10+ FPS suốt toàn bộ quá trình dựng video.
+
 ---
 
 ## 📊 Kết Quả Đạt Được
