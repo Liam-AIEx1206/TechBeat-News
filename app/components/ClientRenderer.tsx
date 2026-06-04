@@ -384,9 +384,12 @@ export function useClientRender() {
 
             const detachedNodes = inactiveScenes.map(node => {
               const parent = node.parentNode;
-              const nextSibling = node.nextSibling;
+              let index = 0;
+              for (let sibling = node.previousSibling; sibling; sibling = sibling.previousSibling) {
+                index++;
+              }
               node.remove();
-              return { node, parent, nextSibling };
+              return { node, parent, index };
             });
 
             // 2. Capture the simplified DOM body
@@ -401,10 +404,12 @@ export function useClientRender() {
               }
             });
 
-            // 3. Immediately re-attach the elements to their original positions
-            for (const item of detachedNodes) {
+            // 3. Immediately re-attach the elements to their original positions (in forward order using original child indices)
+            for (let i = 0; i < detachedNodes.length; i++) {
+              const item = detachedNodes[i];
               if (item.parent) {
-                item.parent.insertBefore(item.node, item.nextSibling);
+                const targetNode = item.parent.childNodes[item.index] || null;
+                item.parent.insertBefore(item.node, targetNode);
               }
             }
 
@@ -701,6 +706,18 @@ async function inlineHtmlAssets(html: string, apiBase: string, sessionId?: strin
       }
     }
     tag.textContent = content;
+  });
+
+  // 4. Cấu hình đường dẫn tuyệt đối cho thẻ <audio> để không bị resolve nhầm về port 3000 của frontend
+  const audios = doc.querySelectorAll("audio");
+  audios.forEach((audio) => {
+    const src = audio.getAttribute("src");
+    if (src && !src.startsWith("data:") && !src.startsWith("http:") && !src.startsWith("https:")) {
+      const fullUrl = sessionId 
+        ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${src}`
+        : `${apiBase.replace(/\/$/, "")}/${src}`;
+      audio.setAttribute("src", fullUrl);
+    }
   });
 
   await Promise.all([...imgPromises, ...stylePromises, ...styleTagPromises]);
