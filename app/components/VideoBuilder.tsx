@@ -219,8 +219,8 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           totalDuration: assetsData.totalDuration,
           sessionId: assetsData.sessionId,
           fps: 30,
-          width: 1280,
-          height: 720,
+          width: 1920,
+          height: 1080,
           onLog: (msg) => {
             localRenderLog.push(msg);
             setRenderLog(p => {
@@ -250,6 +250,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           duration: assetsData.totalDuration,
           userEmail: session?.user?.email ?? undefined,
           logs: logsText,
+          cropX: (blob as any).cropX,
+          cropY: (blob as any).cropY,
+          cropW: (blob as any).cropW,
+          cropH: (blob as any).cropH,
+          width: 1920,
+          height: 1080,
         });
 
         if (!uploadRes.success) throw new Error("Lưu video trên server thất bại");

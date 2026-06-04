@@ -1969,12 +1969,28 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
             for s in req.scenes:
                 wav_path = assets_dir / f"p{s.index + 1}.wav"
                 wav_paths.append(wav_path)
-                yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
+
+            async def run_single_tts(scene_idx, narration, path):
+                engine = await synthesize_tts(narration, path, voice_id=req.voiceId)
+                return scene_idx, engine
+
+            tts_tasks = [run_single_tts(s.index, s.narration, wav_paths[s.index]) for s in req.scenes]
+            completed_tts = 0
+            for future in asyncio.as_completed(tts_tasks):
                 try:
-                    engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
+                    scene_idx, engine = await future
+                    completed_tts += 1
                     engines_used[engine] = engines_used.get(engine, 0) + 1
+                    yield sse({
+                        "type": "stage",
+                        "stage": "tts",
+                        "status": "progress",
+                        "scene": completed_tts,
+                        "of": len(req.scenes),
+                        "message": f"Đã xong giọng đọc scene {scene_idx + 1}"
+                    })
                 except Exception as e:
-                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
+                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene: {e}"})
                     return
 
             engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
@@ -1986,20 +2002,41 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
             measured = [f"p{i+1}.wav={d:.1f}s" for i, d in enumerate(durations)]
             print(f"[tts] Measured durations: {', '.join(measured)}")
 
-            # ── Whisper word-level transcription ────────────────────────────
+            # ── Whisper word-level transcription song song ──────────────────
             yield sse({"type": "stage", "stage": "whisper", "status": "start",
                        "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
-            word_data: list[list[dict]] = []
+            word_data_map = {}
             whisper_engines_used: dict[str, int] = {}
-            for idx, p in enumerate(wav_paths):
-                yield sse({"type": "stage", "stage": "whisper", "status": "progress",
-                           "scene": idx + 1, "of": len(wav_paths)})
+
+            async def run_single_whisper(idx, p, narration, duration):
                 words, w_engine = await transcribe_audio_whisper(p)
-                
-                # Keep original script text (case & punctuation), align using Whisper timestamps
-                aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
-                word_data.append(aligned_words)
-                whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+                aligned_words = align_script_with_whisper(narration, words, duration)
+                return idx, aligned_words, w_engine
+
+            whisper_tasks = [
+                run_single_whisper(idx, p, req.scenes[idx].narration, durations[idx])
+                for idx, p in enumerate(wav_paths)
+            ]
+            completed_whisper = 0
+            for future in asyncio.as_completed(whisper_tasks):
+                try:
+                    idx, aligned_words, w_engine = await future
+                    completed_whisper += 1
+                    word_data_map[idx] = aligned_words
+                    whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+                    yield sse({
+                        "type": "stage",
+                        "stage": "whisper",
+                        "status": "progress",
+                        "scene": completed_whisper,
+                        "of": len(wav_paths),
+                        "message": f"Đã nhận dạng xong scene {idx + 1}"
+                    })
+                except Exception as e:
+                    yield sse({"type": "error", "stage": "whisper", "message": f"Whisper scene: {e}"})
+                    return
+
+            word_data = [word_data_map[i] for i in range(len(wav_paths))]
             whisper_ok = sum(1 for w in word_data if w)
             whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
             build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
@@ -2301,12 +2338,28 @@ async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None
             for s in req.scenes:
                 wav_path = assets_dir / f"p{s.index + 1}.wav"
                 wav_paths.append(wav_path)
-                yield sse({"type": "stage", "stage": "tts", "status": "progress", "scene": s.index + 1, "of": len(req.scenes)})
+
+            async def run_single_tts(scene_idx, narration, path):
+                engine = await synthesize_tts(narration, path, voice_id=req.voiceId)
+                return scene_idx, engine
+
+            tts_tasks = [run_single_tts(s.index, s.narration, wav_paths[s.index]) for s in req.scenes]
+            completed_tts = 0
+            for future in asyncio.as_completed(tts_tasks):
                 try:
-                    engine = await synthesize_tts(s.narration, wav_path, voice_id=req.voiceId)
+                    scene_idx, engine = await future
+                    completed_tts += 1
                     engines_used[engine] = engines_used.get(engine, 0) + 1
+                    yield sse({
+                        "type": "stage",
+                        "stage": "tts",
+                        "status": "progress",
+                        "scene": completed_tts,
+                        "of": len(req.scenes),
+                        "message": f"Đã xong giọng đọc scene {scene_idx + 1}"
+                    })
                 except Exception as e:
-                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene {s.index + 1}: {e}"})
+                    yield sse({"type": "error", "stage": "tts", "message": f"TTS scene: {e}"})
                     return
 
             engine_summary = ", ".join(f"{k}×{v}" for k, v in engines_used.items())
@@ -2320,18 +2373,53 @@ async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None
             for s in req.scenes:
                 audio_urls.append(f"{session_prefix}/assets/p{s.index + 1}.wav")
 
-            # ── Whisper word-level transcription ────────────────────────────
+            # ── Whisper word-level transcription song song ──────────────────
             yield sse({"type": "stage", "stage": "whisper", "status": "start",
                        "message": f"Đang nhận dạng giọng nói cho {len(wav_paths)} scene..."})
-            word_data: list[list[dict]] = []
+            word_data_map = {}
             whisper_engines_used: dict[str, int] = {}
-            for idx, p in enumerate(wav_paths):
-                yield sse({"type": "stage", "stage": "whisper", "status": "progress",
-                           "scene": idx + 1, "of": len(wav_paths)})
+
+            async def run_single_whisper(idx, p, narration, duration):
                 words, w_engine = await transcribe_audio_whisper(p)
-                aligned_words = align_script_with_whisper(req.scenes[idx].narration, words, durations[idx])
-                word_data.append(aligned_words)
-                whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+                aligned_words = align_script_with_whisper(narration, words, duration)
+                return idx, aligned_words, w_engine
+
+            whisper_tasks = [
+                run_single_whisper(idx, p, req.scenes[idx].narration, durations[idx])
+                for idx, p in enumerate(wav_paths)
+            ]
+            completed_whisper = 0
+            for future in asyncio.as_completed(whisper_tasks):
+                try:
+                    idx, aligned_words, w_engine = await future
+                    completed_whisper += 1
+                    word_data_map[idx] = aligned_words
+                    whisper_engines_used[w_engine] = whisper_engines_used.get(w_engine, 0) + 1
+                    yield sse({
+                        "type": "stage",
+                        "stage": "whisper",
+                        "status": "progress",
+                        "scene": completed_whisper,
+                        "of": len(wav_paths),
+                        "message": f"Đã nhận dạng xong scene {idx + 1}"
+                    })
+                except Exception as e:
+                    yield sse({"type": "error", "stage": "whisper", "message": f"Whisper scene: {e}"})
+                    return
+
+            word_data = [word_data_map[i] for i in range(len(wav_paths))]
+            
+            # Save word_data, durations, narrations, and subtitle toggle state for later use in upload-render
+            try:
+                (assets_dir / "word_data.json").write_text(json.dumps(word_data, ensure_ascii=False), encoding="utf-8")
+                (assets_dir / "durations.json").write_text(json.dumps(durations, ensure_ascii=False), encoding="utf-8")
+                narrations = [s.narration for s in req.scenes]
+                (assets_dir / "narrations.json").write_text(json.dumps(narrations, ensure_ascii=False), encoding="utf-8")
+                (assets_dir / "subtitles_enabled.txt").write_text("1" if req.subtitlesEnabled else "0", encoding="utf-8")
+                print(f"[build-assets] Saved word_data.json, durations.json, narrations.json, and subtitles_enabled.txt to {assets_dir}")
+            except Exception as e:
+                print(f"[build-assets] Error saving assets metadata: {e}")
+
             whisper_ok = sum(1 for w in word_data if w)
             whisper_engine_summary = ", ".join(f"{k}×{v}" for k, v in whisper_engines_used.items())
             build_log.append(f"🎤 Whisper: {whisper_engine_summary} ({whisper_ok}/{len(wav_paths)} scene có timestamp)")
@@ -2398,8 +2486,140 @@ async def build_assets(body: BuildRequest, request: Request):
     )
 
 
+def format_ass_time(sec: float) -> str:
+    if sec < 0:
+        sec = 0.0
+    h = int(sec // 3600)
+    m = int((sec % 3600) // 60)
+    s = int(sec % 60)
+    cs = int(round((sec % 1) * 100))
+    if cs == 100:
+        s += 1
+        cs = 0
+        if s == 60:
+            m += 1
+            s = 0
+            if m == 60:
+                h += 1
+                m = 0
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+
+
+def generate_ass_file(
+    word_data: list[list[dict]],
+    durations: list[float],
+    narrations: list[str],
+    output_path: Path
+):
+    import math
+    
+    # Calculate scene start times
+    int_durs = [max(1, math.ceil(d) + 1) for d in durations]
+    starts = []
+    cursor = 0.0
+    for d in int_durs:
+        starts.append(cursor)
+        cursor += d
+        
+    lines = []
+    lines.append("[Script Info]")
+    lines.append("Title: TechBeat Auto Subtitles")
+    lines.append("ScriptType: v4.00+")
+    lines.append("WrapStyle: 0")
+    lines.append("PlayResX: 1920")
+    lines.append("PlayResY: 1080")
+    lines.append("ScaledBorderAndShadow: yes")
+    lines.append("")
+    lines.append("[V4+ Styles]")
+    lines.append("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding")
+    # PrimaryColour is the highlighted color (Orange-Red: &H002D2DFF)
+    # SecondaryColour is the initial color (White: &H00FFFFFF)
+    lines.append("Style: Default,Be Vietnam Pro,50,&H002D2DFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,0,2,80,80,80,1")
+    lines.append("")
+    lines.append("[Events]")
+    lines.append("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text")
+    
+    for i in range(len(durations)):
+        scene_start = starts[i]
+        scene_words = word_data[i] if i < len(word_data) else []
+        narration = narrations[i] if i < len(narrations) else ""
+        
+        if scene_words:
+            # Word-level karaoke mode
+            WLINE = 4
+            grouped = [scene_words[idx : idx + WLINE] for idx in range(0, len(scene_words), WLINE)]
+            for lw in grouped:
+                if not lw:
+                    continue
+                l_start = scene_start + lw[0]['start']
+                l_end = scene_start + lw[-1]['end']
+                
+                parts = []
+                for j, w in enumerate(lw):
+                    word_text = w['word']
+                    if j < len(lw) - 1:
+                        word_text += " "
+                        next_start = lw[j+1]['start']
+                    else:
+                        next_start = w['end']
+                    
+                    dur_sec = max(0.01, next_start - w['start'])
+                    dur_cs = int(round(dur_sec * 100))
+                    parts.append(f"{{\\kf{dur_cs}}}{word_text}")
+                    
+                text_content = "".join(parts)
+                start_str = format_ass_time(l_start)
+                end_str = format_ass_time(l_end)
+                lines.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{text_content}")
+        else:
+            # Fallback chunking mode
+            if not narration:
+                continue
+            words = narration.strip().split()
+            if not words:
+                continue
+            chunks = []
+            max_words = 4
+            for idx in range(0, len(words), max_words):
+                chunks.append(" ".join(words[idx : idx + max_words]))
+                
+            total_audio_time = durations[i]
+            AUDIO_LEAD = 0.15
+            speech_dur = (total_audio_time - AUDIO_LEAD) * 0.93
+            chunk_lens = [len(c) for c in chunks]
+            total_len = sum(chunk_lens)
+            
+            elapsed = 0.0
+            for ci, chunk in enumerate(chunks):
+                chunk_dur = (chunk_lens[ci] / total_len) * speech_dur if total_len > 0 else 0.0
+                chunk_start = scene_start + AUDIO_LEAD + elapsed
+                chunk_end = chunk_start + chunk_dur
+                
+                words_in_chunk = chunk.split()
+                w_count = len(words_in_chunk)
+                w_dur = chunk_dur / w_count if w_count > 0 else 0.0
+                
+                parts = []
+                for wi, word in enumerate(words_in_chunk):
+                    word_text = word
+                    if wi < w_count - 1:
+                        word_text += " "
+                    dur_cs = int(round(w_dur * 100))
+                    parts.append(f"{{\\kf{dur_cs}}}{word_text}")
+                    
+                text_content = "".join(parts)
+                start_str = format_ass_time(chunk_start)
+                end_str = format_ass_time(chunk_end)
+                lines.append(f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{text_content}")
+                
+                elapsed += chunk_dur
+                
+    output_path.write_text("\n".join(lines), encoding="utf-8-sig")
+
+
 # ── Upload rendered MP4 from client ──────────────────────────────────────
 
+from typing import Optional
 from fastapi import File, UploadFile, Form
 
 
@@ -2411,6 +2631,12 @@ async def upload_render(
     composition_html: str = Form(""),
     duration: int = Form(0),
     logs: str = Form(""),
+    crop_x: Optional[int] = Form(None),
+    crop_y: Optional[int] = Form(None),
+    crop_w: Optional[int] = Form(None),
+    crop_h: Optional[int] = Form(None),
+    width: int = Form(1920),
+    height: int = Form(1080),
     request: Request = None,  # type: ignore
 ):
     """Nhận MP4 từ client-side render, lưu vào renders/ và history, kèm theo log."""
@@ -2435,6 +2661,82 @@ async def upload_render(
     mp4_path.write_bytes(content)
     file_size_mb = len(content) / (1024 * 1024)
     print(f"[upload-render] Saved {mp4_name} ({file_size_mb:.1f} MB)")
+
+    # ── Subtitles Overlay / Burn-in via FFmpeg ─────────────────────────────
+    try:
+        session_root = get_project_root(session_id=session_id) if session_id else global_root
+        assets_dir = session_root / "assets"
+        
+        # Check if subtitles are enabled for this project session
+        subtitles_enabled_file = assets_dir / "subtitles_enabled.txt"
+        subtitles_enabled = True
+        if subtitles_enabled_file.exists():
+            subtitles_enabled = subtitles_enabled_file.read_text(encoding="utf-8").strip() == "1"
+            
+        word_data_file = assets_dir / "word_data.json"
+        durations_file = assets_dir / "durations.json"
+        narrations_file = assets_dir / "narrations.json"
+        
+        vf_filters = []
+        if crop_w and crop_h and crop_x is not None and crop_y is not None:
+            print(f"[upload-render] Adding crop filter: {crop_w}x{crop_h} at {crop_x},{crop_y}")
+            vf_filters.append(f"crop={crop_w}:{crop_h}:{crop_x}:{crop_y}")
+            vf_filters.append(f"scale={width}:{height}")
+
+        if subtitles_enabled and word_data_file.exists() and durations_file.exists():
+            print(f"[upload-render] Generating ASS and burning subtitles for session: {session_id}")
+            import json
+            word_data = json.loads(word_data_file.read_text(encoding="utf-8"))
+            durations = json.loads(durations_file.read_text(encoding="utf-8"))
+            narrations = []
+            if narrations_file.exists():
+                narrations = json.loads(narrations_file.read_text(encoding="utf-8"))
+                
+            ass_path = assets_dir / "subtitles.ass"
+            generate_ass_file(word_data, durations, narrations, ass_path)
+            vf_filters.append("ass=subtitles.ass")
+
+        # We always run FFmpeg for transcoding to MP4 since browser records as WebM, 
+        # and to apply any video filters (cropping/subtitles).
+        import subprocess
+        temp_out_path = mp4_path.parent / f"temp_{mp4_path.name}"
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(mp4_path.absolute()),
+        ]
+        if vf_filters:
+            cmd.extend(["-vf", ",".join(vf_filters)])
+            
+        cmd.extend([
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-crf", "18",
+            "-c:a", "aac",
+            str(temp_out_path.absolute())
+        ])
+        
+        print(f"[upload-render] Running FFmpeg in {assets_dir}: {' '.join(cmd)}")
+        res = subprocess.run(
+            cmd,
+            cwd=str(assets_dir.absolute()),
+            capture_output=True,
+            text=True
+        )
+        
+        if res.returncode == 0 and temp_out_path.exists():
+            mp4_path.unlink()
+            temp_out_path.rename(mp4_path)
+            file_size_mb = mp4_path.stat().st_size / (1024 * 1024)
+            print(f"[upload-render] Successfully processed video! New size: {file_size_mb:.1f} MB")
+        else:
+            print(f"[upload-render] FFmpeg processing failed with exit code {res.returncode}")
+            print(f"[upload-render] FFmpeg stderr:\n{res.stderr}")
+            if temp_out_path.exists():
+                temp_out_path.unlink()
+    except Exception as e:
+        print(f"[upload-render] Subtitle burn-in exception: {e}")
+        import traceback
+        traceback.print_exc()
 
     rel_url = f"/renders/{mp4_name}"
 

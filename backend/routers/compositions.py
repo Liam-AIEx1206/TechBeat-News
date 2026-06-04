@@ -1425,6 +1425,32 @@ body {{
 
 
 /* Chunked Subtitle Styles — one short line at a time, fades in/out */
+body.rendering .techbeat-subtitles {{
+  display: none !important;
+}}
+/* Disable expensive backdrop blurs, reduce shadows, and simplify layout when rendering */
+body.rendering .visual-block,
+body.rendering .glass-card,
+body.rendering .stat-list-card,
+body.rendering .tech-card,
+body.rendering .compare .col,
+body.rendering .terminal {{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
+  background: var(--surface) !important;
+}}
+body.rendering .float-orb-lg,
+body.rendering .float-orb-md,
+body.rendering .float-orb-sm,
+body.rendering .aurora-glow,
+body.rendering .light-rays {{
+  filter: blur(10px) !important;
+  opacity: 0.15 !important;
+}}
+body.rendering #root {{
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%) !important;
+}}
 .techbeat-subtitles {{
   position: absolute;
   bottom: 24px;
@@ -1510,6 +1536,9 @@ body {{
   color: rgba(255,255,255,0.85);
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
   transition: none;
+}}
+body.rendering .sub-word {{
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
 }}
 """
 

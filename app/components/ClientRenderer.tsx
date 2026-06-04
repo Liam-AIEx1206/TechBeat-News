@@ -15,7 +15,6 @@
  */
 
 import { useCallback, useRef, useState } from "react";
-import { Muxer, ArrayBufferTarget } from "mp4-muxer";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -26,8 +25,8 @@ interface RenderConfig {
   totalDuration: number;
   sessionId?: string;      // optional session ID for relative assets
   fps?: number;            // default 30
-  width?: number;           // default 1920
-  height?: number;          // default 1080
+  width?: number;           // default 1280
+  height?: number;          // default 720
   onLog?: (msg: string) => void;
 }
 
@@ -38,8 +37,6 @@ interface RenderProgress {
   currentFrame?: number;
   totalFrames?: number;
 }
-
-
 
 // ── Hook ─────────────────────────────────────────────────────────────────
 
@@ -61,8 +58,8 @@ export function useClientRender() {
       totalDuration,
       sessionId,
       fps = 30,
-      width = 1920,
-      height = 1080,
+      width = 1280,
+      height = 720,
       onLog,
     } = config;
 
@@ -77,430 +74,400 @@ export function useClientRender() {
     setMp4Url("");
     setError("");
 
-    // ── 1. Create hidden iframes with composition ──
-    setProgress({ stage: "init", percent: 2, message: "Đang tải composition HTML..." });
+    setProgress({ stage: "init", percent: 2, message: "Chuẩn bị giao diện quay màn hình..." });
 
-    const numWorkers = 2;
-    const iframes: HTMLIFrameElement[] = [];
-
-    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-    // Inject base tag so relative assets load from backend sessions/sessionId/
-    let finalHtml = compositionHtml;
-    finalHtml = finalHtml.replace(/<base\b[^>]*>/gi, "");
-    const baseHref = sessionId
-      ? `${API.replace(/\/$/, "")}/sessions/${sessionId}/`
-      : `${API.replace(/\/$/, "")}/`;
-    const baseTag = `<base href="${baseHref}">`;
-    
-    // Ensure Google Fonts stylesheets are loaded with crossorigin="anonymous"
-    finalHtml = finalHtml.replace(
-      /(<link\b[^>]*href="https:\/\/fonts\.googleapis\.com\/css2\?[^>]*")([^>]*>)/gi,
-      (match, p1, p2) => {
-        if (!p1.includes("crossorigin")) {
-          return `${p1} crossorigin="anonymous"${p2}`;
+    return new Promise<Blob | undefined>((resolve) => {
+      // Create style element for glassmorphic and premium styling
+      const styleEl = document.createElement("style");
+      styleEl.id = "hf-render-styles";
+      styleEl.textContent = `
+        @keyframes hf-pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+          70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
         }
-        return match;
-      }
-    );
-    // Also to preconnect
-    finalHtml = finalHtml.replace(
-      /(<link\b[^>]*href="https:\/\/fonts\.googleapis\.com"([^>]*preconnect[^>]*)>)/gi,
-      (match, p1) => {
-        if (!p1.includes("crossorigin")) {
-          return p1.replace(">", ' crossorigin="anonymous">');
+        @keyframes hf-glow {
+          0% { opacity: 0.6; }
+          50% { opacity: 1; }
+          100% { opacity: 0.6; }
         }
-        return match;
-      }
-    );
+        .hf-btn-primary {
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+          color: white;
+          border: none;
+          padding: 14px 28px;
+          font-size: 16px;
+          font-weight: 600;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+        }
+        .hf-btn-primary:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
+        }
+        .hf-btn-secondary {
+          background: rgba(255,255,255,0.08);
+          color: #a1a1aa;
+          border: 1px solid rgba(255,255,255,0.1);
+          padding: 14px 28px;
+          font-size: 16px;
+          font-weight: 600;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .hf-btn-secondary:hover {
+          background: rgba(255,255,255,0.15);
+          color: white;
+        }
+        .hf-card {
+          background: rgba(18, 18, 24, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+          backdrop-filter: blur(25px);
+          padding: 40px;
+          border-radius: 20px;
+          width: 90%;
+          max-width: 520px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+      `;
+      document.head.appendChild(styleEl);
 
-    finalHtml = finalHtml.replace(/<head\b([^>]*)>/i, `<head$1>${baseTag}`);
+      const overlay = document.createElement("div");
+      overlay.id = "hf-render-overlay";
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: #09090b;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #f4f4f5;
+      `;
+      document.body.appendChild(overlay);
 
-    // ── Pre-cache and inline scene images to Base64 ──
-    setProgress({ stage: "init", percent: 3, message: "Đang chuyển đổi và nén ảnh sang Base64..." });
-    try {
-      finalHtml = await inlineHtmlAssets(finalHtml, API, sessionId);
-      onLog?.(`[DEBUG] Successfully completed inlineHtmlAssets helper.`);
-    } catch (err) {
-      onLog?.(`[WARNING] Image inlining pre-process error: ${err}`);
-    }
-
-    try {
-      // Create all iframes in parallel
-      const loadPromises = Array.from({ length: numWorkers }).map((_, idx) => {
-        return new Promise<HTMLIFrameElement>((resolve, reject) => {
-          const iframe = document.createElement("iframe");
-          iframe.style.cssText = `
-            position: fixed; top: -9999px; left: -9999px;
-            width: ${width}px; height: ${height}px;
-            border: none; pointer-events: none;
-          `;
-
-          const blob = new Blob([finalHtml], { type: "text/html" });
-          const blobUrl = URL.createObjectURL(blob);
+      // Render the instruction card inside overlay
+      overlay.innerHTML = `
+        <div class="hf-card">
+          <h2 style="font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 12px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Dựng Video AI Tốc Độ Cao
+          </h2>
+          <p style="font-size: 15px; color: #a1a1aa; line-height: 1.6; margin-bottom: 24px; text-align: left;">
+            Để đạt hiệu năng tối đa và giữ nguyên 100% hiệu ứng chuyển cảnh, hệ thống sẽ phát trực tiếp hoạt ảnh và âm thanh rồi tự động ghi lại.
+          </p>
           
-          iframe.src = blobUrl;
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 30px; font-size: 14px; line-height: 1.7; text-align: left; width: 100%; box-sizing: border-box;">
+            <div style="margin-bottom: 12px; display: flex; align-items: flex-start;">
+              <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">1</span>
+              <div>Click <strong>"Bắt đầu ghi hình"</strong> bên dưới.</div>
+            </div>
+            <div style="margin-bottom: 12px; display: flex; align-items: flex-start;">
+              <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">2</span>
+              <div>Chọn tab <strong>"DailyByte - Dựng Video AI"</strong> (hoặc tab hiện tại).</div>
+            </div>
+            <div style="display: flex; align-items: flex-start;">
+              <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">3</span>
+              <div><strong>BẮT BUỘC:</strong> Tích chọn <strong>"Chia sẻ âm thanh của tab"</strong> (Also share tab audio) ở góc dưới bên trái của hộp thoại.</div>
+            </div>
+          </div>
 
-          const timeout = setTimeout(() => {
-            onLog?.(`[DEBUG] Iframe ${idx} load timeout!`);
-            reject(new Error(`Iframe ${idx} load timeout`));
-          }, 30000);
-          iframe.onload = () => {
-            clearTimeout(timeout);
-            URL.revokeObjectURL(blobUrl);
-            onLog?.(`[DEBUG] Iframe ${idx} onload fired.`);
-            resolve(iframe);
-          };
-          iframe.onerror = () => {
-            clearTimeout(timeout);
-            URL.revokeObjectURL(blobUrl);
-            onLog?.(`[DEBUG] Iframe ${idx} onerror fired!`);
-            reject(new Error(`Iframe ${idx} load failed`));
-          };
+          <div style="display: flex; gap: 16px; width: 100%; justify-content: center;">
+            <button id="btn-cancel" class="hf-btn-secondary" style="flex: 1;">Hủy bỏ</button>
+            <button id="btn-start" class="hf-btn-primary" style="flex: 1;">Bắt đầu ghi hình</button>
+          </div>
+        </div>
+      `;
 
-          document.body.appendChild(iframe);
-          iframes.push(iframe);
-        });
-      });
+      const cleanupAll = () => {
+        try { document.getElementById("hf-render-overlay")?.remove(); } catch {}
+        try { document.getElementById("hf-render-styles")?.remove(); } catch {}
+        setIsRendering(false);
+      };
 
-      onLog?.("[DEBUG] Awaiting loadPromises...");
-      await Promise.all(loadPromises);
-      onLog?.("[DEBUG] loadPromises resolved.");
+      const handleCancel = () => {
+        cleanupAll();
+        setProgress({ stage: "error", percent: 0, message: "Người dùng đã hủy bỏ quá trình ghi hình." });
+        resolve(undefined);
+      };
 
-      if (cancelRef.current) { cleanup(iframes); return; }
+      document.getElementById("btn-cancel")?.addEventListener("click", handleCancel);
 
-      // ── 2. Wait for GSAP timelines in parallel ──────────────────
-      setProgress({ stage: "init", percent: 5, message: "Đang chờ GSAP timeline..." });
+      document.getElementById("btn-start")?.addEventListener("click", async () => {
+        let stream: MediaStream;
+        try {
+          setProgress({ stage: "init", percent: 5, message: "Đang yêu cầu quyền chia sẻ màn hình..." });
+          stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              displaySurface: "browser",
+              width: { ideal: width },
+              height: { ideal: height },
+              frameRate: { ideal: fps }
+            },
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+              suppressLocalAudioPlayback: false
+            } as any,
+            preferCurrentTab: true,
+          } as any);
+        } catch (err) {
+          console.error("getDisplayMedia blocked:", err);
+          cleanupAll();
+          setProgress({ stage: "error", percent: 0, message: "Không thể khởi động: Người dùng từ chối chia sẻ hoặc trình duyệt không hỗ trợ." });
+          resolve(undefined);
+          return;
+        }
 
-      const timelinePromises = iframes.map(async (iframe, idx) => {
+        // Verify audio stream track is present
+        if (stream.getAudioTracks().length === 0) {
+          stream.getTracks().forEach(t => t.stop());
+          cleanupAll();
+          setProgress({
+            stage: "error",
+            percent: 0,
+            message: "Thiếu đường âm thanh! Vui lòng tích chọn ô 'Chia sẻ âm thanh của tab' ở góc dưới bên trái khi chọn Tab chia sẻ."
+          });
+          resolve(undefined);
+          return;
+        }
+
+        // We have stream and audio!
+        setProgress({ stage: "init", percent: 7, message: "Đang khởi tạo trình phát hoạt ảnh..." });
+
+        // Prepare overlay UI for recording (hide the instruction card, show centered video)
+        overlay.innerHTML = "";
+
+        const container = document.createElement("div");
+        container.id = "hf-video-container";
+        container.style.cssText = `
+          position: relative;
+          width: ${width}px;
+          height: ${height}px;
+          background: black;
+          overflow: hidden;
+          box-shadow: 0 0 50px rgba(0,0,0,0.8);
+          transform-origin: center center;
+        `;
+        overlay.appendChild(container);
+
+        // Setup initial scale
+        const initialScale = Math.min((window.innerWidth - 40) / width, (window.innerHeight - 40) / height);
+        container.style.transform = `scale(${initialScale})`;
+
+        // Setup base tag & finalHtml for iframe
+        const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+        let finalHtml = compositionHtml;
+        finalHtml = finalHtml.replace(/<base\b[^>]*>/gi, "");
+        const baseHref = sessionId
+          ? `${API.replace(/\/$/, "")}/sessions/${sessionId}/`
+          : `${API.replace(/\/$/, "")}/`;
+        const baseTag = `<base href="${baseHref}">`;
+        finalHtml = finalHtml.replace(/<head\b([^>]*)>/i, `<head$1>${baseTag}`);
+
+        // Load iframe in container
+        const iframe = document.createElement("iframe");
+        iframe.style.cssText = "width: 100%; height: 100%; border: none; overflow: hidden;";
+        
+        const blobUrl = URL.createObjectURL(new Blob([finalHtml], { type: "text/html" }));
+        iframe.src = blobUrl;
+        container.appendChild(iframe);
+
         let timeline: any = null;
-        onLog?.(`[DEBUG] Worker ${idx} starts checking timeline...`);
-        for (let i = 0; i < 100; i++) {
-          const iframeWin = iframe.contentWindow as (Window & { __timelines?: Record<string, unknown> }) | null;
-          if (iframeWin) {
-            const timelines = iframeWin.__timelines;
-            if (timelines) {
-              const key = timelines["main"] ? "main" : Object.keys(timelines)[0];
+        const activeTimeouts: any[] = [];
+        let mediaRecorder: MediaRecorder;
+
+        const stopStream = () => {
+          activeTimeouts.forEach(clearTimeout);
+          stream.getTracks().forEach(t => t.stop());
+          URL.revokeObjectURL(blobUrl);
+          iframe.remove();
+        };
+
+        // Listen for track end (if user clicks "Stop sharing" button in browser UI)
+        const track = stream.getVideoTracks()[0];
+        track.onended = () => {
+          if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+          }
+        };
+
+        iframe.onload = async () => {
+          onLog?.("[DEBUG] Iframe loaded. Looking for GSAP timeline...");
+          for (let i = 0; i < 100; i++) {
+            if (cancelRef.current) {
+              stopStream();
+              cleanupAll();
+              resolve(undefined);
+              return;
+            }
+            const iframeWin = iframe.contentWindow as (Window & { __timelines?: Record<string, unknown> }) | null;
+            if (iframeWin && iframeWin.__timelines) {
+              const key = iframeWin.__timelines["main"] ? "main" : Object.keys(iframeWin.__timelines)[0];
               if (key) {
-                timeline = timelines[key];
-                onLog?.(`[DEBUG] Worker ${idx} found timeline on iteration ${i} under key: ${key}`);
+                timeline = iframeWin.__timelines[key];
                 break;
               }
             }
+            await sleep(100);
           }
-          await sleep(100);
-        }
-        if (!timeline) {
-          onLog?.(`[DEBUG] Worker ${idx} timeline NOT found after 100 iterations.`);
-          throw new Error(`GSAP timeline không tìm thấy ở worker ${idx}`);
-        }
-        return { timeline };
-      });
 
-      const timelines = await Promise.all(timelinePromises);
-      onLog?.("[DEBUG] All timelines resolved successfully.");
+          if (!timeline) {
+            stopStream();
+            cleanupAll();
+            setProgress({ stage: "error", percent: 0, message: "Không tìm thấy timeline GSAP trong hoạt ảnh." });
+            resolve(undefined);
+            return;
+          }
 
-      if (cancelRef.current) { cleanup(iframes); return; }
-
-      // ── 3. Fetch audio files ─────────────────────────────────────
-      setProgress({ stage: "init", percent: 8, message: "Đang tải audio files..." });
-
-      const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
-
-      const audioContext = new AudioContext({ sampleRate: 44100 });
-      let mergedAudioBuffer: AudioBuffer | null = null;
-
-      if (audioUrls.length > 0) {
-        const audioBuffers: AudioBuffer[] = [];
-        for (let i = 0; i < audioUrls.length; i++) {
-          const audioUrl = isLocal
-            ? `${API}${audioUrls[i]}`
-            : `/api-backend${audioUrls[i]}`;
+          // We have timeline! Add class for graphics optimization if styling targets body.rendering
           try {
-            const resp = await fetch(audioUrl);
-            const arrBuf = await resp.arrayBuffer();
-            const decoded = await audioContext.decodeAudioData(arrBuf);
-            audioBuffers.push(decoded);
+            if (iframe.contentDocument && iframe.contentDocument.body) {
+              iframe.contentDocument.body.classList.add("rendering");
+            }
+          } catch {}
+
+          // Stabilized calculations after the blue banner appears and browser finishes resizing
+          const currentViewportW = window.innerWidth;
+          const currentViewportH = window.innerHeight;
+
+          const scale = Math.min((currentViewportW - 40) / width, (currentViewportH - 40) / height);
+          container.style.transform = `scale(${scale})`;
+
+          const scaledW = width * scale;
+          const scaledH = height * scale;
+          const cropX = Math.round((currentViewportW - scaledW) / 2);
+          const cropY = Math.round((currentViewportH - scaledH) / 2);
+          const cropW = Math.round(scaledW);
+          const cropH = Math.round(scaledH);
+
+          // Get stabilized track settings
+          const activeTrack = stream.getVideoTracks()[0];
+          const activeSettings = activeTrack.getSettings();
+          const activeTrackW = activeSettings.width || currentViewportW;
+          const activeTrackH = activeSettings.height || currentViewportH;
+
+          const scaleX = activeTrackW / currentViewportW;
+          const scaleY = activeTrackH / currentViewportH;
+
+          const finalCropX = Math.round(cropX * scaleX);
+          const finalCropY = Math.round(cropY * scaleY);
+          const finalCropW = Math.round(cropW * scaleX);
+          const finalCropH = Math.round(cropH * scaleY);
+
+          // Defensive Clamping
+          const safeCropW = Math.min(finalCropW, activeTrackW);
+          const safeCropH = Math.min(finalCropH, activeTrackH);
+          const safeCropX = Math.max(0, Math.min(finalCropX, activeTrackW - safeCropW));
+          const safeCropY = Math.max(0, Math.min(finalCropY, activeTrackH - safeCropH));
+
+          onLog?.(`[DEBUG] Stabilized Viewport: ${currentViewportW}x${currentViewportH}. Track resolution: ${activeTrackW}x${activeTrackH}.`);
+          onLog?.(`[DEBUG] Crop region (logical): ${cropW}x${cropH} at ${cropX},${cropY}`);
+          onLog?.(`[DEBUG] Crop region (physical/FFmpeg): ${safeCropW}x${safeCropH} at ${safeCropX},${safeCropY}`);
+
+          // Configure MediaRecorder
+          let mimeType = 'video/webm;codecs=vp9,opus';
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/webm;codecs=vp8,opus';
+          }
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/webm';
+          }
+
+          const chunks: Blob[] = [];
+          mediaRecorder = new MediaRecorder(stream, { mimeType });
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            stopStream();
+            cleanupAll();
+            
+            const resultBlob = new Blob(chunks, { type: mimeType });
+            // Attach crop metadata
+            (resultBlob as any).cropX = safeCropX;
+            (resultBlob as any).cropY = safeCropY;
+            (resultBlob as any).cropW = safeCropW;
+            (resultBlob as any).cropH = safeCropH;
+            
+            const resultUrl = URL.createObjectURL(resultBlob);
+            setMp4Blob(resultBlob);
+            setMp4Url(resultUrl);
+            
+            setProgress({ stage: "muxing", percent: 95, message: "Đang mã hóa và chèn phụ đề..." });
+            resolve(resultBlob);
+          };
+
+          // Start recording and playback!
+          mediaRecorder.start();
+          timeline.play(0);
+
+          // Play all audios at their start times
+          try {
+            if (iframe.contentDocument) {
+              const audios = Array.from(iframe.contentDocument.querySelectorAll("audio"));
+              audios.forEach((audio) => {
+                const startOffset = parseFloat(audio.getAttribute("data-start") || "0");
+                const vol = parseFloat(audio.getAttribute("data-volume") || "1");
+                audio.volume = vol;
+                audio.currentTime = 0;
+                
+                const tId = setTimeout(() => {
+                  audio.play().catch(e => console.warn("Audio playback blocked/failed:", e));
+                }, startOffset * 1000);
+                activeTimeouts.push(tId);
+              });
+            }
           } catch (e) {
-            console.warn(`[render] Failed to fetch audio ${i}:`, e);
-            const dur = audioDurations[i] || 3;
-            audioBuffers.push(
-              audioContext.createBuffer(1, Math.ceil(dur * 44100), 44100)
-            );
+            console.error("Failed to schedule audios:", e);
           }
-        }
 
-        const totalSamples = audioBuffers.reduce((sum, b) => sum + b.length, 0);
-        mergedAudioBuffer = audioContext.createBuffer(1, totalSamples, 44100);
-        const channel = mergedAudioBuffer.getChannelData(0);
-        let offset = 0;
-        for (const buf of audioBuffers) {
-          channel.set(buf.getChannelData(0), offset);
-          offset += buf.length;
-        }
-      }
-
-      if (cancelRef.current) { cleanup(iframes); return; }
-
-      // ── 4. Setup encoders + muxer ────────────────────────────────
-      setProgress({ stage: "init", percent: 10, message: "Đang cấu hình encoder..." });
-
-      const totalFrames = Math.ceil(totalDuration * fps);
-      const muxerTarget = new ArrayBufferTarget();
-
-      const muxer = new Muxer({
-        target: muxerTarget,
-        video: {
-          codec: "avc",
-          width,
-          height,
-        },
-        audio: mergedAudioBuffer ? {
-          codec: "aac",
-          numberOfChannels: 1,
-          sampleRate: 44100,
-        } : undefined,
-        fastStart: "in-memory",
-      });
-
-      const videoEncoder = new VideoEncoder({
-        output: (chunk, meta) => {
-          muxer.addVideoChunk(chunk, meta);
-        },
-        error: (e) => { throw new Error(`VideoEncoder error: ${e.message}`); },
-      });
-
-      videoEncoder.configure({
-        codec: "avc1.640028",
-        width,
-        height,
-        bitrate: 8_000_000,
-        framerate: fps,
-        latencyMode: "realtime",
-        avc: { format: "avc" },
-      });
-
-      let audioEncoder: AudioEncoder | null = null;
-      if (mergedAudioBuffer) {
-        audioEncoder = new AudioEncoder({
-          output: (chunk, meta) => {
-            muxer.addAudioChunk(chunk, meta);
-          },
-          error: (e) => { throw new Error(`AudioEncoder error: ${e.message}`); },
-        });
-
-        audioEncoder.configure({
-          codec: "mp4a.40.2",
-          numberOfChannels: 1,
-          sampleRate: 44100,
-          bitrate: 128000,
-        });
-      }
-
-      // ── 5. Parallel Frame-by-frame capture using SnapDOM (ultra-fast) ─────────
-      const { snapdom } = await import("@zumer/snapdom");
-      onLog?.(`[DEBUG] Loaded @zumer/snapdom for high-performance DOM capture.`);
-
-      // Compute cumulative start times of all scenes to determine which scene is active at frame timestamp t
-      const sceneDurations = audioDurations.map(d => Math.max(1, Math.ceil(d) + 1));
-      const sceneStarts: number[] = [];
-      let currentStart = 0;
-      for (const d of sceneDurations) {
-        sceneStarts.push(currentStart);
-        currentStart += d;
-      }
-
-      const getActiveSceneId = (time: number): string => {
-        let activeIdx = 0;
-        for (let i = 0; i < sceneStarts.length; i++) {
-          if (time >= sceneStarts[i]) {
-            activeIdx = i;
-          } else {
-            break;
-          }
-        }
-        return `scene${activeIdx + 1}`;
-      };
-
-      let nextFrameToCapture = 0;
-      let nextFrameToEncode = 0;
-      const capturedFrames = new Map<number, HTMLCanvasElement>();
-      let workerError: Error | null = null;
-
-      const workerPromises = iframes.map(async (iframe, workerId) => {
-        try {
-          const iframeDoc = iframe.contentDocument;
-          if (!iframeDoc || !iframeDoc.body) throw new Error(`Cannot access iframe ${workerId} document`);
-
-          const timeline = timelines[workerId].timeline;
-
-          while (true) {
-            if (cancelRef.current || workerError) break;
-
-            const frameIdx = nextFrameToCapture++;
-            if (frameIdx >= totalFrames) break;
-
-            const t = frameIdx / fps;
-            timeline.seek(t);
-
-            const activeSceneId = getActiveSceneId(t);
-            const activeSubSceneId = `sub-scene${activeSceneId.slice(5)}`;
-
-            // 1. Temporarily detach all inactive scenes and sub-scenes to keep DOM tree small
-            const root = iframeDoc.getElementById("root");
-            const inactiveScenes = root
-              ? Array.from(root.querySelectorAll(`.scene:not(#${activeSceneId}), .sub-scene:not(#${activeSubSceneId})`))
-              : [];
-
-            const detachedNodes = inactiveScenes.map(node => {
-              return {
-                node,
-                parent: node.parentNode,
-                nextSibling: node.nextSibling,
-              };
-            });
-
-            for (const item of detachedNodes) {
-              item.node.remove();
+          // Play all videos
+          try {
+            if (iframe.contentDocument) {
+              const videos = Array.from(iframe.contentDocument.querySelectorAll("video"));
+              videos.forEach((video) => {
+                video.currentTime = 0;
+                video.play().catch(() => {});
+              });
             }
+          } catch {}
 
-            // 2. Capture the simplified DOM body using SnapDOM (3-5x faster than html-to-image)
-            const capturedCanvas = await snapdom.toCanvas(iframeDoc.body, {
-              width,
-              height,
-              scale: 1,
-              embedFonts: true,
-              cache: "full",
-              fast: true,
-            });
+          // Watch duration
+          const startPlayTime = performance.now();
+          const durationMs = totalDuration * 1000;
 
-            // 3. Immediately re-attach the elements to their original positions in reverse order (right-to-left) to preserve siblings
-            for (let i = detachedNodes.length - 1; i >= 0; i--) {
-              const item = detachedNodes[i];
-              if (item.parent) {
-                item.parent.insertBefore(item.node, item.nextSibling);
-              }
+          while (performance.now() - startPlayTime < durationMs + 500) {
+            if (cancelRef.current || track.readyState === "ended") {
+              break;
             }
-
-            // Store canvas directly — no intermediate ImageBitmap copy needed
-            capturedFrames.set(frameIdx, capturedCanvas);
-
-            while (frameIdx - nextFrameToEncode > 30 && !cancelRef.current && !workerError) {
-              await sleep(10);
-            }
-          }
-        } catch (err) {
-          console.error(`[ClientRenderer] Worker ${workerId} failed:`, err);
-          workerError = err instanceof Error ? err : new Error(String(err));
-        }
-      });
-
-      while (nextFrameToEncode < totalFrames) {
-        if (cancelRef.current) {
-          cleanup(iframes, videoEncoder, audioEncoder);
-          return;
-        }
-        if (workerError) {
-          throw workerError;
-        }
-
-        if (capturedFrames.has(nextFrameToEncode)) {
-          const canvas = capturedFrames.get(nextFrameToEncode)!;
-          capturedFrames.delete(nextFrameToEncode);
-
-          const t = nextFrameToEncode / fps;
-          // Pass canvas directly to VideoFrame — no intermediate ImageBitmap copy
-          const videoFrame = new VideoFrame(canvas, {
-            timestamp: Math.round(t * 1_000_000),
-            duration: Math.round(1_000_000 / fps),
-          });
-
-          const keyFrame = nextFrameToEncode % (fps * 2) === 0;
-          videoEncoder.encode(videoFrame, { keyFrame });
-          videoFrame.close();
-
-          // Force Chromium to immediately discard the canvas backing store graphics memory
-          canvas.width = 0;
-          canvas.height = 0;
-
-          if (nextFrameToEncode % 30 === 0 || nextFrameToEncode === totalFrames - 1) {
-            const pct = 10 + Math.round((nextFrameToEncode / totalFrames) * 75);
+            const elapsed = performance.now() - startPlayTime;
+            const pct = Math.min(90, 10 + Math.round((elapsed / durationMs) * 80));
             setProgress({
               stage: "capturing",
               percent: pct,
-              message: `Đang capture frame ${nextFrameToEncode + 1}/${totalFrames} (${numWorkers} workers)`,
-              currentFrame: nextFrameToEncode + 1,
-              totalFrames,
+              message: `Đang ghi hình: ${Math.round(elapsed / 1000)}s / ${Math.round(totalDuration)}s`,
             });
+            await sleep(100);
           }
 
-          nextFrameToEncode++;
-        } else {
-          await sleep(5);
-        }
-      }
-
-      await Promise.all(workerPromises);
-      if (workerError) throw workerError;
-
-      // ── 6. Encode audio ──────────────────────────────────────────
-      if (audioEncoder && mergedAudioBuffer) {
-        setProgress({ stage: "encoding", percent: 87, message: "Đang encode audio..." });
-
-        const channelData = mergedAudioBuffer.getChannelData(0);
-        const totalSamples = channelData.length;
-        const chunkSize = 1024;
-        let offset = 0;
-
-        while (offset < totalSamples) {
-          const size = Math.min(chunkSize, totalSamples - offset);
-          const chunkData = channelData.subarray(offset, offset + size);
-
-          const audioData = new AudioData({
-            format: "f32-planar",
-            sampleRate: 44100,
-            numberOfFrames: size,
-            numberOfChannels: 1,
-            timestamp: Math.round((offset / 44100) * 1_000_000),
-            data: chunkData,
-          });
-          audioEncoder.encode(audioData);
-          audioData.close();
-
-          offset += size;
-        }
-
-        await audioEncoder.flush();
-        audioEncoder.close();
-      }
-
-      // ── 7. Flush + finalize ──────────────────────────────────────
-      setProgress({ stage: "muxing", percent: 90, message: "Đang ghép video + audio..." });
-      await videoEncoder.flush();
-      videoEncoder.close();
-      muxer.finalize();
-
-      const mp4Buffer = muxerTarget.buffer;
-      const resultBlob = new Blob([mp4Buffer], { type: "video/mp4" });
-      const resultUrl = URL.createObjectURL(resultBlob);
-
-      setMp4Blob(resultBlob);
-      setMp4Url(resultUrl);
-      setProgress({
-        stage: "done",
-        percent: 100,
-        message: `✓ Hoàn tất — ${(resultBlob.size / (1024 * 1024)).toFixed(1)} MB`,
+          if (mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+          }
+        };
       });
-
-      return resultBlob;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Render thất bại";
-      console.error("[ClientRenderer]", e);
-      setError(msg);
-      setProgress({ stage: "error", percent: 0, message: msg });
-    } finally {
-      setIsRendering(false);
-    }
+    });
   }, []);
 
   const cancelRender = useCallback(() => {
@@ -529,6 +496,12 @@ export async function uploadRenderedVideo(
     duration: number;
     userEmail?: string;
     logs?: string;
+    cropX?: number;
+    cropY?: number;
+    cropW?: number;
+    cropH?: number;
+    width?: number;
+    height?: number;
     onProgress?: (pct: number) => void;
   }
 ): Promise<{ success: boolean; videoUrl: string; videoPath: string; fileSize: number }> {
@@ -536,8 +509,9 @@ export async function uploadRenderedVideo(
   const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
   const endpoint = isLocal ? `${API}/upload-render` : `/api/proxy/upload-render`;
 
+  const ext = mp4Blob.type.includes("webm") ? "webm" : "mp4";
   const formData = new FormData();
-  formData.append("file", mp4Blob, `${opts.title || "video"}.mp4`);
+  formData.append("file", mp4Blob, `${opts.title || "video"}.${ext}`);
   formData.append("title", opts.title);
   formData.append("session_id", opts.sessionId);
   formData.append("composition_html", opts.compositionHtml);
@@ -545,6 +519,12 @@ export async function uploadRenderedVideo(
   if (opts.logs) {
     formData.append("logs", opts.logs);
   }
+  if (opts.cropX !== undefined) formData.append("crop_x", String(opts.cropX));
+  if (opts.cropY !== undefined) formData.append("crop_y", String(opts.cropY));
+  if (opts.cropW !== undefined) formData.append("crop_w", String(opts.cropW));
+  if (opts.cropH !== undefined) formData.append("crop_h", String(opts.cropH));
+  if (opts.width !== undefined) formData.append("width", String(opts.width));
+  if (opts.height !== undefined) formData.append("height", String(opts.height));
 
   const headers: Record<string, string> = {};
   if (opts.userEmail) {
@@ -604,118 +584,6 @@ export async function saveErrorLog(opts: {
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
-async function inlineHtmlAssets(html: string, apiBase: string, sessionId?: string): Promise<string> {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-  
-  // 1. Inline thẻ <img>
-  const imgs = doc.querySelectorAll("img");
-  const imgPromises = Array.from(imgs).map(async (img) => {
-    const src = img.getAttribute("src");
-    if (src && !src.startsWith("data:") && !src.startsWith("http:") && !src.startsWith("https:")) {
-      const fullUrl = sessionId 
-        ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${src}`
-        : `${apiBase.replace(/\/$/, "")}/${src}`;
-      try {
-        const resp = await fetch(fullUrl);
-        const blob = await resp.blob();
-        const dataUrl = await blobToDataURL(blob);
-        img.setAttribute("src", dataUrl);
-      } catch (e) {
-        console.warn(`[ClientRenderer] Failed to inline image: ${src}`, e);
-      }
-    }
-  });
-
-  // 2. Inline background-image trong inline styles
-  const styledEls = doc.querySelectorAll("[style*='url']");
-  const stylePromises = Array.from(styledEls).map(async (el) => {
-    const style = el.getAttribute("style") || "";
-    const urlRegex = /url\(['"]?([^'"]+)['"]?\)/g;
-    let match;
-    let newStyle = style;
-    while ((match = urlRegex.exec(style)) !== null) {
-      const src = match[1];
-      if (src && !src.startsWith("data:") && !src.startsWith("http:") && !src.startsWith("https:")) {
-        const fullUrl = sessionId 
-          ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${src}`
-          : `${apiBase.replace(/\/$/, "")}/${src}`;
-        try {
-          const resp = await fetch(fullUrl);
-          const blob = await resp.blob();
-          const dataUrl = await blobToDataURL(blob);
-          newStyle = newStyle.replace(match[0], `url("${dataUrl}")`);
-        } catch (e) {
-          console.warn(`[ClientRenderer] Failed to inline style image: ${src}`, e);
-        }
-      }
-    }
-    el.setAttribute("style", newStyle);
-  });
-
-  // 3. Inline background-image trong thẻ <style>
-  const styleTags = doc.querySelectorAll("style");
-  const styleTagPromises = Array.from(styleTags).map(async (tag) => {
-    let content = tag.textContent || "";
-    const urlRegex = /url\(['"]?([^'"]+)['"]?\)/g;
-    let match;
-    const matches: { original: string; url: string }[] = [];
-    while ((match = urlRegex.exec(content)) !== null) {
-      matches.push({ original: match[0], url: match[1] });
-    }
-    for (const m of matches) {
-      if (m.url && !m.url.startsWith("data:") && !m.url.startsWith("http:") && !m.url.startsWith("https:")) {
-        const fullUrl = sessionId 
-          ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${m.url}`
-          : `${apiBase.replace(/\/$/, "")}/${m.url}`;
-        try {
-          const resp = await fetch(fullUrl);
-          const blob = await resp.blob();
-          const dataUrl = await blobToDataURL(blob);
-          content = content.replace(m.original, `url("${dataUrl}")`);
-        } catch (e) {
-          console.warn(`[ClientRenderer] Failed to inline stylesheet image: ${m.url}`, e);
-        }
-      }
-    }
-    tag.textContent = content;
-  });
-
-  // 4. Cấu hình đường dẫn tuyệt đối cho thẻ <audio> để không bị resolve nhầm về port 3000 của frontend
-  const audios = doc.querySelectorAll("audio");
-  audios.forEach((audio) => {
-    const src = audio.getAttribute("src");
-    if (src && !src.startsWith("data:") && !src.startsWith("http:") && !src.startsWith("https:")) {
-      const fullUrl = sessionId 
-        ? `${apiBase.replace(/\/$/, "")}/sessions/${sessionId}/${src}`
-        : `${apiBase.replace(/\/$/, "")}/${src}`;
-      audio.setAttribute("src", fullUrl);
-    }
-  });
-
-  await Promise.all([...imgPromises, ...stylePromises, ...styleTagPromises]);
-  return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
-}
-
-function blobToDataURL(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function cleanup(
-  iframes?: HTMLIFrameElement[],
-  videoEncoder?: VideoEncoder | null,
-  audioEncoder?: AudioEncoder | null,
-) {
-  try { iframes?.forEach(iframe => iframe.remove()); } catch {}
-  try { if (videoEncoder?.state !== "closed") videoEncoder?.close(); } catch {}
-  try { if (audioEncoder?.state !== "closed") audioEncoder?.close(); } catch {}
 }
