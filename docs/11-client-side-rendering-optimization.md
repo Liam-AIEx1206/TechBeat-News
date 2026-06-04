@@ -32,19 +32,21 @@ Thay vì dùng regex thay thế cơ bản, trình dựng sử dụng hàm bổ t
 * **Thẻ `<style>`**: Tìm kiếm và thay thế các tài nguyên ảnh được nạp thông qua CSS selector.
 * **Kết quả**: Khi render, `html-to-image` nhận diện toàn bộ ảnh đã nằm sẵn dưới dạng Base64 nên bỏ qua hoàn toàn các bước tải và xử lý hình ảnh phụ.
 
-### 2. Loại bỏ liên kết Stylesheet ngoài (`link[rel="stylesheet"]`)
-* **Vấn đề**: Mặc dù đã chỉ định `fontEmbedCSS`, `html-to-image` vẫn tự động quét và fetch lại tất cả các tệp CSS ngoài (Google Fonts, Tailwind, v.v.) ở mỗi frame.
-* **Giải pháp**: Quét và xoá toàn bộ thẻ `<link rel="stylesheet">` khỏi tất cả các target iframes sau khi tải xong. Sau đó, nạp tệp CSS font chữ đã được trích xuất từ trước vào một thẻ `<style>` nội bộ duy nhất.
-* **Kết quả**: Triệt tiêu hoàn toàn độ trễ giải cú pháp stylesheet và kiểm tra CORS liên tục, mang lại bước nhảy vọt về hiệu năng.
-
-### 3. Tách và cắt tỉa DOM động (DOM Node Pruning)
-* **Vấn đề**: Một composition thường chứa từ 4–8 scenes cùng các cụm phụ đề lớn. Dù ở mỗi frame chỉ có duy nhất 1 scene hiển thị, `html-to-image` vẫn nhân bản và tuần tự hoá (serialize) toàn bộ cây DOM của các scenes ẩn khác.
+### 2. Loại bỏ liên kết Stylesheet ngoài và Bộ Nhớ Đệm Font CSS (Font CSS Caching)
+* **Vấn đề**: Mặc dù đã chỉ định `fontEmbedCSS`, `html-to-image` vẫn tự động quét và fetch lại tất cả các tệp CSS ngoài (Google Fonts, Tailwind, v.v.) ở mỗi frame. Thêm vào đó, việc trích xuất `fontEmbedCSS` ở mỗi lượt render tạo ra độ trễ CPU/mạng khoảng 3-5 giây.
 * **Giải pháp**: 
-  1. Dựa vào mảng `audioDurations` để tính toán khoảng thời gian bắt đầu tích luỹ của từng scene nhằm xác định scene nào đang hoạt động tại thời điểm frame $t$.
-  2. Ngay trước khi gọi `toCanvas`, thực hiện tách tạm thời các scene và sub-scene không hoạt động (`.scene:not(#active)` và `.sub-scene:not(#active)`) ra khỏi DOM.
-  3. Gọi `toCanvas` trên cây DOM đã được rút gọn 80%.
-  4. Ngay khi chụp xong, khôi phục lại các node đã tách về vị trí cũ để GSAP seek timeline ở các frame sau không bị lỗi tham chiếu.
-* **Kết quả**: DOM cây thu gọn tối đa giúp tốc độ chụp frame tăng vọt lên **10–15 FPS** (tức khoảng **600–900 FPM**).
+  * Quét và xoá toàn bộ thẻ `<link rel="stylesheet">` khỏi tất cả các target iframes sau khi tải xong, sau đó nạp CSS font chữ nội bộ vào thẻ `<style>`.
+  * Lưu trữ chuỗi CSS đã giải mã (`fontEmbedCSS`) vào biến đệm toàn cục (`cachedFontEmbedCSS`) để tái sử dụng ngay lập tức cho các lượt render sau mà không cần quét lại DOM hay tải lại font file.
+* **Kết quả**: Triệt tiêu hoàn toàn độ trễ giải cú pháp stylesheet, loại bỏ 3-5s trễ khởi động render, tăng tối đa hiệu năng.
+
+### 3. Tách và cắt tỉa DOM động kèm Khôi phục Thứ tự (DOM Node Pruning & Sibling Restoration)
+* **Vấn đề**: Một composition chứa từ 4–8 scenes cùng phụ đề lớn. Việc render cả cây DOM ẩn làm tốn CPU. Tuy nhiên, nếu tách các nút ẩn rồi khôi phục dựa trên chỉ số index thay đổi động trong khi lặp, thứ tự của các scene/sub-scene sẽ bị xáo trộn ngược xuôi, phá vỡ hiệu ứng chạy chữ karaoke của GSAP.
+* **Giải pháp**: 
+  1. Tính toán scene đang hoạt động dựa trên `audioDurations`.
+  2. Trước khi chụp canvas, trích xuất danh sách các nút ẩn kèm con trỏ tới nút liền kề kế tiếp (`nextSibling`) trước khi thực hiện xóa chúng khỏi DOM.
+  3. Chụp canvas trên DOM rút gọn.
+  4. Khôi phục toàn bộ các nút ẩn theo **thứ tự ngược** (từ phải qua trái): `parent.insertBefore(node, nextSibling)`. Do đi từ dưới lên, nút liền sau luôn được khôi phục trước, đảm bảo thứ tự DOM gốc luôn chính xác 100%.
+* **Kết quả**: DOM cây được thu gọn an toàn giúp tốc độ chụp frame tăng vọt lên **10–15 FPS** và giữ nguyên tính đúng đắn của phụ đề karaoke.
 
 ### 4. Giảm Số Lượng Workers từ 6 xuống 2
 * Do DOM rendering và Canvas Context trong Chrome bắt buộc phải xử lý đồng bộ trên **Main Thread**, việc tạo nhiều workers chạy song song thực chất chỉ gây nghẽn luồng và tranh chấp tài nguyên CPU.

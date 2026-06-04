@@ -39,6 +39,9 @@ interface RenderProgress {
   totalFrames?: number;
 }
 
+// Global cache to prevent redundant font CSS extraction across renders
+let cachedFontEmbedCSS = "";
+
 // ── Hook ─────────────────────────────────────────────────────────────────
 
 export function useClientRender() {
@@ -298,14 +301,17 @@ export function useClientRender() {
       // ── 5. Parallel Frame-by-frame capture using 3 workers ─────────
       const { toCanvas, getFontEmbedCSS } = await import("html-to-image");
 
-      let fontEmbedCSS = "";
-      try {
-        const firstDoc = iframes[0].contentDocument;
-        if (firstDoc && firstDoc.body) {
-          fontEmbedCSS = await getFontEmbedCSS(firstDoc.body);
+      let fontEmbedCSS = cachedFontEmbedCSS;
+      if (!fontEmbedCSS) {
+        try {
+          const firstDoc = iframes[0].contentDocument;
+          if (firstDoc && firstDoc.body) {
+            fontEmbedCSS = await getFontEmbedCSS(firstDoc.body);
+            cachedFontEmbedCSS = fontEmbedCSS;
+          }
+        } catch (err) {
+          console.warn("[ClientRenderer] Error pre-extracting font CSS:", err);
         }
-      } catch (err) {
-        console.warn("[ClientRenderer] Error pre-extracting font CSS:", err);
       }
 
       // Remove external stylesheet link tags from all iframes to prevent html-to-image from fetching them on every frame
@@ -383,14 +389,16 @@ export function useClientRender() {
               : [];
 
             const detachedNodes = inactiveScenes.map(node => {
-              const parent = node.parentNode;
-              let index = 0;
-              for (let sibling = node.previousSibling; sibling; sibling = sibling.previousSibling) {
-                index++;
-              }
-              node.remove();
-              return { node, parent, index };
+              return {
+                node,
+                parent: node.parentNode,
+                nextSibling: node.nextSibling,
+              };
             });
+
+            for (const item of detachedNodes) {
+              item.node.remove();
+            }
 
             // 2. Capture the simplified DOM body
             const capturedCanvas = await toCanvas(iframeDoc.body, {
@@ -404,12 +412,11 @@ export function useClientRender() {
               }
             });
 
-            // 3. Immediately re-attach the elements to their original positions (in forward order using original child indices)
-            for (let i = 0; i < detachedNodes.length; i++) {
+            // 3. Immediately re-attach the elements to their original positions in reverse order (right-to-left) to preserve siblings
+            for (let i = detachedNodes.length - 1; i >= 0; i--) {
               const item = detachedNodes[i];
               if (item.parent) {
-                const targetNode = item.parent.childNodes[item.index] || null;
-                item.parent.insertBefore(item.node, targetNode);
+                item.parent.insertBefore(item.node, item.nextSibling);
               }
             }
 
