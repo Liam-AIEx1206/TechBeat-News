@@ -39,8 +39,7 @@ interface RenderProgress {
   totalFrames?: number;
 }
 
-// Global cache to prevent redundant font CSS extraction across renders
-let cachedFontEmbedCSS = "";
+
 
 // ── Hook ─────────────────────────────────────────────────────────────────
 
@@ -277,7 +276,7 @@ export function useClientRender() {
         height,
         bitrate: 8_000_000,
         framerate: fps,
-        latencyMode: "quality",
+        latencyMode: "realtime",
         avc: { format: "avc" },
       });
 
@@ -298,44 +297,9 @@ export function useClientRender() {
         });
       }
 
-      // ── 5. Parallel Frame-by-frame capture using 3 workers ─────────
-      const { toCanvas, getFontEmbedCSS } = await import("html-to-image");
-
-      let fontEmbedCSS = cachedFontEmbedCSS;
-      if (!fontEmbedCSS) {
-        try {
-          const firstDoc = iframes[0].contentDocument;
-          if (firstDoc && firstDoc.body) {
-            fontEmbedCSS = await getFontEmbedCSS(firstDoc.body);
-            cachedFontEmbedCSS = fontEmbedCSS;
-          }
-        } catch (err) {
-          console.warn("[ClientRenderer] Error pre-extracting font CSS:", err);
-        }
-      }
-
-      // Remove external stylesheet link tags from all iframes to prevent html-to-image from fetching them on every frame
-      try {
-        iframes.forEach((iframe) => {
-          const doc = iframe.contentDocument;
-          if (doc) {
-            const links = doc.querySelectorAll("link[rel='stylesheet']");
-            links.forEach((link) => {
-              link.remove();
-            });
-            
-            // Inject local pre-extracted font CSS so the iframe document still has the font definitions
-            if (fontEmbedCSS) {
-              const style = doc.createElement("style");
-              style.textContent = fontEmbedCSS;
-              doc.head.appendChild(style);
-            }
-          }
-        });
-        onLog?.(`[DEBUG] Removed external link stylesheets and injected pre-extracted font CSS to avoid redundant fetches.`);
-      } catch (err) {
-        console.warn("[ClientRenderer] Error optimizing iframe stylesheets:", err);
-      }
+      // ── 5. Parallel Frame-by-frame capture using SnapDOM (ultra-fast) ─────────
+      const { snapdom } = await import("@zumer/snapdom");
+      onLog?.(`[DEBUG] Loaded @zumer/snapdom for high-performance DOM capture.`);
 
       // Compute cumulative start times of all scenes to determine which scene is active at frame timestamp t
       const sceneDurations = audioDurations.map(d => Math.max(1, Math.ceil(d) + 1));
@@ -360,7 +324,7 @@ export function useClientRender() {
 
       let nextFrameToCapture = 0;
       let nextFrameToEncode = 0;
-      const capturedFrames = new Map<number, ImageBitmap>();
+      const capturedFrames = new Map<number, HTMLCanvasElement>();
       let workerError: Error | null = null;
 
       const workerPromises = iframes.map(async (iframe, workerId) => {
@@ -400,16 +364,14 @@ export function useClientRender() {
               item.node.remove();
             }
 
-            // 2. Capture the simplified DOM body
-            const capturedCanvas = await toCanvas(iframeDoc.body, {
+            // 2. Capture the simplified DOM body using SnapDOM (3-5x faster than html-to-image)
+            const capturedCanvas = await snapdom.toCanvas(iframeDoc.body, {
               width,
               height,
-              pixelRatio: 1,
-              fontEmbedCSS,
-              cacheBust: false,
-              style: {
-                transform: 'none',
-              }
+              scale: 1,
+              embedFonts: true,
+              cache: "full",
+              fast: true,
             });
 
             // 3. Immediately re-attach the elements to their original positions in reverse order (right-to-left) to preserve siblings
@@ -420,12 +382,8 @@ export function useClientRender() {
               }
             }
 
-            const bitmap = await createImageBitmap(capturedCanvas);
-            capturedFrames.set(frameIdx, bitmap);
-
-            // Force Chromium to immediately discard the canvas backing store graphics memory
-            capturedCanvas.width = 0;
-            capturedCanvas.height = 0;
+            // Store canvas directly — no intermediate ImageBitmap copy needed
+            capturedFrames.set(frameIdx, capturedCanvas);
 
             while (frameIdx - nextFrameToEncode > 30 && !cancelRef.current && !workerError) {
               await sleep(10);
@@ -447,11 +405,12 @@ export function useClientRender() {
         }
 
         if (capturedFrames.has(nextFrameToEncode)) {
-          const bitmap = capturedFrames.get(nextFrameToEncode)!;
+          const canvas = capturedFrames.get(nextFrameToEncode)!;
           capturedFrames.delete(nextFrameToEncode);
 
           const t = nextFrameToEncode / fps;
-          const videoFrame = new VideoFrame(bitmap, {
+          // Pass canvas directly to VideoFrame — no intermediate ImageBitmap copy
+          const videoFrame = new VideoFrame(canvas, {
             timestamp: Math.round(t * 1_000_000),
             duration: Math.round(1_000_000 / fps),
           });
@@ -459,7 +418,10 @@ export function useClientRender() {
           const keyFrame = nextFrameToEncode % (fps * 2) === 0;
           videoEncoder.encode(videoFrame, { keyFrame });
           videoFrame.close();
-          bitmap.close();
+
+          // Force Chromium to immediately discard the canvas backing store graphics memory
+          canvas.width = 0;
+          canvas.height = 0;
 
           if (nextFrameToEncode % 30 === 0 || nextFrameToEncode === totalFrames - 1) {
             const pct = 10 + Math.round((nextFrameToEncode / totalFrames) * 75);

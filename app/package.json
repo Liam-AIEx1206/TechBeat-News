@@ -10,6 +10,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
     "@supabase/supabase-js": "^2.106.0",
+    "@zumer/snapdom": "^2.12.8",
     "cheerio": "^1.2.0",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
