@@ -331,6 +331,27 @@ export function useClientRender() {
         console.warn("[ClientRenderer] Error optimizing iframe stylesheets:", err);
       }
 
+      // Compute cumulative start times of all scenes to determine which scene is active at frame timestamp t
+      const sceneDurations = audioDurations.map(d => Math.max(1, Math.ceil(d) + 1));
+      const sceneStarts: number[] = [];
+      let currentStart = 0;
+      for (const d of sceneDurations) {
+        sceneStarts.push(currentStart);
+        currentStart += d;
+      }
+
+      const getActiveSceneId = (time: number): string => {
+        let activeIdx = 0;
+        for (let i = 0; i < sceneStarts.length; i++) {
+          if (time >= sceneStarts[i]) {
+            activeIdx = i;
+          } else {
+            break;
+          }
+        }
+        return `scene${activeIdx + 1}`;
+      };
+
       let nextFrameToCapture = 0;
       let nextFrameToEncode = 0;
       const capturedFrames = new Map<number, ImageBitmap>();
@@ -352,6 +373,23 @@ export function useClientRender() {
             const t = frameIdx / fps;
             timeline.seek(t);
 
+            const activeSceneId = getActiveSceneId(t);
+            const activeSubSceneId = `sub-scene${activeSceneId.slice(5)}`;
+
+            // 1. Temporarily detach all inactive scenes and sub-scenes to keep DOM tree small
+            const root = iframeDoc.getElementById("root");
+            const inactiveScenes = root
+              ? Array.from(root.querySelectorAll(`.scene:not(#${activeSceneId}), .sub-scene:not(#${activeSubSceneId})`))
+              : [];
+
+            const detachedNodes = inactiveScenes.map(node => {
+              const parent = node.parentNode;
+              const nextSibling = node.nextSibling;
+              node.remove();
+              return { node, parent, nextSibling };
+            });
+
+            // 2. Capture the simplified DOM body
             const capturedCanvas = await toCanvas(iframeDoc.body, {
               width,
               height,
@@ -362,6 +400,13 @@ export function useClientRender() {
                 transform: 'none',
               }
             });
+
+            // 3. Immediately re-attach the elements to their original positions
+            for (const item of detachedNodes) {
+              if (item.parent) {
+                item.parent.insertBefore(item.node, item.nextSibling);
+              }
+            }
 
             const bitmap = await createImageBitmap(capturedCanvas);
             capturedFrames.set(frameIdx, bitmap);
