@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["pdf-parse", "officeparser"],
+  experimental: {
+    middlewareClientMaxBodySize: "250mb",
+  },
   async rewrites() {
     return [
       {
@@ -14,3 +17,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
