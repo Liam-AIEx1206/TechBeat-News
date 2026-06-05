@@ -218,7 +218,16 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
         groq_max = int(os.getenv("GROQ_MAX_SCENES", "5"))
 
         try:
-            prompt = f"Tạo kế hoạch scene video.\n\nTiêu đề: {title}\n\nNội dung:\n{content}"
+            import datetime
+            now_dt = datetime.datetime.now()
+            current_date_str = f"Tháng {now_dt.month} {now_dt.year}"
+            
+            prompt = (
+                f"Thời gian hiện tại: {current_date_str}\n"
+                f"Tạo kế hoạch scene video. Đối với các slide chứa thông tin ngày tháng, meta info hoặc mốc thời gian xuất bản video, hãy sử dụng thời gian hiện tại là {current_date_str}.\n\n"
+                f"Tiêu đề: {title}\n\n"
+                f"Nội dung:\n{content}"
+            )
             if video_duration and video_duration > 0:
                 if video_duration <= 60:
                     n_scenes = "exactly 4"
