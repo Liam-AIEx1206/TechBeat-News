@@ -153,6 +153,7 @@ export function useClientRender() {
         justify-content: center;
         font-family: system-ui, -apple-system, sans-serif;
         color: #f4f4f5;
+        overflow: hidden;
       `;
       document.body.appendChild(overlay);
 
@@ -344,12 +345,11 @@ export function useClientRender() {
           const scale = Math.min((currentViewportW - 40) / width, (currentViewportH - 40) / height);
           container.style.transform = `scale(${scale})`;
 
-          const scaledW = width * scale;
-          const scaledH = height * scale;
-          const cropX = Math.round((currentViewportW - scaledW) / 2);
-          const cropY = Math.round((currentViewportH - scaledH) / 2);
-          const cropW = Math.round(scaledW);
-          const cropH = Math.round(scaledH);
+          const rect = container.getBoundingClientRect();
+          const cropX = rect.left;
+          const cropY = rect.top;
+          const cropW = rect.width;
+          const cropH = rect.height;
 
           // Get stabilized track settings
           const activeTrack = stream.getVideoTracks()[0];
