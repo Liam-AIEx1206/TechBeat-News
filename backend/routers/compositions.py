@@ -309,6 +309,18 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
                 ease: "back.out(1.4)"
             }, t);
         }
+        else if (templateId === "T01" || templateId === "T02" || templateId === "T04" || templateId === "T05" || templateId === "T08" || templateId === "T10" || templateId === "T14" || templateId === "T15" || templateId === "T21" || templateId === "T25" || templateId === "T26" || templateId === "T27") {
+            // Standard card/hero layouts: Snappy stagger slide-up
+            hasCustomCardAnim = true;
+            sceneTl.set(cards, { opacity: 0, y: 35, x: 0 }, 0);
+            sceneTl.to(cards, {
+                opacity: 1,
+                y: 0,
+                duration: 0.7,
+                stagger: 0.18,
+                ease: "power2.out"
+            }, t);
+        }
         else if (templateId === "T06" || templateId === "T24") {
             // Terminal & Code Diff: Window fade, then line-by-line reveal
             hasCustomCardAnim = true;
@@ -317,7 +329,7 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
                 sceneTl.set(container, { opacity: 0, y: 30, x: 0 }, 0);
                 sceneTl.to(container, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, t);
                 
-                const codeLines = sceneEl.querySelectorAll("pre, .diff-pane, code, .diff-line");
+                const codeLines = sceneEl.querySelectorAll("pre, .diff-pane, code, .diff-line, .terminal > div:not(.dots)");
                 if (codeLines.length > 0) {
                     sceneTl.set(codeLines, { opacity: 0, x: -10, y: 0 }, 0);
                     sceneTl.to(codeLines, {
