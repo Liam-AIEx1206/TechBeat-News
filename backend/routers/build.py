@@ -2901,8 +2901,9 @@ async def upload_render(
             
         cmd.extend([
             "-c:v", "libx264",
-            "-preset", "veryfast",
+            "-preset", "ultrafast",
             "-crf", "18",
+            "-threads", "0",
             "-c:a", "aac",
             str(temp_out_path.absolute())
         ])
