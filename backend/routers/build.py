@@ -2870,10 +2870,25 @@ async def upload_render(
         narrations_file = assets_dir / "narrations.json"
         
         vf_filters = []
+
         if crop_w and crop_h and crop_x is not None and crop_y is not None:
-            print(f"[upload-render] Adding crop filter: {crop_w}x{crop_h} at {crop_x},{crop_y}")
-            vf_filters.append(f"crop={crop_w}:{crop_h}:{crop_x}:{crop_y}")
-            vf_filters.append(f"scale={width}:{height}")
+            # Client sends the exact content region (16:9 by construction from min-scale).
+            # Crop to content region, then scale to target — no padding needed.
+            safe_crop_w = crop_w - (crop_w % 2)
+            safe_crop_h = crop_h - (crop_h % 2)
+            print(f"[upload-render] Crop to content region: {safe_crop_w}x{safe_crop_h} at ({crop_x},{crop_y})")
+            vf_filters.append(f"crop={safe_crop_w}:{safe_crop_h}:{crop_x}:{crop_y}")
+            # Direct scale — input is guaranteed 16:9 so no black bars
+            vf_filters.append(f"scale={width}:{height}:flags=lanczos")
+        else:
+            # Fallback: no crop provided, scale with aspect-ratio preservation + pad
+            print(f"[upload-render] No crop params — scaling with padding fallback")
+            vf_filters.append(
+                f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
+                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black,"
+                f"setsar=1"
+            )
+        print(f"[upload-render] Scale target: {width}x{height}")
 
         if subtitles_enabled and word_data_file.exists() and durations_file.exists():
             print(f"[upload-render] Generating ASS and burning subtitles for session: {session_id}")
@@ -2889,7 +2904,7 @@ async def upload_render(
             vf_filters.append("ass=subtitles.ass")
 
         # We always run FFmpeg for transcoding to MP4 since browser records as WebM, 
-        # and to apply any video filters (cropping/subtitles).
+        # and to apply any video filters (scaling/subtitles).
         import subprocess
         temp_out_path = mp4_path.parent / f"temp_{mp4_path.name}"
         cmd = [
@@ -2901,10 +2916,13 @@ async def upload_render(
             
         cmd.extend([
             "-c:v", "libx264",
-            "-preset", "ultrafast",
-            "-crf", "18",
+            "-preset", "fast",       # better quality than ultrafast, still reasonably quick
+            "-crf", "18",            # high quality
+            "-pix_fmt", "yuv420p",   # required for broad compatibility
             "-threads", "0",
             "-c:a", "aac",
+            "-b:a", "192k",
+            "-movflags", "+faststart",  # web-optimized: allow play while downloading
             str(temp_out_path.absolute())
         ])
         

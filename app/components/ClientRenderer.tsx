@@ -252,21 +252,21 @@ export function useClientRender() {
         const container = document.createElement("div");
         container.id = "hf-video-container";
         container.style.cssText = `
-          position: relative;
-          width: ${width}px;
-          height: ${height}px;
-          background: black;
+          position: fixed;
+          top: 0; left: 0;
+          width: 100vw;
+          height: 100vh;
           overflow: hidden;
-          box-shadow: 0 0 50px rgba(0,0,0,0.8);
-          transform-origin: center center;
+          background: #000;
         `;
         overlay.appendChild(container);
 
-        // Setup initial scale
-        const initialScale = Math.min((window.innerWidth - 40) / width, (window.innerHeight - 40) / height);
-        container.style.transform = `scale(${initialScale})`;
-
         // Setup base tag & finalHtml for iframe
+        // Also inject a scale rule so #root fills the full viewport height (no black bars)
+        const vpW = window.innerWidth;
+        const vpH = window.innerHeight;
+        // Use height-constrained contain scale so all content is visible and fills height
+        const contentScale = Math.min(vpW / width, vpH / height);
         const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
         let finalHtml = compositionHtml;
         finalHtml = finalHtml.replace(/<base\b[^>]*>/gi, "");
@@ -276,9 +276,45 @@ export function useClientRender() {
         const baseTag = `<base href="${baseHref}">`;
         finalHtml = finalHtml.replace(/<head\b([^>]*)>/i, `<head$1>${baseTag}`);
 
-        // Load iframe in container
+        // Inject CSS so #root fills the capture frame — eliminates black borders without FFmpeg crop:
+        // #root is positioned absolutely at the centered offset, then scaled from top-left.
+        // This avoids the original body flex-center interfering with our transform calculations.
+        const rootOffX = ((vpW - width * contentScale) / 2).toFixed(2);
+        const rootOffY = ((vpH - height * contentScale) / 2).toFixed(2);
+        const fillCss = `
+          <style id="cr-fill">
+            html {
+              width: ${vpW}px !important;
+              height: ${vpH}px !important;
+              overflow: hidden !important;
+              background: #0a0518 !important;
+            }
+            body {
+              width: ${vpW}px !important;
+              height: ${vpH}px !important;
+              min-height: ${vpH}px !important;
+              overflow: hidden !important;
+              display: block !important;
+              position: relative !important;
+              background: #0a0518 !important;
+              margin: 0 !important; padding: 0 !important;
+            }
+            #root {
+              position: absolute !important;
+              top: ${rootOffY}px !important;
+              left: ${rootOffX}px !important;
+              transform-origin: top left !important;
+              transform: scale(${contentScale.toFixed(6)}) !important;
+              width: ${width}px !important;
+              height: ${height}px !important;
+            }
+          </style>
+        `;
+        finalHtml = finalHtml.replace(/<\/head>/i, `${fillCss}</head>`);
+
+        // Load iframe in container — sized to match viewport exactly
         const iframe = document.createElement("iframe");
-        iframe.style.cssText = "width: 100%; height: 100%; border: none; overflow: hidden;";
+        iframe.style.cssText = `width: ${vpW}px; height: ${vpH}px; border: none; overflow: hidden; display: block;`;;
         
         const blobUrl = URL.createObjectURL(new Blob([finalHtml], { type: "text/html" }));
         iframe.src = blobUrl;
@@ -338,44 +374,98 @@ export function useClientRender() {
             }
           } catch {}
 
-          // Stabilized calculations after the blue banner appears and browser finishes resizing
+          // After stream starts, Chrome shows a share banner that shrinks the viewport.
+          // Wait a moment for layout to stabilize before computing crop.
+          await sleep(300);
+
           const currentViewportW = window.innerWidth;
           const currentViewportH = window.innerHeight;
 
-          const scale = Math.min((currentViewportW - 40) / width, (currentViewportH - 40) / height);
-          container.style.transform = `scale(${scale})`;
+          // Re-apply fill CSS with updated viewport dims if they changed (banner appeared)
+          if (currentViewportW !== vpW || currentViewportH !== vpH) {
+            const newScale = Math.min(currentViewportW / width, currentViewportH / height);
+            const newOffX  = ((currentViewportW - width * newScale) / 2).toFixed(2);
+            const newOffY  = ((currentViewportH - height * newScale) / 2).toFixed(2);
+            const newScaleStr = newScale.toFixed(6);
+            try {
+              const doc = iframe.contentDocument;
+              const styleEl = doc?.getElementById("cr-fill");
+              if (styleEl && doc) {
+                styleEl.textContent = `
+                  html {
+                    width: ${currentViewportW}px !important;
+                    height: ${currentViewportH}px !important;
+                    overflow: hidden !important;
+                    background: #0a0518 !important;
+                  }
+                  body {
+                    width: ${currentViewportW}px !important;
+                    height: ${currentViewportH}px !important;
+                    min-height: ${currentViewportH}px !important;
+                    overflow: hidden !important;
+                    display: block !important;
+                    position: relative !important;
+                    background: #0a0518 !important;
+                    margin: 0 !important; padding: 0 !important;
+                  }
+                  #root {
+                    position: absolute !important;
+                    top: ${newOffY}px !important;
+                    left: ${newOffX}px !important;
+                    transform-origin: top left !important;
+                    transform: scale(${newScaleStr}) !important;
+                    width: ${width}px !important;
+                    height: ${height}px !important;
+                  }
+                `;
+              }
+              // Also resize container and iframe
+              container.style.width = currentViewportW + "px";
+              container.style.height = currentViewportH + "px";
+              iframe.style.width = currentViewportW + "px";
+              iframe.style.height = currentViewportH + "px";
+            } catch { /* cross-origin guard */ }
+          }
 
-          const rect = container.getBoundingClientRect();
-
-          // Get stabilized track settings
+          // Get track settings
           const activeTrack = stream.getVideoTracks()[0];
           const activeSettings = activeTrack.getSettings();
           const activeTrackW = activeSettings.width || currentViewportW;
           const activeTrackH = activeSettings.height || currentViewportH;
 
-          // Chrome containment algorithm: tab viewport is scaled to fit (contain) inside the active track stream, then centered.
+          // Compute content crop geometry — this is the key to eliminating black borders.
+          //
+          // After CSS injection, #root sits at (cssX, cssY) within the iframe/viewport,
+          // scaled to (contentW × contentH). contentW/contentH is ALWAYS 16:9 by
+          // construction (min-scale preserves the 1920:1080 ratio), so cropping to this
+          // region and scaling to 1920×1080 is a perfect uniform scale with no padding.
+          //
+          // We convert CSS pixels → physical track pixels using Chrome's containment
+          // factor `s`, which accounts for DPR and Chrome's resolution limits.
+          const curContentScale = Math.min(currentViewportW / width, currentViewportH / height);
+          const contentW = width  * curContentScale;   // CSS pixels
+          const contentH = height * curContentScale;   // CSS pixels
+          const cssX = (currentViewportW - contentW) / 2;
+          const cssY = (currentViewportH - contentH) / 2;
+
+          // Chrome containment: tab viewport → track, possibly upscaled/letterboxed
           const s = Math.min(activeTrackW / currentViewportW, activeTrackH / currentViewportH);
-          const fitW = currentViewportW * s;
-          const fitH = currentViewportH * s;
-          const fitX = (activeTrackW - fitW) / 2;
-          const fitY = (activeTrackH - fitH) / 2;
+          const fitX = (activeTrackW - currentViewportW * s) / 2;
+          const fitY = (activeTrackH - currentViewportH * s) / 2;
 
-          const finalCropX = Math.round(fitX + rect.left * s);
-          const finalCropY = Math.round(fitY + rect.top * s);
-          const finalCropW = Math.round(rect.width * s);
-          const finalCropH = Math.round(rect.height * s);
+          // Crop in physical track pixels — round to even for libx264
+          const cropX = Math.round(fitX + cssX * s);
+          const cropY = Math.round(fitY + cssY * s);
+          const rawCropW = Math.round(contentW * s);
+          const rawCropH = Math.round(contentH * s);
+          const cropW = rawCropW - (rawCropW % 2);
+          const cropH = rawCropH - (rawCropH % 2);
 
-          // Defensive Clamping
-          const safeCropW = Math.min(finalCropW, activeTrackW);
-          const safeCropH = Math.min(finalCropH, activeTrackH);
-          const safeCropX = Math.max(0, Math.min(finalCropX, activeTrackW - safeCropW));
-          const safeCropY = Math.max(0, Math.min(finalCropY, activeTrackH - safeCropH));
+          onLog?.(`[DEBUG] Viewport: ${currentViewportW}x${currentViewportH}. Track: ${activeTrackW}x${activeTrackH}. s=${s.toFixed(4)}.`);
+          onLog?.(`[DEBUG] Content CSS: ${Math.round(contentW)}x${Math.round(contentH)} at (${Math.round(cssX)}, ${Math.round(cssY)}). Scale: ${curContentScale.toFixed(4)}.`);
+          onLog?.(`[DEBUG] Physical crop: ${cropW}x${cropH} at (${cropX}, ${cropY}).`);
 
-          onLog?.(`[DEBUG] Stabilized Viewport: ${currentViewportW}x${currentViewportH}. Track resolution: ${activeTrackW}x${activeTrackH}.`);
-          onLog?.(`[DEBUG] Crop region (logical): ${rect.width}x${rect.height} at ${rect.left},${rect.top}`);
-          onLog?.(`[DEBUG] Crop region (physical/FFmpeg): ${safeCropW}x${safeCropH} at ${safeCropX},${safeCropY}`);
-
-          // Configure MediaRecorder
+          // Configure MediaRecorder with high bitrate for 1080p quality
           let mimeType = 'video/webm;codecs=vp9,opus';
           if (!MediaRecorder.isTypeSupported(mimeType)) {
             mimeType = 'video/webm;codecs=vp8,opus';
@@ -385,7 +475,10 @@ export function useClientRender() {
           }
 
           const chunks: Blob[] = [];
-          mediaRecorder = new MediaRecorder(stream, { mimeType });
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType,
+            videoBitsPerSecond: 8_000_000,  // 8 Mbps for high-quality 1080p
+          });
           mediaRecorder.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) chunks.push(e.data);
           };
@@ -395,11 +488,12 @@ export function useClientRender() {
             cleanupAll();
             
             const resultBlob = new Blob(chunks, { type: mimeType });
-            // Attach crop metadata
-            (resultBlob as any).cropX = safeCropX;
-            (resultBlob as any).cropY = safeCropY;
-            (resultBlob as any).cropW = safeCropW;
-            (resultBlob as any).cropH = safeCropH;
+            // Attach content crop region — backend uses this to crop the side bars
+            // and scale to exactly 1920×1080 with no black borders
+            (resultBlob as any).cropX = cropX;
+            (resultBlob as any).cropY = cropY;
+            (resultBlob as any).cropW = cropW;
+            (resultBlob as any).cropH = cropH;
             
             const resultUrl = URL.createObjectURL(resultBlob);
             setMp4Blob(resultBlob);
