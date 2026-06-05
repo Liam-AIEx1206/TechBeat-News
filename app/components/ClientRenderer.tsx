@@ -372,7 +372,7 @@ export function useClientRender() {
           const safeCropY = Math.max(0, Math.min(finalCropY, activeTrackH - safeCropH));
 
           onLog?.(`[DEBUG] Stabilized Viewport: ${currentViewportW}x${currentViewportH}. Track resolution: ${activeTrackW}x${activeTrackH}.`);
-          onLog?.(`[DEBUG] Crop region (logical): ${cropW}x${cropH} at ${cropX},${cropY}`);
+          onLog?.(`[DEBUG] Crop region (logical): ${rect.width}x${rect.height} at ${rect.left},${rect.top}`);
           onLog?.(`[DEBUG] Crop region (physical/FFmpeg): ${safeCropW}x${safeCropH} at ${safeCropX},${safeCropY}`);
 
           // Configure MediaRecorder
