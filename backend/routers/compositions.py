@@ -227,7 +227,7 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
         
         // Combined query selector covering cards/elements across all 30 templates
         const cards = sceneEl.querySelectorAll(
-            ".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare .col, .step-item, .agent-card, .formula-pill, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper"
+            ".tech-card, .stat-list-card, .glass-card, .feat-card, .terminal, .chat-bubble, .tl-item, .quote-block, .img-frame, .bento-cell, .compare .col, .step-item, .agent-card, .formula-pill, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .flow-arrow, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper"
         );
         
         // Filter out text elements inside visual card blocks to animate them in the second phase
@@ -455,7 +455,7 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
         else if (templateId === "T13" || templateId === "T22" || templateId === "T28") {
             // Step flow: sequential slide-in from left to right or top to bottom
             hasCustomCardAnim = true;
-            const steps = sceneEl.querySelectorAll(".step-item, .flow-step, .status-card");
+            const steps = sceneEl.querySelectorAll(".step-item, .flow-step, .status-card, .flow-arrow");
             if (steps.length > 0) {
                 sceneTl.set(steps, { opacity: 0, x: -40, y: 0 }, 0);
                 steps.forEach((step, idx) => {

@@ -4,7 +4,26 @@ import json
 import os
 import re
 import shutil
+import sys
+import threading
 from pathlib import Path
+
+if sys.platform == "win32":
+    try:
+        class ThreadAwareEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+            def new_event_loop(self):
+                current_thread = threading.current_thread()
+                is_main = current_thread is threading.main_thread()
+                if is_main:
+                    return asyncio.SelectorEventLoop()
+                else:
+                    return asyncio.ProactorEventLoop()
+                    
+        asyncio.set_event_loop_policy(ThreadAwareEventLoopPolicy())
+        print("[system] Activated Windows ThreadAwareEventLoopPolicy (Selector on main thread, Proactor on workers)")
+    except Exception as e:
+        print(f"[system] Failed to set ThreadAwareEventLoopPolicy: {e}")
+
 
 # Tự động dọn dẹp các biến môi trường proxy lỗi/placeholder để tránh làm hỏng kết nối của các thư viện (httpx, aiohttp, requests)
 for var in ["HTTP_PROXY", "HTTPS_PROXY", "EDGE_TTS_PROXY", "http_proxy", "https_proxy"]:
@@ -1400,9 +1419,9 @@ def patch_html_timing(
         gsap.set(titleEl.querySelectorAll(".title-word"), {{ opacity: 0 }});
       }}
       var presetEls = [];
-      el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)").forEach(function(item) {{
+      el.querySelectorAll(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .visual-block, .step-item, .formula-pill, .command-pill, .glass-card, .terminal, .quote-block, .img-frame, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .flow-arrow, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper, .visual-col > *:not(.bento-grid):not(.bento-3x2):not(.feat-row):not(.stat-list):not(.agent-grid):not(.compare):not(.chat-box):not(.tl-list):not(.tech-card):not(.feat-card):not(.stat-list-card):not(.chat-bubble):not(.tl-item):not(.agent-card):not(.step-list):not(.formula-stack)").forEach(function(item) {{
         if (item.classList.contains("visual-block")) {{
-          var hasSubBlocks = item.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card");
+          var hasSubBlocks = item.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card, .terminal, .quote-block, .img-frame, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .flow-arrow, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper");
           if (hasSubBlocks) return;
         }}
         presetEls.push(item);
@@ -1634,6 +1653,10 @@ def patch_html_timing(
         ".bento-cell", ".feat-card", ".stat-list-card", ".chat-bubble",
         ".tl-item", ".agent-card", ".tech-card", ".compare .col", ".visual-block",
         ".step-item", ".formula-pill", ".command-pill", ".glass-card",
+        ".terminal", ".quote-block", ".img-frame", ".gantt-row", ".pc-card",
+        ".bento-box", ".node", ".arch-node", ".featured-box", ".flow-step",
+        ".flow-arrow", ".bento-card", ".diff-pane", ".checklist-item",
+        ".service-card", ".status-card", ".cta-box", ".thanks-box", ".stat-wrapper",
         ".visual-col > *:not(.stat-list):not(.feat-row):not(.bento-grid):not(.bento-3x2):not(.agent-grid):not(.compare):not(.step-list):not(.formula-stack)"
       ];
       var blocks = [];
@@ -1642,7 +1665,7 @@ def patch_html_timing(
         els.forEach(function(el) {{
           if (blocks.indexOf(el) === -1) {{
             if (el.classList.contains("visual-block")) {{
-              var hasSubBlocks = el.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card");
+              var hasSubBlocks = el.querySelector(".bento-cell, .feat-card, .stat-list-card, .chat-bubble, .tl-item, .agent-card, .tech-card, .compare .col, .step-item, .formula-pill, .command-pill, .glass-card, .terminal, .quote-block, .img-frame, .gantt-row, .pc-card, .bento-box, .node, .arch-node, .featured-box, .flow-step, .flow-arrow, .bento-card, .diff-pane, .checklist-item, .service-card, .status-card, .cta-box, .thanks-box, .stat-wrapper");
               if (hasSubBlocks) return;
             }}
             blocks.push(el);
@@ -1680,10 +1703,15 @@ def patch_html_timing(
               return w.length > 2;
             }});
 
+            var stopWords = ["liệu", "hình", "thống", "nhân", "được", "này", "cho", "với", "trong", "trên", "dưới", "của", "các", "một", "nào", "qua", "lại", "học", "máy", "hoạt", "động", "phát", "triển", "cung", "cấp"];
+
             if (blockWords.length > 0) {{
+              var totalAudioDur = actualDurs[i] || d;
               for (var k = 0; k < scWd.length; k++) {{
                 var voiceWord = normalizeStr(scWd[k].word);
-                if (voiceWord.length > 2 && blockWords.indexOf(voiceWord) !== -1) {{
+                var relPos = scWd[k].start / totalAudioDur;
+                var minRelPos = (bi / blocks.length) * 0.55;
+                if (relPos >= minRelPos && voiceWord.length > 2 && stopWords.indexOf(voiceWord) === -1 && blockWords.indexOf(voiceWord) !== -1) {{
                   matchedStart = s + scWd[k].start;
                   break;
                 }}
