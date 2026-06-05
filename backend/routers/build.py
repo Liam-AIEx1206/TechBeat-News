@@ -1763,63 +1763,210 @@ def patch_html_timing(
 
 # -------- Render via npx hyperframes render --------
 
-async def run_render(project_root: Path, on_log) -> Path:
-    """Spawn `npx hyperframes render` in a thread (avoids asyncio subprocess
-    on Windows, which fails on uvicorn's selector loop)."""
+async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True) -> Path:
+    """Spawn a headless Chromium browser using Playwright to record the composition
+    in real-time, then use FFmpeg to mix audio tracks and burn subtitles if enabled."""
+    import asyncio
+    import os
+    import re
+    import json
+    import datetime
     import subprocess
-    import threading
+    from playwright.async_api import async_playwright
 
-    log_queue: asyncio.Queue[str | None] = asyncio.Queue()
-    loop = asyncio.get_running_loop()
+    html_file = project_root / "index.html"
+    if not html_file.exists():
+        raise FileNotFoundError(f"index.html not found in {project_root}")
 
-    def _runner() -> int:
-        if os.name == "nt":
-            cmd = ["npx.cmd", "--yes", "hyperframes@0.6.20", "render"]
-            kwargs = {"shell": False}
-        else:
-            cmd = ["/app/node_modules/.bin/hyperframes", "render"]
-            kwargs = {}
-
-        proc = subprocess.Popen(
-            cmd,
-            cwd=str(project_root),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            **kwargs,
-        )
-        assert proc.stdout is not None
-        for line in proc.stdout:
-            line = line.rstrip()
-            if line:
-                asyncio.run_coroutine_threadsafe(log_queue.put(line), loop)
-        rc = proc.wait()
-        asyncio.run_coroutine_threadsafe(log_queue.put(None), loop)
-        return rc
-
-    runner_future = loop.run_in_executor(None, _runner)
-
-    while True:
-        item = await log_queue.get()
-        if item is None:
-            break
-        await on_log(item)
-
-    rc = await runner_future
-    if rc != 0:
-        raise RuntimeError(f"Render failed with exit code {rc}")
-
+    html_content = html_file.read_text(encoding="utf-8")
+    
+    # 1. Parse total duration
+    m_dur = re.search(r'data-duration=["\'](\d+)["\']', html_content)
+    total_duration = int(m_dur.group(1)) if m_dur else 60
+    await on_log(f"[playwright-render] Total duration detected from HTML: {total_duration}s")
+    
+    # 2. Parse audio elements and start times
+    audio_matches = re.findall(
+        r'<audio\s+[^>]*src=["\']([^"\']+)["\'][^>]*data-start=["\']([^"\']+)["\']',
+        html_content,
+        re.IGNORECASE
+    )
+    audios = []
+    for src, start in audio_matches:
+        audios.append({
+            "path": project_root / src,
+            "start": float(start)
+        })
+    await on_log(f"[playwright-render] Found {len(audios)} audio track(s) for mixing.")
+    
+    # 3. Setup folders
     renders_dir = project_root / "renders"
-    if not renders_dir.exists():
-        raise RuntimeError("Thư mục renders không tồn tại sau khi render")
-
-    mp4s = sorted(renders_dir.glob("*.mp4"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not mp4s:
-        raise RuntimeError("Không tìm thấy file mp4 sau khi render")
-    return mp4s[0]
+    renders_dir.mkdir(exist_ok=True)
+    assets_dir = project_root / "assets"
+    
+    # 4. Playwright Headless recording
+    await on_log("[playwright-render] Launching headless browser...")
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--autoplay-policy=no-user-gesture-required",
+                "--use-fake-ui-for-media-stream",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+            ]
+        )
+        
+        # Configure video recording
+        context = await browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            record_video_dir=str(renders_dir),
+            record_video_size={"width": 1920, "height": 1080}
+        )
+        
+        page = await context.new_page()
+        
+        # Load local index.html using file:// protocol
+        file_url = f"file:///{html_file.absolute().as_posix()}"
+        await on_log(f"[playwright-render] Opening page: {file_url}")
+        await page.goto(file_url)
+        
+        # Wait for timeline to register
+        await on_log("[playwright-render] Waiting for GSAP timeline to load...")
+        try:
+            await page.wait_for_function("window.__timelines && Object.keys(window.__timelines).length > 0", timeout=15000)
+        except Exception as e:
+            await on_log(f"[playwright-render] Timeline registration timeout: {e}")
+            await context.close()
+            await browser.close()
+            raise RuntimeError("GSAP timeline registration failed or timed out.")
+            
+        # Trigger play
+        await on_log("[playwright-render] Starting GSAP master timeline...")
+        await page.evaluate("""() => {
+            const key = window.__timelines["main"] ? "main" : Object.keys(window.__timelines)[0];
+            const timeline = window.__timelines[key];
+            
+            // Mark rendering body
+            document.body.classList.add("rendering");
+            
+            // Play timeline from beginning
+            timeline.play(0);
+            
+            // Play all videos
+            const videos = Array.from(document.querySelectorAll("video"));
+            videos.forEach((video) => {
+                video.currentTime = 0;
+                video.play().catch(() => {});
+            });
+        }""")
+        
+        # Wait for timeline to complete in real-time
+        wait_time = total_duration + 1.0
+        steps = int(wait_time * 2)
+        for step in range(steps):
+            await asyncio.sleep(0.5)
+            elapsed = (step + 1) * 0.5
+            if step % 10 == 0:
+                await on_log(f"[playwright-render] Progress: {elapsed:.1f}s / {total_duration}s")
+                
+        await on_log("[playwright-render] Playback completed. Closing browser...")
+        recorded_video_path = await page.video.path()
+        await context.close()
+        await browser.close()
+        
+    await on_log(f"[playwright-render] WebM captured at: {recorded_video_path}")
+    
+    # 5. Build FFmpeg processing command
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_mp4_name = f"video_{timestamp}.mp4"
+    output_mp4_path = renders_dir / output_mp4_name
+    
+    cmd = ["ffmpeg", "-y", "-i", str(recorded_video_path)]
+    
+    for a in audios:
+        cmd.extend(["-i", str(a["path"].absolute())])
+        
+    vf_filters = []
+    
+    # Subtitles burn-in
+    if subtitles_enabled:
+        word_data_file = assets_dir / "word_data.json"
+        durations_file = assets_dir / "durations.json"
+        narrations_file = assets_dir / "narrations.json"
+        
+        if word_data_file.exists() and durations_file.exists():
+            await on_log("[playwright-render] Generating ASS file and preparing subtitle burn-in...")
+            try:
+                word_data = json.loads(word_data_file.read_text(encoding="utf-8"))
+                durations = json.loads(durations_file.read_text(encoding="utf-8"))
+                narrations = []
+                if narrations_file.exists():
+                    narrations = json.loads(narrations_file.read_text(encoding="utf-8"))
+                    
+                ass_path = assets_dir / "subtitles.ass"
+                generate_ass_file(word_data, durations, narrations, ass_path)
+                vf_filters.append("ass=subtitles.ass")
+            except Exception as e:
+                await on_log(f"[playwright-render] Failed to generate ASS subtitles: {e}")
+        else:
+            await on_log("[playwright-render] Missing subtitle metadata files in assets/, skipping subtitles.")
+            
+    if vf_filters:
+        cmd.extend(["-vf", ",".join(vf_filters)])
+        
+    if audios:
+        filter_parts = []
+        mix_inputs = []
+        for idx, a in enumerate(audios):
+            input_idx = idx + 1
+            delay_ms = int(a["start"] * 1000)
+            delay_ms = max(0, delay_ms)
+            filter_parts.append(f"[{input_idx}:a]adelay={delay_ms}|{delay_ms}[a{input_idx}]")
+            mix_inputs.append(f"[a{input_idx}]")
+            
+        mix_inputs_str = "".join(mix_inputs)
+        filter_parts.append(f"{mix_inputs_str}amix=inputs={len(audios)}[a]")
+        filter_complex_str = "; ".join(filter_parts)
+        
+        cmd.extend(["-filter_complex", filter_complex_str])
+        cmd.extend(["-map", "0:v", "-map", "[a]"])
+    else:
+        cmd.extend(["-map", "0:v"])
+        
+    cmd.extend([
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-crf", "18",
+        "-c:a", "aac",
+        "-t", str(total_duration),
+        str(output_mp4_path.absolute())
+    ])
+    
+    await on_log(f"[playwright-render] Running FFmpeg: {' '.join(cmd)}")
+    
+    res = await asyncio.to_thread(
+        subprocess.run,
+        cmd,
+        cwd=str(assets_dir.absolute()),
+        capture_output=True,
+        text=True
+    )
+    
+    try:
+        if os.path.exists(recorded_video_path):
+            os.unlink(recorded_video_path)
+            await on_log("[playwright-render] Cleaned up temporary Playwright WebM recording.")
+    except Exception as e:
+        print(f"Failed to delete temp video: {e}")
+        
+    if res.returncode == 0 and output_mp4_path.exists():
+        await on_log(f"[playwright-render] Video rendering succeeded! Output: {output_mp4_path}")
+        return output_mp4_path
+    else:
+        await on_log(f"[playwright-render] FFmpeg processing failed with code {res.returncode}")
+        await on_log(f"[playwright-render] FFmpeg stderr:\n{res.stderr}")
+        raise RuntimeError("FFmpeg processing failed.")
 
 
 # -------- Orchestrator --------
@@ -2045,6 +2192,16 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
                        "message": f"Hoàn tất: {whisper_engine_summary}"
                                    + (" — chunk fallback cho scene còn lại" if whisper_ok < len(wav_paths) else "")})
 
+            # Save word_data, durations, and narrations for later use in run_render
+            try:
+                (assets_dir / "word_data.json").write_text(json.dumps(word_data, ensure_ascii=False), encoding="utf-8")
+                (assets_dir / "durations.json").write_text(json.dumps(durations, ensure_ascii=False), encoding="utf-8")
+                narrations = [s.narration for s in req.scenes]
+                (assets_dir / "narrations.json").write_text(json.dumps(narrations, ensure_ascii=False), encoding="utf-8")
+                print(f"[build-pipeline] Saved word_data.json, durations.json, and narrations.json to {assets_dir}")
+            except Exception as e:
+                print(f"[build-pipeline] Error saving assets metadata: {e}")
+
             scene_titles = [s.title for s in req.scenes]
             scene_narrations = [s.narration for s in req.scenes]
             html = patch_html_timing(html, durations, scene_titles, scene_narrations, word_data)
@@ -2095,7 +2252,7 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
                 print(f"[render] {line}")
                 await log_queue.put(line)
 
-            render_task = asyncio.create_task(run_render(project_root, on_log))
+            render_task = asyncio.create_task(run_render(project_root, on_log, subtitles_enabled=req.subtitlesEnabled))
 
             while not render_task.done() or not log_queue.empty():
                 try:
