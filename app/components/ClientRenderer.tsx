@@ -346,10 +346,6 @@ export function useClientRender() {
           container.style.transform = `scale(${scale})`;
 
           const rect = container.getBoundingClientRect();
-          const cropX = rect.left;
-          const cropY = rect.top;
-          const cropW = rect.width;
-          const cropH = rect.height;
 
           // Get stabilized track settings
           const activeTrack = stream.getVideoTracks()[0];
@@ -357,13 +353,17 @@ export function useClientRender() {
           const activeTrackW = activeSettings.width || currentViewportW;
           const activeTrackH = activeSettings.height || currentViewportH;
 
-          const scaleX = activeTrackW / currentViewportW;
-          const scaleY = activeTrackH / currentViewportH;
+          // Chrome containment algorithm: tab viewport is scaled to fit (contain) inside the active track stream, then centered.
+          const s = Math.min(activeTrackW / currentViewportW, activeTrackH / currentViewportH);
+          const fitW = currentViewportW * s;
+          const fitH = currentViewportH * s;
+          const fitX = (activeTrackW - fitW) / 2;
+          const fitY = (activeTrackH - fitH) / 2;
 
-          const finalCropX = Math.round(cropX * scaleX);
-          const finalCropY = Math.round(cropY * scaleY);
-          const finalCropW = Math.round(cropW * scaleX);
-          const finalCropH = Math.round(cropH * scaleY);
+          const finalCropX = Math.round(fitX + rect.left * s);
+          const finalCropY = Math.round(fitY + rect.top * s);
+          const finalCropW = Math.round(rect.width * s);
+          const finalCropH = Math.round(rect.height * s);
 
           // Defensive Clamping
           const safeCropW = Math.min(finalCropW, activeTrackW);
