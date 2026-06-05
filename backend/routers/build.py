@@ -1763,16 +1763,15 @@ def patch_html_timing(
 
 # -------- Render via npx hyperframes render --------
 
-async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True) -> Path:
+def _sync_render(project_root: Path, on_log_sync, subtitles_enabled: bool) -> Path:
     """Spawn a headless Chromium browser using Playwright to record the composition
     in real-time, then use FFmpeg to mix audio tracks and burn subtitles if enabled."""
-    import asyncio
     import os
     import re
     import json
     import datetime
     import subprocess
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
 
     html_file = project_root / "index.html"
     if not html_file.exists():
@@ -1783,7 +1782,7 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
     # 1. Parse total duration
     m_dur = re.search(r'data-duration=["\'](\d+)["\']', html_content)
     total_duration = int(m_dur.group(1)) if m_dur else 60
-    await on_log(f"[playwright-render] Total duration detected from HTML: {total_duration}s")
+    on_log_sync(f"[playwright-render] Total duration detected from HTML: {total_duration}s")
     
     # 2. Parse audio elements and start times
     audio_matches = re.findall(
@@ -1797,7 +1796,7 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
             "path": project_root / src,
             "start": float(start)
         })
-    await on_log(f"[playwright-render] Found {len(audios)} audio track(s) for mixing.")
+    on_log_sync(f"[playwright-render] Found {len(audios)} audio track(s) for mixing.")
     
     # 3. Setup folders
     renders_dir = project_root / "renders"
@@ -1805,9 +1804,9 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
     assets_dir = project_root / "assets"
     
     # 4. Playwright Headless recording
-    await on_log("[playwright-render] Launching headless browser...")
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
+    on_log_sync("[playwright-render] Launching headless browser...")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
             headless=True,
             args=[
                 "--autoplay-policy=no-user-gesture-required",
@@ -1818,32 +1817,32 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
         )
         
         # Configure video recording
-        context = await browser.new_context(
+        context = browser.new_context(
             viewport={"width": 1920, "height": 1080},
             record_video_dir=str(renders_dir),
             record_video_size={"width": 1920, "height": 1080}
         )
         
-        page = await context.new_page()
+        page = context.new_page()
         
         # Load local index.html using file:// protocol
         file_url = f"file:///{html_file.absolute().as_posix()}"
-        await on_log(f"[playwright-render] Opening page: {file_url}")
-        await page.goto(file_url)
+        on_log_sync(f"[playwright-render] Opening page: {file_url}")
+        page.goto(file_url)
         
         # Wait for timeline to register
-        await on_log("[playwright-render] Waiting for GSAP timeline to load...")
+        on_log_sync("[playwright-render] Waiting for GSAP timeline to load...")
         try:
-            await page.wait_for_function("window.__timelines && Object.keys(window.__timelines).length > 0", timeout=15000)
+            page.wait_for_function("window.__timelines && Object.keys(window.__timelines).length > 0", timeout=15000)
         except Exception as e:
-            await on_log(f"[playwright-render] Timeline registration timeout: {e}")
-            await context.close()
-            await browser.close()
+            on_log_sync(f"[playwright-render] Timeline registration timeout: {e}")
+            context.close()
+            browser.close()
             raise RuntimeError("GSAP timeline registration failed or timed out.")
             
         # Trigger play
-        await on_log("[playwright-render] Starting GSAP master timeline...")
-        await page.evaluate("""() => {
+        on_log_sync("[playwright-render] Starting GSAP master timeline...")
+        page.evaluate("""() => {
             const key = window.__timelines["main"] ? "main" : Object.keys(window.__timelines)[0];
             const timeline = window.__timelines[key];
             
@@ -1864,18 +1863,19 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
         # Wait for timeline to complete in real-time
         wait_time = total_duration + 1.0
         steps = int(wait_time * 2)
+        import time
         for step in range(steps):
-            await asyncio.sleep(0.5)
+            time.sleep(0.5)
             elapsed = (step + 1) * 0.5
             if step % 10 == 0:
-                await on_log(f"[playwright-render] Progress: {elapsed:.1f}s / {total_duration}s")
+                on_log_sync(f"[playwright-render] Progress: {elapsed:.1f}s / {total_duration}s")
                 
-        await on_log("[playwright-render] Playback completed. Closing browser...")
-        recorded_video_path = await page.video.path()
-        await context.close()
-        await browser.close()
+        on_log_sync("[playwright-render] Playback completed. Closing browser...")
+        recorded_video_path = page.video.path()
+        context.close()
+        browser.close()
         
-    await on_log(f"[playwright-render] WebM captured at: {recorded_video_path}")
+    on_log_sync(f"[playwright-render] WebM captured at: {recorded_video_path}")
     
     # 5. Build FFmpeg processing command
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1896,7 +1896,7 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
         narrations_file = assets_dir / "narrations.json"
         
         if word_data_file.exists() and durations_file.exists():
-            await on_log("[playwright-render] Generating ASS file and preparing subtitle burn-in...")
+            on_log_sync("[playwright-render] Generating ASS file and preparing subtitle burn-in...")
             try:
                 word_data = json.loads(word_data_file.read_text(encoding="utf-8"))
                 durations = json.loads(durations_file.read_text(encoding="utf-8"))
@@ -1908,9 +1908,9 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
                 generate_ass_file(word_data, durations, narrations, ass_path)
                 vf_filters.append("ass=subtitles.ass")
             except Exception as e:
-                await on_log(f"[playwright-render] Failed to generate ASS subtitles: {e}")
+                on_log_sync(f"[playwright-render] Failed to generate ASS subtitles: {e}")
         else:
-            await on_log("[playwright-render] Missing subtitle metadata files in assets/, skipping subtitles.")
+            on_log_sync("[playwright-render] Missing subtitle metadata files in assets/, skipping subtitles.")
             
     if vf_filters:
         cmd.extend(["-vf", ",".join(vf_filters)])
@@ -1943,10 +1943,9 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
         str(output_mp4_path.absolute())
     ])
     
-    await on_log(f"[playwright-render] Running FFmpeg: {' '.join(cmd)}")
+    on_log_sync(f"[playwright-render] Running FFmpeg: {' '.join(cmd)}")
     
-    res = await asyncio.to_thread(
-        subprocess.run,
+    res = subprocess.run(
         cmd,
         cwd=str(assets_dir.absolute()),
         capture_output=True,
@@ -1956,17 +1955,25 @@ async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True)
     try:
         if os.path.exists(recorded_video_path):
             os.unlink(recorded_video_path)
-            await on_log("[playwright-render] Cleaned up temporary Playwright WebM recording.")
+            on_log_sync("[playwright-render] Cleaned up temporary Playwright WebM recording.")
     except Exception as e:
         print(f"Failed to delete temp video: {e}")
         
     if res.returncode == 0 and output_mp4_path.exists():
-        await on_log(f"[playwright-render] Video rendering succeeded! Output: {output_mp4_path}")
+        on_log_sync(f"[playwright-render] Video rendering succeeded! Output: {output_mp4_path}")
         return output_mp4_path
     else:
-        await on_log(f"[playwright-render] FFmpeg processing failed with code {res.returncode}")
-        await on_log(f"[playwright-render] FFmpeg stderr:\n{res.stderr}")
+        on_log_sync(f"[playwright-render] FFmpeg processing failed with code {res.returncode}")
+        on_log_sync(f"[playwright-render] FFmpeg stderr:\n{res.stderr}")
         raise RuntimeError("FFmpeg processing failed.")
+
+
+async def run_render(project_root: Path, on_log, subtitles_enabled: bool = True) -> Path:
+    import asyncio
+    loop = asyncio.get_running_loop()
+    def on_log_sync(msg: str):
+        asyncio.run_coroutine_threadsafe(on_log(msg), loop)
+    return await loop.run_in_executor(None, _sync_render, project_root, on_log_sync, subtitles_enabled)
 
 
 # -------- Orchestrator --------
