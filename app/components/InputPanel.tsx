@@ -14,7 +14,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
   const [url, setUrl]         = useState("");
   const [dragging, setDragging] = useState(false);
   const [focused, setFocused]   = useState(false);
-  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(180);
   const fileRef = useRef<HTMLInputElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
