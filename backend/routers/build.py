@@ -1954,7 +1954,7 @@ def _sync_render(project_root: Path, on_log_sync, subtitles_enabled: bool) -> Pa
             mix_inputs.append(f"[a{input_idx}]")
             
         mix_inputs_str = "".join(mix_inputs)
-        filter_parts.append(f"{mix_inputs_str}amix=inputs={len(audios)}[a]")
+        filter_parts.append(f"{mix_inputs_str}amix=inputs={len(audios)}:normalize=0[a]")
         filter_complex_str = "; ".join(filter_parts)
         
         cmd.extend(["-filter_complex", filter_complex_str])
