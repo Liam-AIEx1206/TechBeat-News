@@ -24,6 +24,14 @@ export default function LoginPage() {
   const [tickerIdx, setTickerIdx] = useState(0);
   const [tickerVisible, setTickerVisible] = useState(true);
   const [glitch, setGlitch]       = useState(false);
+  const [errorMsg, setErrorMsg]   = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "AccessDenied") {
+      setErrorMsg("Chỉ tài khoản Google có email tên miền @xgamevn.com mới được phép truy cập.");
+    }
+  }, []);
 
   // Clock
   useEffect(() => {
@@ -214,9 +222,8 @@ export default function LoginPage() {
               transform: glitch ? "translateX(2px)" : "none",
               transition: "filter 0.05s, transform 0.05s",
             }}>
-              <span style={{ display: "block" }}>Tin công</span>
-              <span style={{ display: "block" }}>nghệ <span style={{ color: "#f97316", fontStyle: "italic", paddingRight: "0.08em" }}>thành</span></span>
-              <span style={{ display: "block" }}>video</span>
+              <span style={{ display: "block" }}>Tech News</span>
+              <span style={{ display: "block" }}>into <span style={{ color: "#f97316", fontStyle: "italic", paddingRight: "0.08em" }}>AI Videos</span></span>
             </h1>
             <p style={{ fontSize: 15, color: "#888", lineHeight: 1.7, maxWidth: 400 }}>
               Dán link bài viết — AI tóm tắt, viết kịch bản tiếng Việt và xuất MP4 sẵn sàng đăng.
@@ -282,6 +289,21 @@ export default function LoginPage() {
           </div>
 
           {/* Google button */}
+          {errorMsg && (
+             <div style={{
+               background: "rgba(239,68,68,0.1)",
+               border: "1px solid rgba(239,68,68,0.3)",
+               borderRadius: 8,
+               padding: "12px 16px",
+               marginBottom: 16,
+               color: "#fca5a5",
+               fontSize: 12,
+               lineHeight: 1.5,
+               textAlign: "left",
+             }}>
+               ⚠️ {errorMsg}
+             </div>
+           )}
           <button
             onClick={() => signIn("google", { callbackUrl: "/" })}
             style={{
