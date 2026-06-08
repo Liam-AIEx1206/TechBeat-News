@@ -244,8 +244,8 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {stage !== "input" && (
-          <button onClick={onReset} className="btn-ghost" style={{ fontSize: 11 }}>
-            ← Bắt đầu lại
+          <button onClick={onReset} className="btn-ghost" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Bắt đầu lại
           </button>
         )}
         <UserMenu />
@@ -512,12 +512,14 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline", marginRight: 6 }}><polygon points="6 3 20 12 6 21" /></svg>Bắt đầu tạo video
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline" }}><polygon points="6 3 20 12 6 21" /></svg>Bắt đầu tạo video
               <span style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 20, height: 20, borderRadius: "50%",
                 background: "rgba(0,0,0,0.18)", fontSize: 11,
-              }}>→</span>
+              }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </span>
             </span>
           </motion.button>
 
@@ -565,8 +567,8 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                   BẢN TIN MỚI NHẤT HÔM NAY
                 </h3>
               </div>
-              <a href="/history" style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>
-                Xem tất cả →
+              <a href="/history" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>
+                Xem tất cả <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
               </a>
             </div>
 
@@ -765,7 +767,7 @@ function InputStage({
         {/* Process steps */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[
-            { n: "01", t: "Trích xuất nội dung", d: "Bài viết → văn bản sạch" },
+            { n: "01", t: "Trích xuất nội dung", d: "Bài viết sang văn bản sạch" },
             { n: "02", t: "AI viết kịch bản", d: "Phân cảnh + lời dẫn tiếng Việt" },
             { n: "03", t: "Xem trước & chỉnh sửa", d: "Theme · giọng đọc · ảnh minh hoạ" },
             { n: "04", t: "Render MP4 1080p", d: "GSAP + TTS + FFmpeg" },
@@ -979,7 +981,9 @@ function PreviewStage({
               boxShadow: `0 12px 32px -4px ${theme.accent}99`,
             }}
           >
-            <span>→ Xem trước HTML</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              Xem trước HTML <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </span>
           </button>
         </div>
       </div>

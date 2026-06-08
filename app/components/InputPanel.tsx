@@ -195,6 +195,9 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
                 transition: "all 0.25s var(--ease-out)",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               {isLoading ? (
@@ -206,7 +209,11 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
                   }} />
                   Đang xử lý
                 </span>
-              ) : "Trích xuất →"}
+              ) : (
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  Trích xuất <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </span>
+              )}
             </button>
           </div>
         </div>

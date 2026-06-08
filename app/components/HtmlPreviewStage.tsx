@@ -493,15 +493,17 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
             {scenePlan.title}
           </h1>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button onClick={onBack} className="btn-ghost" style={{ fontSize: 12 }}>← Quay lại kịch bản</button>
+            <button onClick={onBack} className="btn-ghost" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Quay lại kịch bản
+            </button>
             {html && (
               <button
                 onClick={regenFull}
                 disabled={isGenning}
                 className="btn-ghost"
-                style={{ fontSize: 12, opacity: isGenning ? 0.4 : 1 }}
+                style={{ fontSize: 12, opacity: isGenning ? 0.4 : 1, display: "flex", alignItems: "center", gap: 6 }}
               >
-                ↺ Gen lại tất cả
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" /></svg> Gen lại tất cả
               </button>
             )}
             <button
@@ -522,7 +524,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 <polygon points="23 7 16 12 23 17 23 7" />
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
               </svg>
-              <span>Dựng video MP4 →</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                Dựng video MP4 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </span>
             </button>
           </div>
         </div>
@@ -580,7 +584,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 {allDone
                   ? `Hoàn tất — ${total} scene đã gen`
                   : isGenning
-                  ? `Đang gen scene ${(genningIdx ?? 0) + 1}/${total}…`
+                  ? `Đang gen scene ${(genningIdx ?? 0) + 1}/${total}...`
                   : doneSoFar === 0
                   ? `Sẵn sàng gen ${total} scene`
                   : `${doneSoFar}/${total} scene đã gen`}
@@ -599,9 +603,12 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
               <button
                 onClick={handleStopGen}
                 className="btn-ghost"
-                style={{ fontSize: 12, borderColor: "#f87171", color: "#f87171" }}
+                style={{ fontSize: 12, borderColor: "#f87171", color: "#f87171", display: "flex", alignItems: "center", gap: 6 }}
               >
-                ⏹ Dừng
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                </svg>
+                Dừng
               </button>
             ) : allDone ? null : (
               <>
@@ -625,7 +632,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                         Gen scene 1
                       </span>
                     ) : (
-                      `→ Gen scene ${nextPendingIdx + 1}`
+                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        Gen scene {nextPendingIdx + 1} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                      </span>
                     )}
                   </button>
                 )}
@@ -888,9 +897,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 }}
                 disabled={activeIdx === 0 || !sceneStatuses.slice(0, activeIdx).some(s => s === "done")}
                 className="btn-ghost"
-                style={{ fontSize: 12, padding: "6px 14px" }}
+                style={{ fontSize: 12, padding: "6px 14px", display: "flex", alignItems: "center", gap: 4 }}
               >
-                ← Prev
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Prev
               </button>
               <button
                 onClick={() => {
@@ -900,9 +909,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 }}
                 disabled={!sceneStatuses.slice(activeIdx + 1).some(s => s === "done")}
                 className="btn-ghost"
-                style={{ fontSize: 12, padding: "6px 14px" }}
+                style={{ fontSize: 12, padding: "6px 14px", display: "flex", alignItems: "center", gap: 4 }}
               >
-                Next →
+                Next <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
               </button>
             </div>
           </div>
@@ -916,7 +925,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           }}>
             {sceneStatuses[activeIdx] !== "done" ? (
               <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+                <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
+                  <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                </div>
                 <p style={{ fontSize: 13, color: "var(--gray-5)" }}>
                   Scene {activeIdx + 1} chưa được gen.
                 </p>
@@ -968,7 +979,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                     <span className="hero-eyebrow" style={{ fontSize: 10, marginBottom: 0 }}>Ảnh minh hoạ</span>
                     <button onClick={() => setPickerOpen(true)} className="btn-ghost" style={{ fontSize: 10, padding: "4px 10px" }}>
-                      ↑ Chọn ảnh
+                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg> Chọn ảnh
+                </span>
                     </button>
                   </div>
                   {active?.imageUrl ? (
@@ -1016,7 +1029,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
                             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
                           </svg>
-                          Đang regen…
+                          Đang regen...
                         </>
                       ) : (
                         "Regen scene"

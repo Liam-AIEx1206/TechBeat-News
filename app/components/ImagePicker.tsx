@@ -314,11 +314,11 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                 }}
               >
                 <span className="text-xs" style={{ color: "var(--text-3)" }}>
-                  Đã chọn ảnh → bấm <strong style={{ color: "var(--accent-2)" }}>Dùng ảnh này</strong> để áp dụng
+                  Đã chọn ảnh. Bấm <strong style={{ color: "var(--accent-2)" }}>Dùng ảnh này</strong> để áp dụng
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => setSearchSelected(null)} className="btn-ghost text-sm">
-                    ← Chọn ảnh khác
+                  <button onClick={() => setSearchSelected(null)} className="btn-ghost text-sm inline-flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Chọn ảnh khác
                   </button>
                   <button
                     onClick={confirmSearch}
@@ -418,11 +418,11 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                 }}
               >
                 <span className="text-xs" style={{ color: "var(--text-3)" }}>
-                  Sẵn sàng → bấm <strong style={{ color: "var(--accent-2)" }}>Dùng ảnh này</strong> để áp dụng cho phân cảnh
+                  Sẵn sàng. Bấm <strong style={{ color: "var(--accent-2)" }}>Dùng ảnh này</strong> để áp dụng cho phân cảnh
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => { setUploadPreview(""); setError(""); }} className="btn-ghost text-sm">
-                    ← Chọn ảnh khác
+                  <button onClick={() => { setUploadPreview(""); setError(""); }} className="btn-ghost text-sm inline-flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Chọn ảnh khác
                   </button>
                   <button
                     onClick={confirmUpload}

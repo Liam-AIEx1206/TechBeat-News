@@ -179,8 +179,8 @@ export default function HistoryPage() {
           </h2>
         </div>
 
-        <a href="/" className="btn-ghost" style={{ textDecoration: "none", fontSize: 11 }}>
-          ← Về Trang Chủ
+        <a href="/" className="btn-ghost" style={{ textDecoration: "none", fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Về Trang Chủ
         </a>
       </header>
 

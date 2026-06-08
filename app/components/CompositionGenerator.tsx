@@ -148,15 +148,15 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={onBack}
-              className="px-5 py-2.5 rounded-lg border border-stone-200 text-stone-600 text-sm font-medium hover:bg-stone-50 transition-colors"
+              className="px-5 py-2.5 rounded-lg border border-stone-200 text-stone-600 text-sm font-medium hover:bg-stone-50 transition-colors inline-flex items-center gap-2"
             >
-              ← Back to scenes
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Back to scenes
             </button>
             <button
               onClick={generate}
-              className="px-6 py-2.5 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white text-sm font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-sm shadow-orange-500/30"
+              className="px-6 py-2.5 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white text-sm font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-sm shadow-orange-500/30 inline-flex items-center gap-2"
             >
-              Generate Composition →
+              Generate Composition <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           </div>
         </div>
@@ -222,9 +222,9 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
           <div className="flex items-center gap-2">
             <button
               onClick={onBack}
-              className="text-sm px-3 py-1.5 rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
+              className="text-sm px-3 py-1.5 rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors inline-flex items-center gap-1.5"
             >
-              ← Back
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Back
             </button>
             <button
               onClick={generate}
