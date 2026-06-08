@@ -102,11 +102,7 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
               </>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--gray-4)" }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
+                <span style={{ fontSize: 20 }}>Ảnh</span>
                 <span style={{ fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--gray-4)" }}>Ảnh</span>
               </div>
             )}
@@ -133,21 +129,9 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--gray-3)" }}>
           {onMoveUp && <button onClick={onMoveUp} disabled={isFirst} className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px", opacity: isFirst ? 0.3 : 1 }}>↑</button>}
           {onMoveDown && <button onClick={onMoveDown} disabled={isLast} className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px", opacity: isLast ? 0.3 : 1 }}>↓</button>}
-          <button onClick={() => setPickerOpen(true)} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-            Ảnh
-          </button>
-          <button onClick={() => { setDraft(scene); setEditing(true); }} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            Sửa
-          </button>
-          <button onClick={onDelete} style={{ fontSize: 11, padding: "5px 12px", borderRadius: "var(--r)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)", background: "transparent", fontWeight: 700, transition: "background 0.2s", display: "inline-flex", alignItems: "center", gap: 4 }}
+          <button onClick={() => setPickerOpen(true)} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>Ảnh</button>
+          <button onClick={() => { setDraft(scene); setEditing(true); }} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>✎ Sửa</button>
+          <button onClick={onDelete} style={{ fontSize: 11, padding: "5px 12px", borderRadius: "var(--r)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)", background: "transparent", fontWeight: 700, transition: "background 0.2s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

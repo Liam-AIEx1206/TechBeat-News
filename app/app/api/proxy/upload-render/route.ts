@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 300; // 5 minutes timeout for FFmpeg rendering
+
 export async function POST(req: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
   const backendUrl = isDev ? "http://localhost:8000/upload-render" : "http://backend:8000/upload-render";
@@ -10,7 +12,7 @@ export async function POST(req: NextRequest) {
     headers["x-user-email"] = userEmail;
   }
 
-  // Forward the multipart form data as-is
+  // Parse the 50MB chunk safely
   const formData = await req.formData();
 
   const response = await fetch(backendUrl, {

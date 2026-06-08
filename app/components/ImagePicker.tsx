@@ -200,11 +200,8 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
             <div className="flex-1 overflow-auto p-4 min-h-0">
               {error && (
                 <div className="mb-3 px-4 py-3 rounded-xl text-sm"
-                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  {error}
+                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)" }}>
+                  Lỗi: {error}
                 </div>
               )}
 
@@ -343,11 +340,8 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
             <div className="flex-1 overflow-auto p-5 flex flex-col gap-4">
               {error && (
                 <div className="px-4 py-3 rounded-xl text-sm"
-                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  {error}
+                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)" }}>
+                  Lỗi: {error}
                 </div>
               )}
 
@@ -366,13 +360,7 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); e.target.value = ""; }}
                   />
-                  <div className="text-stone-300 opacity-40">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                  </div>
+                  <div className="text-5xl">Ảnh</div>
                   <div>
                     <p className="text-sm font-bold mb-1" style={{ color: "var(--text-1)" }}>Kéo ảnh vào đây hoặc click để chọn</p>
                     <p className="text-xs" style={{ color: "var(--text-3)" }}>JPG · PNG · WebP · GIF · tối đa 10MB</p>

@@ -520,26 +520,15 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 gap: 8,
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="23 7 16 12 23 17 23 7" />
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-              </svg>
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                Dựng video MP4 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-              </span>
+              <span>Dựng video MP4 →</span>
             </button>
           </div>
         </div>
 
         {/* Dirty flag warning */}
         {!allClean && html && (
-          <div style={{ marginTop: 10, fontSize: 11, color: "var(--accent3)", display: "flex", alignItems: "center", gap: 6 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-            Có scene đã sửa nhưng chưa regen — bấm "Regen scene" trong panel bên phải để cập nhật.
+          <div style={{ marginTop: 10, fontSize: 11, color: "var(--accent3)" }}>
+            Có scene đã sửa nhưng chưa regen — bấm "↻ Regen scene" trong panel bên phải để cập nhật.
           </div>
         )}
       </div>
@@ -570,14 +559,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 flexShrink: 0,
               }} />
             ) : allDone ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.accent, flexShrink: 0 }}>
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <span style={{ fontSize: 16 }}>✓</span>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: theme.accent, flexShrink: 0 }}>
-                <polygon points="23 7 16 12 23 17 23 7" />
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-              </svg>
+              <span style={{ fontSize: 16 }}>▶</span>
             )}
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--white)" }}>
@@ -925,9 +909,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           }}>
             {sceneStatuses[activeIdx] !== "done" ? (
               <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
-                  <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                </div>
+                <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>...</div>
                 <p style={{ fontSize: 13, color: "var(--gray-5)" }}>
                   Scene {activeIdx + 1} chưa được gen.
                 </p>
@@ -1016,24 +998,8 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                       opacity: (regenStatus !== "idle" || isGenning) ? 0.5 : 1,
                     }}
                   >
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      {regenScene === activeIdx + 1 ? (
-                        <>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-                            <line x1="12" y1="2" x2="12" y2="6" />
-                            <line x1="12" y1="18" x2="12" y2="22" />
-                            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
-                            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-                            <line x1="2" y1="12" x2="6" y2="12" />
-                            <line x1="18" y1="12" x2="22" y2="12" />
-                            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
-                            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-                          </svg>
-                          Đang regen...
-                        </>
-                      ) : (
-                        "Regen scene"
-                      )}
+                    <span>
+                      {regenScene === activeIdx + 1 ? "Đang regen…" : "↻ Regen scene"}
                     </span>
                   </button>
                 </div>
@@ -1077,11 +1043,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
               border: "1px solid rgba(255,255,255,0.06)"
             }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--white)", marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                  </svg>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--white)", marginBottom: 2 }}>
                   Nghe thử 5s giọng đọc kịch bản
                 </div>
                 <div style={{ fontSize: 9, color: "var(--gray-6)" }}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ScenePlan } from "@/types/scene";
 
 interface Props {
@@ -17,6 +17,8 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
   const [error, setError] = useState("");
   const [savedInfo, setSavedInfo] = useState<{ path: string; next: string } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+
 
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -133,11 +135,8 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
     return (
       <div className="bg-white rounded-2xl border border-orange-100 p-8 shadow-sm shadow-orange-500/5">
         <div className="text-center max-w-md mx-auto">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="23 7 16 12 23 17 23 7" />
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-            </svg>
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-orange-500/30">
+            ▶
           </div>
           <h2 className="text-xl font-bold text-stone-900 mb-2">
             Sẵn sàng sinh composition
@@ -172,9 +171,6 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
           <h2 className="text-lg font-semibold text-stone-900 mb-1">
             Đang sinh composition HTML...
           </h2>
-          <p className="text-xs text-stone-500">
-            Gemini đang viết GSAP timeline + layout cho {scenePlan.scenes.length} scene
-          </p>
         </div>
         {streamBuffer && (
           <div className="bg-stone-900 text-orange-300 rounded-xl p-4 max-h-96 overflow-auto">

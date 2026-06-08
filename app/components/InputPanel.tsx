@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, DragEvent } from "react";
+import { Link as LinkIcon, FileText } from "lucide-react";
 
 interface Props {
   onExtracted: (content: { title: string; text: string; source: string; videoDuration?: number | null }) => void;
@@ -13,7 +14,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
   const [url, setUrl]         = useState("");
   const [dragging, setDragging] = useState(false);
   const [focused, setFocused]   = useState(false);
-  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(180);
   const fileRef = useRef<HTMLInputElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -63,10 +64,6 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           marginBottom: 10, display: "flex", alignItems: "center", gap: 8,
         }}>
           <span style={{ width: 20, height: 1, background: "var(--accent)", display: "inline-block" }} />
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
           Chọn thời lượng video
         </div>
         
@@ -134,11 +131,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           marginBottom: 10, display: "flex", alignItems: "center", gap: 8,
         }}>
           <span style={{ width: 20, height: 1, background: "var(--accent)", display: "inline-block" }} />
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-          </svg>
-          Dán URL bài viết
+          <LinkIcon size={12} strokeWidth={3} /> Dán URL bài viết
         </div>
 
         {/* Input wrapper with glow */}
@@ -285,14 +278,8 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           style={{ display: "none" }} disabled={isLoading}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) extractFile(f); e.target.value = ""; }} />
 
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, filter: dragging ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none", transition: "filter 0.3s", color: "var(--accent)" }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-            <polyline points="10 9 9 9 8 9" />
-          </svg>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, filter: dragging ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none", transition: "filter 0.3s" }}>
+          <FileText size={36} color="var(--white)" />
         </div>
         <p style={{ fontSize: 14, fontWeight: 700, color: dragging ? "var(--white)" : "rgba(255,255,255,0.7)", marginBottom: 8, transition: "color 0.2s" }}>
           Kéo file vào đây hoặc click để chọn

@@ -105,16 +105,27 @@ async def delete_local_history(item_id: str, request: Request):
         else:
             prefix = "/static-history/"
 
-        html_rel = item["html_url"].replace(prefix, "")
-        video_rel = item["video_url"].replace(prefix, "")
+        html_url = item.get("html_url")
+        video_url = item.get("video_url")
+        log_url = item.get("log_url")
 
-        html_file = history_dir / html_rel
-        video_file = history_dir / video_rel
+        if html_url:
+            html_rel = html_url.replace(prefix, "")
+            html_file = history_dir / html_rel
+            if html_file.exists():
+                html_file.unlink()
 
-        if html_file.exists():
-            html_file.unlink()
-        if video_file.exists():
-            video_file.unlink()
+        if video_url:
+            video_rel = video_url.replace(prefix, "")
+            video_file = history_dir / video_rel
+            if video_file.exists():
+                video_file.unlink()
+                
+        if log_url:
+            log_rel = log_url.replace(prefix, "")
+            log_file = history_dir / log_rel
+            if log_file.exists():
+                log_file.unlink()
 
         # Filter item from list
         new_list = [x for x in history_list if x["id"] != item_id]

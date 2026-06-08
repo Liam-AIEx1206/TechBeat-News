@@ -41,6 +41,21 @@ export default function Home() {
   const [streamBuffer, setStreamBuffer] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
+  const hasUnsavedProgress = stage === "generating" || stage === "preview" || stage === "htmlPreview" || stage === "build" || (stage === "input" && isLoading);
+
+  // Global beforeunload listener to protect against accidental tab closing/refreshing
+  useEffect(() => {
+    if (!hasUnsavedProgress) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      const msg = "Tiến trình hiện tại sẽ bị mất nếu bạn rời khỏi hoặc tải lại trang. Bạn có chắc chắn muốn thoát không?";
+      e.returnValue = msg;
+      return msg;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedProgress]);
+
   function go(next: Stage) {
     if (next === stage) return;
     setStage(next);
@@ -136,7 +151,12 @@ export default function Home() {
       <CurtainSweep stageKey={stage} accent={scenePlan?.theme ? getTheme(scenePlan.theme).accent : "#f97316"} />
 
       {stage !== "dashboard" && (
-        <AppHeader stage={stage} onHome={handleHome} onReset={handleReset} />
+        <AppHeader 
+          stage={stage} 
+          onHome={handleHome} 
+          onReset={handleReset} 
+          hasUnsavedProgress={hasUnsavedProgress} 
+        />
       )}
 
       <StageTransition stageKey={stage}>
@@ -174,7 +194,17 @@ export default function Home() {
 
 /* ─────────────────────────  HEADER  ───────────────────────── */
 
-function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => void; onReset: () => void }) {
+function AppHeader({ 
+  stage, 
+  onHome, 
+  onReset, 
+  hasUnsavedProgress 
+}: { 
+  stage: Stage; 
+  onHome: () => void; 
+  onReset: () => void; 
+  hasUnsavedProgress: boolean; 
+}) {
   const steps: { key: Stage; num: number; label: string }[] = [
     { key: "input", num: 1, label: "Nhập" },
     { key: "preview", num: 2, label: "Kịch bản" },
@@ -187,7 +217,12 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
   return (
     <header className="site-header">
       <button
-        onClick={onHome}
+        onClick={() => {
+          if (hasUnsavedProgress) {
+            if (!window.confirm("Tiến trình hiện tại sẽ bị mất nếu bạn quay về trang chủ. Bạn có chắc chắn muốn thoát không?")) return;
+          }
+          onHome();
+        }}
         style={{
           display: "flex", alignItems: "center", gap: 12,
           background: "transparent", border: "none", cursor: "pointer", color: "inherit",
@@ -244,8 +279,15 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {stage !== "input" && (
-          <button onClick={onReset} className="btn-ghost" style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg> Bắt đầu lại
+          <button 
+            onClick={() => {
+              if (hasUnsavedProgress) {
+                if (!window.confirm("Tiến trình hiện tại sẽ bị mất nếu bạn bắt đầu lại. Bạn có chắc chắn muốn hủy không?")) return;
+              }
+              onReset();
+            }} 
+            className="btn-ghost" style={{ fontSize: 11 }}>
+            ← Bắt đầu lại
           </button>
         )}
         <UserMenu />
@@ -512,7 +554,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline" }}><polygon points="6 3 20 12 6 21" /></svg>Bắt đầu tạo video
+              Bắt đầu tạo video
               <span style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 20, height: 20, borderRadius: "50%",
@@ -600,7 +642,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                     className="scene-card"
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ color: "var(--accent)", flexShrink: 0, display: "inline" }}><polygon points="6 3 20 12 6 21" /></svg>
+                      <span style={{ fontSize: 12, color: "var(--accent)" }}></span>
                       <h4 style={{ fontSize: 12, fontWeight: 700, color: "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0, padding: 0 }}>
                         {h.title}
                       </h4>
@@ -811,7 +853,7 @@ function InputStage({
               color: "var(--red)", fontSize: 13,
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>{error}</span>
+            Lỗi: {error}
           </motion.div>
         )}
 
@@ -936,7 +978,11 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
 
       <div className="fade-up" style={{ display: "flex", justifyContent: "center", marginTop: 32, animationDelay: "0.3s" }}>
         <button
-          onClick={onCancel}
+          onClick={() => {
+            if (window.confirm("AI đang viết kịch bản. Nếu huỷ bây giờ, toàn bộ tiến trình này sẽ bị mất.\n\nBạn có chắc chắn muốn huỷ không?")) {
+              onCancel();
+            }
+          }}
           className="btn-ghost"
           style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}
         >

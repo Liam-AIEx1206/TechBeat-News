@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["pdf-parse", "officeparser"],
   experimental: {
-    middlewareClientMaxBodySize: "250mb",
+    proxyClientMaxBodySize: "1024mb",
   },
   async rewrites() {
     return [

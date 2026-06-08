@@ -77,6 +77,22 @@ export function useClientRender() {
     setProgress({ stage: "init", percent: 2, message: "Chuẩn bị giao diện quay màn hình..." });
 
     return new Promise<Blob | undefined>((resolve) => {
+        let mediaRecorder: MediaRecorder | null = null;
+        
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+          e.preventDefault();
+          e.returnValue = "Trang web đang dựng video, nếu bạn tải lại hoặc đóng tab, quá trình sẽ bị hỏng!";
+          return e.returnValue;
+        };
+
+        const handleVisibilityChange = () => {
+          if (document.hidden && mediaRecorder && mediaRecorder.state === "recording") {
+            alert("⚠️ CẢNH BÁO: BẠN VỪA CHUYỂN TAB HOẶC THU NHỎ TRÌNH DUYỆT!\n\nHành động này đã khiến hệ thống đồ họa bị hạ xuống 1 FPS để tiết kiệm pin. Video được quay từ giây phút này có thể bị giật lag nghiêm trọng hoặc đứng hình.\n\nSau khi video hoàn tất, vui lòng Xóa video lỗi và Bấm Render lại, VÀ giữ nguyên tab này ở trên cùng màn hình cho đến khi quay xong!");
+          }
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
       // Create style element for glassmorphic and premium styling
       const styleEl = document.createElement("style");
       styleEl.id = "hf-render-styles";
@@ -167,6 +183,13 @@ export function useClientRender() {
             Để đạt hiệu năng tối đa và giữ nguyên 100% hiệu ứng chuyển cảnh, hệ thống sẽ phát trực tiếp hoạt ảnh và âm thanh rồi tự động ghi lại.
           </p>
           
+          <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+            <strong style="color: #f87171; display: block; margin-bottom: 4px;">⚠️ LƯU Ý QUAN TRỌNG:</strong>
+            <span style="color: #fca5a5; font-size: 14px; line-height: 1.5;">
+              KHÔNG ĐƯỢC ĐỔI TAB hoặc THU NHỎ TRÌNH DUYỆT trong lúc đang chạy! Việc đổi tab sẽ làm Chrome tự động tắt đồ họa (giảm xuống 1 FPS) khiến video thu được bị giật lag và mất hình.
+            </span>
+          </div>
+
           <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 30px; font-size: 14px; line-height: 1.7; text-align: left; width: 100%; box-sizing: border-box;">
             <div style="margin-bottom: 12px; display: flex; align-items: flex-start;">
               <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">1</span>
@@ -190,12 +213,17 @@ export function useClientRender() {
       `;
 
       const cleanupAll = () => {
+        document.getElementById("btn-start")?.removeEventListener("click", () => {});
+        document.getElementById("btn-cancel")?.removeEventListener("click", handleCancel);
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
         try { document.getElementById("hf-render-overlay")?.remove(); } catch {}
         try { document.getElementById("hf-render-styles")?.remove(); } catch {}
         setIsRendering(false);
       };
 
       const handleCancel = () => {
+        cancelRef.current = true;
         cleanupAll();
         setProgress({ stage: "error", percent: 0, message: "Người dùng đã hủy bỏ quá trình ghi hình." });
         resolve(undefined);
@@ -267,7 +295,12 @@ export function useClientRender() {
         const vpH = window.innerHeight;
         // Use height-constrained contain scale so all content is visible and fills height
         const contentScale = Math.min(vpW / width, vpH / height);
-        const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+        let API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+        // Convert relative API paths (like "/api-backend") to absolute URLs 
+        // to prevent `blob:` iframe "Invalid URL" errors and cross-origin blocks
+        if (API.startsWith("/")) {
+          API = window.location.origin + API;
+        }
         let finalHtml = compositionHtml;
         finalHtml = finalHtml.replace(/<base\b[^>]*>/gi, "");
         const baseHref = sessionId
@@ -314,7 +347,8 @@ export function useClientRender() {
 
         // Load iframe in container — sized to match viewport exactly
         const iframe = document.createElement("iframe");
-        iframe.style.cssText = `width: ${vpW}px; height: ${vpH}px; border: none; overflow: hidden; display: block;`;;
+        iframe.allow = "autoplay; fullscreen";
+        iframe.style.cssText = `width: ${vpW}px; height: ${vpH}px; border: none; overflow: hidden; display: block;`;
         
         const blobUrl = URL.createObjectURL(new Blob([finalHtml], { type: "text/html" }));
         iframe.src = blobUrl;
@@ -322,7 +356,6 @@ export function useClientRender() {
 
         let timeline: any = null;
         const activeTimeouts: any[] = [];
-        let mediaRecorder: MediaRecorder;
 
         const stopStream = () => {
           activeTimeouts.forEach(clearTimeout);
@@ -475,15 +508,17 @@ export function useClientRender() {
           }
 
           const chunks: Blob[] = [];
-          mediaRecorder = new MediaRecorder(stream, {
+          const recorder = new MediaRecorder(stream, {
             mimeType,
             videoBitsPerSecond: 8_000_000,  // 8 Mbps for high-quality 1080p
           });
-          mediaRecorder.ondataavailable = (e) => {
+          mediaRecorder = recorder; // bind to outer scope for visibility check
+
+          recorder.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) chunks.push(e.data);
           };
 
-          mediaRecorder.onstop = () => {
+          recorder.onstop = () => {
             stopStream();
             cleanupAll();
             
@@ -504,7 +539,7 @@ export function useClientRender() {
           };
 
           // Start recording and playback!
-          mediaRecorder.start();
+          recorder.start();
           timeline.play(0);
 
           // Play all audios at their start times
@@ -603,39 +638,75 @@ export async function uploadRenderedVideo(
   const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
   const endpoint = isLocal ? `${API}/upload-render` : `/api/proxy/upload-render`;
 
-  const ext = mp4Blob.type.includes("webm") ? "webm" : "mp4";
-  const formData = new FormData();
-  formData.append("file", mp4Blob, `${opts.title || "video"}.${ext}`);
-  formData.append("title", opts.title);
-  formData.append("session_id", opts.sessionId);
-  formData.append("composition_html", opts.compositionHtml);
-  formData.append("duration", String(opts.duration));
-  if (opts.logs) {
-    formData.append("logs", opts.logs);
-  }
-  if (opts.cropX !== undefined) formData.append("crop_x", String(opts.cropX));
-  if (opts.cropY !== undefined) formData.append("crop_y", String(opts.cropY));
-  if (opts.cropW !== undefined) formData.append("crop_w", String(opts.cropW));
-  if (opts.cropH !== undefined) formData.append("crop_h", String(opts.cropH));
-  if (opts.width !== undefined) formData.append("width", String(opts.width));
-  if (opts.height !== undefined) formData.append("height", String(opts.height));
+  return new Promise(async (resolve, reject) => {
+    const ext = mp4Blob.type.includes("webm") ? "webm" : "mp4";
+    const chunkSize = 50 * 1024 * 1024; // 50MB chunks to bypass Cloudflare 100MB limit
+    const totalChunks = Math.ceil(mp4Blob.size / chunkSize);
+    let uploadedBytes = 0;
 
-  const headers: Record<string, string> = {};
-  if (opts.userEmail) {
-    headers["x-user-email"] = opts.userEmail;
-  }
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = mp4Blob.slice(i * chunkSize, (i + 1) * chunkSize);
+      
+      const formData = new FormData();
+      formData.append("file", chunk, `${opts.title || "video"}.${ext}`);
+      formData.append("title", opts.title);
+      formData.append("session_id", opts.sessionId);
+      formData.append("composition_html", opts.compositionHtml);
+      formData.append("duration", String(opts.duration));
+      if (opts.logs) formData.append("logs", opts.logs);
+      if (opts.cropX !== undefined) formData.append("crop_x", String(opts.cropX));
+      if (opts.cropY !== undefined) formData.append("crop_y", String(opts.cropY));
+      if (opts.cropW !== undefined) formData.append("crop_w", String(opts.cropW));
+      if (opts.cropH !== undefined) formData.append("crop_h", String(opts.cropH));
+      if (opts.width !== undefined) formData.append("width", String(opts.width));
+      if (opts.height !== undefined) formData.append("height", String(opts.height));
+      
+      formData.append("chunk_index", String(i));
+      formData.append("total_chunks", String(totalChunks));
 
-  const resp = await fetch(endpoint, {
-    method: "POST",
-    headers,
-    body: formData,
+      try {
+        await new Promise<void>((resChunk, rejChunk) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", endpoint, true);
+
+          if (opts.userEmail) {
+            xhr.setRequestHeader("x-user-email", opts.userEmail);
+          }
+
+          if (opts.onProgress) {
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                // Calculate total progress including previously uploaded chunks
+                const pct = Math.round(((uploadedBytes + e.loaded) / mp4Blob.size) * 100);
+                opts.onProgress!(pct);
+              }
+            };
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              uploadedBytes += chunk.size;
+              if (i === totalChunks - 1) {
+                try {
+                  resolve(JSON.parse(xhr.responseText));
+                } catch (err) {
+                  reject(new Error("Invalid JSON response"));
+                }
+              }
+              resChunk();
+            } else {
+              rejChunk(new Error(`Chunk ${i+1}/${totalChunks} upload failed: HTTP ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => rejChunk(new Error("Network error during upload"));
+          xhr.send(formData);
+        });
+      } catch (error) {
+        return reject(error);
+      }
+    }
   });
-
-  if (!resp.ok) {
-    throw new Error(`Upload failed: HTTP ${resp.status}`);
-  }
-
-  return resp.json();
 }
 
 export async function saveErrorLog(opts: {

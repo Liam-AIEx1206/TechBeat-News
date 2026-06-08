@@ -235,11 +235,6 @@ export default function HistoryPage() {
             color: "var(--red)", textAlign: "center",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
             Lỗi: {error}
           </div>
         ) : filtered.length === 0 ? (
@@ -255,10 +250,7 @@ export default function HistoryPage() {
               {search ? "Thử tìm kiếm với từ khóa khác." : "Hãy tiến hành tạo bản tin đầu tiên ở trang chủ để lưu lịch sử!"}
             </p>
             {!search && (
-              <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="6 3 20 12 6 21" />
-                </svg>
+              <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none" }}>
                 <span>Bắt đầu tạo video ngay</span>
               </a>
             )}
@@ -306,10 +298,6 @@ export default function HistoryPage() {
                             color: "var(--accent2)", display: "flex", alignItems: "center", gap: 4, marginBottom: 4,
                             fontWeight: 700
                           }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
                             {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                           </span>
                           <h4 style={{ fontSize: 14, fontWeight: 800, color: "var(--white)", margin: 0, lineHeight: 1.3 }}>
@@ -320,11 +308,7 @@ export default function HistoryPage() {
                         {/* Control buttons */}
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                           {/* Duration badge */}
-                          <div className="badge badge-accent" style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
+                          <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
                             {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
                           </div>
 
@@ -339,9 +323,6 @@ export default function HistoryPage() {
                               display: "inline-flex", alignItems: "center", gap: 6
                             }}
                           >
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                              <polygon points="6 3 20 12 6 21" />
-                            </svg>
                             <span>Xem Video</span>
                           </button>
 
@@ -486,17 +467,7 @@ export default function HistoryPage() {
                       gap: 6
                     }}
                   >
-                    {copied ? (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                      </svg>
-                    )}
-                    <span>{copied ? "Đã copy!" : "Copy mã HTML"}</span>
+                    <span>{copied ? "✓ Đã copy!" : "Copy mã HTML"}</span>
                   </button>
                   <button onClick={() => setActiveHtmlUrl(null)} className="btn-ghost" style={{ padding: "6px 10px", fontSize: 11 }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 6 }}>

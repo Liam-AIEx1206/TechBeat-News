@@ -197,7 +197,7 @@ async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") 
         
         temp_mp3 = target.with_suffix(".mp3.tmp")
         
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(
                 f"{base_url}/audio/speech",
                 headers={
@@ -790,31 +790,27 @@ async def _transcribe_pinkyne_api(wav_path: Path) -> list[dict]:
         ]
         
         import asyncio
-        max_retries = 5
-        backoff = 30.0
+        max_retries = 1
+        backoff = 5.0
         
         for attempt in range(max_retries):
             try:
-                async with httpx.AsyncClient(timeout=120) as client:
+                async with httpx.AsyncClient(timeout=25.0) as client:
                     resp = await client.post(
                         f"{base_url}/audio/transcriptions",
                         headers={"Authorization": f"Bearer {api_key}"},
                         files=multipart,
                     )
                 if resp.status_code == 429:
-                    print(f"[whisper/pinkyne] Rate limit (429) on attempt {attempt+1}/{max_retries}. Backing off for {backoff}s...")
-                    await asyncio.sleep(backoff)
-                    backoff *= 2.0
-                    continue
+                    print(f"[whisper/pinkyne] Rate limit (429).")
+                    return []
                 if resp.status_code != 200:
                     print(f"[whisper/pinkyne] HTTP {resp.status_code}: {resp.text[:200]}")
                     return []
                 break
             except Exception as ex:
-                if attempt == max_retries - 1:
-                    raise ex
-                print(f"[whisper/pinkyne] Request exception: {ex}. Retrying...")
-                await asyncio.sleep(5.0)
+                print(f"[whisper/pinkyne] Request exception: {ex}.")
+                return []
         
         data = resp.json()
         words: list[dict] = []
@@ -1954,7 +1950,7 @@ def _sync_render(project_root: Path, on_log_sync, subtitles_enabled: bool) -> Pa
             mix_inputs.append(f"[a{input_idx}]")
             
         mix_inputs_str = "".join(mix_inputs)
-        filter_parts.append(f"{mix_inputs_str}amix=inputs={len(audios)}[a]")
+        filter_parts.append(f"{mix_inputs_str}amix=inputs={len(audios)}:normalize=0[a]")
         filter_complex_str = "; ".join(filter_parts)
         
         cmd.extend(["-filter_complex", filter_complex_str])
@@ -2829,6 +2825,8 @@ async def upload_render(
     crop_h: Optional[int] = Form(None),
     width: int = Form(1920),
     height: int = Form(1080),
+    chunk_index: int = Form(0),
+    total_chunks: int = Form(1),
     request: Request = None,  # type: ignore
 ):
     """Nhận MP4 từ client-side render, lưu vào renders/ và history, kèm theo log."""
@@ -2839,20 +2837,32 @@ async def upload_render(
     user_email = await get_optional_user_email(request) if request else None
 
     global_root = get_project_root()
+    session_root = get_project_root(session_id=session_id) if session_id else global_root
+    assets_dir = session_root / "assets"
     renders_dir = global_root / "renders"
     renders_dir.mkdir(exist_ok=True)
+    assets_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate filename
+    # Save uploaded chunk appending to temp file
+    temp_chunk_path = assets_dir / f"upload_{session_id}.webm"
+    mode = "ab" if chunk_index > 0 else "wb"
+    with open(temp_chunk_path, mode) as f:
+        f.write(await file.read())
+
+    if chunk_index < total_chunks - 1:
+        return {"success": True, "message": f"Chunk {chunk_index+1}/{total_chunks} received"}
+
+    # Final chunk received! Move to final mp4_path
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_title = re.sub(r'[^\w\s-]', '', title)[:50].strip().replace(' ', '_') or "video"
     mp4_name = f"{safe_title}_{timestamp}.mp4"
     mp4_path = renders_dir / mp4_name
-
-    # Save uploaded file
-    content = await file.read()
-    mp4_path.write_bytes(content)
-    file_size_mb = len(content) / (1024 * 1024)
-    print(f"[upload-render] Saved {mp4_name} ({file_size_mb:.1f} MB)")
+    
+    import shutil
+    shutil.move(str(temp_chunk_path), str(mp4_path))
+    
+    file_size_mb = mp4_path.stat().st_size / (1024 * 1024)
+    print(f"[upload-render] All {total_chunks} chunks received! Saved {mp4_name} ({file_size_mb:.1f} MB)")
 
     # ── Subtitles Overlay / Burn-in via FFmpeg ─────────────────────────────
     try:
@@ -2877,7 +2887,8 @@ async def upload_render(
             safe_crop_w = crop_w - (crop_w % 2)
             safe_crop_h = crop_h - (crop_h % 2)
             print(f"[upload-render] Crop to content region: {safe_crop_w}x{safe_crop_h} at ({crop_x},{crop_y})")
-            vf_filters.append(f"crop={safe_crop_w}:{safe_crop_h}:{crop_x}:{crop_y}")
+            # Use min() to ensure crop dimensions don't exceed actual input dimensions (iw, ih)
+            vf_filters.append(f"crop=min({safe_crop_w}\\,iw):min({safe_crop_h}\\,ih):min({crop_x}\\,iw):min({crop_y}\\,ih)")
             # Direct scale — input is guaranteed 16:9 so no black bars
             vf_filters.append(f"scale={width}:{height}:flags=lanczos")
         else:
@@ -2916,8 +2927,8 @@ async def upload_render(
             
         cmd.extend([
             "-c:v", "libx264",
-            "-preset", "fast",       # better quality than ultrafast, still reasonably quick
-            "-crf", "18",            # high quality
+            "-preset", "superfast",  # significantly faster encoding while maintaining acceptable quality
+            "-crf", "22",            # balanced quality/size, faster to encode than 18
             "-pix_fmt", "yuv420p",   # required for broad compatibility
             "-threads", "0",
             "-c:a", "aac",
