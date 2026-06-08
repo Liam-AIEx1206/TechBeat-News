@@ -134,7 +134,7 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
       <div className="bg-white rounded-2xl border border-orange-100 p-8 shadow-sm shadow-orange-500/5">
         <div className="text-center max-w-md mx-auto">
           <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-orange-500/30">
-            🎬
+            ▶
           </div>
           <h2 className="text-xl font-bold text-stone-900 mb-2">
             Sẵn sàng sinh composition

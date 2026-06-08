@@ -89,7 +89,7 @@ export default function Home() {
             setStreamBuffer((prev) => `[!] ${event.message}\n\n${prev}`);
           } else if (event.type === "done" && event.scenePlan) {
             if (event.llmProvider || event.llmModel) {
-              setStreamBuffer(prev => prev + `\n\n✅ Kịch bản: ${event.llmProvider ?? ""}/${event.llmModel ?? ""}`);
+              setStreamBuffer(prev => prev + `\n\nKịch bản: ${event.llmProvider ?? ""}/${event.llmModel ?? ""}`);
             }
             setScenePlan(event.scenePlan as ScenePlan);
             go("preview");
@@ -805,7 +805,7 @@ function InputStage({
               color: "var(--red)", fontSize: 13,
             }}
           >
-            ⚠ {error}
+            Lỗi: {error}
           </motion.div>
         )}
 

@@ -63,7 +63,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           marginBottom: 10, display: "flex", alignItems: "center", gap: 8,
         }}>
           <span style={{ width: 20, height: 1, background: "var(--accent)", display: "inline-block" }} />
-          ⏱️ Chọn thời lượng video
+          Chọn thời lượng video
         </div>
         
         <div style={{

@@ -102,7 +102,7 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
               </>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                <span style={{ fontSize: 20 }}>🖼️</span>
+                <span style={{ fontSize: 20 }}>Ảnh</span>
                 <span style={{ fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--gray-4)" }}>Ảnh</span>
               </div>
             )}
@@ -129,7 +129,7 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--gray-3)" }}>
           {onMoveUp && <button onClick={onMoveUp} disabled={isFirst} className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px", opacity: isFirst ? 0.3 : 1 }}>↑</button>}
           {onMoveDown && <button onClick={onMoveDown} disabled={isLast} className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px", opacity: isLast ? 0.3 : 1 }}>↓</button>}
-          <button onClick={() => setPickerOpen(true)} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>🖼 Ảnh</button>
+          <button onClick={() => setPickerOpen(true)} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>Ảnh</button>
           <button onClick={() => { setDraft(scene); setEditing(true); }} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>✎ Sửa</button>
           <button onClick={onDelete} style={{ fontSize: 11, padding: "5px 12px", borderRadius: "var(--r)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)", background: "transparent", fontWeight: 700, transition: "background 0.2s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}

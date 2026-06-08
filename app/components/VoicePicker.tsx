@@ -135,7 +135,7 @@ export function VoicePicker({ value, onChange }: Props) {
           color: "var(--accent3)",
           fontSize: 12, lineHeight: 1.7,
         }}>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>💡 Trải nghiệm chất lượng âm thanh Pro-Max</div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Trải nghiệm chất lượng âm thanh Pro-Max</div>
           <div style={{ color: "var(--gray-6)" }}>
             Bấm nút <strong style={{ color: "var(--accent)" }}>Play</strong> trên các thẻ giọng đọc để nghe thử demo chất giọng (Microsoft Edge & Google Gemini).
           </div>
@@ -148,7 +148,7 @@ export function VoicePicker({ value, onChange }: Props) {
           background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)",
           color: "var(--red)", fontSize: 12, lineHeight: 1.6,
         }}>
-          ⚠ Lỗi nạp custom voice: {data.error}
+          Lỗi nạp custom voice: {data.error}
         </div>
       )}
 

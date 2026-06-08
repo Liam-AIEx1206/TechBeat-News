@@ -181,7 +181,7 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
               {error && (
                 <div className="mb-3 px-4 py-3 rounded-xl text-sm"
                   style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)" }}>
-                  ⚠ {error}
+                  Lỗi: {error}
                 </div>
               )}
 
@@ -310,7 +310,7 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
               {error && (
                 <div className="px-4 py-3 rounded-xl text-sm"
                   style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)" }}>
-                  ⚠ {error}
+                  Lỗi: {error}
                 </div>
               )}
 
@@ -329,7 +329,7 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); e.target.value = ""; }}
                   />
-                  <div className="text-5xl">🖼️</div>
+                  <div className="text-5xl">Ảnh</div>
                   <div>
                     <p className="text-sm font-bold mb-1" style={{ color: "var(--text-1)" }}>Kéo ảnh vào đây hoặc click để chọn</p>
                     <p className="text-xs" style={{ color: "var(--text-3)" }}>JPG · PNG · WebP · GIF · tối đa 10MB</p>

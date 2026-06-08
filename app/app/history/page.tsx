@@ -230,7 +230,7 @@ export default function HistoryPage() {
             background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)",
             color: "var(--red)", textAlign: "center"
           }}>
-            ⚠ Lỗi: {error}
+            Lỗi: {error}
           </div>
         ) : filtered.length === 0 ? (
           <div style={{
@@ -293,7 +293,7 @@ export default function HistoryPage() {
                             color: "var(--accent2)", display: "block", marginBottom: 4,
                             fontWeight: 700
                           }}>
-                            ⏱️ {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                           </span>
                           <h4 style={{ fontSize: 14, fontWeight: 800, color: "var(--white)", margin: 0, lineHeight: 1.3 }}>
                             {item.title}
@@ -304,7 +304,7 @@ export default function HistoryPage() {
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                           {/* Duration badge */}
                           <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
-                            ⏱️ {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                            {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
                           </div>
 
                           <button

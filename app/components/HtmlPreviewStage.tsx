@@ -510,7 +510,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 opacity: (!allDone || isGenning) ? 0.4 : 1,
               }}
             >
-              <span>🎬 Dựng video MP4 →</span>
+              <span>Dựng video MP4 →</span>
             </button>
           </div>
         </div>
@@ -518,7 +518,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
         {/* Dirty flag warning */}
         {!allClean && html && (
           <div style={{ marginTop: 10, fontSize: 11, color: "var(--accent3)" }}>
-            ⚠ Có scene đã sửa nhưng chưa regen — bấm "↻ Regen scene" trong panel bên phải để cập nhật.
+            Có scene đã sửa nhưng chưa regen — bấm "↻ Regen scene" trong panel bên phải để cập nhật.
           </div>
         )}
       </div>
@@ -549,9 +549,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                 flexShrink: 0,
               }} />
             ) : allDone ? (
-              <span style={{ fontSize: 16 }}>✅</span>
+              <span style={{ fontSize: 16 }}>✓</span>
             ) : (
-              <span style={{ fontSize: 16 }}>🎬</span>
+              <span style={{ fontSize: 16 }}>▶</span>
             )}
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--white)" }}>
@@ -882,7 +882,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           }}>
             {sceneStatuses[activeIdx] !== "done" ? (
               <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+                <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>...</div>
                 <p style={{ fontSize: 13, color: "var(--gray-5)" }}>
                   Scene {activeIdx + 1} chưa được gen.
                 </p>
@@ -967,7 +967,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
                     }}
                   >
                     <span>
-                      {regenScene === activeIdx + 1 ? "⏳ Đang regen…" : "↻ Regen scene"}
+                      {regenScene === activeIdx + 1 ? "Đang regen…" : "↻ Regen scene"}
                     </span>
                   </button>
                 </div>
@@ -1012,7 +1012,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
             }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--white)", marginBottom: 2 }}>
-                  🔊 Nghe thử 5s giọng đọc kịch bản
+                  Nghe thử 5s giọng đọc kịch bản
                 </div>
                 <div style={{ fontSize: 9, color: "var(--gray-6)" }}>
                   Nghe thử giọng đọc thực tế của Phân cảnh 1

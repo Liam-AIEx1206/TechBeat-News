@@ -13,12 +13,12 @@ interface Props {
 type StageKey = "composition" | "save" | "tts" | "whisper" | "render";
 type StageState = "pending" | "active" | "done" | "error";
 
-const STAGES: { key: StageKey; label: string; detail: string; icon: string }[] = [
-  { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP",    icon: "🎨" },
-  { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project",     icon: "💾" },
-  { key: "tts",         label: "Giọng đọc",      detail: "Edge TTS / gTTS / Gemini",          icon: "🎙️" },
-  { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ", icon: "🎤" },
-  { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg",              icon: "🎬" },
+const STAGES: { key: StageKey; label: string; detail: string }[] = [
+  { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP" },
+  { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project" },
+  { key: "tts",         label: "Giọng đọc",      detail: "Edge TTS / gTTS / Gemini" },
+  { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ" },
+  { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg" },
 ];
 
 function fmtMs(ms: number): string {
@@ -311,7 +311,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             setRenderLog(p => [...p, msg]);
           } else if (ev.type === "warning") {
             const msg = (ev.message as string) ?? "";
-            setRenderLog(p => [...p, `⚠ ${msg}`]);
+            setRenderLog(p => [...p, `Lỗi: ${msg}`]);
             setStateOnly("composition", "active", msg.slice(0, 80));
           } else if (ev.type === "done") {
             finishStage("render", "done", "✓ Hoàn tất");
@@ -383,7 +383,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
       {error && (
         <div className="fade-up px-4 py-3 rounded-xl text-sm"
           style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
-          ⚠ {error}
+          Lỗi: {error}
         </div>
       )}
 
@@ -447,7 +447,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                   }}
                   title={!supported ? "Trình duyệt không hỗ trợ WebCodecs" : "Dựng trực tiếp trên máy của bạn (WebCodecs - Nhanh, không đợi hàng đợi)"}
                 >
-                  ⚡ Client
+                  Client
                 </button>
                 <button
                   onClick={() => setRenderMode("server")}
@@ -473,7 +473,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
             {!running && (
               <button onClick={build} className="btn-primary magnetic">
-                <span>🎬 {done ? "Dựng lại" : "Bắt đầu dựng"}</span>
+                <span>{done ? "Dựng lại" : "Bắt đầu dựng"}</span>
               </button>
             )}
             {running && (
@@ -503,7 +503,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                     background: state === "active" ? "var(--accent)" : state === "done" ? "rgba(34,197,94,0.15)" : state === "error" ? "rgba(239,68,68,0.15)" : "var(--gray-3)",
                     color: state === "active" ? "var(--black)" : state === "done" ? "var(--green)" : state === "error" ? "var(--red)" : "var(--gray-5)",
                   }}>
-                    {state === "done" ? "✓" : state === "error" ? "!" : state === "active" ? s.icon : idx + 1}
+                    {state === "done" ? "✓" : state === "error" ? "!" : idx + 1}
                     {state === "active" && (
                       <span style={{ position: "absolute", inset: 0, borderRadius: "var(--r-sm)", border: "1px solid var(--accent)", animation: "ping 1.2s ease-out infinite" }} />
                     )}
@@ -616,7 +616,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           {buildLog.length > 0 && (
             <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: "var(--r)", background: "var(--gray-2)", border: "1px solid var(--gray-3)" }}>
               <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 10 }}>
-                🛠 Build Summary — Models &amp; Tools
+                Build Summary — Models & Tools
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {buildLog.map((line, i) => (

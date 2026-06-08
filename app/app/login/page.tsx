@@ -148,7 +148,7 @@ export default function LoginPage() {
           whiteSpace: "nowrap", flexShrink: 0,
           borderRight: "2px solid #f97316",
         }}>
-          ⚡ BREAKING
+          BREAKING
         </div>
         <div style={{
           flex: 1, padding: "0 20px",
@@ -324,7 +324,7 @@ export default function LoginPage() {
 
           {/* Security badges */}
           <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
-            {["🔒 OAuth 2.0", "🛡️ Mã hóa TLS", "✓ Google Verified"].map(b => (
+            {["OAuth 2.0", "Mã hóa TLS", "Google Verified"].map(b => (
               <div key={b} style={{
                 flex: 1, padding: "8px 10px", textAlign: "center",
                 background: "rgba(255,255,255,0.03)",
