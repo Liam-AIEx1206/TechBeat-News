@@ -17,7 +17,7 @@ type StageState = "pending" | "active" | "done" | "error";
 const STAGES: { key: StageKey; label: string; detail: string }[] = [
   { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP" },
   { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project" },
-  { key: "tts",         label: "Giọng đọc",      detail: "Edge TTS / gTTS / Gemini" },
+  { key: "tts",         label: "Giọng đọc",      detail: "OpenAI / Edge TTS" },
   { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ" },
   { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg" },
 ];
@@ -82,7 +82,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
     }
   }, [clientProgress, clientRendering, renderMode]);
 
-  // Tick interval for live timer display (only while running)
+    // Tick interval for live timer display (only while running)
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {
@@ -100,6 +100,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
     }, 100);
     return () => clearInterval(id);
   }, [running, totalStart, stageStart, stageStates]);
+
 
   function startStage(key: StageKey, message?: string) {
     const now = performance.now();
@@ -487,7 +488,11 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
               </button>
             )}
             {running && (
-              <button onClick={() => { abortRef.current?.abort(); cancelRender(); setRunning(false); }} className="btn-ghost"
+              <button onClick={() => { 
+                if (window.confirm("Hệ thống đang dựng video. Nếu huỷ bây giờ, tiến trình sẽ dừng lại và dữ liệu chưa hoàn tất sẽ bị mất.\n\nBạn có chắc chắn muốn huỷ không?")) {
+                  abortRef.current?.abort(); cancelRender(); setRunning(false); 
+                }
+              }} className="btn-ghost"
                 style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}>
                 Huỷ
               </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ScenePlan } from "@/types/scene";
 
 interface Props {
@@ -17,6 +17,8 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
   const [error, setError] = useState("");
   const [savedInfo, setSavedInfo] = useState<{ path: string; next: string } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+
 
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -169,9 +171,6 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
           <h2 className="text-lg font-semibold text-stone-900 mb-1">
             Đang sinh composition HTML...
           </h2>
-          <p className="text-xs text-stone-500">
-            Gemini đang viết GSAP timeline + layout cho {scenePlan.scenes.length} scene
-          </p>
         </div>
         {streamBuffer && (
           <div className="bg-stone-900 text-orange-300 rounded-xl p-4 max-h-96 overflow-auto">

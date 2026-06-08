@@ -96,52 +96,6 @@ DEFAULT_PREMADE_VOICES: list[dict[str, str]] = [
         "traits": "Mượt mà, truyền cảm, dịu dàng",
         "service": "Microsoft Edge"
     },
-    # Gemini Premium AI Voices (Pinky API via OpenAI key)
-    {
-        "voice_id": "gemini-3.1-flash-tts-preview:Puck",
-        "name": "Gemini Puck",
-        "gender": "male",
-        "description": "Giọng Nam Premium 3.1 ấm áp, cực kỳ tự nhiên — Google Gemini",
-        "actor": "Puck",
-        "traits": "Ấm áp, tự nhiên, chuyên nghiệp",
-        "service": "Google Gemini"
-    },
-    {
-        "voice_id": "gemini-3.1-flash-tts-preview:Aoede",
-        "name": "Gemini Aoede",
-        "gender": "female",
-        "description": "Giọng Nữ Premium 3.1 truyền cảm, mượt mà — Google Gemini",
-        "actor": "Aoede",
-        "traits": "Mượt mà, truyền cảm, sang trọng",
-        "service": "Google Gemini"
-    },
-    {
-        "voice_id": "gemini-3.1-flash-tts-preview:Charon",
-        "name": "Gemini Charon",
-        "gender": "male",
-        "description": "Giọng Nam Premium 3.1 trầm sâu, trung thực — Google Gemini",
-        "actor": "Charon",
-        "traits": "Trầm sâu, chững chạc, uy tín",
-        "service": "Google Gemini"
-    },
-    {
-        "voice_id": "gemini-3.1-flash-tts-preview:Fenrir",
-        "name": "Gemini Fenrir",
-        "gender": "male",
-        "description": "Giọng Nam Premium 3.1 mạnh mẽ, lôi cuốn — Google Gemini",
-        "actor": "Fenrir",
-        "traits": "Mạnh mẽ, năng động, lôi cuốn",
-        "service": "Google Gemini"
-    },
-    {
-        "voice_id": "gemini-3.1-flash-tts-preview:Kore",
-        "name": "Gemini Kore",
-        "gender": "female",
-        "description": "Giọng Nữ Premium 3.1 thanh thoát, êm dịu — Google Gemini",
-        "actor": "Kore",
-        "traits": "Thanh thoát, dịu dàng, trong trẻo",
-        "service": "Google Gemini"
-    },
 ]
 
 
@@ -175,11 +129,6 @@ async def get_voice_demo(voice_id: str) -> dict[str, str]:
         "openai-shimmer": "Xin chào! Tôi là Shimmer, giọng đọc nữ chuyên nghiệp, rõ ràng và vô cùng tin cậy từ OpenAI TTS. Chúc bạn thành công.",
         "edge-vi-VN-NamMinhNeural": "Xin chào! Tôi là Nam Minh, trợ lý giọng nói trầm ấm và vô cùng tự nhiên đến từ Microsoft Edge. Tôi đã sẵn sàng đồng hành cùng video của bạn.",
         "edge-vi-VN-HoaiMyNeural": "Xin chào! Tôi là Hoài My, trợ lý giọng nói mượt mà và truyền cảm đến từ Microsoft Edge. Chúc bạn một ngày làm việc hiệu quả.",
-        "gemini-3.1-flash-tts-preview:Puck": "Chào bạn! Tôi là Puck, giọng đọc nam trầm ấm và vô cùng tự nhiên từ Google Gemini. Hãy để tôi giúp câu chuyện của bạn sinh động hơn.",
-        "gemini-3.1-flash-tts-preview:Aoede": "Chào bạn! Tôi là Aoede, giọng nữ mượt mà, truyền cảm và sang trọng từ Google Gemini. Thật tuyệt vời khi được đồng hành cùng bạn.",
-        "gemini-3.1-flash-tts-preview:Charon": "Chào bạn! Tôi là Charon, giọng nam trầm sâu, chững chạc và uy tín từ Google Gemini. Hãy cùng tôi xây dựng những nội dung chất lượng.",
-        "gemini-3.1-flash-tts-preview:Fenrir": "Chào bạn! Tôi là Fenrir, giọng nam mạnh mẽ, năng động và lôi cuốn từ Google Gemini. Hãy sẵn sàng cùng tôi tạo nên những thước phim đột phá.",
-        "gemini-3.1-flash-tts-preview:Kore": "Chào bạn! Tôi là Kore, giọng nữ thanh thoát, êm dịu và trong trẻo từ Google Gemini. Rất hân hạnh được hỗ trợ bạn trong dự án này.",
     }
 
     matched_voice = next((v for v in DEFAULT_PREMADE_VOICES if v["voice_id"] == voice_id), None)

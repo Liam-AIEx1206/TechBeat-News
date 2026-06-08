@@ -137,7 +137,7 @@ export function VoicePicker({ value, onChange }: Props) {
         }}>
           <div style={{ fontWeight: 700, marginBottom: 4 }}>Trải nghiệm chất lượng âm thanh Pro-Max</div>
           <div style={{ color: "var(--gray-6)" }}>
-            Bấm nút <strong style={{ color: "var(--accent)" }}>Play</strong> trên các thẻ giọng đọc để nghe thử demo chất giọng (Microsoft Edge & Google Gemini).
+            Bấm nút <strong style={{ color: "var(--accent)" }}>Play</strong> trên các thẻ giọng đọc để nghe thử demo chất giọng.
           </div>
         </div>
       )}

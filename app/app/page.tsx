@@ -41,6 +41,21 @@ export default function Home() {
   const [streamBuffer, setStreamBuffer] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
+  const hasUnsavedProgress = stage === "generating" || stage === "preview" || stage === "htmlPreview" || stage === "build" || (stage === "input" && isLoading);
+
+  // Global beforeunload listener to protect against accidental tab closing/refreshing
+  useEffect(() => {
+    if (!hasUnsavedProgress) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      const msg = "Tiến trình hiện tại sẽ bị mất nếu bạn rời khỏi hoặc tải lại trang. Bạn có chắc chắn muốn thoát không?";
+      e.returnValue = msg;
+      return msg;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedProgress]);
+
   function go(next: Stage) {
     if (next === stage) return;
     setStage(next);
@@ -136,7 +151,12 @@ export default function Home() {
       <CurtainSweep stageKey={stage} accent={scenePlan?.theme ? getTheme(scenePlan.theme).accent : "#f97316"} />
 
       {stage !== "dashboard" && (
-        <AppHeader stage={stage} onHome={handleHome} onReset={handleReset} />
+        <AppHeader 
+          stage={stage} 
+          onHome={handleHome} 
+          onReset={handleReset} 
+          hasUnsavedProgress={hasUnsavedProgress} 
+        />
       )}
 
       <StageTransition stageKey={stage}>
@@ -174,7 +194,17 @@ export default function Home() {
 
 /* ─────────────────────────  HEADER  ───────────────────────── */
 
-function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => void; onReset: () => void }) {
+function AppHeader({ 
+  stage, 
+  onHome, 
+  onReset, 
+  hasUnsavedProgress 
+}: { 
+  stage: Stage; 
+  onHome: () => void; 
+  onReset: () => void; 
+  hasUnsavedProgress: boolean; 
+}) {
   const steps: { key: Stage; num: number; label: string }[] = [
     { key: "input",       num: 1, label: "Nhập" },
     { key: "preview",     num: 2, label: "Kịch bản" },
@@ -187,7 +217,12 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
   return (
     <header className="site-header">
       <button
-        onClick={onHome}
+        onClick={() => {
+          if (hasUnsavedProgress) {
+            if (!window.confirm("Tiến trình hiện tại sẽ bị mất nếu bạn quay về trang chủ. Bạn có chắc chắn muốn thoát không?")) return;
+          }
+          onHome();
+        }}
         style={{
           display: "flex", alignItems: "center", gap: 12,
           background: "transparent", border: "none", cursor: "pointer", color: "inherit",
@@ -240,7 +275,14 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {stage !== "input" && (
-          <button onClick={onReset} className="btn-ghost" style={{ fontSize: 11 }}>
+          <button 
+            onClick={() => {
+              if (hasUnsavedProgress) {
+                if (!window.confirm("Tiến trình hiện tại sẽ bị mất nếu bạn bắt đầu lại. Bạn có chắc chắn muốn hủy không?")) return;
+              }
+              onReset();
+            }} 
+            className="btn-ghost" style={{ fontSize: 11 }}>
             ← Bắt đầu lại
           </button>
         )}
@@ -930,7 +972,11 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
 
       <div className="fade-up" style={{ display: "flex", justifyContent: "center", marginTop: 32, animationDelay: "0.3s" }}>
         <button
-          onClick={onCancel}
+          onClick={() => {
+            if (window.confirm("AI đang viết kịch bản. Nếu huỷ bây giờ, toàn bộ tiến trình này sẽ bị mất.\n\nBạn có chắc chắn muốn huỷ không?")) {
+              onCancel();
+            }
+          }}
           className="btn-ghost"
           style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}
         >
