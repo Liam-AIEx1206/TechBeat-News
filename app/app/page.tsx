@@ -512,10 +512,10 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           }}
         >
           <span style={{ display: "block" }}>
-            <StaggeredText text="Tin công nghệ" />
+            <StaggeredText text="Tech News" />
           </span>
           <span style={{ display: "block" }}>
-            <StaggeredText text="thành video" accentWord="video" />
+            <StaggeredText text="into AI Videos" accentWord="AI Videos" />
           </span>
         </h1>
 

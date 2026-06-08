@@ -9,6 +9,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const email = user?.email;
+        if (email && email.endsWith("@xgamevn.com")) {
+          return true;
+        }
+        return false;
+      }
+      return true;
+    },
     async jwt({ token, account }) {
       if (account) {
         token.accessToken = account.id_token;
