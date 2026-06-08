@@ -108,7 +108,7 @@ export function UserMenu() {
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--gray-2)"; (e.currentTarget as HTMLElement).style.color = "var(--white)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--gray-6)"; }}
             >
-              <span>📋</span> Lịch sử video
+              Lịch sử video
             </a>
 
             <div style={{ height: 1, background: "var(--gray-3)", margin: "6px 0" }} />

@@ -246,7 +246,7 @@ export default function HistoryPage() {
             </p>
             {!search && (
               <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none" }}>
-                <span>▶ Bắt đầu tạo video ngay</span>
+                <span>Bắt đầu tạo video ngay</span>
               </a>
             )}
           </div>
@@ -317,7 +317,7 @@ export default function HistoryPage() {
                               padding: "8px 16px", fontSize: 11, background: "var(--accent)", color: "var(--black)"
                             }}
                           >
-                            <span>▶ Xem Video</span>
+                            <span>Xem Video</span>
                           </button>
 
                           <button
@@ -443,7 +443,7 @@ export default function HistoryPage() {
                       color: copied ? "var(--white)" : "var(--black)"
                     }}
                   >
-                    <span>{copied ? "✓ Đã copy!" : "📋 Copy mã HTML"}</span>
+                    <span>{copied ? "✓ Đã copy!" : "Copy mã HTML"}</span>
                   </button>
                   <button onClick={() => setActiveHtmlUrl(null)} className="btn-ghost" style={{ padding: "6px 10px", fontSize: 11 }}>
                     ✕ Đóng

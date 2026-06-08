@@ -508,7 +508,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              ▶ Bắt đầu tạo video
+              Bắt đầu tạo video
               <span style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 20, height: 20, borderRadius: "50%",
@@ -532,7 +532,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               textDecoration: "none",
             }}
           >
-            📋 Lịch sử video
+            Lịch sử video
           </motion.a>
         </motion.div>
 
@@ -558,7 +558,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 8px var(--accent)" }} />
                 <h3 style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)" }}>
-                  📺 BẢN TIN MỚI NHẤT HÔM NAY
+                  BẢN TIN MỚI NHẤT HÔM NAY
                 </h3>
               </div>
               <a href="/history" style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>
@@ -594,7 +594,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                     className="scene-card"
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 12, color: "var(--accent)" }}>▶</span>
+                      <span style={{ fontSize: 12, color: "var(--accent)" }}></span>
                       <h4 style={{ fontSize: 12, fontWeight: 700, color: "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0, padding: 0 }}>
                         {h.title}
                       </h4>
