@@ -13,12 +13,12 @@ interface Props {
 type StageKey = "composition" | "save" | "tts" | "whisper" | "render";
 type StageState = "pending" | "active" | "done" | "error";
 
-const STAGES: { key: StageKey; label: string; detail: string; icon: string }[] = [
-  { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP",    icon: "🎨" },
-  { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project",     icon: "💾" },
-  { key: "tts",         label: "Giọng đọc",      detail: "Edge TTS / gTTS / Gemini",          icon: "🎙️" },
-  { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ", icon: "🎤" },
-  { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg",              icon: "🎬" },
+const STAGES: { key: StageKey; label: string; detail: string }[] = [
+  { key: "composition", label: "Sinh HTML",      detail: "LLM viết composition + GSAP" },
+  { key: "save",        label: "Lưu file",       detail: "Ghi index.html vào project" },
+  { key: "tts",         label: "Giọng đọc",      detail: "Edge TTS / gTTS / Gemini" },
+  { key: "whisper",     label: "Nhận dạng",      detail: "Whisper API — timestamp từng từ" },
+  { key: "render",      label: "Render MP4",     detail: "Chromium + FFmpeg" },
 ];
 
 function fmtMs(ms: number): string {
@@ -314,7 +314,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             setRenderLog(p => [...p, `⚠ ${msg}`]);
             setStateOnly("composition", "active", msg.slice(0, 80));
           } else if (ev.type === "done") {
-            finishStage("render", "done", "✓ Hoàn tất");
+            finishStage("render", "done", "Hoàn tất");
             setProgress(100);
             if (ev.videoUrl) setVideoUrl(ev.videoUrl as string);
             if (ev.videoPath) setVideoPath(ev.videoPath as string);
@@ -382,8 +382,11 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {error && (
         <div className="fade-up px-4 py-3 rounded-xl text-sm"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
-          ⚠ {error}
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          {error}
         </div>
       )}
 
@@ -391,8 +394,13 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
       <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-3)", borderRadius: "var(--r-xl)", padding: "clamp(20px,3vw,32px)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
           <div>
-            <div className="hero-eyebrow" style={{ marginBottom: 10 }}>
-              {done ? "✓ Video sẵn sàng" : running ? "Đang dựng..." : "Chuẩn bị dựng"}
+            <div className="hero-eyebrow" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              {done && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {done ? "Video sẵn sàng" : running ? "Đang dựng..." : "Chuẩn bị dựng"}
             </div>
             <h2 style={{ fontSize: "clamp(20px,2.5vw,32px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 8 }}>
               {scenePlan.title}
@@ -447,7 +455,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                   }}
                   title={!supported ? "Trình duyệt không hỗ trợ WebCodecs" : "Dựng trực tiếp trên máy của bạn (WebCodecs - Nhanh, không đợi hàng đợi)"}
                 >
-                  ⚡ Client
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    Client
+                  </span>
                 </button>
                 <button
                   onClick={() => setRenderMode("server")}
@@ -465,7 +478,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                   }}
                   title="Dựng trên máy chủ VPS (Playwright + FFmpeg - Dành cho máy yếu hoặc di động)"
                 >
-                  ☁ Server
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+                    </svg>
+                    Server
+                  </span>
                 </button>
               </div>
             )}
@@ -473,7 +491,13 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
             {!running && (
               <button onClick={build} className="btn-primary magnetic">
-                <span>🎬 {done ? "Dựng lại" : "Bắt đầu dựng"}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="23 7 16 12 23 17 23 7" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                  </svg>
+                  {done ? "Dựng lại" : "Bắt đầu dựng"}
+                </span>
               </button>
             )}
             {running && (
@@ -503,7 +527,11 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                     background: state === "active" ? "var(--accent)" : state === "done" ? "rgba(34,197,94,0.15)" : state === "error" ? "rgba(239,68,68,0.15)" : "var(--gray-3)",
                     color: state === "active" ? "var(--black)" : state === "done" ? "var(--green)" : state === "error" ? "var(--red)" : "var(--gray-5)",
                   }}>
-                    {state === "done" ? "✓" : state === "error" ? "!" : state === "active" ? s.icon : idx + 1}
+                    {state === "done" ? (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : state === "error" ? "!" : idx + 1}
                     {state === "active" && (
                       <span style={{ position: "absolute", inset: 0, borderRadius: "var(--r-sm)", border: "1px solid var(--accent)", animation: "ping 1.2s ease-out infinite" }} />
                     )}
@@ -587,7 +615,12 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
         <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-3)", borderRadius: "var(--r-xl)", padding: "clamp(20px,3vw,32px)" }} className="fade-up">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
             <div>
-              <div className="hero-eyebrow" style={{ marginBottom: 8 }}>✓ Video đã render xong</div>
+              <div className="hero-eyebrow" style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Video đã render xong
+              </div>
               <p style={{ fontSize: 15, fontWeight: 800, color: "var(--white)" }}>{scenePlan.title}.mp4</p>
               <p style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 6 }}>
                 Tổng thời gian dựng: <span style={{ color: "#22c55e", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{fmtMs(totalElapsed)}</span>
@@ -607,16 +640,22 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           </div>
           <video src={fullVideoUrl} controls style={{ width: "100%", borderRadius: "var(--r-lg)", background: "#000", aspectRatio: "16/9" }} />
           {videoPath && (
-            <p style={{ fontSize: 10, marginTop: 12, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "var(--gray-2)", padding: "8px 12px", borderRadius: "var(--r-sm)", wordBreak: "break-all" }}>
-              📁 {videoPath}
+            <p style={{ fontSize: 10, marginTop: 12, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "var(--gray-2)", padding: "8px 12px", borderRadius: "var(--r-sm)", wordBreak: "break-all", display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+              {videoPath}
             </p>
           )}
 
           {/* Build Summary */}
           {buildLog.length > 0 && (
             <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: "var(--r)", background: "var(--gray-2)", border: "1px solid var(--gray-3)" }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 10 }}>
-                🛠 Build Summary — Models &amp; Tools
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+                Build Summary — Models &amp; Tools
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {buildLog.map((line, i) => (

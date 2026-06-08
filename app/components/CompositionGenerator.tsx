@@ -133,8 +133,11 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
     return (
       <div className="bg-white rounded-2xl border border-orange-100 p-8 shadow-sm shadow-orange-500/5">
         <div className="text-center max-w-md mx-auto">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-orange-500/30">
-            🎬
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7" />
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+            </svg>
           </div>
           <h2 className="text-xl font-bold text-stone-900 mb-2">
             Sẵn sàng sinh composition
@@ -194,8 +197,11 @@ export function CompositionGenerator({ scenePlan, onBack }: Props) {
 
       {savedInfo && (
         <div className="px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl">
-          <p className="text-sm font-semibold text-orange-900 mb-1">
-            ✓ Đã ghi vào my-video/index.html
+          <p className="text-sm font-semibold text-orange-900 mb-1 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Đã ghi vào my-video/index.html
           </p>
           <p className="text-xs text-stone-600 mb-2 font-mono break-all">{savedInfo.path}</p>
           <p className="text-xs text-stone-700 mb-1">Bước tiếp theo, mở terminal và chạy:</p>

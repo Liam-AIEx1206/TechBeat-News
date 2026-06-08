@@ -133,7 +133,13 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
             >
               Không dùng ảnh
             </button>
-            <button onClick={onClose} className="btn-ghost text-xs px-3 py-1.5">✕ Đóng</button>
+            <button onClick={onClose} className="btn-ghost text-xs px-3 py-1.5 inline-flex items-center gap-1.5">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              Đóng
+            </button>
           </div>
         </div>
 
@@ -150,7 +156,21 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                 borderBottom: tab === t ? "2px solid var(--accent)" : "2px solid transparent",
               }}
             >
-              {t === "search" ? "🔍 Tìm kiếm (Openverse)" : "📁 Upload ảnh"}
+              {t === "search" ? (
+                <span className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  Tìm kiếm (Openverse)
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  Upload ảnh
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -180,8 +200,11 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
             <div className="flex-1 overflow-auto p-4 min-h-0">
               {error && (
                 <div className="mb-3 px-4 py-3 rounded-xl text-sm"
-                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)" }}>
-                  ⚠ {error}
+                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  {error}
                 </div>
               )}
 
@@ -219,8 +242,12 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                 </div>
               )}
               {!loading && results.length === 0 && !error && (
-                <div className="text-center py-14" style={{ color: "var(--text-3)" }}>
-                  <div className="text-4xl mb-3">🔍</div>
+                <div className="text-center py-14" style={{ color: "var(--text-3)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div className="mb-3" style={{ color: "var(--text-3)", opacity: 0.5 }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </div>
                   <p className="text-sm">Nhập từ khóa rồi bấm Tìm</p>
                   <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Hoặc chuyển sang tab Upload để dùng ảnh của bạn</p>
                 </div>
@@ -263,8 +290,12 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                         <div
                           className={`absolute inset-0 flex items-center justify-center transition-opacity ${isPicked ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                         >
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-black"
-                            style={{ background: "rgba(249,115,22,0.95)", boxShadow: "0 4px 12px rgba(249,115,22,0.5)" }}>✓</div>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                            style={{ background: "rgba(249,115,22,0.95)", boxShadow: "0 4px 12px rgba(249,115,22,0.5)" }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
                         </div>
                       </button>
                     );
@@ -291,10 +322,13 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                   </button>
                   <button
                     onClick={confirmSearch}
-                    className="btn-primary text-sm px-6"
+                    className="btn-primary text-sm px-6 inline-flex items-center gap-1.5"
                     style={{ boxShadow: "0 8px 24px -4px rgba(249,115,22,0.5)" }}
                   >
-                    ✓ Dùng ảnh này
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Dùng ảnh này
                   </button>
                 </div>
               </div>
@@ -309,8 +343,11 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
             <div className="flex-1 overflow-auto p-5 flex flex-col gap-4">
               {error && (
                 <div className="px-4 py-3 rounded-xl text-sm"
-                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)" }}>
-                  ⚠ {error}
+                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  {error}
                 </div>
               )}
 
@@ -329,7 +366,13 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); e.target.value = ""; }}
                   />
-                  <div className="text-5xl">🖼️</div>
+                  <div className="text-stone-300 opacity-40">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </div>
                   <div>
                     <p className="text-sm font-bold mb-1" style={{ color: "var(--text-1)" }}>Kéo ảnh vào đây hoặc click để chọn</p>
                     <p className="text-xs" style={{ color: "var(--text-3)" }}>JPG · PNG · WebP · GIF · tối đa 10MB</p>
@@ -383,10 +426,13 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                   </button>
                   <button
                     onClick={confirmUpload}
-                    className="btn-primary text-sm px-6"
+                    className="btn-primary text-sm px-6 inline-flex items-center gap-1.5"
                     style={{ boxShadow: "0 8px 24px -4px rgba(249,115,22,0.5)" }}
                   >
-                    ✓ Dùng ảnh này
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Dùng ảnh này
                   </button>
                 </div>
               </div>

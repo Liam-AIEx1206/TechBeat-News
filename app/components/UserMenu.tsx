@@ -108,7 +108,13 @@ export function UserMenu() {
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--gray-2)"; (e.currentTarget as HTMLElement).style.color = "var(--white)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--gray-6)"; }}
             >
-              <span>📋</span> Lịch sử video
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "currentColor", flexShrink: 0 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              Lịch sử video
             </a>
 
             <div style={{ height: 1, background: "var(--gray-3)", margin: "6px 0" }} />
@@ -125,7 +131,12 @@ export function UserMenu() {
               onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <span>🚪</span> Đăng xuất
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "currentColor", flexShrink: 0 }}>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Đăng xuất
             </button>
           </div>
         </div>

@@ -205,15 +205,19 @@ export default function HistoryPage() {
             </div>
 
             {/* Search Input bar */}
-            <div style={{ width: "100%", maxWidth: 300 }}>
+            <div style={{ width: "100%", maxWidth: 300, position: "relative" }}>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="🔍 Tìm kiếm tiêu đề bản tin..."
+                placeholder="Tìm kiếm tiêu đề bản tin..."
                 className="input-dark"
-                style={{ padding: "10px 16px", fontSize: 12 }}
+                style={{ padding: "10px 16px 10px 36px", fontSize: 12, width: "100%" }}
               />
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--gray-5)" }}>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
             </div>
           </div>
         </motion.div>
@@ -228,9 +232,15 @@ export default function HistoryPage() {
           <div style={{
             padding: "24px", borderRadius: "var(--r)",
             background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)",
-            color: "var(--red)", textAlign: "center"
+            color: "var(--red)", textAlign: "center",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8
           }}>
-            ⚠ Lỗi: {error}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            Lỗi: {error}
           </div>
         ) : filtered.length === 0 ? (
           <div style={{
@@ -245,8 +255,11 @@ export default function HistoryPage() {
               {search ? "Thử tìm kiếm với từ khóa khác." : "Hãy tiến hành tạo bản tin đầu tiên ở trang chủ để lưu lịch sử!"}
             </p>
             {!search && (
-              <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none" }}>
-                <span>▶ Bắt đầu tạo video ngay</span>
+              <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="6 3 20 12 6 21" />
+                </svg>
+                <span>Bắt đầu tạo video ngay</span>
               </a>
             )}
           </div>
@@ -257,7 +270,7 @@ export default function HistoryPage() {
                 {/* Date header indicator */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                   <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)" }}>
-                    📅 {day}
+                    {day}
                   </h3>
                   <div className="divider-dotted" style={{ flex: 1 }} />
                   <span style={{ fontSize: 10, color: "var(--gray-5)", fontWeight: 700 }}>
@@ -290,10 +303,14 @@ export default function HistoryPage() {
                         <div style={{ flex: 1, minWidth: 280 }}>
                           <span style={{
                             fontFamily: "var(--font-mono)", fontSize: 10,
-                            color: "var(--accent2)", display: "block", marginBottom: 4,
+                            color: "var(--accent2)", display: "flex", alignItems: "center", gap: 4, marginBottom: 4,
                             fontWeight: 700
                           }}>
-                            ⏱️ {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                           </span>
                           <h4 style={{ fontSize: 14, fontWeight: 800, color: "var(--white)", margin: 0, lineHeight: 1.3 }}>
                             {item.title}
@@ -303,8 +320,12 @@ export default function HistoryPage() {
                         {/* Control buttons */}
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                           {/* Duration badge */}
-                          <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
-                            ⏱️ {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                          <div className="badge badge-accent" style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
                           </div>
 
                           <button
@@ -314,10 +335,14 @@ export default function HistoryPage() {
                             }}
                             className="btn-primary"
                             style={{
-                              padding: "8px 16px", fontSize: 11, background: "var(--accent)", color: "var(--black)"
+                              padding: "8px 16px", fontSize: 11, background: "var(--accent)", color: "var(--black)",
+                              display: "inline-flex", alignItems: "center", gap: 6
                             }}
                           >
-                            <span>▶ Xem Video</span>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                              <polygon points="6 3 20 12 6 21" />
+                            </svg>
+                            <span>Xem Video</span>
                           </button>
 
                           <button
@@ -326,9 +351,13 @@ export default function HistoryPage() {
                               setActiveHtmlTitle(item.title);
                             }}
                             className="btn-ghost"
-                            style={{ padding: "8px 14px", fontSize: 11 }}
+                            style={{ padding: "8px 14px", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 6 }}
                           >
-                            💻 Xem mã HTML
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="16 18 22 12 16 6" />
+                              <polyline points="8 6 2 12 8 18" />
+                            </svg>
+                            Xem mã HTML
                           </button>
 
                           <button
@@ -336,10 +365,15 @@ export default function HistoryPage() {
                             className="btn-ghost"
                             style={{
                               padding: "8px 10px", fontSize: 11,
-                              borderColor: "rgba(239,68,68,0.2)", color: "var(--red)"
+                              borderColor: "rgba(239,68,68,0.2)", color: "var(--red)",
+                              display: "inline-flex", alignItems: "center", gap: 6
                             }}
                           >
-                            ✕ Xóa
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            Xóa
                           </button>
                         </div>
                       </motion.div>
@@ -386,7 +420,13 @@ export default function HistoryPage() {
                   {activeVideoTitle}
                 </h3>
                 <button onClick={() => setActiveVideoUrl(null)} className="btn-ghost" style={{ padding: "4px 10px" }}>
-                  ✕ Đóng
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    Đóng
+                  </span>
                 </button>
               </div>
               <video src={activeVideoUrl} controls autoPlay style={{ width: "100%", display: "block" }} />
@@ -440,13 +480,32 @@ export default function HistoryPage() {
                     style={{
                       padding: "6px 12px", fontSize: 11,
                       background: copied ? "var(--green)" : "var(--accent)",
-                      color: copied ? "var(--white)" : "var(--black)"
+                      color: copied ? "var(--white)" : "var(--black)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6
                     }}
                   >
-                    <span>{copied ? "✓ Đã copy!" : "📋 Copy mã HTML"}</span>
+                    {copied ? (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    )}
+                    <span>{copied ? "Đã copy!" : "Copy mã HTML"}</span>
                   </button>
                   <button onClick={() => setActiveHtmlUrl(null)} className="btn-ghost" style={{ padding: "6px 10px", fontSize: 11 }}>
-                    ✕ Đóng
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      Đóng
+                    </span>
                   </button>
                 </div>
               </div>

@@ -113,10 +113,11 @@ function ThemeCard({ theme, active, onClick }: { theme: Theme; active: boolean; 
             width: 22, height: 22, borderRadius: "50%",
             background: theme.accent, color: theme.bg,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: 900,
             boxShadow: `0 0 12px ${theme.accent}`,
           }}>
-            ✓
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
         )}
       </div>

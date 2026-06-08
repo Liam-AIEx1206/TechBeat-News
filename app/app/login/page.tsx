@@ -148,7 +148,7 @@ export default function LoginPage() {
           whiteSpace: "nowrap", flexShrink: 0,
           borderRight: "2px solid #f97316",
         }}>
-          ⚡ BREAKING
+          BREAKING
         </div>
         <div style={{
           flex: 1, padding: "0 20px",
@@ -324,13 +324,20 @@ export default function LoginPage() {
 
           {/* Security badges */}
           <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
-            {["🔒 OAuth 2.0", "🛡️ Mã hóa TLS", "✓ Google Verified"].map(b => (
-              <div key={b} style={{
-                flex: 1, padding: "8px 10px", textAlign: "center",
+            {[
+              { label: "OAuth 2.0", icon: <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> },
+              { label: "Mã hóa TLS", icon: <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> },
+              { label: "Google Verified", icon: <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg> }
+            ].map(b => (
+              <div key={b.label} style={{
+                flex: 1, padding: "8px 10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 6, fontSize: 10, color: "#555", fontWeight: 600,
-              }}>{b}</div>
+              }}>
+                {b.icon}
+                <span>{b.label}</span>
+              </div>
             ))}
           </div>
 
@@ -362,7 +369,10 @@ export default function LoginPage() {
         padding: "0 24px", gap: 24,
         fontSize: 10, color: "#555", fontFamily: "monospace",
       }}>
-        <span style={{ color: "#f97316", fontWeight: 700 }}>● TECHBEAT AI</span>
+        <span style={{ color: "#f97316", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#f97316" }} />
+          TECHBEAT AI
+        </span>
         <span>GPT-4o + HyperFrames + gTTS</span>
         <span style={{ marginLeft: "auto" }}>1920×1080 · 30fps · Tiếng Việt</span>
         <span>© 2026</span>

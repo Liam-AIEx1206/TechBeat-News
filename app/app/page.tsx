@@ -176,10 +176,10 @@ export default function Home() {
 
 function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => void; onReset: () => void }) {
   const steps: { key: Stage; num: number; label: string }[] = [
-    { key: "input",       num: 1, label: "Nhập" },
-    { key: "preview",     num: 2, label: "Kịch bản" },
+    { key: "input", num: 1, label: "Nhập" },
+    { key: "preview", num: 2, label: "Kịch bản" },
     { key: "htmlPreview", num: 3, label: "Xem trước" },
-    { key: "build",       num: 4, label: "Dựng" },
+    { key: "build", num: 4, label: "Dựng" },
   ];
   const order: Stage[] = ["input", "generating", "preview", "htmlPreview", "build"];
   const cur = order.indexOf(stage);
@@ -571,7 +571,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
                 const videoUrl = h.video_url || "";
                 const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
-                
+
                 return (
                   <div
                     key={h.id}

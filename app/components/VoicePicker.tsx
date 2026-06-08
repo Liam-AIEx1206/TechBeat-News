@@ -135,7 +135,14 @@ export function VoicePicker({ value, onChange }: Props) {
           color: "var(--accent3)",
           fontSize: 12, lineHeight: 1.7,
         }}>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>💡 Trải nghiệm chất lượng âm thanh Pro-Max</div>
+          <div style={{ fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}>
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A7 7 0 0 0 4 8c0 1.3.5 2.6 1.5 3.5.7.8 1.3 1.5 1.5 2.5" />
+              <line x1="9" y1="18" x2="15" y2="18" />
+              <line x1="10" y1="22" x2="14" y2="22" />
+            </svg>
+            Trải nghiệm chất lượng âm thanh Pro-Max
+          </div>
           <div style={{ color: "var(--gray-6)" }}>
             Bấm nút <strong style={{ color: "var(--accent)" }}>Play</strong> trên các thẻ giọng đọc để nghe thử demo chất giọng (Microsoft Edge & Google Gemini).
           </div>
@@ -148,7 +155,12 @@ export function VoicePicker({ value, onChange }: Props) {
           background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)",
           color: "var(--red)", fontSize: 12, lineHeight: 1.6,
         }}>
-          ⚠ Lỗi nạp custom voice: {data.error}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            Lỗi nạp custom voice: {data.error}
+          </div>
         </div>
       )}
 
@@ -372,8 +384,14 @@ function VoiceCard({
             color: "var(--accent)",
             textTransform: "uppercase",
             letterSpacing: "0.08em",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
           }}>
-            Đang Chọn ✓
+            Đang Chọn
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </span>
         ) : (
           <span style={{ fontSize: 10, color: "var(--gray-6)" }}>Chọn giọng</span>
