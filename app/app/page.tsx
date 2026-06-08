@@ -89,7 +89,7 @@ export default function Home() {
             setStreamBuffer((prev) => `[!] ${event.message}\n\n${prev}`);
           } else if (event.type === "done" && event.scenePlan) {
             if (event.llmProvider || event.llmModel) {
-              setStreamBuffer(prev => prev + `\n\n✅ Kịch bản: ${event.llmProvider ?? ""}/${event.llmModel ?? ""}`);
+              setStreamBuffer(prev => prev + `\n\nKịch bản: ${event.llmProvider ?? ""}/${event.llmModel ?? ""}`);
             }
             setScenePlan(event.scenePlan as ScenePlan);
             go("preview");
@@ -227,7 +227,11 @@ function AppHeader({ stage, onHome, onReset }: { stage: Stage; onHome: () => voi
                     background: cls === "active" ? "rgba(0,0,0,0.2)" : cls === "done" ? "rgba(249,115,22,0.15)" : "var(--gray-3)",
                     color: cls === "active" ? "var(--black)" : "inherit",
                   }}>
-                    {isDone ? "✓" : s.num}
+                    {isDone ? (
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : s.num}
                   </span>
                   {s.label}
                 </div>
@@ -429,7 +433,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           <div className="ticker-track">
             {[...TICKER_ITEMS, ...TICKER_ITEMS].map((it, i) => (
               <div key={i} className="ticker-item">
-                <span>●</span> {it}
+                <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: "currentColor", opacity: 0.6, verticalAlign: "middle", marginRight: 8 }}></span> {it}
               </div>
             ))}
           </div>
@@ -508,7 +512,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              ▶ Bắt đầu tạo video
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline", marginRight: 6 }}><polygon points="6 3 20 12 6 21" /></svg>Bắt đầu tạo video
               <span style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 20, height: 20, borderRadius: "50%",
@@ -532,7 +536,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               textDecoration: "none",
             }}
           >
-            📋 Lịch sử video
+            Lịch sử video
           </motion.a>
         </motion.div>
 
@@ -558,7 +562,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 8px var(--accent)" }} />
                 <h3 style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)" }}>
-                  📺 BẢN TIN MỚI NHẤT HÔM NAY
+                  BẢN TIN MỚI NHẤT HÔM NAY
                 </h3>
               </div>
               <a href="/history" style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>
@@ -594,7 +598,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                     className="scene-card"
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 12, color: "var(--accent)" }}>▶</span>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ color: "var(--accent)", flexShrink: 0, display: "inline" }}><polygon points="6 3 20 12 6 21" /></svg>
                       <h4 style={{ fontSize: 12, fontWeight: 700, color: "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0, padding: 0 }}>
                         {h.title}
                       </h4>
@@ -651,7 +655,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                   className="btn-ghost"
                   style={{ padding: "4px 10px", fontSize: 11 }}
                 >
-                  ✕ Đóng
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>Đóng</span>
                 </button>
               </div>
               <video src={activeVideoUrl} controls autoPlay style={{ width: "100%", display: "block" }} />
@@ -805,7 +809,7 @@ function InputStage({
               color: "var(--red)", fontSize: 13,
             }}
           >
-            ⚠ {error}
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>{error}</span>
           </motion.div>
         )}
 
@@ -934,7 +938,7 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
           className="btn-ghost"
           style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}
         >
-          ✕ Huỷ và quay lại
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>Huỷ và quay lại</span>
         </button>
       </div>
     </main>

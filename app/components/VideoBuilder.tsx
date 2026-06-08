@@ -170,7 +170,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
               }
               else if (k === "tts" && ev.scene) setStateOnly(k, "active", `Phân cảnh ${ev.scene}/${ev.of}...`);
             } else if (ev.status === "done") {
-              finishStage(k, "done", ev.path ? `✓ ${(ev.path as string).split(/[\\/]/).pop()}` : "✓ Hoàn tất");
+              finishStage(k, "done", ev.path ? (ev.path as string).split(/[\\/]/).pop() : "Hoàn tất");
               if (k === "tts") {
                 if (ev.engine) setTtsEngine(ev.engine as string);
                 if (ev.actualDuration) setActualDuration(ev.actualDuration as number);
@@ -260,7 +260,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
 
         if (!uploadRes.success) throw new Error("Lưu video trên server thất bại");
 
-        finishStage("render", "done", `✓ Hoàn tất (${uploadRes.fileSize} MB)`);
+        finishStage("render", "done", `Hoàn tất (${uploadRes.fileSize} MB)`);
         setProgress(100);
         if (uploadRes.videoUrl) setVideoUrl(uploadRes.videoUrl);
         if (uploadRes.videoPath) setVideoPath(uploadRes.videoPath);
@@ -292,7 +292,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
               setRenderLog(p => { const n = [...p.slice(-100), ev.line as string]; setTimeout(() => logRef.current?.scrollTo(0, 99999), 50); return n; });
               const m = (ev.line as string).match(/(\d+)%/); if (m) setProgress(parseInt(m[1], 10));
             } else if (ev.status === "done") {
-              finishStage(k, "done", ev.path ? `✓ ${(ev.path as string).split(/[\\/]/).pop()}` : "✓ Hoàn tất");
+              finishStage(k, "done", ev.path ? (ev.path as string).split(/[\\/]/).pop() : "Hoàn tất");
               if (k === "tts") {
                 if (ev.engine) setTtsEngine(ev.engine as string);
                 if (ev.actualDuration) setActualDuration(ev.actualDuration as number);
@@ -311,7 +311,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             setRenderLog(p => [...p, msg]);
           } else if (ev.type === "warning") {
             const msg = (ev.message as string) ?? "";
-            setRenderLog(p => [...p, `⚠ ${msg}`]);
+            setRenderLog(p => [...p, `[!] ${msg}`]);
             setStateOnly("composition", "active", msg.slice(0, 80));
           } else if (ev.type === "done") {
             finishStage("render", "done", "Hoàn tất");
