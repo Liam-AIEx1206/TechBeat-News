@@ -257,6 +257,15 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           cropH: (blob as any).cropH,
           width: 1920,
           height: 1080,
+          onProgress: (pct) => {
+            if (pct < 100) {
+              setStateOnly("render", "active", `Đang tải video lên server (${pct}%)...`);
+              setProgress(95 + (pct * 0.04));
+            } else {
+              setStateOnly("render", "active", "Đang xử lý phụ đề và mã hóa H.264...");
+              setProgress(99);
+            }
+          }
         });
 
         if (!uploadRes.success) throw new Error("Lưu video trên server thất bại");

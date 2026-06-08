@@ -477,7 +477,7 @@ export function useClientRender() {
           const chunks: Blob[] = [];
           mediaRecorder = new MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: 8_000_000,  // 8 Mbps for high-quality 1080p
+            videoBitsPerSecond: 4_000_000,  // 4 Mbps is plenty for 1080p animated content and halves the upload size
           });
           mediaRecorder.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) chunks.push(e.data);
@@ -620,22 +620,38 @@ export async function uploadRenderedVideo(
   if (opts.width !== undefined) formData.append("width", String(opts.width));
   if (opts.height !== undefined) formData.append("height", String(opts.height));
 
-  const headers: Record<string, string> = {};
-  if (opts.userEmail) {
-    headers["x-user-email"] = opts.userEmail;
-  }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint, true);
 
-  const resp = await fetch(endpoint, {
-    method: "POST",
-    headers,
-    body: formData,
+    if (opts.userEmail) {
+      xhr.setRequestHeader("x-user-email", opts.userEmail);
+    }
+
+    if (opts.onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          opts.onProgress!(pct);
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch (err) {
+          reject(new Error("Invalid JSON response"));
+        }
+      } else {
+        reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(formData);
   });
-
-  if (!resp.ok) {
-    throw new Error(`Upload failed: HTTP ${resp.status}`);
-  }
-
-  return resp.json();
 }
 
 export async function saveErrorLog(opts: {

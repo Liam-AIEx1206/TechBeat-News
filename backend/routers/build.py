@@ -2916,8 +2916,8 @@ async def upload_render(
             
         cmd.extend([
             "-c:v", "libx264",
-            "-preset", "fast",       # better quality than ultrafast, still reasonably quick
-            "-crf", "18",            # high quality
+            "-preset", "superfast",  # significantly faster encoding while maintaining acceptable quality
+            "-crf", "22",            # balanced quality/size, faster to encode than 18
             "-pix_fmt", "yuv420p",   # required for broad compatibility
             "-threads", "0",
             "-c:a", "aac",
