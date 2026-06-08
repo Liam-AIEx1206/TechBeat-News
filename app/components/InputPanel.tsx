@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, DragEvent } from "react";
+import { Link as LinkIcon, FileText } from "lucide-react";
 
 interface Props {
   onExtracted: (content: { title: string; text: string; source: string; videoDuration?: number | null }) => void;
@@ -130,7 +131,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           marginBottom: 10, display: "flex", alignItems: "center", gap: 8,
         }}>
           <span style={{ width: 20, height: 1, background: "var(--accent)", display: "inline-block" }} />
-          🔗 Dán URL bài viết
+          <LinkIcon size={12} strokeWidth={3} /> Dán URL bài viết
         </div>
 
         {/* Input wrapper with glow */}
@@ -270,8 +271,8 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           style={{ display: "none" }} disabled={isLoading}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) extractFile(f); e.target.value = ""; }} />
 
-        <div style={{ fontSize: 36, marginBottom: 12, filter: dragging ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none", transition: "filter 0.3s" }}>
-          📄
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, filter: dragging ? "drop-shadow(0 0 12px rgba(249,115,22,0.6))" : "none", transition: "filter 0.3s" }}>
+          <FileText size={36} color="var(--white)" />
         </div>
         <p style={{ fontSize: 14, fontWeight: 700, color: dragging ? "var(--white)" : "rgba(255,255,255,0.7)", marginBottom: 8, transition: "color 0.2s" }}>
           Kéo file vào đây hoặc click để chọn

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import type { ScenePlan } from "@/types/scene";
 import { useSession } from "next-auth/react";
 import { useClientRender, uploadRenderedVideo, saveErrorLog } from "./ClientRenderer";
+import { Palette, Mic, AudioLines } from "lucide-react";
 
 interface Props {
   scenePlan: ScenePlan;
@@ -619,11 +620,25 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                 Build Summary — Models & Tools
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {buildLog.map((line, i) => (
-                  <div key={i} style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--accent2)", lineHeight: 1.5 }}>
-                    {line}
-                  </div>
-                ))}
+                {buildLog.map((line, i) => {
+                  let icon = null;
+                  let text = line;
+                  if (line.startsWith("🎨 ")) {
+                    icon = <Palette size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />;
+                    text = line.replace("🎨 ", "");
+                  } else if (line.startsWith("🎙️ ")) {
+                    icon = <Mic size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />;
+                    text = line.replace("🎙️ ", "");
+                  } else if (line.startsWith("🎤 ")) {
+                    icon = <AudioLines size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />;
+                    text = line.replace("🎤 ", "");
+                  }
+                  return (
+                    <div key={i} style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--accent2)", lineHeight: 1.5 }}>
+                      {icon}{text}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
