@@ -222,8 +222,8 @@ export default function LoginPage() {
               transform: glitch ? "translateX(2px)" : "none",
               transition: "filter 0.05s, transform 0.05s",
             }}>
-              <span style={{ display: "block" }}>Tech News</span>
-              <span style={{ display: "block" }}>into <span style={{ color: "#f97316", fontStyle: "italic", paddingRight: "0.08em" }}>AI Videos</span></span>
+              <span style={{ display: "block" }}>Cinematic</span>
+              <span style={{ display: "block" }}><span style={{ color: "#f97316", fontStyle: "italic", paddingRight: "0.08em" }}>Tech News</span></span>
             </h1>
             <p style={{ fontSize: 15, color: "#888", lineHeight: 1.7, maxWidth: 400 }}>
               Dán link bài viết — AI tóm tắt, viết kịch bản tiếng Việt và xuất MP4 sẵn sàng đăng.
