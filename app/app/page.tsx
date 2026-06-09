@@ -512,10 +512,10 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           }}
         >
           <span style={{ display: "block" }}>
-            <StaggeredText text="Cinematic" />
+            <StaggeredText text="Cinematic" className="shine-cinematic" />
           </span>
           <span style={{ display: "block" }}>
-            <StaggeredText text="Tech News" accentWord="Tech News" />
+            <StaggeredText text="Tech News" className="shine-technews" />
           </span>
         </h1>
 
@@ -526,7 +526,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             hidden: { opacity: 0 },
             visible: {
               opacity: 1,
-              transition: { staggerChildren: 0.08, delayChildren: 0.6 }
+              transition: { staggerChildren: 0.25, delayChildren: 0.6 }
             }
           }}
           style={{
@@ -545,12 +545,10 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               <motion.span
                 key={i}
                 variants={{
-                  hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+                  hidden: { opacity: 0 },
                   visible: { 
                     opacity: 1, 
-                    y: 0, 
-                    filter: "blur(0px)",
-                    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } 
+                    transition: { duration: 0.01 }
                   }
                 }}
                 style={{
@@ -565,6 +563,8 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               </motion.span>
             );
           })}
+          {/* Blinking typewriter cursor */}
+          <span className="blinking-cursor" />
         </motion.div>
 
         <motion.p
