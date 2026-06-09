@@ -585,3 +585,75 @@ body {
   pointer-events: none;
   z-index: 1;
 }
+
+/* ── Text Shine / Light Sweep Effect ── */
+@keyframes text-shine {
+  0% { background-position: 150% center; }
+  100% { background-position: -150% center; }
+}
+
+.shine-cinematic {
+  background: linear-gradient(
+    110deg,
+    #ffffff 30%,
+    #ffedd5 42%,
+    #f97316 50%,
+    #ffedd5 58%,
+    #ffffff 70%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shine 4s linear infinite;
+  display: inline-block;
+}
+
+.shine-technews {
+  background: linear-gradient(
+    110deg,
+    #f97316 30%,
+    #fed7aa 42%,
+    #ffffff 50%,
+    #fed7aa 58%,
+    #f97316 70%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shine 4s linear infinite;
+  display: inline-block;
+}
+
+/* For StaggeredText children to inherit the parent shine */
+.shine-cinematic span, .shine-cinematic span span {
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.shine-technews span, .shine-technews span span {
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Blinking Cursor Effect ── */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.blinking-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1.05em;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: middle;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+  animation: cursor-blink 0.8s steps(2) infinite;
+}

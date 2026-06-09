@@ -223,8 +223,8 @@ export default function LoginPage() {
               transform: glitch ? "translateX(2px)" : "none",
               transition: "filter 0.05s, transform 0.05s",
             }}>
-              <span style={{ display: "block" }}>Cinematic</span>
-              <span style={{ display: "block" }}><span style={{ color: "#f97316", fontStyle: "italic", paddingRight: "0.08em" }}>Tech News</span></span>
+              <span className="shine-cinematic" style={{ display: "block" }}>Cinematic</span>
+              <span className="shine-technews" style={{ display: "block" }}>Tech News</span>
             </h1>
             <motion.div
               initial="hidden"
@@ -233,7 +233,7 @@ export default function LoginPage() {
                 hidden: { opacity: 0 },
                 visible: {
                   opacity: 1,
-                  transition: { staggerChildren: 0.08, delayChildren: 0.4 }
+                  transition: { staggerChildren: 0.25, delayChildren: 0.4 }
                 }
               }}
               style={{
@@ -253,12 +253,10 @@ export default function LoginPage() {
                   <motion.span
                     key={i}
                     variants={{
-                      hidden: { opacity: 0, y: 8, filter: "blur(3px)" },
+                      hidden: { opacity: 0 },
                       visible: { 
                         opacity: 1, 
-                        y: 0, 
-                        filter: "blur(0px)",
-                        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } 
+                        transition: { duration: 0.01 }
                       }
                     }}
                     style={{
@@ -273,6 +271,8 @@ export default function LoginPage() {
                   </motion.span>
                 );
               })}
+              {/* Blinking typewriter cursor */}
+              <span className="blinking-cursor" />
             </motion.div>
 
             <motion.p
