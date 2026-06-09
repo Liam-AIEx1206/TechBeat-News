@@ -519,16 +519,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           </span>
         </h1>
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.25, delayChildren: 0.6 }
-            }
-          }}
+        <div
           style={{
             fontSize: "clamp(16px, 1.6vw, 20px)",
             lineHeight: 1.6,
@@ -536,36 +527,51 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             maxWidth: 600,
             color: "var(--gray-6)",
             fontWeight: 500,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
-          {["Turn", "Tech", "Stories", "into", "Dynamic", "Videos"].map((word, i) => {
-            const isOrange = word === "Dynamic" || word === "Videos";
-            const isBold = word === "Tech" || word === "Stories" || isOrange;
-            return (
-              <motion.span
-                key={i}
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: { 
-                    opacity: 1, 
-                    transition: { duration: 0.01 }
-                  }
-                }}
-                style={{
-                  display: "inline-block",
-                  marginRight: "0.28em",
-                  color: isOrange ? "var(--accent)" : isBold ? "var(--white)" : "inherit",
-                  fontWeight: isBold ? 800 : 500,
-                  textShadow: isOrange ? "0 0 12px rgba(249,115,22,0.25)" : "none",
-                }}
-              >
-                {word}
-              </motion.span>
-            );
-          })}
+          {(() => {
+            const sloganWords = [
+              { text: "Turn", isOrange: false, isBold: false },
+              { text: "Tech", isOrange: false, isBold: true },
+              { text: "Stories", isOrange: false, isBold: true },
+              { text: "into", isOrange: false, isBold: false },
+              { text: "Dynamic", isOrange: true, isBold: true },
+              { text: "Videos", isOrange: true, isBold: true },
+            ];
+            let globalCharIndex = 0;
+            return sloganWords.map((word, wordIdx) => {
+              const letters = Array.from(word.text);
+              return (
+                <span key={wordIdx} style={{ display: "inline-block", marginRight: "0.28em" }}>
+                  {letters.map((char, charIdx) => {
+                    const idx = globalCharIndex++;
+                    return (
+                      <motion.span
+                        key={charIdx}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 + idx * 0.04, duration: 0.01 }}
+                        style={{
+                          color: word.isOrange ? "var(--accent)" : word.isBold ? "var(--white)" : "inherit",
+                          fontWeight: word.isBold ? 800 : 500,
+                          textShadow: word.isOrange ? "0 0 12px rgba(249,115,22,0.25)" : "none",
+                          display: "inline-block",
+                        }}
+                      >
+                        {char}
+                      </motion.span>
+                    );
+                  })}
+                </span>
+              );
+            });
+          })()}
           {/* Blinking typewriter cursor */}
           <span className="blinking-cursor" />
-        </motion.div>
+        </div>
 
         <motion.p
           initial={{ opacity: 0 }}
