@@ -519,20 +519,67 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           </span>
         </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.7 }}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.08, delayChildren: 0.6 }
+            }
+          }}
           style={{
-            fontSize: "clamp(14px, 1.4vw, 17px)",
+            fontSize: "clamp(16px, 1.6vw, 20px)",
+            lineHeight: 1.6,
+            marginBottom: 24,
+            maxWidth: 600,
             color: "var(--gray-6)",
-            maxWidth: 560,
-            lineHeight: 1.7,
+            fontWeight: 500,
+          }}
+        >
+          {["Turn", "Tech", "Stories", "into", "Dynamic", "Videos"].map((word, i) => {
+            const isOrange = word === "Dynamic" || word === "Videos";
+            const isBold = word === "Tech" || word === "Stories" || isOrange;
+            return (
+              <motion.span
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+                  visible: { 
+                    opacity: 1, 
+                    y: 0, 
+                    filter: "blur(0px)",
+                    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } 
+                  }
+                }}
+                style={{
+                  display: "inline-block",
+                  marginRight: "0.28em",
+                  color: isOrange ? "var(--accent)" : isBold ? "var(--white)" : "inherit",
+                  fontWeight: isBold ? 800 : 500,
+                  textShadow: isOrange ? "0 0 12px rgba(249,115,22,0.25)" : "none",
+                }}
+              >
+                {word}
+              </motion.span>
+            );
+          })}
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.55 }}
+          transition={{ duration: 1, delay: 1.4 }}
+          style={{
+            fontSize: 13,
+            color: "var(--white)",
+            maxWidth: 500,
+            lineHeight: 1.6,
             marginBottom: 48,
           }}
         >
           Dán link bài viết — AI tóm tắt, viết kịch bản, đọc tiếng Việt và xuất MP4 1080p.
-          Một bản tin chỉ trong vài phút.
         </motion.p>
 
         <motion.div

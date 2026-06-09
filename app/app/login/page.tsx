@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 
 const HEADLINES = [
   "BREAKING: OpenAI ra mắt GPT-5 với khả năng lý luận vượt trội",
@@ -225,9 +226,63 @@ export default function LoginPage() {
               <span style={{ display: "block" }}>Cinematic</span>
               <span style={{ display: "block" }}><span style={{ color: "#f97316", fontStyle: "italic", paddingRight: "0.08em" }}>Tech News</span></span>
             </h1>
-            <p style={{ fontSize: 15, color: "#888", lineHeight: 1.7, maxWidth: 400 }}>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.08, delayChildren: 0.4 }
+                }
+              }}
+              style={{
+                fontSize: "clamp(15px, 1.5vw, 18px)",
+                lineHeight: 1.6,
+                marginBottom: 20,
+                maxWidth: 440,
+                color: "#888",
+                fontWeight: 500,
+                textAlign: "left",
+              }}
+            >
+              {["Turn", "Tech", "Stories", "into", "Dynamic", "Videos"].map((word, i) => {
+                const isOrange = word === "Dynamic" || word === "Videos";
+                const isBold = word === "Tech" || word === "Stories" || isOrange;
+                return (
+                  <motion.span
+                    key={i}
+                    variants={{
+                      hidden: { opacity: 0, y: 8, filter: "blur(3px)" },
+                      visible: { 
+                        opacity: 1, 
+                        y: 0, 
+                        filter: "blur(0px)",
+                        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } 
+                      }
+                    }}
+                    style={{
+                      display: "inline-block",
+                      marginRight: "0.28em",
+                      color: isOrange ? "#f97316" : isBold ? "#fff" : "inherit",
+                      fontWeight: isBold ? 800 : 500,
+                      textShadow: isOrange ? "0 0 10px rgba(249,115,22,0.3)" : "none",
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                );
+              })}
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+              style={{ fontSize: 12, color: "#fff", lineHeight: 1.6, maxWidth: 400, marginBottom: 28 }}
+            >
               Dán link bài viết — AI tóm tắt, viết kịch bản tiếng Việt và xuất MP4 sẵn sàng đăng.
-            </p>
+            </motion.p>
           </div>
 
           {/* Stats bar */}
