@@ -257,12 +257,11 @@ export default function LoginPage() {
                       {letters.map((char, charIdx) => {
                         const idx = globalCharIndex++;
                         return (
-                          <motion.span
+                          <span
                             key={charIdx}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.4 + idx * 0.04, duration: 0.01 }}
+                            className="char-reveal"
                             style={{
+                              animationDelay: `${0.4 + idx * 0.04}s`,
                               color: word.isOrange ? "#f97316" : word.isBold ? "#fff" : "inherit",
                               fontWeight: word.isBold ? 800 : 500,
                               textShadow: word.isOrange ? "0 0 10px rgba(249,115,22,0.3)" : "none",
@@ -270,7 +269,7 @@ export default function LoginPage() {
                             }}
                           >
                             {char}
-                          </motion.span>
+                          </span>
                         );
                       })}
                     </span>

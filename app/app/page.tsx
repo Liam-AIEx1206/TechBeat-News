@@ -549,12 +549,11 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                   {letters.map((char, charIdx) => {
                     const idx = globalCharIndex++;
                     return (
-                      <motion.span
+                      <span
                         key={charIdx}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6 + idx * 0.04, duration: 0.01 }}
+                        className="char-reveal"
                         style={{
+                          animationDelay: `${0.6 + idx * 0.04}s`,
                           color: word.isOrange ? "var(--accent)" : word.isBold ? "var(--white)" : "inherit",
                           fontWeight: word.isBold ? 800 : 500,
                           textShadow: word.isOrange ? "0 0 12px rgba(249,115,22,0.25)" : "none",
@@ -562,7 +561,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                         }}
                       >
                         {char}
-                      </motion.span>
+                      </span>
                     );
                   })}
                 </span>
