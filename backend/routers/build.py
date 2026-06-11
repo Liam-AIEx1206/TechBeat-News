@@ -2806,9 +2806,162 @@ def generate_ass_file(
 
 
 # ── Upload rendered MP4 from client ──────────────────────────────────────
+# FFmpeg chạy async background để tránh Cloudflare 524 timeout.
+# Frontend nhận job_id và poll /upload-render/status/{job_id}
 
 from typing import Optional
 from fastapi import File, UploadFile, Form
+
+_render_jobs: dict[str, dict] = {}  # job_id -> {status, result, error}
+
+
+async def _run_ffmpeg_job(
+    job_id: str,
+    mp4_path,
+    assets_dir,
+    crop_x, crop_y, crop_w, crop_h,
+    width, height,
+    subtitles_enabled,
+    word_data_file,
+    durations_file,
+    narrations_file,
+    title,
+    timestamp,
+    session_id,
+    composition_html,
+    logs,
+    user_email,
+    global_root,
+    renders_dir,
+):
+    """Chạy FFmpeg + lưu history trong background. Cập nhật _render_jobs[job_id]."""
+    import asyncio
+    import shutil as _shutil
+    import json as _json
+
+    try:
+        vf_filters = []
+        if crop_w and crop_h and crop_x is not None and crop_y is not None:
+            safe_crop_w = crop_w - (crop_w % 2)
+            safe_crop_h = crop_h - (crop_h % 2)
+            print(f"[upload-render:{job_id}] Crop: {safe_crop_w}x{safe_crop_h} at ({crop_x},{crop_y})")
+            vf_filters.append(f"crop=min({safe_crop_w}\\,iw):min({safe_crop_h}\\,ih):min({crop_x}\\,iw):min({crop_y}\\,ih)")
+            vf_filters.append(f"scale={width}:{height}:flags=lanczos")
+        else:
+            vf_filters.append(
+                f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
+                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black,"
+                f"setsar=1"
+            )
+
+        if subtitles_enabled and word_data_file.exists() and durations_file.exists():
+            word_data = _json.loads(word_data_file.read_text(encoding="utf-8"))
+            durations = _json.loads(durations_file.read_text(encoding="utf-8"))
+            narrations = _json.loads(narrations_file.read_text(encoding="utf-8")) if narrations_file.exists() else []
+            ass_path = assets_dir / "subtitles.ass"
+            generate_ass_file(word_data, durations, narrations, ass_path)
+            vf_filters.append("ass=subtitles.ass")
+
+        import subprocess
+        temp_out_path = mp4_path.parent / f"temp_{mp4_path.name}"
+        cmd = ["ffmpeg", "-y", "-i", str(mp4_path.absolute())]
+        if vf_filters:
+            cmd.extend(["-vf", ",".join(vf_filters)])
+        cmd.extend([
+            "-c:v", "libx264",
+            "-preset", "superfast",
+            "-crf", "22",
+            "-pix_fmt", "yuv420p",
+            "-threads", "0",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-movflags", "+faststart",
+            str(temp_out_path.absolute())
+        ])
+
+        print(f"[upload-render:{job_id}] Running FFmpeg...")
+        # Run FFmpeg in thread pool to avoid blocking event loop
+        loop = asyncio.get_event_loop()
+        res = await loop.run_in_executor(
+            None,
+            lambda: subprocess.run(cmd, cwd=str(assets_dir.absolute()), capture_output=True, text=True)
+        )
+
+        if res.returncode == 0 and temp_out_path.exists():
+            mp4_path.unlink()
+            temp_out_path.rename(mp4_path)
+            file_size_mb = mp4_path.stat().st_size / (1024 * 1024)
+            print(f"[upload-render:{job_id}] FFmpeg done! {file_size_mb:.1f} MB")
+        else:
+            print(f"[upload-render:{job_id}] FFmpeg failed: {res.returncode}\n{res.stderr}")
+            if temp_out_path.exists():
+                temp_out_path.unlink()
+
+        rel_url = f"/renders/{mp4_path.name}"
+        file_size_mb = mp4_path.stat().st_size / (1024 * 1024) if mp4_path.exists() else 0
+
+        # Save to history
+        try:
+            if user_email:
+                history_dir = global_root / "history" / "users" / user_email
+                prefix = f"/static-history/users/{user_email}/"
+            else:
+                history_dir = global_root / "history"
+                prefix = "/static-history/"
+
+            htmls_dir = history_dir / "htmls"
+            videos_dir = history_dir / "videos"
+            logs_dir = history_dir / "logs"
+            for d in [history_dir, htmls_dir, videos_dir, logs_dir]:
+                d.mkdir(parents=True, exist_ok=True)
+
+            hist_html_name = f"html_{timestamp}.html"
+            hist_video_name = f"video_{timestamp}.mp4"
+            hist_log_name = f"log_{timestamp}.txt"
+
+            if composition_html:
+                (htmls_dir / hist_html_name).write_text(composition_html, encoding="utf-8")
+            _shutil.copy2(mp4_path, videos_dir / hist_video_name)
+            if logs:
+                (logs_dir / hist_log_name).write_text(logs, encoding="utf-8")
+
+            db_path = history_dir / "db.json"
+            history_list = []
+            if db_path.exists():
+                try:
+                    history_list = _json.loads(db_path.read_text(encoding="utf-8"))
+                except Exception:
+                    history_list = []
+
+            new_entry = {
+                "id": timestamp,
+                "title": title,
+                "html_url": f"{prefix}htmls/{hist_html_name}" if composition_html else "",
+                "video_url": f"{prefix}videos/{hist_video_name}",
+                "log_url": f"{prefix}logs/{hist_log_name}" if logs else "",
+                "duration": 0,
+                "created_at": __import__('datetime').datetime.now().isoformat(),
+                "rendered_by": "client",
+            }
+            history_list.insert(0, new_entry)
+            db_path.write_text(_json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+            print(f"[upload-render:{job_id}] Saved to history: {timestamp}")
+        except Exception as he:
+            print(f"[upload-render:{job_id}] History ERROR: {he}")
+
+        _render_jobs[job_id] = {
+            "status": "done",
+            "result": {
+                "success": True,
+                "videoUrl": rel_url,
+                "videoPath": str(mp4_path),
+                "fileSize": round(file_size_mb, 1),
+            }
+        }
+    except Exception as e:
+        import traceback
+        print(f"[upload-render:{job_id}] EXCEPTION: {e}\n{traceback.format_exc()}")
+        _render_jobs[job_id] = {"status": "error", "error": str(e)}
 
 
 @router.post("/upload-render")
@@ -2852,174 +3005,75 @@ async def upload_render(
     if chunk_index < total_chunks - 1:
         return {"success": True, "message": f"Chunk {chunk_index+1}/{total_chunks} received"}
 
-    # Final chunk received! Move to final mp4_path
+    # Final chunk received! Move to final mp4_path and fire FFmpeg in background
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_title = re.sub(r'[^\w\s-]', '', title)[:50].strip().replace(' ', '_') or "video"
     mp4_name = f"{safe_title}_{timestamp}.mp4"
     mp4_path = renders_dir / mp4_name
-    
+
     import shutil
     shutil.move(str(temp_chunk_path), str(mp4_path))
-    
+
     file_size_mb = mp4_path.stat().st_size / (1024 * 1024)
     print(f"[upload-render] All {total_chunks} chunks received! Saved {mp4_name} ({file_size_mb:.1f} MB)")
 
-    # ── Subtitles Overlay / Burn-in via FFmpeg ─────────────────────────────
-    try:
-        session_root = get_project_root(session_id=session_id) if session_id else global_root
-        assets_dir = session_root / "assets"
-        
-        # Check if subtitles are enabled for this project session
-        subtitles_enabled_file = assets_dir / "subtitles_enabled.txt"
-        subtitles_enabled = True
-        if subtitles_enabled_file.exists():
-            subtitles_enabled = subtitles_enabled_file.read_text(encoding="utf-8").strip() == "1"
-            
-        word_data_file = assets_dir / "word_data.json"
-        durations_file = assets_dir / "durations.json"
-        narrations_file = assets_dir / "narrations.json"
-        
-        vf_filters = []
+    # ── Check subtitle settings ─────────────────────────────────────────────
+    subtitles_enabled_file = assets_dir / "subtitles_enabled.txt"
+    subtitles_enabled = True
+    if subtitles_enabled_file.exists():
+        subtitles_enabled = subtitles_enabled_file.read_text(encoding="utf-8").strip() == "1"
 
-        if crop_w and crop_h and crop_x is not None and crop_y is not None:
-            # Client sends the exact content region (16:9 by construction from min-scale).
-            # Crop to content region, then scale to target — no padding needed.
-            safe_crop_w = crop_w - (crop_w % 2)
-            safe_crop_h = crop_h - (crop_h % 2)
-            print(f"[upload-render] Crop to content region: {safe_crop_w}x{safe_crop_h} at ({crop_x},{crop_y})")
-            # Use min() to ensure crop dimensions don't exceed actual input dimensions (iw, ih)
-            vf_filters.append(f"crop=min({safe_crop_w}\\,iw):min({safe_crop_h}\\,ih):min({crop_x}\\,iw):min({crop_y}\\,ih)")
-            # Direct scale — input is guaranteed 16:9 so no black bars
-            vf_filters.append(f"scale={width}:{height}:flags=lanczos")
-        else:
-            # Fallback: no crop provided, scale with aspect-ratio preservation + pad
-            print(f"[upload-render] No crop params — scaling with padding fallback")
-            vf_filters.append(
-                f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos,"
-                f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black,"
-                f"setsar=1"
-            )
-        print(f"[upload-render] Scale target: {width}x{height}")
+    word_data_file = assets_dir / "word_data.json"
+    durations_file = assets_dir / "durations.json"
+    narrations_file = assets_dir / "narrations.json"
 
-        if subtitles_enabled and word_data_file.exists() and durations_file.exists():
-            print(f"[upload-render] Generating ASS and burning subtitles for session: {session_id}")
-            import json
-            word_data = json.loads(word_data_file.read_text(encoding="utf-8"))
-            durations = json.loads(durations_file.read_text(encoding="utf-8"))
-            narrations = []
-            if narrations_file.exists():
-                narrations = json.loads(narrations_file.read_text(encoding="utf-8"))
-                
-            ass_path = assets_dir / "subtitles.ass"
-            generate_ass_file(word_data, durations, narrations, ass_path)
-            vf_filters.append("ass=subtitles.ass")
+    # ── Launch FFmpeg as background task (avoids Cloudflare 524 timeout) ──
+    import uuid
+    job_id = f"{timestamp}_{uuid.uuid4().hex[:8]}"
+    _render_jobs[job_id] = {"status": "processing"}
 
-        # We always run FFmpeg for transcoding to MP4 since browser records as WebM, 
-        # and to apply any video filters (scaling/subtitles).
-        import subprocess
-        temp_out_path = mp4_path.parent / f"temp_{mp4_path.name}"
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", str(mp4_path.absolute()),
-        ]
-        if vf_filters:
-            cmd.extend(["-vf", ",".join(vf_filters)])
-            
-        cmd.extend([
-            "-c:v", "libx264",
-            "-preset", "superfast",  # significantly faster encoding while maintaining acceptable quality
-            "-crf", "22",            # balanced quality/size, faster to encode than 18
-            "-pix_fmt", "yuv420p",   # required for broad compatibility
-            "-threads", "0",
-            "-c:a", "aac",
-            "-b:a", "192k",
-            "-movflags", "+faststart",  # web-optimized: allow play while downloading
-            str(temp_out_path.absolute())
-        ])
-        
-        print(f"[upload-render] Running FFmpeg in {assets_dir}: {' '.join(cmd)}")
-        res = subprocess.run(
-            cmd,
-            cwd=str(assets_dir.absolute()),
-            capture_output=True,
-            text=True
-        )
-        
-        if res.returncode == 0 and temp_out_path.exists():
-            mp4_path.unlink()
-            temp_out_path.rename(mp4_path)
-            file_size_mb = mp4_path.stat().st_size / (1024 * 1024)
-            print(f"[upload-render] Successfully processed video! New size: {file_size_mb:.1f} MB")
-        else:
-            print(f"[upload-render] FFmpeg processing failed with exit code {res.returncode}")
-            print(f"[upload-render] FFmpeg stderr:\n{res.stderr}")
-            if temp_out_path.exists():
-                temp_out_path.unlink()
-    except Exception as e:
-        print(f"[upload-render] Subtitle burn-in exception: {e}")
-        import traceback
-        traceback.print_exc()
+    import asyncio
+    asyncio.create_task(_run_ffmpeg_job(
+        job_id=job_id,
+        mp4_path=mp4_path,
+        assets_dir=assets_dir,
+        crop_x=crop_x, crop_y=crop_y, crop_w=crop_w, crop_h=crop_h,
+        width=width, height=height,
+        subtitles_enabled=subtitles_enabled,
+        word_data_file=word_data_file,
+        durations_file=durations_file,
+        narrations_file=narrations_file,
+        title=title,
+        timestamp=timestamp,
+        session_id=session_id,
+        composition_html=composition_html,
+        logs=logs,
+        user_email=user_email,
+        global_root=global_root,
+        renders_dir=renders_dir,
+    ))
 
-    rel_url = f"/renders/{mp4_name}"
+    # Return immediately — frontend polls /upload-render/status/{job_id}
+    return {"success": True, "job_id": job_id, "status": "processing"}
 
-    # Save to history
-    try:
-        if user_email:
-            history_dir = global_root / "history" / "users" / user_email
-            prefix = f"/static-history/users/{user_email}/"
-        else:
-            history_dir = global_root / "history"
-            prefix = "/static-history/"
 
-        htmls_dir = history_dir / "htmls"
-        videos_dir = history_dir / "videos"
-        logs_dir = history_dir / "logs"
-        history_dir.mkdir(parents=True, exist_ok=True)
-        htmls_dir.mkdir(parents=True, exist_ok=True)
-        videos_dir.mkdir(parents=True, exist_ok=True)
-        logs_dir.mkdir(parents=True, exist_ok=True)
-
-        hist_html_name = f"html_{timestamp}.html"
-        hist_video_name = f"video_{timestamp}.mp4"
-        hist_log_name = f"log_{timestamp}.txt"
-
-        if composition_html:
-            (htmls_dir / hist_html_name).write_text(composition_html, encoding="utf-8")
-        shutil.copy2(mp4_path, videos_dir / hist_video_name)
-
-        if logs:
-            (logs_dir / hist_log_name).write_text(logs, encoding="utf-8")
-
-        db_path = history_dir / "db.json"
-        history_list = []
-        if db_path.exists():
-            try:
-                history_list = json.loads(db_path.read_text(encoding="utf-8"))
-            except Exception:
-                history_list = []
-
-        new_entry = {
-            "id": timestamp,
-            "title": title,
-            "html_url": f"{prefix}htmls/{hist_html_name}" if composition_html else "",
-            "video_url": f"{prefix}videos/{hist_video_name}",
-            "log_url": f"{prefix}logs/{hist_log_name}" if logs else "",
-            "duration": duration,
-            "created_at": datetime.datetime.now().isoformat(),
-            "rendered_by": "client",
-        }
-        history_list.insert(0, new_entry)
-        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"[upload-render] Saved to history with logs: {timestamp}")
-    except Exception as he:
-        print(f"[upload-render ERROR] Failed to save history: {he}")
-
-    return {
-        "success": True,
-        "videoUrl": rel_url,
-        "videoPath": str(mp4_path),
-        "fileSize": round(file_size_mb, 1),
-    }
+@router.get("/upload-render/status/{job_id}")
+async def upload_render_status(job_id: str):
+    """Poll endpoint: trả trạng thái FFmpeg job. Frontend poll mỗi 3s."""
+    job = _render_jobs.get(job_id)
+    if job is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job["status"] == "done":
+        # Cleanup after delivering result
+        _render_jobs.pop(job_id, None)
+        return job["result"]
+    if job["status"] == "error":
+        _render_jobs.pop(job_id, None)
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=job.get("error", "FFmpeg error"))
+    # Still processing
+    return {"success": False, "status": "processing"}
 
 
 class ErrorLogRequest(BaseModel):

@@ -686,14 +686,54 @@ export async function uploadRenderedVideo(
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               uploadedBytes += chunk.size;
+              resChunk();
+
+              // Only handle result on the last chunk
               if (i === totalChunks - 1) {
                 try {
-                  resolve(JSON.parse(xhr.responseText));
+                  const parsed = JSON.parse(xhr.responseText);
+
+                  // Async job pattern: server returns job_id, we must poll
+                  if (parsed.job_id && parsed.status === "processing") {
+                    const statusEndpoint = isLocal
+                      ? `${API}/upload-render/status/${parsed.job_id}`
+                      : `/api/proxy/upload-render/status/${parsed.job_id}`;
+
+                    const pollInterval = setInterval(async () => {
+                      try {
+                        const statusRes = await fetch(statusEndpoint, {
+                          headers: opts.userEmail ? { "x-user-email": opts.userEmail } : {},
+                        });
+                        if (statusRes.status === 404) {
+                          clearInterval(pollInterval);
+                          reject(new Error("Render job not found on server"));
+                          return;
+                        }
+                        if (!statusRes.ok) {
+                          clearInterval(pollInterval);
+                          reject(new Error(`FFmpeg error: HTTP ${statusRes.status}`));
+                          return;
+                        }
+                        const statusData = await statusRes.json();
+                        if (opts.onProgress) opts.onProgress(99);
+                        if (statusData.success && statusData.videoUrl) {
+                          clearInterval(pollInterval);
+                          resolve(statusData);
+                        }
+                        // status === "processing" → keep polling
+                      } catch (pollErr) {
+                        clearInterval(pollInterval);
+                        reject(pollErr);
+                      }
+                    }, 3000); // poll every 3s
+                  } else {
+                    // Immediate result (local dev or small video)
+                    resolve(parsed);
+                  }
                 } catch (err) {
                   reject(new Error("Invalid JSON response"));
                 }
               }
-              resChunk();
             } else {
               rejChunk(new Error(`Chunk ${i+1}/${totalChunks} upload failed: HTTP ${xhr.status}`));
             }
