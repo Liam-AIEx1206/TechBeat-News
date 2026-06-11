@@ -686,53 +686,63 @@ export async function uploadRenderedVideo(
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               uploadedBytes += chunk.size;
-              resChunk();
 
-              // Only handle result on the last chunk
-              if (i === totalChunks - 1) {
-                try {
-                  const parsed = JSON.parse(xhr.responseText);
+              // For non-final chunks, resolve immediately
+              if (i < totalChunks - 1) {
+                resChunk();
+                return;
+              }
 
-                  // Async job pattern: server returns job_id, we must poll
-                  if (parsed.job_id && parsed.status === "processing") {
-                    const statusEndpoint = isLocal
-                      ? `${API}/upload-render/status/${parsed.job_id}`
-                      : `/api/proxy/upload-render/status/${parsed.job_id}`;
+              // Final chunk: parse response
+              let parsed: any;
+              try {
+                parsed = JSON.parse(xhr.responseText);
+              } catch {
+                rejChunk(new Error("Invalid JSON response from server"));
+                return;
+              }
 
-                    const pollInterval = setInterval(async () => {
-                      try {
-                        const statusRes = await fetch(statusEndpoint, {
-                          headers: opts.userEmail ? { "x-user-email": opts.userEmail } : {},
-                        });
-                        if (statusRes.status === 404) {
-                          clearInterval(pollInterval);
-                          reject(new Error("Render job not found on server"));
-                          return;
-                        }
-                        if (!statusRes.ok) {
-                          clearInterval(pollInterval);
-                          reject(new Error(`FFmpeg error: HTTP ${statusRes.status}`));
-                          return;
-                        }
-                        const statusData = await statusRes.json();
-                        if (opts.onProgress) opts.onProgress(99);
-                        if (statusData.success && statusData.videoUrl) {
-                          clearInterval(pollInterval);
-                          resolve(statusData);
-                        }
-                        // status === "processing" → keep polling
-                      } catch (pollErr) {
-                        clearInterval(pollInterval);
-                        reject(pollErr);
+              // Async job pattern: backend returns job_id → poll until done
+              if (parsed.job_id && parsed.status === "processing") {
+                const statusEndpoint = isLocal
+                  ? `${API}/upload-render/status/${parsed.job_id}`
+                  : `/api/proxy/upload-render/status/${parsed.job_id}`;
+
+                // Poll inside the chunk promise so the outer for-loop awaits
+                const doPoll = async () => {
+                  while (true) {
+                    await new Promise(r => setTimeout(r, 3000));
+                    try {
+                      const statusRes = await fetch(statusEndpoint, {
+                        headers: opts.userEmail ? { "x-user-email": opts.userEmail } : {},
+                      });
+                      if (statusRes.status === 404) {
+                        rejChunk(new Error("Render job not found on server"));
+                        return;
                       }
-                    }, 3000); // poll every 3s
-                  } else {
-                    // Immediate result (local dev or small video)
-                    resolve(parsed);
+                      if (!statusRes.ok) {
+                        rejChunk(new Error(`FFmpeg error: HTTP ${statusRes.status}`));
+                        return;
+                      }
+                      const statusData = await statusRes.json();
+                      if (opts.onProgress) opts.onProgress(99);
+                      if (statusData.success && statusData.videoUrl) {
+                        resolve(statusData);  // resolve outer promise with final result
+                        resChunk();           // also resolve inner to end the for-loop
+                        return;
+                      }
+                      // still processing → loop again
+                    } catch (pollErr) {
+                      rejChunk(pollErr as Error);
+                      return;
+                    }
                   }
-                } catch (err) {
-                  reject(new Error("Invalid JSON response"));
-                }
+                };
+                doPoll();
+              } else {
+                // Immediate result (local dev / single chunk)
+                resolve(parsed);
+                resChunk();
               }
             } else {
               rejChunk(new Error(`Chunk ${i+1}/${totalChunks} upload failed: HTTP ${xhr.status}`));
