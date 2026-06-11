@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { InputPanel } from "@/components/InputPanel";
 import { SceneList } from "@/components/SceneList";
 import { VideoBuilder } from "@/components/VideoBuilder";
@@ -34,12 +34,21 @@ const TICKER_ITEMS = [
 ];
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [stage, setStage] = useState<Stage>("dashboard");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [scenePlan, setScenePlan] = useState<ScenePlan | null>(null);
   const [streamBuffer, setStreamBuffer] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+  const hasRedirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (status === "authenticated" && !hasRedirectedRef.current) {
+      setStage("input");
+      hasRedirectedRef.current = true;
+    }
+  }, [status]);
 
   const hasUnsavedProgress = stage === "generating" || stage === "preview" || stage === "htmlPreview" || stage === "build" || (stage === "input" && isLoading);
 
@@ -205,6 +214,7 @@ function AppHeader({
   onReset: () => void; 
   hasUnsavedProgress: boolean; 
 }) {
+  const { data: session } = useSession();
   const steps: { key: Stage; num: number; label: string }[] = [
     { key: "input",       num: 1, label: "Nhập" },
     { key: "preview",     num: 2, label: "Kịch bản" },
@@ -229,7 +239,10 @@ function AppHeader({
           padding: 0,
         }}
       >
-        <div className="logo-mark">T</div>
+        <div className="logo-mark" style={{ background: "transparent" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="TechBeat" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
+        </div>
         <div style={{ textAlign: "left", lineHeight: 1.1 }}>
           <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em" }}>
             Tech<span style={{ color: "var(--accent)" }}>Beat</span>
@@ -241,36 +254,38 @@ function AppHeader({
       </button>
 
       <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-        <div className="stepper" style={{ display: "flex" }}>
-          {steps.map((s, i) => {
-            const sIdx = order.indexOf(s.key);
-            const isDone =
-              cur > sIdx ||
-              (s.key === "preview" && (stage === "htmlPreview" || stage === "build")) ||
-              (s.key === "htmlPreview" && stage === "build");
-            const isActive =
-              stage === s.key ||
-              (s.key === "preview" && stage === "generating");
-            const cls = isActive ? "active" : isDone ? "done" : "pending";
-            return (
-              <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div className={`step-pill ${cls}`}>
-                  <span style={{
-                    width: 14, height: 14, borderRadius: "50%",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 9, fontWeight: 900,
-                    background: cls === "active" ? "rgba(0,0,0,0.2)" : cls === "done" ? "rgba(249,115,22,0.15)" : "var(--gray-3)",
-                    color: cls === "active" ? "var(--black)" : "inherit",
-                  }}>
-                    {isDone ? "✓" : s.num}
-                  </span>
-                  {s.label}
+        {session && (
+          <div className="stepper" style={{ display: "flex" }}>
+            {steps.map((s, i) => {
+              const sIdx = order.indexOf(s.key);
+              const isDone =
+                cur > sIdx ||
+                (s.key === "preview" && (stage === "htmlPreview" || stage === "build")) ||
+                (s.key === "htmlPreview" && stage === "build");
+              const isActive =
+                stage === s.key ||
+                (s.key === "preview" && stage === "generating");
+              const cls = isActive ? "active" : isDone ? "done" : "pending";
+              return (
+                <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div className={`step-pill ${cls}`}>
+                    <span style={{
+                      width: 14, height: 14, borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 9, fontWeight: 900,
+                      background: cls === "active" ? "rgba(0,0,0,0.2)" : cls === "done" ? "rgba(249,115,22,0.15)" : "var(--gray-3)",
+                      color: cls === "active" ? "var(--black)" : "inherit",
+                    }}>
+                      {isDone ? "✓" : s.num}
+                    </span>
+                    {s.label}
+                  </div>
+                  {i < steps.length - 1 && <div className={`step-connector ${isDone ? "done" : ""}`} />}
                 </div>
-                {i < steps.length - 1 && <div className={`step-connector ${isDone ? "done" : ""}`} />}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -301,13 +316,24 @@ function Dashboard({ onStart }: { onStart: () => void }) {
   const [history, setHistory] = useState<any[]>([]);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-    const headers: Record<string, string> = {};
-    if (session?.user?.email) {
-      headers["X-User-Email"] = session.user.email;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "AccessDenied") {
+      setErrorMsg("Chỉ tài khoản Google có email tên miền @xgamevn.com mới được phép truy cập.");
     }
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user?.email) {
+      setHistory([]);
+      return;
+    }
+    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const headers: Record<string, string> = {
+      "X-User-Email": session.user.email,
+    };
     fetch(`${API}/history/local`, { headers })
       .then(res => res.json())
       .then(data => {
@@ -583,52 +609,99 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           Dán link bài viết — AI tóm tắt, viết kịch bản, đọc tiếng Việt và xuất MP4 1080p.
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
-          style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}
-        >
-          <motion.button
-            onClick={onStart}
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="btn-primary"
-            style={{
-              padding: "18px 36px",
-              fontSize: 14,
-              borderRadius: "var(--r-full)",
-              boxShadow: "0 0 0 1px rgba(249,115,22,0.5), 0 12px 48px -8px rgba(249,115,22,0.6)",
-            }}
+        {!session ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", maxWidth: 360, margin: "0 auto" }}>
+            {errorMsg && (
+              <div style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: 8,
+                padding: "12px 16px",
+                width: "100%",
+                color: "#fca5a5",
+                fontSize: 12,
+                lineHeight: 1.5,
+                textAlign: "center",
+              }}>
+                ⚠️ {errorMsg}
+              </div>
+            )}
+            <motion.button
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+              whileHover={{ scale: 1.04, y: -2, backgroundColor: "#e0f2fe", color: "#0369a1" }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                width: "100%",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                padding: "18px 36px",
+                fontSize: 15,
+                borderRadius: "var(--r-full)",
+                background: "#fff",
+                border: "none",
+                color: "#111",
+                fontWeight: 800,
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.5), 0 12px 48px -8px rgba(255,255,255,0.3)",
+                cursor: "pointer",
+                transition: "background-color 0.2s, color 0.2s",
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span>Đăng nhập với Google</span>
+            </motion.button>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
+            style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              Bắt đầu tạo video
-              <span style={{
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                width: 20, height: 20, borderRadius: "50%",
-                background: "rgba(0,0,0,0.18)", fontSize: 11,
-              }}>→</span>
-            </span>
-          </motion.button>
+            <motion.button
+              onClick={onStart}
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="btn-primary"
+              style={{
+                padding: "18px 36px",
+                fontSize: 14,
+                borderRadius: "var(--r-full)",
+                boxShadow: "0 0 0 1px rgba(249,115,22,0.5), 0 12px 48px -8px rgba(249,115,22,0.6)",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                Bắt đầu tạo video
+                <span style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: "rgba(0,0,0,0.18)", fontSize: 11,
+                }}>→</span>
+              </span>
+            </motion.button>
 
-          <motion.a
-            href="/history"
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="btn-ghost"
-            style={{
-              padding: "18px 28px",
-              fontSize: 12,
-              borderRadius: "var(--r-full)",
-              borderColor: "rgba(255,255,255,0.15)",
-              backdropFilter: "blur(10px)",
-              background: "rgba(255,255,255,0.03)",
-              textDecoration: "none",
-            }}
-          >
-            Lịch sử video
-          </motion.a>
-        </motion.div>
+            <motion.a
+              href="/history"
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="btn-ghost"
+              style={{
+                padding: "18px 28px",
+                fontSize: 12,
+                borderRadius: "var(--r-full)",
+                borderColor: "rgba(255,255,255,0.15)",
+                backdropFilter: "blur(10px)",
+                background: "rgba(255,255,255,0.03)",
+                textDecoration: "none",
+              }}
+            >
+              Lịch sử video
+            </motion.a>
+          </motion.div>
+        )}
 
         {/* Highlight 5 latest videos */}
         {history.length > 0 && (
@@ -745,7 +818,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                   className="btn-ghost"
                   style={{ padding: "4px 10px", fontSize: 11 }}
                 >
-                  ✕ Đóng
+                  Đóng
                 </button>
               </div>
               <video src={activeVideoUrl} controls autoPlay style={{ width: "100%", display: "block" }} />
@@ -1032,7 +1105,7 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
           className="btn-ghost"
           style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}
         >
-          ✕ Huỷ và quay lại
+          Huỷ và quay lại
         </button>
       </div>
     </main>

@@ -532,6 +532,50 @@ def get_theme(theme_id: str | None) -> dict:
 # write scene-specific HTML structure + tiny custom tweaks (max 60 lines).
 
 BASE_CSS_TEMPLATE = """
+/* ── Local font-face declarations (offline-safe for Playwright/Docker rendering) ── */
+@font-face {{
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Be Vietnam Pro Regular'), local('BeVietnamPro-Regular'),
+       url('/usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Regular.ttf') format('truetype');
+}}
+@font-face {{
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Be Vietnam Pro Medium'), local('BeVietnamPro-Medium'),
+       url('/usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Medium.ttf') format('truetype');
+}}
+@font-face {{
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Be Vietnam Pro SemiBold'), local('BeVietnamPro-SemiBold'),
+       url('/usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-SemiBold.ttf') format('truetype');
+}}
+@font-face {{
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Be Vietnam Pro Bold'), local('BeVietnamPro-Bold'),
+       url('/usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Bold.ttf') format('truetype');
+}}
+@font-face {{
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 800;
+  src: local('Be Vietnam Pro ExtraBold'), local('BeVietnamPro-ExtraBold'),
+       url('/usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-ExtraBold.ttf') format('truetype');
+}}
+@font-face {{
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 900;
+  src: local('Be Vietnam Pro Black'), local('BeVietnamPro-Black'),
+       url('/usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Black.ttf') format('truetype');
+}}
+
 :root {{
   --bg: {bg};
   --bg2: {bg2};
@@ -610,7 +654,7 @@ body {{
 .scene .layout {{
   display: grid; gap: 40px;
   height: 920px; /* Bounded height to guarantee no subtitle overlap while maximizing content space */
-  padding: 60px 120px 0;
+  padding: 80px 120px 0;
   align-items: center;
   position: relative; z-index: 10;
   overflow: hidden; /* Force clipping to protect the subtitle area */
@@ -623,7 +667,7 @@ body {{
   text-align: center;
   align-content: flex-start;
   gap: 24px;
-  padding-top: 80px;
+  padding-top: 100px;
 }}
 /* Bug2 fix: cascade text-align into info-col and all its direct children so body-text/caption inherit centering */
 .scene.centered .info-col {{ align-items: center; text-align: center; }}
@@ -4303,6 +4347,15 @@ def _build_boilerplate(title: str, total_duration: float, theme: dict, base_css:
 </style>
 </head>
 <body>
+<!-- Font preloader to trigger browser download of Vietnamese font subsets for all weights -->
+<div style="position: absolute; width: 0; height: 0; overflow: hidden; opacity: 0.001; pointer-events: none; user-select: none;">
+  <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 300;">áàảãạâấầẩẫậăắằẳẵặéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ</span>
+  <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 400;">áàảãạâấầẩẫậăắằẳẵặéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ</span>
+  <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600;">áàảãạâấầẩẫậăắằẳẵặéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ</span>
+  <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700;">áàảãạâấầẩẫậăắằẳẵặéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ</span>
+  <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 800;">áàảãạâấầẩẫậăắằẳẵặéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ</span>
+  <span style="font-family: 'Be Vietnam Pro', sans-serif; font-weight: 900;">áàảãạâấầẩẫậăắằẳẵặéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ</span>
+</div>
 <div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="{total_duration}">
   <div class="scanlines"></div>
 

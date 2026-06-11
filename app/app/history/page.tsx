@@ -162,7 +162,10 @@ export default function HistoryPage() {
             textDecoration: "none",
           }}
         >
-          <div className="logo-mark" style={{ background: "var(--accent)" }}>T</div>
+          <div className="logo-mark" style={{ background: "transparent" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="TechBeat" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
+          </div>
           <div style={{ textAlign: "left", lineHeight: 1.1 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>
               Tech<span style={{ color: "var(--accent)" }}>Beat</span>
@@ -210,7 +213,7 @@ export default function HistoryPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="🔍 Tìm kiếm tiêu đề bản tin..."
+                placeholder="Tìm kiếm tiêu đề bản tin..."
                 className="input-dark"
                 style={{ padding: "10px 16px", fontSize: 12 }}
               />
@@ -257,7 +260,7 @@ export default function HistoryPage() {
                 {/* Date header indicator */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                   <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)" }}>
-                    📅 {day}
+                    {day}
                   </h3>
                   <div className="divider-dotted" style={{ flex: 1 }} />
                   <span style={{ fontSize: 10, color: "var(--gray-5)", fontWeight: 700 }}>
@@ -328,7 +331,7 @@ export default function HistoryPage() {
                             className="btn-ghost"
                             style={{ padding: "8px 14px", fontSize: 11 }}
                           >
-                            💻 Xem mã HTML
+                            Xem mã HTML
                           </button>
 
                           <button
@@ -339,7 +342,7 @@ export default function HistoryPage() {
                               borderColor: "rgba(239,68,68,0.2)", color: "var(--red)"
                             }}
                           >
-                            ✕ Xóa
+                            Xóa
                           </button>
                         </div>
                       </motion.div>
@@ -386,7 +389,7 @@ export default function HistoryPage() {
                   {activeVideoTitle}
                 </h3>
                 <button onClick={() => setActiveVideoUrl(null)} className="btn-ghost" style={{ padding: "4px 10px" }}>
-                  ✕ Đóng
+                  Đóng
                 </button>
               </div>
               <video src={activeVideoUrl} controls autoPlay style={{ width: "100%", display: "block" }} />
@@ -443,10 +446,10 @@ export default function HistoryPage() {
                       color: copied ? "var(--white)" : "var(--black)"
                     }}
                   >
-                    <span>{copied ? "✓ Đã copy!" : "Copy mã HTML"}</span>
+                    <span>{copied ? "Đã copy!" : "Copy mã HTML"}</span>
                   </button>
                   <button onClick={() => setActiveHtmlUrl(null)} className="btn-ghost" style={{ padding: "6px 10px", fontSize: 11 }}>
-                    ✕ Đóng
+                    Đóng
                   </button>
                 </div>
               </div>

@@ -1,0 +1,92 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="orangeFill" x1="230" y1="240" x2="760" y2="780" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD36A"/>
+      <stop offset="0.28" stop-color="#FF9F00"/>
+      <stop offset="0.65" stop-color="#FF5A00"/>
+      <stop offset="1" stop-color="#FF7A00"/>
+    </linearGradient>
+
+    <linearGradient id="playStroke" x1="360" y1="180" x2="880" y2="790" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE08A"/>
+      <stop offset="0.35" stop-color="#FF9A00"/>
+      <stop offset="1" stop-color="#FF4D00"/>
+    </linearGradient>
+
+    <linearGradient id="lineGrad" x1="420" y1="500" x2="770" y2="500" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF4D00" stop-opacity="0"/>
+      <stop offset="0.3" stop-color="#FF8C00" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFD36A"/>
+    </linearGradient>
+
+    <filter id="bigGlow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="9" result="blur1"/>
+      <feColorMatrix in="blur1" type="matrix" values="1 0 0 0 1  0 0.36 0 0 0.28  0 0 0 0 0  0 0 0 0.95 0" result="orangeGlow"/>
+      <feGaussianBlur in="orangeGlow" stdDeviation="18" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="orangeGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 1  0 0.42 0 0 0.27  0 0 0 0 0  0 0 0 1 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="dotGlow" x="-120%" y="-120%" width="340%" height="340%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 1  0 0.45 0 0 0.25  0 0 0 0 0  0 0 0 1 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Transparent background by default. Uncomment below if you want black app icon background. -->
+  <!-- <rect width="1024" height="1024" rx="180" fill="#050505"/> -->
+
+  <!-- subtle dark plate only inside logo, low opacity for contrast on light backgrounds -->
+  <path d="M501 173C517 145 557 145 573 173L858 667C874 695 854 730 821 730H252C219 730 199 695 216 667L501 173Z"
+        fill="#050505" opacity="0.12" transform="rotate(90 536 451)"/>
+
+  <!-- Play outline -->
+  <path d="M360 205C360 178 393 165 412 185L827 436C865 459 865 515 827 538L412 789C393 809 360 796 360 769V660"
+        stroke="url(#playStroke)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" filter="url(#bigGlow)"/>
+
+  <!-- Fiber optic lines -->
+  <g filter="url(#softGlow)" stroke="url(#lineGrad)" stroke-width="9" stroke-linecap="round">
+    <path d="M426 468 C535 453 635 427 729 382"/>
+    <path d="M425 501 C543 490 646 470 779 425"/>
+    <path d="M425 532 C557 532 674 514 833 477"/>
+    <path d="M424 565 C556 579 666 574 778 548"/>
+    <path d="M423 596 C529 627 620 633 719 608"/>
+  </g>
+
+  <!-- Endpoint dots -->
+  <g filter="url(#dotGlow)">
+    <circle cx="733" cy="380" r="14" fill="#FFD46A"/>
+    <circle cx="783" cy="423" r="14" fill="#FFD46A"/>
+    <circle cx="838" cy="476" r="14" fill="#FFD46A"/>
+    <circle cx="782" cy="548" r="14" fill="#FFD46A"/>
+    <circle cx="721" cy="608" r="14" fill="#FFD46A"/>
+  </g>
+
+  <!-- Letter T -->
+  <g filter="url(#bigGlow)">
+    <path d="M190 340H595L660 406L595 472H450V674L384 748V472H250L190 340Z"
+          fill="url(#orangeFill)"/>
+    <path d="M190 340H595L660 406L595 472H450V674L384 748V472H250L190 340Z"
+          stroke="#FFD16A" stroke-width="8" stroke-linejoin="round" opacity="0.85"/>
+  </g>
+
+  <!-- Inner highlight -->
+  <path d="M240 365H584L618 402H266L240 365Z" fill="#FFE29A" opacity="0.35"/>
+  <path d="M405 475V635" stroke="#FFB238" stroke-width="16" stroke-linecap="round" opacity="0.35"/>
+</svg>

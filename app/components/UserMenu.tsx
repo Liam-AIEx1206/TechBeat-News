@@ -37,7 +37,7 @@ export function UserMenu() {
       const callbackInput = document.createElement("input");
       callbackInput.type = "hidden";
       callbackInput.name = "callbackUrl";
-      callbackInput.value = "/login";
+      callbackInput.value = "/";
       form.appendChild(tokenInput);
       form.appendChild(callbackInput);
       document.body.appendChild(form);

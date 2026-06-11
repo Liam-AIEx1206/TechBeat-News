@@ -32,6 +32,8 @@ RUN mkdir -p /usr/share/fonts/truetype/be-vietnam-pro \
     && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Medium.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-Medium.ttf" \
     && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-SemiBold.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-SemiBold.ttf" \
     && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Bold.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-Bold.ttf" \
+    && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-ExtraBold.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-ExtraBold.ttf" \
+    && curl -L -o /usr/share/fonts/truetype/be-vietnam-pro/BeVietnamPro-Black.ttf "https://github.com/google/fonts/raw/main/ofl/bevietnampro/BeVietnamPro-Black.ttf" \
     && fc-cache -f -v
 
 # Thiết lập thư mục làm việc
