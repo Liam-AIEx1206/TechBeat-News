@@ -97,6 +97,10 @@ export function useClientRender() {
       const styleEl = document.createElement("style");
       styleEl.id = "hf-render-styles";
       styleEl.textContent = `
+        #hf-render-overlay, #hf-render-overlay *,
+        #hf-video-container, #hf-video-container * {
+          cursor: none !important;
+        }
         @keyframes hf-pulse {
           0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
           70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
@@ -317,6 +321,9 @@ export function useClientRender() {
         const rootOffY = ((vpH - height * contentScale) / 2).toFixed(2);
         const fillCss = `
           <style id="cr-fill">
+            * {
+              cursor: none !important;
+            }
             html {
               width: ${vpW}px !important;
               height: ${vpH}px !important;
