@@ -11,6 +11,22 @@ interface HistoryItem {
   video_url: string;
   duration: number;
   created_at: string;
+  status?: string;
+  error?: string;
+  log_url?: string;
+  rendered_by?: string;
+}
+
+interface AdminUser {
+  email: string;
+  created_at: string;
+  last_active: string;
+  stats: {
+    total: number;
+    success: number;
+    failed: number;
+  };
+  history: HistoryItem[];
 }
 
 export default function HistoryPage() {
@@ -28,6 +44,22 @@ export default function HistoryPage() {
   const [htmlContent, setHtmlContent] = useState("");
   const [fetchingHtml, setFetchingHtml] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Admin states
+  const isAdmin = session?.user?.email === "cuongld@xgamevn.com";
+  const [activeTab, setActiveTab] = useState<"my-history" | "admin">("my-history");
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [adminSearch, setAdminSearch] = useState("");
+  const [loadingAdmin, setLoadingAdmin] = useState(false);
+  const [adminError, setAdminError] = useState("");
+  const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
+
+  // Log viewer modal states
+  const [activeLogUrl, setActiveLogUrl] = useState<string | null>(null);
+  const [activeLogTitle, setActiveLogTitle] = useState("");
+  const [logContent, setLogContent] = useState("");
+  const [fetchingLog, setFetchingLog] = useState(false);
+  const [copiedLog, setCopiedLog] = useState(false);
 
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -54,9 +86,38 @@ export default function HistoryPage() {
       });
   }
 
+  function fetchAdminUsers() {
+    setLoadingAdmin(true);
+    const headers: Record<string, string> = {};
+    if (session?.user?.email) {
+      headers["X-User-Email"] = session.user.email;
+    }
+    fetch(`${API}/history/admin/users`, { headers })
+      .then((res) => {
+        if (!res.ok) throw new Error("Không thể tải danh sách người dùng.");
+        return res.json();
+      })
+      .then((data) => {
+        setAdminUsers(data.users || []);
+        setAdminError("");
+      })
+      .catch((err) => {
+        setAdminError(err instanceof Error ? err.message : "Lỗi khi lấy thông tin người dùng.");
+      })
+      .finally(() => {
+        setLoadingAdmin(false);
+      });
+  }
+
   useEffect(() => {
     fetchHistory();
   }, [session?.user?.email]);
+
+  useEffect(() => {
+    if (isAdmin && activeTab === "admin") {
+      fetchAdminUsers();
+    }
+  }, [session?.user?.email, activeTab, isAdmin]);
 
   // Fetch HTML source code when viewer is opened
   useEffect(() => {
@@ -78,6 +139,27 @@ export default function HistoryPage() {
         setFetchingHtml(false);
       });
   }, [activeHtmlUrl]);
+
+  // Fetch Log content when viewer is opened
+  useEffect(() => {
+    if (!activeLogUrl) {
+      setLogContent("");
+      return;
+    }
+    setFetchingLog(true);
+    const fullUrl = activeLogUrl.startsWith("http") ? activeLogUrl : `${API}${activeLogUrl}`;
+    fetch(fullUrl)
+      .then((r) => r.text())
+      .then((txt) => {
+        setLogContent(txt);
+      })
+      .catch((e) => {
+        setLogContent(`<!-- Lỗi tải log: ${e.message} -->`);
+      })
+      .finally(() => {
+        setFetchingLog(false);
+      });
+  }, [activeLogUrl]);
 
   const handleDelete = async (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -105,17 +187,50 @@ export default function HistoryPage() {
     }
   };
 
+  const handleDeleteAdmin = async (userEmail: string, id: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Bạn có chắc chắn muốn xóa bản tin "${title}" của người dùng ${userEmail}? Hành động này sẽ xóa vĩnh viễn cả video và mã HTML.`)) {
+      return;
+    }
+
+    try {
+      const headers: Record<string, string> = {};
+      if (session?.user?.email) {
+        headers["X-User-Email"] = session.user.email;
+      }
+      const res = await fetch(`${API}/history/admin/users/${userEmail}/items/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchAdminUsers();
+      } else {
+        alert("Xóa thất bại: " + (data.message ?? "Lỗi không xác định"));
+      }
+    } catch (err) {
+      alert("Lỗi khi kết nối đến máy chủ.");
+    }
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(htmlContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyLog = () => {
+    navigator.clipboard.writeText(logContent);
+    setCopiedLog(true);
+    setTimeout(() => setCopiedLog(false), 2000);
+  };
+
+  // Filtering for personal history
   const filtered = history.filter((item) =>
     item.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Group items by day
+  // Group items by day for personal history
   const groupKeys: Record<string, HistoryItem[]> = {};
   filtered.forEach((item) => {
     const d = new Date(item.created_at);
@@ -136,9 +251,18 @@ export default function HistoryPage() {
     groupKeys[key].push(item);
   });
 
+  // Filtering for admin dashboard users
+  const filteredAdminUsers = adminUsers.filter((user) => {
+    const emailMatch = user.email.toLowerCase().includes(adminSearch.toLowerCase());
+    const titleMatch = user.history.some((item) =>
+      item.title.toLowerCase().includes(adminSearch.toLowerCase())
+    );
+    return emailMatch || titleMatch;
+  });
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--white)", position: "relative" }}>
-      {/* Dynamic background styling inspired by page.tsx */}
+      {/* Dynamic background styling */}
       <div style={{
         position: "absolute", inset: 0, zIndex: 0,
         background: "radial-gradient(ellipse at center, #0c0515 0%, #000000 70%)",
@@ -164,11 +288,11 @@ export default function HistoryPage() {
         >
           <div className="logo-mark" style={{ background: "transparent" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="TechBeat" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
+            <img src="/logo.svg" alt="Xnew" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
           </div>
           <div style={{ textAlign: "left", lineHeight: 1.1 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>
-              Tech<span style={{ color: "var(--accent)" }}>Beat</span>
+              X<span style={{ color: "var(--accent)" }}>new</span>
             </div>
             <div style={{ fontSize: 9, color: "var(--gray-5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
               AI News Studio
@@ -178,7 +302,7 @@ export default function HistoryPage() {
 
         <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <h2 style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--gray-5)", margin: 0 }}>
-            LỊCH SỬ DỰNG BẢN TIN TIN TỨC
+            {activeTab === "admin" ? "QUẢN TRỊ HỆ THỐNG TIN TỨC" : "LỊCH SỬ DỰNG BẢN TIN TIN TỨC"}
           </h2>
         </div>
 
@@ -192,18 +316,21 @@ export default function HistoryPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          style={{ marginBottom: 40 }}
+          style={{ marginBottom: 32 }}
         >
           <div className="hero-eyebrow" style={{ marginBottom: 14 }}>
-            Kho lưu trữ nội dung
+            {activeTab === "admin" ? "Hệ thống quản trị" : "Kho lưu trữ nội dung"}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
             <div>
               <h1 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>
-                Quản lý lịch sử bản tin
+                {activeTab === "admin" ? "Quản lý người dùng" : "Quản lý lịch sử bản tin"}
               </h1>
               <p style={{ fontSize: 13, color: "var(--gray-5)", marginTop: 6, margin: 0 }}>
-                Dưới đây là danh sách toàn bộ code HTML và video MP4 đã sinh theo thời gian thực để check mã hoặc xem lại.
+                {activeTab === "admin" 
+                  ? "Giám sát lịch sử dựng video, mã nguồn HTML, tệp log của toàn bộ tài khoản người dùng trên hệ thống."
+                  : "Dưới đây là danh sách toàn bộ code HTML và video MP4 đã sinh theo thời gian thực để check mã hoặc xem lại."
+                }
               </p>
             </div>
 
@@ -211,9 +338,9 @@ export default function HistoryPage() {
             <div style={{ width: "100%", maxWidth: 300 }}>
               <input
                 type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm kiếm tiêu đề bản tin..."
+                value={activeTab === "admin" ? adminSearch : search}
+                onChange={(e) => activeTab === "admin" ? setAdminSearch(e.target.value) : setSearch(e.target.value)}
+                placeholder={activeTab === "admin" ? "Tìm email hoặc tiêu đề video..." : "Tìm kiếm tiêu đề bản tin..."}
                 className="input-dark"
                 style={{ padding: "10px 16px", fontSize: 12 }}
               />
@@ -221,137 +348,465 @@ export default function HistoryPage() {
           </div>
         </motion.div>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <div className="badge badge-accent badge-dot" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <span /> Đang tải danh sách lịch sử dựng video...
-            </div>
-          </div>
-        ) : error ? (
-          <div style={{
-            padding: "24px", borderRadius: "var(--r)",
-            background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)",
-            color: "var(--red)", textAlign: "center"
+        {/* Tab Navigation for Admin */}
+        {isAdmin && (
+          <div style={{ 
+            display: "flex", 
+            gap: 8, 
+            marginBottom: 32, 
+            background: "rgba(255,255,255,0.02)", 
+            padding: 4, 
+            borderRadius: "var(--r)", 
+            border: "1px solid var(--gray-3)", 
+            width: "max-content" 
           }}>
-            Lỗi: {error}
+            <button
+              onClick={() => setActiveTab("my-history")}
+              className={activeTab === "my-history" ? "btn-primary" : "btn-ghost"}
+              style={{ padding: "8px 16px", fontSize: 12, margin: 0, borderRadius: "calc(var(--r) - 2px)" }}
+            >
+              Lịch sử của tôi
+            </button>
+            <button
+              onClick={() => setActiveTab("admin")}
+              className={activeTab === "admin" ? "btn-primary" : "btn-ghost"}
+              style={{ padding: "8px 16px", fontSize: 12, margin: 0, borderRadius: "calc(var(--r) - 2px)" }}
+            >
+              Quản lý hệ thống (Admin)
+            </button>
           </div>
-        ) : filtered.length === 0 ? (
-          <div style={{
-            padding: "60px 24px", borderRadius: "var(--r-lg)",
-            background: "var(--gray-1)", border: "1px solid var(--gray-3)",
-            textAlign: "center", color: "var(--gray-5)"
-          }}>
-            <p style={{ fontSize: 15, fontWeight: 700, margin: "0 0 12px 0", color: "var(--gray-6)" }}>
-              {search ? "Không tìm thấy kết quả phù hợp" : "Chưa có bản tin nào trong lịch sử"}
-            </p>
-            <p style={{ fontSize: 12, margin: 0 }}>
-              {search ? "Thử tìm kiếm với từ khóa khác." : "Hãy tiến hành tạo bản tin đầu tiên ở trang chủ để lưu lịch sử!"}
-            </p>
-            {!search && (
-              <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none" }}>
-                <span>Bắt đầu tạo video ngay</span>
-              </a>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-            {Object.entries(groupKeys).map(([day, items]) => (
-              <div key={day}>
-                {/* Date header indicator */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)" }}>
-                    {day}
-                  </h3>
-                  <div className="divider-dotted" style={{ flex: 1 }} />
-                  <span style={{ fontSize: 10, color: "var(--gray-5)", fontWeight: 700 }}>
-                    {items.length} bản tin
-                  </span>
-                </div>
+        )}
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {items.map((item, idx) => {
-                    const videoUrl = item.video_url || "";
-                    const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
-                    
-                    return (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: idx * 0.05 }}
-                        className="scene-card"
+        {/* Tab 1: My History */}
+        {activeTab === "my-history" && (
+          <>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "80px 0" }}>
+                <div className="badge badge-accent badge-dot" style={{ background: "rgba(255,255,255,0.03)" }}>
+                  <span /> Đang tải danh sách lịch sử dựng video...
+                </div>
+              </div>
+            ) : error ? (
+              <div style={{
+                padding: "24px", borderRadius: "var(--r)",
+                background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)",
+                color: "var(--red)", textAlign: "center"
+              }}>
+                Lỗi: {error}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{
+                padding: "60px 24px", borderRadius: "var(--r-lg)",
+                background: "var(--gray-1)", border: "1px solid var(--gray-3)",
+                textAlign: "center", color: "var(--gray-5)"
+              }}>
+                <p style={{ fontSize: 15, fontWeight: 700, margin: "0 0 12px 0", color: "var(--gray-6)" }}>
+                  {search ? "Không tìm thấy kết quả phù hợp" : "Chưa có bản tin nào trong lịch sử"}
+                </p>
+                <p style={{ fontSize: 12, margin: 0 }}>
+                  {search ? "Thử tìm kiếm với từ khóa khác." : "Hãy tiến hành tạo bản tin đầu tiên ở trang chủ để lưu lịch sử!"}
+                </p>
+                {!search && (
+                  <a href="/" className="btn-primary" style={{ marginTop: 20, textDecoration: "none" }}>
+                    <span>Bắt đầu tạo video ngay</span>
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+                {Object.entries(groupKeys).map(([day, items]) => (
+                  <div key={day}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                      <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)" }}>
+                        {day}
+                      </h3>
+                      <div className="divider-dotted" style={{ flex: 1 }} />
+                      <span style={{ fontSize: 10, color: "var(--gray-5)", fontWeight: 700 }}>
+                        {items.length} bản tin
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {items.map((item, idx) => {
+                        const isFailed = item.status === "failed";
+                        const videoUrl = item.video_url || "";
+                        const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
+                        
+                        return (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: idx * 0.05 }}
+                            className="scene-card"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              flexWrap: "wrap",
+                              gap: 16,
+                              padding: "16px 20px",
+                              background: isFailed 
+                                ? "rgba(239,68,68,0.02)" 
+                                : "linear-gradient(180deg, var(--gray-1) 0%, rgba(10,10,10,0.8) 100%)",
+                              border: isFailed ? "1px solid rgba(239,68,68,0.2)" : "1px solid var(--gray-3)",
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 280 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                <span style={{
+                                  fontFamily: "var(--font-mono)", fontSize: 10,
+                                  color: "var(--accent2)", fontWeight: 700
+                                }}>
+                                  {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                                </span>
+                                {isFailed && (
+                                  <span className="badge badge-error" style={{ background: "rgba(239,68,68,0.15)", color: "var(--red)", fontSize: 9, padding: "2px 6px" }}>
+                                    Lỗi dựng
+                                  </span>
+                                )}
+                              </div>
+                              <h4 style={{ fontSize: 14, fontWeight: 800, color: "var(--white)", margin: 0, lineHeight: 1.3 }}>
+                                {item.title}
+                              </h4>
+                              {isFailed && item.error && (
+                                <div style={{ fontSize: 11, color: "var(--red)", marginTop: 4, fontStyle: "italic" }}>
+                                  Chi tiết lỗi: {item.error}
+                                </div>
+                              )}
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                              {!isFailed && (
+                                <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
+                                  {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                                </div>
+                              )}
+
+                              {!isFailed && videoFullUrl && (
+                                <button
+                                  onClick={() => {
+                                    setActiveVideoUrl(videoFullUrl);
+                                    setActiveVideoTitle(item.title);
+                                  }}
+                                  className="btn-primary"
+                                  style={{
+                                    padding: "8px 16px", fontSize: 11, background: "var(--accent)", color: "var(--black)"
+                                  }}
+                                >
+                                  <span>Xem Video</span>
+                                </button>
+                              )}
+
+                              {!isFailed && item.html_url && (
+                                <button
+                                  onClick={() => {
+                                    setActiveHtmlUrl(item.html_url);
+                                    setActiveHtmlTitle(item.title);
+                                  }}
+                                  className="btn-ghost"
+                                  style={{ padding: "8px 14px", fontSize: 11 }}
+                                >
+                                  Xem mã HTML
+                                </button>
+                              )}
+
+                              {item.log_url && (
+                                <button
+                                  onClick={() => {
+                                    setActiveLogUrl(item.log_url || null);
+                                    setActiveLogTitle(item.title);
+                                  }}
+                                  className="btn-ghost"
+                                  style={{ padding: "8px 14px", fontSize: 11, borderColor: "rgba(236,72,153,0.3)", color: "var(--accent)" }}
+                                >
+                                  Xem Log / Lỗi
+                                </button>
+                              )}
+
+                              <button
+                                onClick={(e) => handleDelete(item.id, item.title, e)}
+                                className="btn-ghost"
+                                style={{
+                                  padding: "8px 10px", fontSize: 11,
+                                  borderColor: "rgba(239,68,68,0.2)", color: "var(--red)"
+                                }}
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Tab 2: Admin System Management */}
+        {activeTab === "admin" && isAdmin && (
+          <>
+            {loadingAdmin ? (
+              <div style={{ textAlign: "center", padding: "80px 0" }}>
+                <div className="badge badge-accent badge-dot" style={{ background: "rgba(255,255,255,0.03)" }}>
+                  <span /> Đang tải danh sách người dùng...
+                </div>
+              </div>
+            ) : adminError ? (
+              <div style={{
+                padding: "24px", borderRadius: "var(--r)",
+                background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)",
+                color: "var(--red)", textAlign: "center"
+              }}>
+                Lỗi: {adminError}
+              </div>
+            ) : filteredAdminUsers.length === 0 ? (
+              <div style={{
+                padding: "60px 24px", borderRadius: "var(--r-lg)",
+                background: "var(--gray-1)", border: "1px solid var(--gray-3)",
+                textAlign: "center", color: "var(--gray-5)"
+              }}>
+                <p style={{ fontSize: 15, fontWeight: 700, margin: "0 0 12px 0", color: "var(--gray-6)" }}>
+                  Không tìm thấy tài khoản người dùng nào
+                </p>
+                <p style={{ fontSize: 12, margin: 0 }}>
+                  Thử tìm kiếm với email hoặc tiêu đề video khác.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {filteredAdminUsers.map((user) => {
+                  const isExpanded = !!expandedUsers[user.email];
+                  const toggleExpanded = () => {
+                    setExpandedUsers(prev => ({ ...prev, [user.email]: !prev[user.email] }));
+                  };
+
+                  const createDate = new Date(user.created_at).toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  });
+
+                  return (
+                    <div
+                      key={user.email}
+                      style={{
+                        background: "var(--gray-1)",
+                        border: "1px solid var(--gray-3)",
+                        borderRadius: "var(--r-lg)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Accordion Trigger Header */}
+                      <div
+                        onClick={toggleExpanded}
                         style={{
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          flexWrap: "wrap",
-                          gap: 16,
                           padding: "16px 20px",
-                          background: "linear-gradient(180deg, var(--gray-1) 0%, rgba(10,10,10,0.8) 100%)",
+                          cursor: "pointer",
+                          background: "linear-gradient(90deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%)",
+                          userSelect: "none",
                         }}
                       >
-                        <div style={{ flex: 1, minWidth: 280 }}>
-                          <span style={{
-                            fontFamily: "var(--font-mono)", fontSize: 10,
-                            color: "var(--accent2)", display: "block", marginBottom: 4,
-                            fontWeight: 700
+                        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                          <div style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: "50%",
+                            background: "rgba(236, 72, 153, 0.08)",
+                            border: "1px solid rgba(236, 72, 153, 0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 14,
+                            fontWeight: 800,
+                            color: "var(--accent)"
                           }}>
-                            {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                          </span>
-                          <h4 style={{ fontSize: 14, fontWeight: 800, color: "var(--white)", margin: 0, lineHeight: 1.3 }}>
-                            {item.title}
-                          </h4>
-                        </div>
-
-                        {/* Control buttons */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                          {/* Duration badge */}
-                          <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
-                            {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                            {user.email.charAt(0).toUpperCase()}
                           </div>
-
-                          <button
-                            onClick={() => {
-                              setActiveVideoUrl(videoFullUrl);
-                              setActiveVideoTitle(item.title);
-                            }}
-                            className="btn-primary"
-                            style={{
-                              padding: "8px 16px", fontSize: 11, background: "var(--accent)", color: "var(--black)"
-                            }}
-                          >
-                            <span>Xem Video</span>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setActiveHtmlUrl(item.html_url);
-                              setActiveHtmlTitle(item.title);
-                            }}
-                            className="btn-ghost"
-                            style={{ padding: "8px 14px", fontSize: 11 }}
-                          >
-                            Xem mã HTML
-                          </button>
-
-                          <button
-                            onClick={(e) => handleDelete(item.id, item.title, e)}
-                            className="btn-ghost"
-                            style={{
-                              padding: "8px 10px", fontSize: 11,
-                              borderColor: "rgba(239,68,68,0.2)", color: "var(--red)"
-                            }}
-                          >
-                            Xóa
-                          </button>
+                          <div style={{ textAlign: "left" }}>
+                            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--white)" }}>
+                              {user.email}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 2 }}>
+                              Ngày tạo ngăn: <span style={{ fontFamily: "var(--font-mono)", color: "var(--gray-6)" }}>{createDate}</span>
+                            </div>
+                          </div>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <span className="badge" style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--gray-3)", color: "var(--gray-5)", fontSize: 10 }}>
+                              Tổng: {user.stats.total}
+                            </span>
+                            {user.stats.success > 0 && (
+                              <span className="badge" style={{ background: "rgba(34,197,94,0.08)", color: "var(--green)", border: "1px solid rgba(34,197,94,0.15)", fontSize: 10 }}>
+                                Thành công: {user.stats.success}
+                              </span>
+                            )}
+                            {user.stats.failed > 0 && (
+                              <span className="badge" style={{ background: "rgba(239,68,68,0.08)", color: "var(--red)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 10 }}>
+                                Lỗi: {user.stats.failed}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <motion.span
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ display: "inline-block", color: "var(--gray-5)", fontSize: 11 }}
+                          >
+                            ▼
+                          </motion.span>
+                        </div>
+                      </div>
+
+                      {/* Accordion Content */}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            style={{ overflow: "hidden", borderTop: "1px solid var(--gray-3)", background: "rgba(0,0,0,0.2)" }}
+                          >
+                            <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+                              {user.history.length === 0 ? (
+                                <div style={{ textAlign: "center", padding: "20px 0", color: "var(--gray-5)", fontSize: 12 }}>
+                                  Người dùng chưa có lịch sử dựng bản tin.
+                                </div>
+                              ) : (
+                                user.history.map((item) => {
+                                  const isFailed = item.status === "failed";
+                                  const videoUrl = item.video_url || "";
+                                  const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
+                                  
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="scene-card"
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        flexWrap: "wrap",
+                                        gap: 16,
+                                        padding: "12px 16px",
+                                        background: isFailed 
+                                          ? "rgba(239,68,68,0.01)" 
+                                          : "linear-gradient(180deg, var(--gray-1) 0%, rgba(8,8,8,0.7) 100%)",
+                                        border: isFailed ? "1px solid rgba(239,68,68,0.15)" : "1px solid var(--gray-3)",
+                                      }}
+                                    >
+                                      <div style={{ flex: 1, minWidth: 260, textAlign: "left" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                          <span style={{
+                                            fontFamily: "var(--font-mono)", fontSize: 10,
+                                            color: "var(--accent2)", fontWeight: 700
+                                          }}>
+                                            {new Date(item.created_at).toLocaleString("vi-VN")}
+                                          </span>
+                                          {isFailed ? (
+                                            <span className="badge badge-error" style={{ background: "rgba(239,68,68,0.12)", color: "var(--red)", fontSize: 9, padding: "1px 5px" }}>
+                                              Lỗi
+                                            </span>
+                                          ) : (
+                                            <span className="badge badge-success" style={{ background: "rgba(34,197,94,0.12)", color: "var(--green)", fontSize: 9, padding: "1px 5px" }}>
+                                              Đã dựng
+                                            </span>
+                                          )}
+                                        </div>
+                                        <h4 style={{ fontSize: 13, fontWeight: 700, color: "var(--white)", margin: 0, lineHeight: 1.3 }}>
+                                          {item.title}
+                                        </h4>
+                                        {isFailed && item.error && (
+                                          <div style={{ fontSize: 11, color: "var(--red)", marginTop: 4, fontStyle: "italic" }}>
+                                            Lỗi: {item.error}
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                        {!isFailed && (
+                                          <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)", fontSize: 10 }}>
+                                            {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                                          </div>
+                                        )}
+
+                                        {!isFailed && videoFullUrl && (
+                                          <button
+                                            onClick={() => {
+                                              setActiveVideoUrl(videoFullUrl);
+                                              setActiveVideoTitle(item.title);
+                                            }}
+                                            className="btn-primary"
+                                            style={{
+                                              padding: "6px 12px", fontSize: 10, background: "var(--accent)", color: "var(--black)"
+                                            }}
+                                          >
+                                            <span>Xem Video</span>
+                                          </button>
+                                        )}
+
+                                        {!isFailed && item.html_url && (
+                                          <button
+                                            onClick={() => {
+                                              setActiveHtmlUrl(item.html_url);
+                                              setActiveHtmlTitle(item.title);
+                                            }}
+                                            className="btn-ghost"
+                                            style={{ padding: "6px 12px", fontSize: 10 }}
+                                          >
+                                            Xem HTML
+                                          </button>
+                                        )}
+
+                                        {item.log_url && (
+                                          <button
+                                            onClick={() => {
+                                              setActiveLogUrl(item.log_url || null);
+                                              setActiveLogTitle(item.title);
+                                            }}
+                                            className="btn-ghost"
+                                            style={{ padding: "6px 12px", fontSize: 10, borderColor: "rgba(236,72,153,0.3)", color: "var(--accent)" }}
+                                          >
+                                            Xem Log
+                                          </button>
+                                        )}
+
+                                        <button
+                                          onClick={(e) => handleDeleteAdmin(user.email, item.id, item.title, e)}
+                                          className="btn-ghost"
+                                          style={{
+                                            padding: "6px 10px", fontSize: 10,
+                                            borderColor: "rgba(239,68,68,0.2)", color: "var(--red)"
+                                          }}
+                                        >
+                                          Xóa
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
 
@@ -429,7 +884,7 @@ export default function HistoryPage() {
                 padding: "16px 20px", display: "flex", justifyContent: "space-between",
                 alignItems: "center", borderBottom: "1px solid var(--gray-3)", background: "rgba(0,0,0,0.3)"
               }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
                   <span style={{ fontSize: 9, fontWeight: 800, color: "var(--accent)", letterSpacing: "0.08em" }}>SOURCE CODE HTML</span>
                   <h3 style={{ fontSize: 13, fontWeight: 800, margin: "2px 0 0 0", color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "90%" }}>
                     {activeHtmlTitle}
@@ -454,7 +909,6 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* Source code display box */}
               <div style={{ flex: 1, overflow: "auto", padding: 20, background: "#020204" }}>
                 {fetchingHtml ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "var(--gray-5)" }}>
@@ -463,9 +917,84 @@ export default function HistoryPage() {
                 ) : (
                   <pre style={{
                     margin: 0, fontFamily: "var(--font-mono)", fontSize: 11,
-                    lineHeight: 1.6, color: "rgba(249,115,22,0.85)", whiteSpace: "pre-wrap"
+                    lineHeight: 1.6, color: "rgba(249,115,22,0.85)", whiteSpace: "pre-wrap", textAlign: "left"
                   }}>
                     <code>{htmlContent}</code>
+                  </pre>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Log/Error Viewer Modal */}
+      <AnimatePresence>
+        {activeLogUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 9999,
+              background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 24,
+            }}
+            onClick={() => setActiveLogUrl(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              style={{
+                position: "relative", width: "100%", maxWidth: 840,
+                background: "var(--gray-1)", border: "1px solid var(--gray-3)",
+                borderRadius: "var(--r-lg)", overflow: "hidden",
+                display: "flex", flexDirection: "column", maxHeight: "85vh"
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                padding: "16px 20px", display: "flex", justifyContent: "space-between",
+                alignItems: "center", borderBottom: "1px solid var(--gray-3)", background: "rgba(0,0,0,0.3)"
+              }}>
+                <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: "var(--accent)", letterSpacing: "0.08em" }}>RUNTIME LOGS / ERRORS</span>
+                  <h3 style={{ fontSize: 13, fontWeight: 800, margin: "2px 0 0 0", color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "90%" }}>
+                    {activeLogTitle}
+                  </h3>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button
+                    onClick={handleCopyLog}
+                    disabled={fetchingLog || !logContent}
+                    className="btn-primary"
+                    style={{
+                      padding: "6px 12px", fontSize: 11,
+                      background: copiedLog ? "var(--green)" : "var(--accent)",
+                      color: copiedLog ? "var(--white)" : "var(--black)"
+                    }}
+                  >
+                    <span>{copiedLog ? "Đã copy!" : "Copy Log"}</span>
+                  </button>
+                  <button onClick={() => setActiveLogUrl(null)} className="btn-ghost" style={{ padding: "6px 10px", fontSize: 11 }}>
+                    Đóng
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ flex: 1, overflow: "auto", padding: 20, background: "#020204" }}>
+                {fetchingLog ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "var(--gray-5)" }}>
+                    <div className="badge badge-accent badge-dot"><span /> Đang tải log...</div>
+                  </div>
+                ) : (
+                  <pre style={{
+                    margin: 0, fontFamily: "var(--font-mono)", fontSize: 11,
+                    lineHeight: 1.6, color: "var(--gray-6)", whiteSpace: "pre-wrap", textAlign: "left"
+                  }}>
+                    <code>{logContent}</code>
                   </pre>
                 )}
               </div>
