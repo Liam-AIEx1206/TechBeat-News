@@ -288,11 +288,11 @@ export default function HistoryPage() {
         >
           <div className="logo-mark" style={{ background: "transparent" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="Xnew" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
+            <img src="/logo.svg" alt="TechBeat" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
           </div>
           <div style={{ textAlign: "left", lineHeight: 1.1 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>
-              X<span style={{ color: "var(--accent)" }}>new</span>
+              Tech<span style={{ color: "var(--accent)" }}>Beat</span>
             </div>
             <div style={{ fontSize: 9, color: "var(--gray-5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
               AI News Studio

@@ -24,7 +24,7 @@ import { DEFAULT_THEME, getTheme } from "@/types/scene";
 type Stage = "dashboard" | "input" | "generating" | "preview" | "htmlPreview" | "build";
 
 const TICKER_ITEMS = [
-  "XNEW LIVE",
+  "TECHBEAT LIVE",
   "AI bản tin tự động",
   "Render 1080p · 30fps",
   "Powered by GPT-4o + HyperFrames",
@@ -256,7 +256,7 @@ export default function Home() {
               color: "var(--gray-6)",
               marginBottom: 28,
             }}>
-              Bạn đang mở một tab Xnew khác. Để tránh xung đột dữ liệu và lỗi trong quá trình tạo video, vui lòng đóng tab này và tiếp tục sử dụng tab đầu tiên.
+              Bạn đang mở một tab TechBeat khác. Để tránh xung đột dữ liệu và lỗi trong quá trình tạo video, vui lòng đóng tab này và tiếp tục sử dụng tab đầu tiên.
             </p>
             <div style={{
               display: "flex",
@@ -369,11 +369,11 @@ function AppHeader({
       >
         <div className="logo-mark" style={{ background: "transparent" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="Xnew" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
+          <img src="/logo.svg" alt="TechBeat" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
         </div>
         <div style={{ textAlign: "left", lineHeight: 1.1 }}>
           <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em" }}>
-            X<span style={{ color: "var(--accent)" }}>new</span>
+            Tech<span style={{ color: "var(--accent)" }}>Beat</span>
           </div>
           <div style={{ fontSize: 9, color: "var(--gray-5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
             AI News Studio
