@@ -57,8 +57,8 @@ def deploy():
             f"tar -xzf {tar_name} -C TechBeat-News --strip-components=1",
             f"rm {tar_name}",
             "cd TechBeat-News && cp .env.compose.example .env",
-            "cd TechBeat-News && sed -i 's|NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=https://techbeat.aiteamxg.io.vn|g' .env",
-            "cd TechBeat-News && echo 'TUNNEL_TOKEN=eyJhIjoiNzYyNjcxZWQxMWNiZDE0NmE1ZWRlNTQ4ZWRkOTA1MmUiLCJ0IjoiOTdhZTdmYWItMTZmZC00NTZkLWFkNGEtMmUzMWI0MmIxNzljIiwicyI6IllqRXpPR0UzTldJdE56RmtZeTAwWW1VeUxXRTBOalV0TkdFMVlqTTFOalF4TVRZdyJ9' >> .env",
+            "cd TechBeat-News && sed -i 's|NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=https://techbeat.labpinky.com|g' .env",
+            "cd TechBeat-News && echo 'TUNNEL_TOKEN=eyJhIjoiYzJlZTU3NWRkMmE4MWMxMjU0MWUzMzA5YTFjOTA5MjEiLCJ0IjoiN2QyYmQ1MTUtNzA2ZC00YWI5LTk5YWItMDBiZTIzZWZmYTE2IiwicyI6IlpETmhZMlkzTTJJdFpEVmtaaTAwT1dRNExUbG1aVEl0WVdJMU5HSmpOMlprTkRSayJ9' >> .env",
             f"cd TechBeat-News && echo '{password}' | sudo -S docker compose up -d --build"
         ]
         

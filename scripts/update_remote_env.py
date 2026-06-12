@@ -52,7 +52,7 @@ def run():
             env_content_to_append += f"{k}={app_env_vars[k]}\n"
 
     # Set the NEXTAUTH_URL to the production domain
-    env_content_to_append += "NEXTAUTH_URL=https://techbeat.aiteamxg.io.vn\n"
+    env_content_to_append += "NEXTAUTH_URL=https://techbeat.labpinky.com\n"
 
     if not env_content_to_append:
         print("No keys found to copy!")
