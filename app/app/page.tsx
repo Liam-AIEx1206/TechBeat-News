@@ -44,11 +44,22 @@ export default function Home() {
   const hasRedirectedRef = useRef(false);
 
   const [hasDuplicateConflict, setHasDuplicateConflict] = useState(false);
-  const [tabId] = useState(() => Math.random().toString(36).substring(2, 9));
+  const [tabId, setTabId] = useState("");
+
+  // Initialize unique tab ID in sessionStorage (safe for F5 refreshes)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let id = sessionStorage.getItem("techbeat_tab_id");
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 9);
+      sessionStorage.setItem("techbeat_tab_id", id);
+    }
+    setTabId(id);
+  }, []);
 
   // Detect duplicate tabs using localStorage heartbeat
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !tabId) return;
 
     const checkTabStatus = () => {
       const activeTabId = localStorage.getItem("techbeat_active_tab_id");
