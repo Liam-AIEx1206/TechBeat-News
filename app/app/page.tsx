@@ -43,6 +43,58 @@ export default function Home() {
   const abortRef = useRef<AbortController | null>(null);
   const hasRedirectedRef = useRef(false);
 
+  const [hasDuplicateConflict, setHasDuplicateConflict] = useState(false);
+  const [tabId] = useState(() => Math.random().toString(36).substring(2, 9));
+
+  // Detect duplicate tabs using localStorage heartbeat
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkTabStatus = () => {
+      const activeTabId = localStorage.getItem("techbeat_active_tab_id");
+      const lastSeenStr = localStorage.getItem("techbeat_active_tab_last_seen");
+      const now = Date.now();
+      const lastSeen = lastSeenStr ? parseInt(lastSeenStr, 10) : 0;
+      const isActiveTabDead = !activeTabId || (now - lastSeen > 4000);
+
+      if (activeTabId === tabId) {
+        // We are the active tab, update heartbeat
+        localStorage.setItem("techbeat_active_tab_last_seen", now.toString());
+        setHasDuplicateConflict(false);
+      } else if (isActiveTabDead) {
+        // No active tab or it died, we claim it
+        localStorage.setItem("techbeat_active_tab_id", tabId);
+        localStorage.setItem("techbeat_active_tab_last_seen", now.toString());
+        setHasDuplicateConflict(false);
+        console.log(`[TabManager] Claimed active status for tabId: ${tabId}`);
+      } else {
+        // Another tab is active and alive, we are duplicate
+        setHasDuplicateConflict(true);
+      }
+    };
+
+    // Run check immediately
+    checkTabStatus();
+
+    // Check/Heartbeat every 1 second
+    const intervalId = setInterval(checkTabStatus, 1000);
+
+    // Clean up active tab registration if we close the tab cleanly
+    const handleUnload = () => {
+      const activeTabId = localStorage.getItem("techbeat_active_tab_id");
+      if (activeTabId === tabId) {
+        localStorage.removeItem("techbeat_active_tab_id");
+        localStorage.removeItem("techbeat_active_tab_last_seen");
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [tabId]);
+
   useEffect(() => {
     if (status === "authenticated" && !hasRedirectedRef.current) {
       setStage("input");
@@ -158,6 +210,82 @@ export default function Home() {
     <div style={{ minHeight: "100vh", position: "relative", background: "var(--black)" }}>
       <GlobalFXOverlay />
       <CurtainSweep stageKey={stage} accent={scenePlan?.theme ? getTheme(scenePlan.theme).accent : "#f97316"} />
+
+      {hasDuplicateConflict && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0, 0, 0, 0.95)",
+          backdropFilter: "blur(20px)",
+          zIndex: 99999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--white)",
+          padding: 24,
+          textAlign: "center",
+        }}>
+          <div style={{
+            width: "100%",
+            maxWidth: 500,
+            background: "var(--gray-1)",
+            border: "1px solid rgba(249, 115, 22, 0.3)",
+            borderRadius: "var(--r-lg)",
+            padding: "40px 32px",
+            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(249, 115, 22, 0.05)",
+          }}>
+            <div style={{
+              fontSize: 54,
+              marginBottom: 20,
+            }}>
+              ⚠️
+            </div>
+            <h2 style={{
+              fontSize: 20,
+              fontWeight: 900,
+              letterSpacing: "-0.02em",
+              marginBottom: 12,
+              color: "var(--white)"
+            }}>
+              Cảnh báo: Tab trùng lặp
+            </h2>
+            <p style={{
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: "var(--gray-6)",
+              marginBottom: 28,
+            }}>
+              Bạn đang mở một tab TechBeat khác. Để tránh xung đột dữ liệu và lỗi trong quá trình tạo video, vui lòng đóng tab này và tiếp tục sử dụng tab đầu tiên.
+            </p>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              width: "100%"
+            }}>
+              <button
+                onClick={() => {
+                  window.close();
+                  setTimeout(() => {
+                    alert("Vui lòng tự đóng tab này trên trình duyệt của bạn.");
+                  }, 200);
+                }}
+                className="btn-primary"
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  padding: "12px 24px",
+                  fontSize: 13,
+                  fontWeight: 800,
+                }}
+              >
+                Đóng tab này
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {stage !== "dashboard" && (
         <AppHeader 

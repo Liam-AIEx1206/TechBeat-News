@@ -197,7 +197,7 @@ async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") 
         
         temp_mp3 = target.with_suffix(".mp3.tmp")
         
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(
                 f"{base_url}/audio/speech",
                 headers={
@@ -225,13 +225,13 @@ async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") 
                 temp_mp3.unlink()
             return True
         except Exception as e:
-            print(f"[tts/openai] mp3->wav conversion failed, renaming directly: {e}")
+            print(f"[tts/openai] mp3->wav conversion failed, renaming directly: {repr(e)}")
             if temp_mp3.exists():
                 temp_mp3.rename(target)
             return True
             
     except Exception as e:
-        print(f"[tts/openai] request failed: {e}")
+        print(f"[tts/openai] request failed: {repr(e)}")
         return False
 
 

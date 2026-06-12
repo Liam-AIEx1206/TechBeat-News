@@ -212,17 +212,28 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
     const scenes = document.querySelectorAll(".scene");
     scenes.forEach((sceneEl) => {
         // Clean up empty layout items (e.g. stats, cards, steps) where variables are missing
+        const isTextEmpty = (el) => {
+            if (!el) return true;
+            const txt = el.textContent.trim();
+            if (!txt) return true;
+            try {
+                return txt.replace(/[^\p{L}\p{N}]/gu, "").length === 0;
+            } catch(e) {
+                return txt.length <= 2;
+            }
+        };
+
         sceneEl.querySelectorAll('.stat-list-card').forEach(card => {
             const num = card.querySelector('.num');
             const title = card.querySelector('.title');
-            if ((!num || !num.textContent.trim()) && (!title || !title.textContent.trim())) {
+            if (isTextEmpty(num) && isTextEmpty(title)) {
                 card.remove();
             }
         });
         sceneEl.querySelectorAll('.glass-card').forEach(card => {
             const title = card.querySelector('.title');
             const desc = card.querySelector('.desc');
-            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+            if (isTextEmpty(title) && isTextEmpty(desc)) {
                 card.remove();
             }
         });
@@ -236,40 +247,150 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
         sceneEl.querySelectorAll('.feat-card').forEach(card => {
             const title = card.querySelector('.t');
             const desc = card.querySelector('.d');
-            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+            if (isTextEmpty(title) && isTextEmpty(desc)) {
                 card.remove();
             }
         });
         const featGrid = sceneEl.querySelector('.feat-grid');
         if (featGrid) {
-            const remaining = featGrid.querySelectorAll('.feat-card').length;
-            if (remaining > 0 && remaining < 4) {
-                featGrid.style.gridTemplateColumns = remaining === 1 ? '1fr' : `repeat(2, 1fr)`;
+            const remaining = featGrid.querySelectorAll('.feat-card');
+            const remainingCount = remaining.length;
+            if (remainingCount === 3) {
+                remaining[2].style.gridColumn = 'span 2';
+                featGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            } else if (remainingCount === 2) {
+                featGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            } else if (remainingCount === 1) {
+                featGrid.style.gridTemplateColumns = '1fr';
             }
         }
+        sceneEl.querySelectorAll('.agent-card').forEach(card => {
+            const role = card.querySelector('.role');
+            const desc = card.querySelector('.desc');
+            if (isTextEmpty(role) && isTextEmpty(desc)) {
+                card.remove();
+            }
+        });
+        const agentGrid = sceneEl.querySelector('.agent-grid');
+        if (agentGrid) {
+            const remaining = agentGrid.querySelectorAll('.agent-card');
+            const remainingCount = remaining.length;
+            if (remainingCount === 3) {
+                remaining[2].style.gridColumn = 'span 2';
+                agentGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            } else if (remainingCount === 2) {
+                agentGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                const pill = agentGrid.querySelector('.agent-grid-center-pill');
+                if (pill) pill.remove();
+            } else if (remainingCount === 1) {
+                agentGrid.style.gridTemplateColumns = '1fr';
+                const pill = agentGrid.querySelector('.agent-grid-center-pill');
+                if (pill) pill.remove();
+            }
+        }
+        let stepCount = 1;
         sceneEl.querySelectorAll('.step-item').forEach(step => {
             const text = step.querySelector('.step-text');
-            if (!text || !text.textContent.trim()) {
+            if (isTextEmpty(text)) {
                 step.remove();
+            } else {
+                const circle = step.querySelector('.step-circle');
+                if (circle) circle.textContent = stepCount++;
+            }
+        });
+        sceneEl.querySelectorAll('.flow-step').forEach(step => {
+            const text = step.querySelector('.flow-text');
+            if (isTextEmpty(text)) {
+                step.remove();
+            }
+        });
+        const flowPipeline = sceneEl.querySelector('.flow-pipeline');
+        if (flowPipeline) {
+            const steps = flowPipeline.querySelectorAll('.flow-step');
+            const arrows = flowPipeline.querySelectorAll('.flow-arrow');
+            for (let i = arrows.length - 1; i >= steps.length - 1; i--) {
+                if (arrows[i]) arrows[i].remove();
+            }
+            const remainingSteps = steps.length;
+            if (remainingSteps === 3) {
+                flowPipeline.style.gridTemplateColumns = '1fr 40px 1fr 40px 1fr';
+            } else if (remainingSteps === 2) {
+                flowPipeline.style.gridTemplateColumns = '1fr 40px 1fr';
+            } else if (remainingSteps === 1) {
+                flowPipeline.style.gridTemplateColumns = '1fr';
+            }
+        }
+        sceneEl.querySelectorAll('.arch-layer').forEach(layer => {
+            layer.querySelectorAll('.arch-node').forEach(node => {
+                if (isTextEmpty(node)) {
+                    node.remove();
+                }
+            });
+            const remaining = layer.querySelectorAll('.arch-node');
+            if (remaining.length === 1) {
+                remaining[0].style.gridColumn = 'span 2';
+            } else if (remaining.length === 0) {
+                const arrow = layer.nextElementSibling;
+                if (arrow && arrow.classList.contains('arch-arrow')) {
+                    arrow.remove();
+                } else {
+                    const prevArrow = layer.previousElementSibling;
+                    if (prevArrow && prevArrow.classList.contains('arch-arrow')) {
+                        prevArrow.remove();
+                    }
+                }
+                layer.remove();
+            }
+        });
+        sceneEl.querySelectorAll('.formula-pill').forEach(pill => {
+            if (isTextEmpty(pill)) {
+                const nextOperator = pill.nextElementSibling;
+                if (nextOperator && nextOperator.classList.contains('formula-operator')) {
+                    nextOperator.remove();
+                } else {
+                    const prevOperator = pill.previousElementSibling;
+                    if (prevOperator && prevOperator.classList.contains('formula-operator')) {
+                        prevOperator.remove();
+                    }
+                }
+                pill.remove();
+            }
+        });
+        const nodes = ['n1', 'n2', 'n3', 'n4'];
+        const paths = sceneEl.querySelectorAll('.mm-svg path');
+        nodes.forEach((nClass, idx) => {
+            const nodeEl = sceneEl.querySelector('.node.' + nClass);
+            if (nodeEl) {
+                if (isTextEmpty(nodeEl)) {
+                    nodeEl.remove();
+                    if (paths[idx]) paths[idx].remove();
+                }
+            }
+        });
+        sceneEl.querySelectorAll('.gantt-row').forEach(row => {
+            const label = row.querySelector('.gantt-label');
+            const bar = row.querySelector('.gantt-bar');
+            if (isTextEmpty(label) && isTextEmpty(bar)) {
+                row.remove();
             }
         });
         sceneEl.querySelectorAll('.tl-item').forEach(item => {
             const title = item.querySelector('.t');
             const desc = item.querySelector('.d');
-            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+            if (isTextEmpty(title) && isTextEmpty(desc)) {
                 item.remove();
             }
         });
         sceneEl.querySelectorAll('.checklist-item').forEach(item => {
             const span = item.querySelector('span');
-            if (!span || !span.textContent.trim()) {
+            if (isTextEmpty(span)) {
                 item.remove();
             }
         });
         sceneEl.querySelectorAll('.service-card').forEach(card => {
             const title = card.querySelector('.service-title');
             const desc = card.querySelector('.service-desc');
-            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+            if (isTextEmpty(title) && isTextEmpty(desc)) {
                 card.remove();
             }
         });
@@ -282,7 +403,7 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
         }
         sceneEl.querySelectorAll('.kanban-col').forEach(col => {
             const title = col.querySelector('.status-title');
-            if (!title || !title.textContent.trim()) {
+            if (isTextEmpty(title)) {
                 col.remove();
             }
         });
@@ -294,14 +415,14 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
             }
         }
         sceneEl.querySelectorAll('.stat-tags .badge, .badge').forEach(badge => {
-            if (!badge.textContent.trim()) {
+            if (isTextEmpty(badge)) {
                 badge.remove();
             }
         });
         sceneEl.querySelectorAll('.bento-card').forEach(card => {
             const title = card.querySelector('.bento-title');
             const desc = card.querySelector('.bento-desc');
-            if ((!title || title.textContent.trim().length <= 2) && (!desc || !desc.textContent.trim())) {
+            if (isTextEmpty(title) && isTextEmpty(desc)) {
                 card.remove();
             }
         });
@@ -310,7 +431,10 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
             const remaining = bentoGrid.querySelectorAll('.bento-card');
             if (remaining.length === 3) {
                 remaining[2].style.gridColumn = 'span 2';
+                bentoGrid.style.gridTemplateColumns = '1fr 1fr';
+                bentoGrid.style.gridTemplateRows = '1fr 1fr';
             } else if (remaining.length === 2) {
+                bentoGrid.style.gridTemplateColumns = '1fr 1fr';
                 bentoGrid.style.gridTemplateRows = '1fr';
                 bentoGrid.style.height = '240px';
             } else if (remaining.length === 1) {
