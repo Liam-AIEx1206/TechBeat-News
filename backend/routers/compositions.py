@@ -298,6 +298,34 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
                 badge.remove();
             }
         });
+        sceneEl.querySelectorAll('.bento-card').forEach(card => {
+            const title = card.querySelector('.bento-title');
+            const desc = card.querySelector('.bento-desc');
+            if ((!title || title.textContent.trim().length <= 2) && (!desc || !desc.textContent.trim())) {
+                card.remove();
+            }
+        });
+        const bentoGrid = sceneEl.querySelector('.bento-grid');
+        if (bentoGrid) {
+            const remaining = bentoGrid.querySelectorAll('.bento-card');
+            if (remaining.length === 3) {
+                remaining[2].style.gridColumn = 'span 2';
+            } else if (remaining.length === 2) {
+                bentoGrid.style.gridTemplateRows = '1fr';
+                bentoGrid.style.height = '240px';
+            } else if (remaining.length === 1) {
+                bentoGrid.style.gridTemplateColumns = '1fr';
+                bentoGrid.style.gridTemplateRows = '1fr';
+                bentoGrid.style.height = '240px';
+            }
+        }
+        sceneEl.querySelectorAll('.bento-cell').forEach(cell => {
+            const title = cell.querySelector('.t');
+            const desc = cell.querySelector('.d');
+            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+                cell.remove();
+            }
+        });
 
         const idStr = sceneEl.id;
         const num = idStr.replace("scene", "");
@@ -1869,6 +1897,9 @@ def build_template_content_prompt(
     scene_index: int,
     theme: dict,
 ) -> str:
+    import datetime
+    now_dt = datetime.datetime.now()
+    current_date_str = f"Tháng {now_dt.month}/{now_dt.year}"
     """Build a focused prompt asking the LLM to return JSON content for template placeholders.
     
     This is MUCH simpler than the old free-form prompt because the LLM doesn't need to
@@ -1900,7 +1931,7 @@ def build_template_content_prompt(
 ⚠️ QUY TẮC BẮT BUỘC:
 - Trả về DUY NHẤT một JSON object hợp lệ (không markdown, không giải thích, không code fence).
 - Mọi giá trị phải là STRING tiếng Việt có dấu đầy đủ (trừ các trường icon/emoji).
-- BẮT BUỘC DÙNG NĂM 2026: Hiện tại là năm 2026. Mọi thông tin ngày tháng, mốc thời gian, meta info hoặc nội dung trong video liên quan đến thời điểm hiện tại BẮT BUỘC phải sử dụng năm 2026 (ví dụ: 'Tháng 6 2026 · Hà Nội', 'Mốc thời gian 2026'). Tuyệt đối không sử dụng năm 2023, 2024 hay 2025.
+- THỜI GIAN HIỆN TẠI CỦA HỆ THỐNG: {current_date_str}. Mọi thông tin ngày tháng, mốc thời gian, meta info hoặc nội dung trong video liên quan đến thời điểm hiện tại BẮT BUỘC phải sử dụng đúng thời gian hiện tại là {current_date_str} (ví dụ: '{current_date_str} · Hà Nội'). Tuyệt đối không sử dụng các năm cũ như 2023, 2024 hay 2025.
 - TUYỆT ĐỐI KHÔNG copy nguyên văn narration vào TITLE hoặc SUBTITLE — hãy tóm tắt sáng tạo.
 - GHOST_WORD: chỉ 1 từ tiếng Anh 3-6 ký tự (ví dụ: "TECH", "DATA", "SPEED", "AI").
 - BADGE_TEXT: bắt đầu bằng emoji + "PHẦN {scene_index}" (ví dụ: "⚡ PHẦN {scene_index}").
