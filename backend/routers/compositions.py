@@ -211,6 +211,94 @@ ENTRANCE_ANIMATION_SCRIPT = """  <script>
     
     const scenes = document.querySelectorAll(".scene");
     scenes.forEach((sceneEl) => {
+        // Clean up empty layout items (e.g. stats, cards, steps) where variables are missing
+        sceneEl.querySelectorAll('.stat-list-card').forEach(card => {
+            const num = card.querySelector('.num');
+            const title = card.querySelector('.title');
+            if ((!num || !num.textContent.trim()) && (!title || !title.textContent.trim())) {
+                card.remove();
+            }
+        });
+        sceneEl.querySelectorAll('.glass-card').forEach(card => {
+            const title = card.querySelector('.title');
+            const desc = card.querySelector('.desc');
+            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+                card.remove();
+            }
+        });
+        const featRow = sceneEl.querySelector('.feat-row');
+        if (featRow) {
+            const remaining = featRow.querySelectorAll('.glass-card').length;
+            if (remaining > 0) {
+                featRow.style.gridTemplateColumns = `repeat(${remaining}, 1fr)`;
+            }
+        }
+        sceneEl.querySelectorAll('.feat-card').forEach(card => {
+            const title = card.querySelector('.t');
+            const desc = card.querySelector('.d');
+            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+                card.remove();
+            }
+        });
+        const featGrid = sceneEl.querySelector('.feat-grid');
+        if (featGrid) {
+            const remaining = featGrid.querySelectorAll('.feat-card').length;
+            if (remaining > 0 && remaining < 4) {
+                featGrid.style.gridTemplateColumns = remaining === 1 ? '1fr' : `repeat(2, 1fr)`;
+            }
+        }
+        sceneEl.querySelectorAll('.step-item').forEach(step => {
+            const text = step.querySelector('.step-text');
+            if (!text || !text.textContent.trim()) {
+                step.remove();
+            }
+        });
+        sceneEl.querySelectorAll('.tl-item').forEach(item => {
+            const title = item.querySelector('.t');
+            const desc = item.querySelector('.d');
+            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+                item.remove();
+            }
+        });
+        sceneEl.querySelectorAll('.checklist-item').forEach(item => {
+            const span = item.querySelector('span');
+            if (!span || !span.textContent.trim()) {
+                item.remove();
+            }
+        });
+        sceneEl.querySelectorAll('.service-card').forEach(card => {
+            const title = card.querySelector('.service-title');
+            const desc = card.querySelector('.service-desc');
+            if ((!title || !title.textContent.trim()) && (!desc || !desc.textContent.trim())) {
+                card.remove();
+            }
+        });
+        const servicesGrid = sceneEl.querySelector('.services-grid');
+        if (servicesGrid) {
+            const remaining = servicesGrid.querySelectorAll('.service-card').length;
+            if (remaining > 0) {
+                servicesGrid.style.gridTemplateColumns = `repeat(${remaining}, 1fr)`;
+            }
+        }
+        sceneEl.querySelectorAll('.kanban-col').forEach(col => {
+            const title = col.querySelector('.status-title');
+            if (!title || !title.textContent.trim()) {
+                col.remove();
+            }
+        });
+        const kanbanBoard = sceneEl.querySelector('.kanban-board');
+        if (kanbanBoard) {
+            const remaining = kanbanBoard.querySelectorAll('.kanban-col').length;
+            if (remaining > 0) {
+                kanbanBoard.style.gridTemplateColumns = `repeat(${remaining}, 1fr)`;
+            }
+        }
+        sceneEl.querySelectorAll('.stat-tags .badge, .badge').forEach(badge => {
+            if (!badge.textContent.trim()) {
+                badge.remove();
+            }
+        });
+
         const idStr = sceneEl.id;
         const num = idStr.replace("scene", "");
         const audioEl = document.getElementById("v" + num);
