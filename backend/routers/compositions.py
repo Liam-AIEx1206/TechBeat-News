@@ -1900,6 +1900,7 @@ def build_template_content_prompt(
 ⚠️ QUY TẮC BẮT BUỘC:
 - Trả về DUY NHẤT một JSON object hợp lệ (không markdown, không giải thích, không code fence).
 - Mọi giá trị phải là STRING tiếng Việt có dấu đầy đủ (trừ các trường icon/emoji).
+- BẮT BUỘC DÙNG NĂM 2026: Hiện tại là năm 2026. Mọi thông tin ngày tháng, mốc thời gian, meta info hoặc nội dung trong video liên quan đến thời điểm hiện tại BẮT BUỘC phải sử dụng năm 2026 (ví dụ: 'Tháng 6 2026 · Hà Nội', 'Mốc thời gian 2026'). Tuyệt đối không sử dụng năm 2023, 2024 hay 2025.
 - TUYỆT ĐỐI KHÔNG copy nguyên văn narration vào TITLE hoặc SUBTITLE — hãy tóm tắt sáng tạo.
 - GHOST_WORD: chỉ 1 từ tiếng Anh 3-6 ký tự (ví dụ: "TECH", "DATA", "SPEED", "AI").
 - BADGE_TEXT: bắt đầu bằng emoji + "PHẦN {scene_index}" (ví dụ: "⚡ PHẦN {scene_index}").
@@ -2005,7 +2006,7 @@ _PLACEHOLDER_HINT_MAP = {
     "STAT_SUFFIX": "Hậu tố (VD: '%', 'x', 'M')",
     "STAT_LABEL": "Nhãn số liệu (VD: 'Độ chính xác AI')",
     "STAT_EXPLANATION": "Giải thích 1-2 câu về số liệu",
-    "TL_1_YEAR": "Mốc thời gian #1 (VD: '2023')",
+    "TL_1_YEAR": "Mốc thời gian #1 (VD: '2026')",
     "TL_1_EVENT": "Sự kiện #1 (≤ 6 từ)",
     "TL_1_DESC": "Mô tả sự kiện #1 (1 câu)",
     "TL_2_YEAR": "Mốc thời gian #2",
