@@ -39,14 +39,13 @@ AI sẽ tóm tắt bài viết của bạn thành 4 đến 8 phân cảnh ngắn
 
 ---
 
-### 👁️ Bước 3: Xem trước Trực quan & Chọn Ảnh (HTML Preview)
+### 👁️ Bước 3: Xem trước Trực quan (HTML Preview)
 Đây là màn hình quan trọng nhất để bạn tinh chỉnh video của mình trước khi xuất bản. Giao diện được chia làm 3 cột:
 * **Cột bên trái**: Danh sách các phân cảnh (nhấp chọn để chuyển phân cảnh). Các phân cảnh có chấm tròn màu vàng nghĩa là bạn vừa chỉnh sửa văn bản và cần nhấn **Regen scene** để cập nhật lại giao diện.
 * **Cột ở giữa (Khung Preview)**: Hiển thị giao diện video chạy thực tế trên trình duyệt đúng với phân cảnh bạn đang chọn.
 * **Cột bên phải (Bảng chỉnh sửa)**: 
   * Cho phép chỉnh sửa tiêu đề và nội dung giọng đọc trực tiếp.
-  * **Đổi ảnh minh họa**: Click vào **Chọn ảnh** $\rightarrow$ Gõ từ khóa tìm kiếm tiếng Anh $\rightarrow$ Chọn hình ảnh đẹp nhất từ thư viện Openverse miễn phí để gán vào phân cảnh.
-  * Nhấp vào **Regen scene** (Mũi tên xoay vòng) nếu bạn vừa đổi chữ hoặc đổi ảnh để cập nhật khung hình preview ở giữa.
+  * Nhấp vào **Regen scene** (Mũi tên xoay vòng) nếu bạn vừa đổi chữ để cập nhật khung hình preview ở giữa.
 * Khi đã ưng ý với toàn bộ các phân cảnh, nhấp nút **Dựng video MP4** ở góc trên cùng bên phải.
 
 ---
@@ -69,11 +68,10 @@ AI sẽ tóm tắt bài viết của bạn thành 4 đến 8 phân cảnh ngắn
 * Nhấp vào mục **Lịch sử** ở góc trên thanh tiêu đề trang chủ.
 * Tại đây, bạn sẽ thấy danh sách toàn bộ các bản tin mình đã tạo được sắp xếp theo từng ngày.
 * Bạn có thể bấm **Xem Video** để xem lại, **Xem HTML** để copy mã nguồn, hoặc bấm **Xóa** để dọn dẹp dung lượng.
-* *Lưu ý*: Với các bản tin bị lỗi trong quá trình dựng, bạn có thể click nút **Xem Log / Lỗi** để biết nguyên nhân cụ thể (ví dụ: lỗi văn bản quá dài, lỗi tải ảnh, v.v.).
+* *Lưu ý*: Với các bản tin bị lỗi trong quá trình dựng, bạn có thể click nút **Xem Log / Lỗi** để biết nguyên nhân cụ thể (ví dụ: lỗi văn bản quá dài, lỗi kết nối API, v.v.).
 
 ---
 
 ## 💡 Một số mẹo nhỏ khi tạo video
 * **Độ dài giọng đọc**: Nên viết nội dung giọng đọc (Narration) cho mỗi phân cảnh vừa phải (khoảng 2-3 câu ngắn, dưới 200 ký tự) để video trôi chảy và tránh bị tràn phụ đề.
-* **Chọn ảnh minh họa**: Nên sử dụng từ khóa tìm kiếm bằng tiếng Anh (ví dụ: gõ `artificial intelligence` thay vì `trí tuệ nhân tạo`) để tìm kiếm được nhiều ảnh chất lượng cao nhất từ thư viện Openverse.
 * **Đóng các tab trùng lặp**: Hệ thống chỉ cho phép bạn thao tác tạo video trên **một tab trình duyệt duy nhất**. Nếu bạn mở tab thứ 2, hệ thống sẽ hiển thị cảnh báo yêu cầu đóng tab để tránh xung đột tài nguyên dựng video.
