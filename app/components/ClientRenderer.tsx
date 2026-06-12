@@ -240,7 +240,8 @@ export function useClientRender() {
               displaySurface: "browser",
               width: { ideal: width },
               height: { ideal: height },
-              frameRate: { ideal: fps }
+              frameRate: { ideal: fps },
+              cursor: "never"
             },
             audio: {
               echoCancellation: false,

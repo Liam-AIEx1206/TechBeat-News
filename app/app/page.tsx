@@ -45,6 +45,7 @@ export default function Home() {
 
   const [hasDuplicateConflict, setHasDuplicateConflict] = useState(false);
   const [tabId, setTabId] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
 
   // Initialize unique tab ID in sessionStorage (safe for F5 refreshes)
   useEffect(() => {
@@ -108,10 +109,32 @@ export default function Home() {
 
   useEffect(() => {
     if (status === "authenticated" && !hasRedirectedRef.current) {
-      setStage("input");
+      // Stay on dashboard stage on mount so they see the history dashboard first.
       hasRedirectedRef.current = true;
     }
   }, [status]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "") as Stage;
+      if (["dashboard", "input", "generating", "preview", "htmlPreview", "build"].includes(hash)) {
+        setStage(hash);
+      } else if (!hash) {
+        setStage("dashboard");
+      }
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    
+    // On mount
+    const hash = window.location.hash.replace("#", "");
+    if (["dashboard", "input", "generating", "preview", "htmlPreview", "build"].includes(hash)) {
+      setStage(hash as Stage);
+    } else if (status === "authenticated" || stage !== "dashboard") {
+      window.location.hash = stage;
+    }
+
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const hasUnsavedProgress = stage === "generating" || stage === "preview" || stage === "htmlPreview" || stage === "build" || (stage === "input" && isLoading);
 
@@ -130,7 +153,7 @@ export default function Home() {
 
   function go(next: Stage) {
     if (next === stage) return;
-    setStage(next);
+    window.location.hash = next;
   }
 
   async function generateScenes(content: ExtractedContent & { videoDuration?: number | null }) {
@@ -222,6 +245,35 @@ export default function Home() {
       <GlobalFXOverlay />
       <CurtainSweep stageKey={stage} accent={scenePlan?.theme ? getTheme(scenePlan.theme).accent : "#f97316"} />
 
+      {confirmDialog && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)",
+          zIndex: 100000, display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{
+            background: "var(--gray-1)", border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "var(--r-lg)", padding: 32, maxWidth: 420, width: "100%",
+            textAlign: "center", boxShadow: "0 24px 64px rgba(0,0,0,0.6)"
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 20 }}>⚠️</div>
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 12, color: "var(--white)", letterSpacing: "-0.01em" }}>
+              Xác nhận
+            </h3>
+            <p style={{ fontSize: 14, color: "var(--gray-5)", marginBottom: 32, lineHeight: 1.6 }}>
+              {confirmDialog.message}
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button onClick={() => setConfirmDialog(null)} className="btn-ghost" style={{ flex: 1, padding: "12px 0", fontSize: 14, fontWeight: 700 }}>
+                Hủy
+              </button>
+              <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="btn-primary" style={{ flex: 1, padding: "12px 0", fontSize: 14, fontWeight: 700 }}>
+                Đồng ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {hasDuplicateConflict && (
         <div style={{
           position: "fixed",
@@ -279,7 +331,10 @@ export default function Home() {
                 onClick={() => {
                   window.close();
                   setTimeout(() => {
-                    alert("Vui lòng tự đóng tab này trên trình duyệt của bạn.");
+                    setConfirmDialog({
+                      message: "Vui lòng tự đóng tab này bằng tay (Ctrl+W) do trình duyệt chặn tự động đóng.",
+                      onConfirm: () => {}
+                    });
                   }, 200);
                 }}
                 className="btn-primary"
@@ -304,6 +359,7 @@ export default function Home() {
           onHome={handleHome} 
           onReset={handleReset} 
           hasUnsavedProgress={hasUnsavedProgress} 
+          setConfirmDialog={setConfirmDialog}
         />
       )}
 
@@ -346,12 +402,14 @@ function AppHeader({
   stage, 
   onHome, 
   onReset, 
-  hasUnsavedProgress 
+  hasUnsavedProgress,
+  setConfirmDialog
 }: { 
   stage: Stage; 
   onHome: () => void; 
   onReset: () => void; 
   hasUnsavedProgress: boolean; 
+  setConfirmDialog: (d: any) => void;
 }) {
   const { data: session } = useSession();
   const steps: { key: Stage; num: number; label: string }[] = [
@@ -368,7 +426,11 @@ function AppHeader({
       <button
         onClick={() => {
           if (hasUnsavedProgress) {
-            if (!window.confirm("Tiến trình hiện tại sẽ bị mất nếu bạn quay về trang chủ. Bạn có chắc chắn muốn thoát không?")) return;
+            setConfirmDialog({
+              message: "Tiến trình hiện tại sẽ bị mất nếu bạn quay về trang chủ. Bạn có chắc chắn muốn thoát không?",
+              onConfirm: onHome
+            });
+            return;
           }
           onHome();
         }}
@@ -432,7 +494,11 @@ function AppHeader({
           <button 
             onClick={() => {
               if (hasUnsavedProgress) {
-                if (!window.confirm("Tiến trình hiện tại sẽ bị mất nếu bạn bắt đầu lại. Bạn có chắc chắn muốn hủy không?")) return;
+                setConfirmDialog({
+                  message: "Tiến trình hiện tại sẽ bị mất nếu bạn bắt đầu lại. Bạn có chắc chắn muốn hủy không?",
+                  onConfirm: onReset
+                });
+                return;
               }
               onReset();
             }} 
@@ -449,7 +515,7 @@ function AppHeader({
 /* ─────────────────────────  DASHBOARD  ───────────────────────── */
 
 function Dashboard({ onStart }: { onStart: () => void }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [now, setNow] = useState<string>("");
   const [history, setHistory] = useState<any[]>([]);
@@ -748,7 +814,13 @@ function Dashboard({ onStart }: { onStart: () => void }) {
           Dán link bài viết — AI tóm tắt, viết kịch bản, đọc tiếng Việt và xuất MP4 1080p.
         </motion.p>
 
-        {!session ? (
+        {status === "loading" ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 120 }}>
+            <div className="badge badge-accent badge-dot" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <span /> Đang đồng bộ trạng thái tài khoản...
+            </div>
+          </div>
+        ) : !session ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", maxWidth: 360, margin: "0 auto" }}>
             {errorMsg && (
               <div style={{
@@ -766,7 +838,19 @@ function Dashboard({ onStart }: { onStart: () => void }) {
               </div>
             )}
             <motion.button
-              onClick={() => signIn("google", { callbackUrl: "/" })}
+              onClick={async () => {
+                try {
+                  const res = await signIn("google", { redirect: false, callbackUrl: "/" });
+                  if (res?.url) {
+                    window.location.replace(res.url);
+                  } else {
+                    signIn("google", { callbackUrl: "/" });
+                  }
+                } catch (e) {
+                  console.error("Sign in failed:", e);
+                  signIn("google", { callbackUrl: "/" });
+                }
+              }}
               whileHover={{ scale: 1.04, y: -2, backgroundColor: "#e0f2fe", color: "#0369a1" }}
               whileTap={{ scale: 0.98 }}
               style={{

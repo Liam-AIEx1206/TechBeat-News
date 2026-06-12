@@ -99,7 +99,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
                   border: "none",
                   fontSize: 12,
                   fontWeight: active ? 800 : 600,
-                  cursor: "none",
+                  cursor: "pointer",
                   transition: "all 0.25s var(--ease-out)",
                   boxShadow: active ? "0 4px 12px rgba(249,115,22,0.2)" : "none",
                 }}
@@ -184,7 +184,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
                 fontSize: 13,
                 fontWeight: 800,
                 letterSpacing: "0.02em",
-                cursor: "none",
+                cursor: "pointer",
                 transition: "all 0.25s var(--ease-out)",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
@@ -239,7 +239,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           background: dragging
             ? "rgba(249,115,22,0.06)"
             : "rgba(255,255,255,0.03)",
-          cursor: "none",
+          cursor: "pointer",
           transition: "all 0.25s var(--ease-out)",
           opacity: isLoading ? 0.4 : 1,
           overflow: "hidden",
