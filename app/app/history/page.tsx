@@ -26,7 +26,80 @@ interface AdminUser {
     success: number;
     failed: number;
   };
+  notes?: string;
+  total_cost?: number;
+  cost_breakdown?: Record<string, number>;
+  cost_history?: Array<{
+    timestamp: string;
+    category: string;
+    detail: string;
+    cost: number;
+  }>;
   history: HistoryItem[];
+}
+
+function UserNotesForm({ userEmail, initialNotes, API, fetchAdminUsers }: { userEmail: string, initialNotes: string, API: string, fetchAdminUsers: () => void }) {
+  const [notes, setNotes] = useState(initialNotes);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${API}/history/admin/users/${userEmail}/details`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Email": "cuongld@xgamevn.com",
+        },
+        body: JSON.stringify({ notes }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Đã lưu ghi chú thành công!");
+        fetchAdminUsers();
+      } else {
+        alert("Lưu thất bại.");
+      }
+    } catch (e) {
+      alert("Lỗi kết nối.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Nhập ghi chú cho người dùng..."
+        className="input-dark"
+        style={{
+          flex: 1,
+          height: 52,
+          fontSize: 12,
+          resize: "none",
+          padding: "8px 12px"
+        }}
+      />
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="btn-primary"
+        style={{
+          padding: "0 16px",
+          fontSize: 12,
+          height: 52,
+          background: "var(--accent)",
+          color: "var(--black)",
+          borderRadius: "var(--r)",
+          fontWeight: 700
+        }}
+      >
+        <span>{saving ? "..." : "Lưu"}</span>
+      </button>
+    </div>
+  );
 }
 
 export default function HistoryPage() {
@@ -549,6 +622,65 @@ export default function HistoryPage() {
         {/* Tab 2: Admin System Management */}
         {activeTab === "admin" && isAdmin && (
           <>
+            {/* Leaderboard Section */}
+            <div style={{
+              background: "linear-gradient(180deg, var(--gray-1) 0%, rgba(12,5,20,0.5) 100%)",
+              border: "1px solid rgba(249,115,22,0.2)",
+              borderRadius: "var(--r-lg)",
+              padding: 24,
+              marginBottom: 32,
+              position: "relative",
+              overflow: "hidden",
+              zIndex: 5
+            }}>
+              <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                🏆 BẢNG XẾP HẠNG THỐNG KÊ (LEADERBOARD)
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+                {/* Video Count Ranking */}
+                <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: "var(--r)", border: "1px solid var(--gray-3)" }}>
+                  <h4 style={{ fontSize: 11, fontWeight: 800, color: "var(--white)", marginBottom: 12, letterSpacing: "0.04em" }}>
+                    🎬 HOÀN THÀNH NHIỀU BẢN TIN NHẤT
+                  </h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[...adminUsers]
+                      .sort((a, b) => b.stats.success - a.stats.success)
+                      .slice(0, 5)
+                      .map((u, idx) => (
+                        <div key={u.email} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                          <span style={{ color: "var(--gray-6)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "70%" }}>
+                            <strong style={{ color: idx === 0 ? "var(--accent3)" : idx === 1 ? "var(--gray-6)" : idx === 2 ? "var(--accent2)" : "var(--gray-5)", marginRight: 8 }}>#{idx + 1}</strong>
+                            {u.email}
+                          </span>
+                          <span style={{ color: "var(--white)", fontWeight: 700 }}>{u.stats.success} video</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* API Cost Ranking */}
+                <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: "var(--r)", border: "1px solid var(--gray-3)" }}>
+                  <h4 style={{ fontSize: 11, fontWeight: 800, color: "var(--white)", marginBottom: 12, letterSpacing: "0.04em" }}>
+                    💸 CHI PHÍ SỬ DỤNG API CAO NHẤT
+                  </h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[...adminUsers]
+                      .sort((a, b) => (b.total_cost || 0) - (a.total_cost || 0))
+                      .slice(0, 5)
+                      .map((u, idx) => (
+                        <div key={u.email} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                          <span style={{ color: "var(--gray-6)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "70%" }}>
+                            <strong style={{ color: idx === 0 ? "var(--accent3)" : idx === 1 ? "var(--gray-6)" : idx === 2 ? "var(--accent2)" : "var(--gray-5)", marginRight: 8 }}>#{idx + 1}</strong>
+                            {u.email}
+                          </span>
+                          <span style={{ color: "var(--accent)", fontWeight: 800 }}>${(u.total_cost || 0).toFixed(4)}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {loadingAdmin ? (
               <div style={{ textAlign: "center", padding: "80px 0" }}>
                 <div className="badge badge-accent badge-dot" style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -642,7 +774,12 @@ export default function HistoryPage() {
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                          <div style={{ display: "flex", gap: 6 }}>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                            {user.total_cost !== undefined && user.total_cost > 0 && (
+                              <span className="badge" style={{ background: "rgba(249,115,22,0.08)", color: "var(--accent)", border: "1px solid rgba(249,115,22,0.15)", fontSize: 10 }}>
+                                Chi phí: ${user.total_cost.toFixed(4)}
+                              </span>
+                            )}
                             <span className="badge" style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--gray-3)", color: "var(--gray-5)", fontSize: 10 }}>
                               Tổng: {user.stats.total}
                             </span>
@@ -678,7 +815,78 @@ export default function HistoryPage() {
                             transition={{ duration: 0.25 }}
                             style={{ overflow: "hidden", borderTop: "1px solid var(--gray-3)", background: "rgba(0,0,0,0.2)" }}
                           >
-                            <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+                            <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+                              {/* Notes and Cost breakdown section */}
+                              <div style={{
+                                display: "flex",
+                                gap: 20,
+                                padding: 16,
+                                background: "rgba(255,255,255,0.02)",
+                                borderRadius: "var(--r)",
+                                border: "1px solid var(--gray-3)",
+                                flexWrap: "wrap"
+                              }}>
+                                <div style={{ flex: 1, minWidth: 260 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginBottom: 8 }}>
+                                    📝 Ghi chú người dùng
+                                  </div>
+                                  <UserNotesForm userEmail={user.email} initialNotes={user.notes || ""} API={API} fetchAdminUsers={fetchAdminUsers} />
+                                </div>
+                                <div style={{ minWidth: 220, display: "flex", flexDirection: "column", gap: 6 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginBottom: 4 }}>
+                                    💰 Chi tiết chi phí API
+                                  </div>
+                                  <div style={{ fontSize: 12, color: "var(--gray-6)", display: "flex", flexDirection: "column", gap: 4 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                                      <span>LLM (Kịch bản):</span>
+                                      <span style={{ color: "var(--white)", fontWeight: 700 }}>${(user.cost_breakdown?.llm || 0).toFixed(4)}</span>
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                                      <span>TTS (Giọng đọc):</span>
+                                      <span style={{ color: "var(--white)", fontWeight: 700 }}>${(user.cost_breakdown?.tts || 0).toFixed(4)}</span>
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                                      <span>Whisper (Phụ đề):</span>
+                                      <span style={{ color: "var(--white)", fontWeight: 700 }}>${(user.cost_breakdown?.whisper || 0).toFixed(4)}</span>
+                                    </div>
+                                    <div style={{ height: 1, background: "var(--gray-3)", margin: "4px 0" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 13, color: "var(--accent)", fontWeight: 800 }}>
+                                      <span>Tổng cộng:</span>
+                                      <span>${(user.total_cost || 0).toFixed(4)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Cost History Log */}
+                              {user.cost_history && user.cost_history.length > 0 && (
+                                <div style={{
+                                  padding: 16,
+                                  background: "rgba(0,0,0,0.2)",
+                                  borderRadius: "var(--r)",
+                                  border: "1px solid var(--gray-3)",
+                                }}>
+                                  <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginBottom: 10 }}>
+                                    📑 Nhật ký sử dụng API chi tiết
+                                  </div>
+                                  <div style={{ maxHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+                                    {user.cost_history.map((tx: { timestamp: string; category: string; detail: string; cost: number }, txIdx: number) => (
+                                      <div key={txIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, borderBottom: "1px solid rgba(255,255,255,0.02)", paddingBottom: 6 }}>
+                                        <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+                                          <span style={{ color: "var(--white)", fontWeight: 600 }}>{tx.detail || tx.category}</span>
+                                          <span style={{ color: "var(--gray-5)", fontSize: 9 }}>{new Date(tx.timestamp).toLocaleString("vi-VN")}</span>
+                                        </div>
+                                        <span style={{ color: "var(--accent)", fontWeight: 700 }}>+${tx.cost.toFixed(4)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginTop: 8 }}>
+                                🎥 Lịch sử bản tin ({user.history.length})
+                              </div>
+
                               {user.history.length === 0 ? (
                                 <div style={{ textAlign: "center", padding: "20px 0", color: "var(--gray-5)", fontSize: 12 }}>
                                   Người dùng chưa có lịch sử dựng bản tin.

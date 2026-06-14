@@ -97,8 +97,8 @@ export function useClientRender() {
       const styleEl = document.createElement("style");
       styleEl.id = "hf-render-styles";
       styleEl.textContent = `
-        #hf-render-overlay, #hf-render-overlay *,
-        #hf-video-container, #hf-video-container * {
+        #hf-video-container, #hf-video-container *,
+        body.recording, body.recording * {
           cursor: none !important;
         }
         @keyframes hf-pulse {
@@ -203,9 +203,13 @@ export function useClientRender() {
               <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">2</span>
               <div>Chọn tab <strong>"DailyByte - Dựng Video AI"</strong> (hoặc tab hiện tại).</div>
             </div>
-            <div style="display: flex; align-items: flex-start;">
+            <div style="margin-bottom: 12px; display: flex; align-items: flex-start;">
               <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">3</span>
               <div><strong>BẮT BUỘC:</strong> Tích chọn <strong>"Chia sẻ âm thanh của tab"</strong> (Also share tab audio) ở góc dưới bên trái của hộp thoại.</div>
+            </div>
+            <div style="display: flex; align-items: flex-start; background: rgba(249, 115, 22, 0.1); border: 1px dashed rgba(249, 115, 22, 0.3); padding: 8px 12px; border-radius: 8px; margin-top: 8px;">
+              <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">4</span>
+              <div style="color: #ffedd5;"><strong>QUAN TRỌNG:</strong> Sau khi bắt đầu ghi hình, <strong>hãy di chuyển con trỏ chuột ra ngoài khu vực hiển thị video</strong> (ví dụ: đưa lên thanh địa chỉ/thanh tab của trình duyệt, hoặc di chuyển sang màn hình khác) để tránh bị dính con trỏ chuột vào video.</div>
             </div>
           </div>
 
@@ -217,6 +221,7 @@ export function useClientRender() {
       `;
 
       const cleanupAll = () => {
+        document.body.classList.remove("recording");
         document.getElementById("btn-start")?.removeEventListener("click", () => {});
         document.getElementById("btn-cancel")?.removeEventListener("click", handleCancel);
         window.removeEventListener("beforeunload", handleBeforeUnload);
@@ -278,6 +283,7 @@ export function useClientRender() {
 
         // We have stream and audio!
         setProgress({ stage: "init", percent: 7, message: "Đang khởi tạo trình phát hoạt ảnh..." });
+        document.body.classList.add("recording");
 
         // Prepare overlay UI for recording (hide the instruction card, show centered video)
         overlay.innerHTML = "";
@@ -321,7 +327,7 @@ export function useClientRender() {
         const rootOffY = ((vpH - height * contentScale) / 2).toFixed(2);
         const fillCss = `
           <style id="cr-fill">
-            * {
+            html, body, * {
               cursor: none !important;
             }
             html {
@@ -413,7 +419,21 @@ export function useClientRender() {
             if (iframe.contentDocument && iframe.contentDocument.body) {
               iframe.contentDocument.body.classList.add("rendering");
             }
-          } catch {}
+            // Focus window and iframe to ensure cursor: none is properly applied
+            window.focus();
+            iframe.contentWindow?.focus();
+            iframe.focus();
+            
+            // Force cursor recalculation by toggling pointerEvents
+            if (container) {
+              container.style.pointerEvents = "none";
+              setTimeout(() => {
+                container.style.pointerEvents = "auto";
+              }, 50);
+            }
+          } catch (e) {
+            console.warn("Failed to focus or toggle pointer events:", e);
+          }
 
           // After stream starts, Chrome shows a share banner that shrinks the viewport.
           // Wait a moment for layout to stabilize before computing crop.

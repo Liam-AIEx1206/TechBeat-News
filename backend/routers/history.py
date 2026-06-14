@@ -15,6 +15,58 @@ def _get_user_id(email: str) -> str:
     return res.data["id"] if res.data else None
 
 
+def add_user_cost(email: str, category: str, cost: float, detail: str = ""):
+    if not email or cost <= 0:
+        return
+    try:
+        from routers.compositions import get_project_root
+        import json
+        import re
+        import datetime
+
+        email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        if not re.match(email_regex, email):
+            return
+
+        project_root = get_project_root()
+        user_dir = project_root / "history" / "users" / email
+        user_dir.mkdir(parents=True, exist_ok=True)
+        info_path = user_dir / "user_info.json"
+
+        info_data = {"notes": "", "total_cost": 0.0, "cost_breakdown": {}, "cost_history": []}
+        if info_path.exists():
+            try:
+                info_data = json.loads(info_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+        if "total_cost" not in info_data:
+            info_data["total_cost"] = 0.0
+        if "cost_breakdown" not in info_data:
+            info_data["cost_breakdown"] = {}
+        if "cost_history" not in info_data:
+            info_data["cost_history"] = []
+
+        info_data["total_cost"] = round(info_data["total_cost"] + cost, 4)
+        
+        breakdown = info_data["cost_breakdown"]
+        breakdown[category] = round(breakdown.get(category, 0.0) + cost, 4)
+
+        # Append detailed transaction log
+        transaction = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "category": category,
+            "detail": detail,
+            "cost": round(cost, 4)
+        }
+        info_data["cost_history"].insert(0, transaction) # newest first
+
+        info_path.write_text(json.dumps(info_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[cost-logger] Added {cost}$ to user {email} (category: {category}, detail: {detail}). Total: {info_data['total_cost']}$")
+    except Exception as e:
+        print(f"[add_user_cost ERROR] {e}")
+
+
 async def get_optional_user_email(request: Request) -> Optional[str]:
     # Try custom header
     email = request.headers.get("x-user-email")
@@ -195,11 +247,30 @@ async def list_admin_users(request: Request):
                 except Exception as e:
                     print(f"[list_admin_users ERROR] Failed to parse db.json for {user_email}: {e}")
 
+            info_path = p / "user_info.json"
+            user_notes = ""
+            total_cost = 0.0
+            cost_breakdown = {}
+            cost_history = []
+            if info_path.exists():
+                try:
+                    info_data = json.loads(info_path.read_text(encoding="utf-8"))
+                    user_notes = info_data.get("notes", "")
+                    total_cost = info_data.get("total_cost", 0.0)
+                    cost_breakdown = info_data.get("cost_breakdown", {})
+                    cost_history = info_data.get("cost_history", [])
+                except Exception:
+                    pass
+
             users_list.append({
                 "email": user_email,
                 "created_at": created_at,
                 "last_active": last_active,
                 "stats": stats,
+                "notes": user_notes,
+                "total_cost": total_cost,
+                "cost_breakdown": cost_breakdown,
+                "cost_history": cost_history,
                 "history": history
             })
 
@@ -275,4 +346,40 @@ async def delete_admin_user_history_item(user_email: str, item_id: str, request:
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/users/{user_email}/details")
+async def update_admin_user_details(user_email: str, body: dict, request: Request):
+    from routers.compositions import get_project_root
+    import json
+    import re
+    from fastapi import HTTPException
+
+    # 1. Enforce admin permission
+    email = await get_optional_user_email(request)
+    if email != ADMIN_EMAIL:
+        raise HTTPException(status_code=403, detail="Forbidden: Admin access only")
+
+    # 2. Validate email format
+    email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    if not re.match(email_regex, user_email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
+    project_root = get_project_root()
+    user_dir = project_root / "history" / "users" / user_email
+    user_dir.mkdir(parents=True, exist_ok=True)
+    info_path = user_dir / "user_info.json"
+
+    info_data = {"notes": "", "total_cost": 0.0, "cost_breakdown": {}}
+    if info_path.exists():
+        try:
+            info_data = json.loads(info_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    if "notes" in body:
+        info_data["notes"] = body["notes"]
+
+    info_path.write_text(json.dumps(info_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return {"success": True}
 

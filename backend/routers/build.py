@@ -2131,6 +2131,24 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
         yield sse({"type": "error", "stage": "composition", "message": "Không nhận được HTML"})
         return
 
+    # Estimate LLM cost
+    if user_email and html and not (req.compositionHtml and "<html" in req.compositionHtml.lower()):
+        provider = "primary"
+        model = "gpt-5.5-pro"
+        for line in build_log:
+            if "HTML:" in line:
+                if "groq" in line.lower():
+                    provider = "groq"
+                parts = line.split("HTML:")
+                if len(parts) > 1:
+                    model = parts[1].strip()
+        if provider == "primary":
+            in_tokens = 6000
+            out_tokens = len(html) // 4
+            cost = (in_tokens * 0.005 / 1000) + (out_tokens * 0.015 / 1000)
+            from routers.history import add_user_cost
+            add_user_cost(user_email, "llm", cost, detail=f"{model} ({in_tokens} prompt tokens, {out_tokens} completion tokens)")
+
     # ---- Stage 2: Save ----
     yield sse({"type": "stage", "stage": "save", "status": "start", "message": "Đang lưu index.html..."})
     target_html = project_root / "index.html"
@@ -2150,6 +2168,17 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
 
             async def run_single_tts(scene_idx, narration, path):
                 engine = await synthesize_tts(narration, path, voice_id=req.voiceId)
+                if user_email:
+                    char_count = len(narration)
+                    cost = 0.0
+                    voice_label = req.voiceId or "default"
+                    if engine == "google":
+                        cost = char_count * 0.000004
+                    elif engine == "openai":
+                        cost = char_count * 0.000015
+                    if cost > 0:
+                        from routers.history import add_user_cost
+                        add_user_cost(user_email, "tts", cost, detail=f"{engine} (giọng {voice_label}, {char_count} ký tự)")
                 return scene_idx, engine
 
             tts_tasks = [run_single_tts(s.index, s.narration, wav_paths[s.index]) for s in req.scenes]
@@ -2189,6 +2218,10 @@ async def build_pipeline(req: BuildRequest, user_email: str | None = None):
             async def run_single_whisper(idx, p, narration, duration):
                 words, w_engine = await transcribe_audio_whisper(p)
                 aligned_words = align_script_with_whisper(narration, words, duration)
+                if user_email and w_engine == "openai" and duration > 0:
+                    cost = duration * (0.006 / 60)
+                    from routers.history import add_user_cost
+                    add_user_cost(user_email, "whisper", cost, detail=f"openai-whisper-1 ({round(duration, 1)} giây)")
                 return idx, aligned_words, w_engine
 
             whisper_tasks = [
@@ -2506,6 +2539,24 @@ async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None
         yield sse({"type": "error", "stage": "composition", "message": "Không nhận được HTML"})
         return
 
+    # Estimate LLM cost
+    if user_email and html and not (req.compositionHtml and "<html" in req.compositionHtml.lower()):
+        provider = "primary"
+        model = "gpt-5.5-pro"
+        for line in build_log:
+            if "HTML:" in line:
+                if "groq" in line.lower():
+                    provider = "groq"
+                parts = line.split("HTML:")
+                if len(parts) > 1:
+                    model = parts[1].strip()
+        if provider == "primary":
+            in_tokens = 6000
+            out_tokens = len(html) // 4
+            cost = (in_tokens * 0.005 / 1000) + (out_tokens * 0.015 / 1000)
+            from routers.history import add_user_cost
+            add_user_cost(user_email, "llm", cost, detail=f"{model} ({in_tokens} prompt tokens, {out_tokens} completion tokens)")
+
     # ---- Stage 2: Save ----
     yield sse({"type": "stage", "stage": "save", "status": "start", "message": "Đang lưu index.html..."})
     target_html = project_root / "index.html"
@@ -2529,6 +2580,17 @@ async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None
 
             async def run_single_tts(scene_idx, narration, path):
                 engine = await synthesize_tts(narration, path, voice_id=req.voiceId)
+                if user_email:
+                    char_count = len(narration)
+                    cost = 0.0
+                    voice_label = req.voiceId or "default"
+                    if engine == "google":
+                        cost = char_count * 0.000004
+                    elif engine == "openai":
+                        cost = char_count * 0.000015
+                    if cost > 0:
+                        from routers.history import add_user_cost
+                        add_user_cost(user_email, "tts", cost, detail=f"{engine} (giọng {voice_label}, {char_count} ký tự)")
                 return scene_idx, engine
 
             tts_tasks = [run_single_tts(s.index, s.narration, wav_paths[s.index]) for s in req.scenes]
@@ -2570,6 +2632,10 @@ async def build_assets_pipeline(req: BuildRequest, user_email: str | None = None
             async def run_single_whisper(idx, p, narration, duration):
                 words, w_engine = await transcribe_audio_whisper(p)
                 aligned_words = align_script_with_whisper(narration, words, duration)
+                if user_email and w_engine == "openai" and duration > 0:
+                    cost = duration * (0.006 / 60)
+                    from routers.history import add_user_cost
+                    add_user_cost(user_email, "whisper", cost, detail=f"openai-whisper-1 ({round(duration, 1)} giây)")
                 return idx, aligned_words, w_engine
 
             whisper_tasks = [

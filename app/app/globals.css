@@ -311,6 +311,7 @@ body {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
   border-radius: var(--r);
@@ -328,21 +329,25 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 60%);
   pointer-events: none;
 }
 .btn-primary::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--black);
+  background: rgba(255, 255, 255, 0.15);
   transform: translateY(101%);
   transition: transform 0.3s var(--ease-out);
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -4px rgba(249,115,22,0.5); }
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: var(--accent2);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.6);
+}
 .btn-primary:hover::after { transform: translateY(0); }
-.btn-primary:hover span { color: var(--accent); position: relative; z-index: 1; }
-.btn-primary:active { transform: translateY(0); }
+.btn-primary:hover span { color: var(--black); position: relative; z-index: 1; }
+.btn-primary:active { transform: translateY(0); filter: brightness(1.1); }
 .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 .btn-primary span { position: relative; z-index: 1; }
 
@@ -351,6 +356,7 @@ body {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
   border-radius: var(--r);
@@ -370,6 +376,7 @@ body {
 .btn-ghost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 10px 18px;
   border-radius: var(--r);
