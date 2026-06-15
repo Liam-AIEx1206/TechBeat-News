@@ -1021,7 +1021,7 @@ def patch_html_timing(
     # to prevent layout overflow errors during hyperframes inspect
     html = re.sub(
         r'class="([^"]*(?:ghost-text|float-orb|glow-orb|retro-grid|animated-grid)[^"]*)"(?!\\s+data-layout-ignore)',
-        r'class="\\1" data-layout-ignore',
+        r'class="\1" data-layout-ignore',
         html,
         flags=re.IGNORECASE
     )

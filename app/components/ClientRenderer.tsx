@@ -87,7 +87,7 @@ export function useClientRender() {
 
         const handleVisibilityChange = () => {
           if (document.hidden && mediaRecorder && mediaRecorder.state === "recording") {
-            alert("⚠️ CẢNH BÁO: BẠN VỪA CHUYỂN TAB HOẶC THU NHỎ TRÌNH DUYỆT!\n\nHành động này đã khiến hệ thống đồ họa bị hạ xuống 1 FPS để tiết kiệm pin. Video được quay từ giây phút này có thể bị giật lag nghiêm trọng hoặc đứng hình.\n\nSau khi video hoàn tất, vui lòng Xóa video lỗi và Bấm Render lại, VÀ giữ nguyên tab này ở trên cùng màn hình cho đến khi quay xong!");
+            alert("CẢNH BÁO: BẠN VỪA CHUYỂN TAB HOẶC THU NHỎ TRÌNH DUYỆT!\n\nHành động này đã khiến hệ thống đồ họa bị hạ xuống 1 FPS để tiết kiệm pin. Video được quay từ giây phút này có thể bị giật lag nghiêm trọng hoặc đứng hình.\n\nSau khi video hoàn tất, vui lòng Xóa video lỗi và Bấm Render lại, VÀ giữ nguyên tab này ở trên cùng màn hình cho đến khi quay xong!");
           }
         };
 
@@ -188,7 +188,7 @@ export function useClientRender() {
           </p>
           
           <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
-            <strong style="color: #f87171; display: block; margin-bottom: 4px;">⚠️ LƯU Ý QUAN TRỌNG:</strong>
+            <strong style="color: #f87171; display: block; margin-bottom: 4px;">LƯU Ý QUAN TRỌNG:</strong>
             <span style="color: #fca5a5; font-size: 14px; line-height: 1.5;">
               KHÔNG ĐƯỢC ĐỔI TAB hoặc THU NHỎ TRÌNH DUYỆT trong lúc đang chạy! Việc đổi tab sẽ làm Chrome tự động tắt đồ họa (giảm xuống 1 FPS) khiến video thu được bị giật lag và mất hình.
             </span>
@@ -207,9 +207,9 @@ export function useClientRender() {
               <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">3</span>
               <div><strong>BẮT BUỘC:</strong> Tích chọn <strong>"Chia sẻ âm thanh của tab"</strong> (Also share tab audio) ở góc dưới bên trái của hộp thoại.</div>
             </div>
-            <div style="display: flex; align-items: flex-start; background: rgba(249, 115, 22, 0.1); border: 1px dashed rgba(249, 115, 22, 0.3); padding: 8px 12px; border-radius: 8px; margin-top: 8px;">
-              <span style="background: #f97316; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">4</span>
-              <div style="color: #ffedd5;"><strong>QUAN TRỌNG:</strong> Sau khi bắt đầu ghi hình, <strong>hãy di chuyển con trỏ chuột ra ngoài khu vực hiển thị video</strong> (ví dụ: đưa lên thanh địa chỉ/thanh tab của trình duyệt, hoặc di chuyển sang màn hình khác) để tránh bị dính con trỏ chuột vào video.</div>
+            <div style="display: flex; align-items: flex-start; background: rgba(239, 68, 68, 0.15); border: 1px dashed rgba(239, 68, 68, 0.4); padding: 8px 12px; border-radius: 8px; margin-top: 8px;">
+              <span style="background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 12px; flex-shrink: 0; font-weight: bold; margin-top: 2px;">4</span>
+              <div style="color: #fca5a5;"><strong>QUAN TRỌNG:</strong> Sau khi bắt đầu ghi hình, <strong>hãy di chuyển con trỏ chuột ra ngoài khu vực hiển thị video</strong> (ví dụ: đưa lên thanh địa chỉ/thanh tab của trình duyệt, hoặc di chuyển sang màn hình khác) để tránh bị dính con trỏ chuột vào video.</div>
             </div>
           </div>
 
@@ -418,6 +418,7 @@ export function useClientRender() {
           try {
             if (iframe.contentDocument && iframe.contentDocument.body) {
               iframe.contentDocument.body.classList.add("rendering");
+              iframe.contentDocument.body.classList.add("recording");
             }
             // Focus window and iframe to ensure cursor: none is properly applied
             window.focus();

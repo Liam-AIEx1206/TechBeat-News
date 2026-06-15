@@ -6,7 +6,7 @@ from typing import Optional
 
 router = APIRouter(prefix="/history", tags=["history"])
 
-ADMIN_EMAIL = "cuongld@xgamevn.com"
+ADMIN_EMAILS = {"cuongld@xgamevn.com", "dungdv286@gmail.com", "dungdv@xgamevn.com"}
 
 
 def _get_user_id(email: str) -> str:
@@ -199,7 +199,7 @@ async def list_admin_users(request: Request):
 
     # 1. Enforce admin permission
     email = await get_optional_user_email(request)
-    if email != ADMIN_EMAIL:
+    if email not in ADMIN_EMAILS:
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Forbidden: Admin access only")
 
@@ -289,7 +289,7 @@ async def delete_admin_user_history_item(user_email: str, item_id: str, request:
 
     # 1. Enforce admin permission
     email = await get_optional_user_email(request)
-    if email != ADMIN_EMAIL:
+    if email not in ADMIN_EMAILS:
         raise HTTPException(status_code=403, detail="Forbidden: Admin access only")
 
     # 2. Validate user_email format using regex to prevent path traversal
@@ -357,7 +357,7 @@ async def update_admin_user_details(user_email: str, body: dict, request: Reques
 
     # 1. Enforce admin permission
     email = await get_optional_user_email(request)
-    if email != ADMIN_EMAIL:
+    if email not in ADMIN_EMAILS:
         raise HTTPException(status_code=403, detail="Forbidden: Admin access only")
 
     # 2. Validate email format

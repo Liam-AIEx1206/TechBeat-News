@@ -841,6 +841,13 @@ body {{
   color: var(--text1, #e8e8f0);
 }}
 
+body.rendering,
+body.rendering *,
+body.recording,
+body.recording * {{
+  cursor: none !important;
+}}
+
 #root {{
   position: relative;
   width: 1920px;

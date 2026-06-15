@@ -150,7 +150,7 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
                 borderBottom: tab === t ? "2px solid var(--accent)" : "2px solid transparent",
               }}
             >
-              {t === "search" ? "🔍 Tìm kiếm (Openverse)" : "📁 Upload ảnh"}
+              {t === "search" ? "Tìm kiếm (Openverse)" : "Upload ảnh"}
             </button>
           ))}
         </div>
@@ -220,8 +220,7 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
               )}
               {!loading && results.length === 0 && !error && (
                 <div className="text-center py-14" style={{ color: "var(--text-3)" }}>
-                  <div className="text-4xl mb-3">🔍</div>
-                  <p className="text-sm">Nhập từ khóa rồi bấm Tìm</p>
+                  <p className="text-sm" style={{ marginTop: 20 }}>Nhập từ khóa rồi bấm Tìm</p>
                   <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Hoặc chuyển sang tab Upload để dùng ảnh của bạn</p>
                 </div>
               )}

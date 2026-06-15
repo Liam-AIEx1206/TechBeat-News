@@ -623,7 +623,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
           <video src={fullVideoUrl} controls style={{ width: "100%", borderRadius: "var(--r-lg)", background: "#000", aspectRatio: "16/9" }} />
           {videoPath && (
             <p style={{ fontSize: 10, marginTop: 12, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "var(--gray-2)", padding: "8px 12px", borderRadius: "var(--r-sm)", wordBreak: "break-all" }}>
-              📁 {videoPath}
+              {videoPath}
             </p>
           )}
 

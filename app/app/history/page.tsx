@@ -38,7 +38,7 @@ interface AdminUser {
   history: HistoryItem[];
 }
 
-function UserNotesForm({ userEmail, initialNotes, API, fetchAdminUsers }: { userEmail: string, initialNotes: string, API: string, fetchAdminUsers: () => void }) {
+function UserNotesForm({ userEmail, initialNotes, API, fetchAdminUsers, currentUserEmail }: { userEmail: string, initialNotes: string, API: string, fetchAdminUsers: () => void, currentUserEmail?: string }) {
   const [notes, setNotes] = useState(initialNotes);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +49,7 @@ function UserNotesForm({ userEmail, initialNotes, API, fetchAdminUsers }: { user
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Email": "cuongld@xgamevn.com",
+          "X-User-Email": currentUserEmail || "cuongld@xgamevn.com",
         },
         body: JSON.stringify({ notes }),
       });
@@ -119,7 +119,8 @@ export default function HistoryPage() {
   const [copied, setCopied] = useState(false);
 
   // Admin states
-  const isAdmin = session?.user?.email === "cuongld@xgamevn.com";
+  const adminEmails = ["cuongld@xgamevn.com", "dungdv286@gmail.com", "dungdv@xgamevn.com"];
+  const isAdmin = !!session?.user?.email && adminEmails.includes(session.user.email);
   const [activeTab, setActiveTab] = useState<"my-history" | "admin">("my-history");
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [adminSearch, setAdminSearch] = useState("");
@@ -634,13 +635,13 @@ export default function HistoryPage() {
               zIndex: 5
             }}>
               <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                🏆 BẢNG XẾP HẠNG THỐNG KÊ (LEADERBOARD)
+                BẢNG XẾP HẠNG THỐNG KÊ (LEADERBOARD)
               </h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
                 {/* Video Count Ranking */}
                 <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: "var(--r)", border: "1px solid var(--gray-3)" }}>
                   <h4 style={{ fontSize: 11, fontWeight: 800, color: "var(--white)", marginBottom: 12, letterSpacing: "0.04em" }}>
-                    🎬 HOÀN THÀNH NHIỀU BẢN TIN NHẤT
+                    HOÀN THÀNH NHIỀU BẢN TIN NHẤT
                   </h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {[...adminUsers]
@@ -661,7 +662,7 @@ export default function HistoryPage() {
                 {/* API Cost Ranking */}
                 <div style={{ background: "rgba(0,0,0,0.2)", padding: 16, borderRadius: "var(--r)", border: "1px solid var(--gray-3)" }}>
                   <h4 style={{ fontSize: 11, fontWeight: 800, color: "var(--white)", marginBottom: 12, letterSpacing: "0.04em" }}>
-                    💸 CHI PHÍ SỬ DỤNG API CAO NHẤT
+                    CHI PHÍ SỬ DỤNG API CAO NHẤT
                   </h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {[...adminUsers]
@@ -828,13 +829,13 @@ export default function HistoryPage() {
                               }}>
                                 <div style={{ flex: 1, minWidth: 260 }}>
                                   <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginBottom: 8 }}>
-                                    📝 Ghi chú người dùng
+                                    Ghi chú người dùng
                                   </div>
-                                  <UserNotesForm userEmail={user.email} initialNotes={user.notes || ""} API={API} fetchAdminUsers={fetchAdminUsers} />
+                                  <UserNotesForm userEmail={user.email} initialNotes={user.notes || ""} API={API} fetchAdminUsers={fetchAdminUsers} currentUserEmail={session?.user?.email || undefined} />
                                 </div>
                                 <div style={{ minWidth: 220, display: "flex", flexDirection: "column", gap: 6 }}>
                                   <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginBottom: 4 }}>
-                                    💰 Chi tiết chi phí API
+                                    Chi tiết chi phí API
                                   </div>
                                   <div style={{ fontSize: 12, color: "var(--gray-6)", display: "flex", flexDirection: "column", gap: 4 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
@@ -867,7 +868,7 @@ export default function HistoryPage() {
                                   border: "1px solid var(--gray-3)",
                                 }}>
                                   <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginBottom: 10 }}>
-                                    📑 Nhật ký sử dụng API chi tiết
+                                    Nhật ký sử dụng API chi tiết
                                   </div>
                                   <div style={{ maxHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
                                     {user.cost_history.map((tx: { timestamp: string; category: string; detail: string; cost: number }, txIdx: number) => (
@@ -884,7 +885,7 @@ export default function HistoryPage() {
                               )}
 
                               <div style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--gray-5)", marginTop: 8 }}>
-                                🎥 Lịch sử bản tin ({user.history.length})
+                                Lịch sử bản tin ({user.history.length})
                               </div>
 
                               {user.history.length === 0 ? (

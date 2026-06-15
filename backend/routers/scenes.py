@@ -217,6 +217,16 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
         full_text = ""
         groq_max = int(os.getenv("GROQ_MAX_SCENES", "5"))
 
+        # Detect short content (less than 60 words or 300 chars)
+        word_count = len(content.strip().split())
+        char_count = len(content.strip())
+        is_short_prompt = word_count < 60 or char_count < 300
+
+        if is_short_prompt:
+            # Force at least 1-minute duration for short contents/prompts
+            if video_duration is None or video_duration < 60:
+                video_duration = 60
+
         try:
             import datetime
             now_dt = datetime.datetime.now()
@@ -228,6 +238,15 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
                 f"Tiêu đề: {title}\n\n"
                 f"Nội dung:\n{content}"
             )
+
+            if is_short_prompt:
+                prompt += (
+                    f"\n\n⚠️ NỘI DUNG CUNG CẤP RẤT NGẮN ({word_count} từ, {char_count} ký tự) HOẶC LÀ GỢI Ý CHỦ ĐỀ.\n"
+                    f"- Bạn BẮT BUỘC phải đóng vai trò là một biên tập viên tin tức, tự động phát triển, mở rộng ý và viết kịch bản chi tiết dựa trên gợi ý ngắn này.\n"
+                    f"- Tự sáng tạo câu chuyện, bối cảnh, số liệu kỹ thuật giả định phù hợp để tạo nên bản tin đầy đủ dài đúng {video_duration} giây.\n"
+                    f"- Tuyệt đối KHÔNG viết tóm tắt ngắn ngủn. Phải viết đủ dài để đạt đúng thời lượng."
+                )
+
             if video_duration and video_duration > 0:
                 if video_duration <= 60:
                     n_scenes = "exactly 4"

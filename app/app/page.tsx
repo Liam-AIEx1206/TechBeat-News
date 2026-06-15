@@ -834,7 +834,7 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                 lineHeight: 1.5,
                 textAlign: "center",
               }}>
-                ⚠️ {errorMsg}
+                {errorMsg}
               </div>
             )}
             <motion.button
