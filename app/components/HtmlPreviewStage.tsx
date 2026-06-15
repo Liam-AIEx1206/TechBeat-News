@@ -259,6 +259,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
     });
     setGenError(null);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const isLocal = API.includes("localhost") || API.includes("127.0.0.1");
       const endpoint = isLocal ? `${API}/gen-scene-one` : `/api/proxy/gen-scene-one`;
@@ -275,6 +278,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           previousContext: prevContextRef.current,
           sessionId: plan.sessionId,
         }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -317,7 +321,14 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
 
       return true;
     } catch (e) {
-      if ((e as Error).name === "AbortError") return false;
+      if ((e as Error).name === "AbortError") {
+        setSceneStatuses(prev => {
+          const next = [...prev];
+          next[idx] = "pending";
+          return next;
+        });
+        return false;
+      }
       setSceneStatuses(prev => {
         const next = [...prev];
         next[idx] = "error";
@@ -326,6 +337,10 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       setGenError(e instanceof Error ? e.message : "Gen scene thất bại");
       setGenningIdx(null);
       return false;
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
     }
   }, [setScenePlan]);
 
@@ -360,6 +375,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
     autoGenRef.current = false;
     setIsAutoGen(false);
     setGenningIdx(null);
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
   }, []);
 
   // ── Regen toàn bộ (đổi theme, v.v.) ─────────────────────────────────
