@@ -243,10 +243,10 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       setGenedCount(count);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [html]);
+  }, [html, scenePlan]);
 
   // ── Gen 1 scene ─────────────────────────────────────────────────────
-  const genOneScene = useCallback(async (idx: number): Promise<boolean> => {
+  const genOneScene = useCallback(async (idx: number, customHtml?: string | null): Promise<string | null> => {
     // idx: 0-based
     const plan = scenePlanRef.current;
     const sceneIndex = idx + 1; // 1-based cho API
@@ -274,7 +274,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           totalDuration: plan.totalDuration,
           theme: plan.theme,
           sceneIndex,
-          existingHtml: scenePlanRef.current.compositionHtml ?? null,
+          existingHtml: customHtml !== undefined ? customHtml : (scenePlanRef.current.compositionHtml ?? null),
           previousContext: prevContextRef.current,
           sessionId: plan.sessionId,
         }),
@@ -319,7 +319,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       setActiveIdx(idx); // Tự chuyển preview sang scene vừa gen
       setGenningIdx(null);
 
-      return true;
+      return data.html;
     } catch (e) {
       if ((e as Error).name === "AbortError") {
         setSceneStatuses(prev => {
@@ -327,7 +327,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
           next[idx] = "pending";
           return next;
         });
-        return false;
+        return null;
       }
       setSceneStatuses(prev => {
         const next = [...prev];
@@ -336,7 +336,7 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       });
       setGenError(e instanceof Error ? e.message : "Gen scene thất bại");
       setGenningIdx(null);
-      return false;
+      return null;
     } finally {
       if (abortRef.current === controller) {
         abortRef.current = null;
@@ -360,10 +360,12 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
       .map((s, i) => (s === "pending" || s === "error" ? i : -1))
       .filter(i => i >= 0);
 
+    let currentHtml = scenePlanRef.current.compositionHtml ?? null;
     for (const idx of pendingIdxs) {
       if (!autoGenRef.current) break;
-      const ok = await genOneScene(idx);
-      if (!ok) break; // Dừng nếu bị abort hoặc lỗi
+      const newHtml = await genOneScene(idx, currentHtml);
+      if (!newHtml) break; // Dừng nếu bị abort hoặc lỗi
+      currentHtml = newHtml;
     }
 
     setIsAutoGen(false);
