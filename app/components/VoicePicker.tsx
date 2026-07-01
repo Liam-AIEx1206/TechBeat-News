@@ -243,7 +243,7 @@ function VoiceCard({
         padding: "16px 14px",
         borderRadius: 16,
         border: active ? `2px solid var(--accent)` : "1px solid var(--gray-3)",
-        background: active ? "rgba(249,115,22,0.06)" : "var(--gray-1)",
+        background: active ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.03)",
         boxShadow: active
           ? "0 0 0 3px rgba(249,115,22,0.15), 0 12px 32px -8px rgba(249,115,22,0.3)"
           : "0 4px 12px rgba(0,0,0,0.1)",
