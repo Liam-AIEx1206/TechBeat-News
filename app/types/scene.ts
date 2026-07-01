@@ -17,18 +17,14 @@ export interface ScenePlan {
   title: string;
   scenes: Scene[];
   totalDuration: number;
-  theme?: ThemeId; // user-selected theme; backend defaults to "cyber-orange" if missing
-  voiceId?: string; // TTS voice_id; backend uses default if missing
-  /** Full composition HTML cached by the html-preview stage. When present, the
-   *  build pipeline skips the composition stage and uses this directly. */
+  theme?: ThemeId;
+  voiceId?: string;
   compositionHtml?: string;
-  /** Per-scene flag — true when narration/title/image was edited after the
-   *  last successful HTML generation, so the user knows to regen that scene. */
   sceneRegenFlags?: boolean[];
-  /** Subtitle toggle — when false, the backend injects CSS to hide .techbeat-subtitles
-   *  in the rendered video. Defaults to true (subtitles visible). */
   subtitlesEnabled?: boolean;
   sessionId?: string;
+  outputType?: "video" | "slide";
+  pptxUrl?: string;
 }
 
 export interface ExtractedContent {

@@ -22,6 +22,7 @@ from routers.images import router as images_router
 from routers.projects import router as projects_router
 from routers.history import router as history_router
 from routers.voices import router as voices_router
+from routers.slides import router as slides_router
 from routers.llm import log_provider_status
 
 app = FastAPI(title="TechBeat API", version="2.0.0")
@@ -51,6 +52,7 @@ app.include_router(images_router)
 app.include_router(projects_router)
 app.include_router(history_router)
 app.include_router(voices_router)
+app.include_router(slides_router)
 
 # Serve rendered MP4 + assets — create dirs eagerly so the mount works on first
 # render, not only after the folder happens to exist at startup.
@@ -62,9 +64,12 @@ sessions_dir = project_dir / "sessions"
 renders_dir.mkdir(parents=True, exist_ok=True)
 assets_dir.mkdir(parents=True, exist_ok=True)
 sessions_dir.mkdir(parents=True, exist_ok=True)
+slides_dir = project_dir / "slides"
+slides_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/renders", StaticFiles(directory=str(renders_dir)), name="renders")
 app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 app.mount("/sessions", StaticFiles(directory=str(sessions_dir)), name="sessions")
+app.mount("/slides", StaticFiles(directory=str(slides_dir)), name="slides")
 
 # Serve static history
 history_dir = project_dir / "history"

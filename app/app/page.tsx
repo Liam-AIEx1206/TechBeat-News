@@ -10,6 +10,8 @@ import { ThemePicker } from "@/components/ThemePicker";
 import { GalaxyCanvas } from "@/components/GalaxyCanvas";
 import { VoicePicker } from "@/components/VoicePicker";
 import { HtmlPreviewStage } from "@/components/HtmlPreviewStage";
+import { SlidePreviewStage } from "@/components/SlidePreviewStage";
+import { SlideExporter } from "@/components/SlideExporter";
 import {
   StageTransition,
   CurtainSweep,
@@ -23,7 +25,7 @@ import { Palette, Mic } from "lucide-react";
 import type { ExtractedContent, ScenePlan, ThemeId } from "@/types/scene";
 import { DEFAULT_THEME, getTheme, THEMES } from "@/types/scene";
 
-type Stage = "dashboard" | "input" | "generating" | "preview" | "htmlPreview" | "build";
+type Stage = "dashboard" | "input" | "generating" | "preview" | "htmlPreview" | "build" | "slidePreview" | "slideExport";
 
 const TICKER_ITEMS = [
   "XNEW LIVE",
@@ -79,7 +81,7 @@ export default function Home() {
         clearSession();
         return;
       }
-      const validStages: Stage[] = ["preview", "htmlPreview", "build"];
+      const validStages: Stage[] = ["preview", "htmlPreview", "build", "slidePreview", "slideExport"];
       if (validStages.includes(savedStage)) {
         setScenePlan(plan);
         setStage(savedStage);
@@ -167,17 +169,17 @@ export default function Home() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "") as Stage;
-      if (["dashboard", "input", "generating", "preview", "htmlPreview", "build"].includes(hash)) {
+      if (["dashboard", "input", "generating", "preview", "htmlPreview", "build", "slidePreview", "slideExport"].includes(hash)) {
         setStage(hash);
       } else if (!hash) {
         setStage("dashboard");
       }
     };
     window.addEventListener("hashchange", handleHashChange);
-    
+
     // On mount
     const hash = window.location.hash.replace("#", "");
-    if (["dashboard", "input", "generating", "preview", "htmlPreview", "build"].includes(hash)) {
+    if (["dashboard", "input", "generating", "preview", "htmlPreview", "build", "slidePreview", "slideExport"].includes(hash)) {
       setStage(hash as Stage);
     } else if (status === "authenticated" || stage !== "dashboard") {
       window.location.hash = stage;
@@ -186,7 +188,7 @@ export default function Home() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  const hasUnsavedProgress = stage === "generating" || stage === "preview" || stage === "htmlPreview" || stage === "build" || (stage === "input" && isLoading);
+  const hasUnsavedProgress = stage === "generating" || stage === "preview" || stage === "htmlPreview" || stage === "build" || stage === "slidePreview" || stage === "slideExport" || (stage === "input" && isLoading);
 
   // Global beforeunload listener to protect against accidental tab closing/refreshing
   useEffect(() => {
@@ -206,7 +208,7 @@ export default function Home() {
     window.location.hash = next;
   }
 
-  async function generateScenes(content: ExtractedContent & { videoDuration?: number | null }) {
+  async function generateScenes(content: ExtractedContent & { videoDuration?: number | null; outputType?: "video" | "slide" }) {
     go("generating");
     setError("");
     setStreamBuffer("");
@@ -251,7 +253,8 @@ export default function Home() {
             if (event.llmProvider || event.llmModel) {
               setStreamBuffer(prev => prev + `\n\nKịch bản: ${event.llmProvider ?? ""}/${event.llmModel ?? ""}`);
             }
-            setScenePlan(event.scenePlan as ScenePlan);
+            const plan = { ...(event.scenePlan as ScenePlan), outputType: content.outputType ?? "video" };
+            setScenePlan(plan);
             go("preview");
           } else if (event.type === "error") {
             throw new Error(event.message ?? "Lỗi không xác định");
@@ -489,12 +492,13 @@ export default function Home() {
       )}
 
       {stage !== "dashboard" && (
-        <AppHeader 
-          stage={stage} 
-          onHome={handleHome} 
-          onReset={handleReset} 
-          hasUnsavedProgress={hasUnsavedProgress} 
+        <AppHeader
+          stage={stage}
+          onHome={handleHome}
+          onReset={handleReset}
+          hasUnsavedProgress={hasUnsavedProgress}
           setConfirmDialog={setConfirmDialog}
+          scenePlan={scenePlan}
         />
       )}
 
@@ -511,7 +515,11 @@ export default function Home() {
         )}
         {stage === "generating" && <GeneratingStage buffer={streamBuffer} onCancel={handleReset} />}
         {stage === "preview" && scenePlan && (
-          <PreviewStage scenePlan={scenePlan} setScenePlan={setScenePlan} onBuild={() => go("htmlPreview")} />
+          <PreviewStage
+            scenePlan={scenePlan}
+            setScenePlan={setScenePlan}
+            onBuild={() => scenePlan.outputType === "slide" ? go("slidePreview") : go("htmlPreview")}
+          />
         )}
         {stage === "htmlPreview" && scenePlan && (
           <HtmlPreviewStage
@@ -530,6 +538,22 @@ export default function Home() {
             </main>
           </div>
         )}
+        {stage === "slidePreview" && scenePlan && (
+          <SlidePreviewStage
+            scenePlan={scenePlan}
+            setScenePlan={setScenePlan}
+            onBack={() => go("preview")}
+            onExport={() => go("slideExport")}
+          />
+        )}
+        {stage === "slideExport" && scenePlan && (
+          <div style={{ position: "relative", minHeight: "100vh" }}>
+            <GalaxyCanvas accentHue={260} starCount={200} nebulaOpacity={0.08} />
+            <main style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "32px clamp(20px,4vw,48px)" }}>
+              <SlideExporter scenePlan={scenePlan} onBack={() => go("slidePreview")} />
+            </main>
+          </div>
+        )}
       </StageTransition>
     </div>
   );
@@ -537,27 +561,38 @@ export default function Home() {
 
 /* ─────────────────────────  HEADER  ───────────────────────── */
 
-function AppHeader({ 
-  stage, 
-  onHome, 
-  onReset, 
+function AppHeader({
+  stage,
+  onHome,
+  onReset,
   hasUnsavedProgress,
-  setConfirmDialog
-}: { 
-  stage: Stage; 
-  onHome: () => void; 
-  onReset: () => void; 
-  hasUnsavedProgress: boolean; 
+  setConfirmDialog,
+  scenePlan,
+}: {
+  stage: Stage;
+  onHome: () => void;
+  onReset: () => void;
+  hasUnsavedProgress: boolean;
   setConfirmDialog: (d: any) => void;
+  scenePlan: ScenePlan | null;
 }) {
   const { data: session } = useSession();
-  const steps: { key: Stage; num: number; label: string }[] = [
+  const isSlide = stage === "slidePreview" || stage === "slideExport" ||
+    (stage === "preview" && (scenePlan?.outputType === "slide"));
+  const steps: { key: Stage; num: number; label: string }[] = isSlide ? [
+    { key: "input",       num: 1, label: "Nhập" },
+    { key: "preview",     num: 2, label: "Kịch bản" },
+    { key: "slidePreview", num: 3, label: "Xem trước" },
+    { key: "slideExport",  num: 4, label: "Xuất Slide" },
+  ] : [
     { key: "input",       num: 1, label: "Nhập" },
     { key: "preview",     num: 2, label: "Kịch bản" },
     { key: "htmlPreview", num: 3, label: "Xem trước" },
     { key: "build",       num: 4, label: "Dựng" },
   ];
-  const order: Stage[] = ["input", "generating", "preview", "htmlPreview", "build"];
+  const order: Stage[] = isSlide
+    ? ["input", "generating", "preview", "slidePreview", "slideExport"]
+    : ["input", "generating", "preview", "htmlPreview", "build"];
   const cur = order.indexOf(stage);
 
   return (
@@ -600,8 +635,9 @@ function AppHeader({
               const sIdx = order.indexOf(s.key);
               const isDone =
                 cur > sIdx ||
-                (s.key === "preview" && (stage === "htmlPreview" || stage === "build")) ||
-                (s.key === "htmlPreview" && stage === "build");
+                (s.key === "preview" && (stage === "htmlPreview" || stage === "build" || stage === "slidePreview" || stage === "slideExport")) ||
+                (s.key === "htmlPreview" && stage === "build") ||
+                (s.key === "slidePreview" && stage === "slideExport");
               const isActive =
                 stage === s.key ||
                 (s.key === "preview" && stage === "generating");

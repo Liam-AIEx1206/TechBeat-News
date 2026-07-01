@@ -3,7 +3,7 @@
 import { useState, useRef, DragEvent } from "react";
 
 interface Props {
-  onExtracted: (content: { title: string; text: string; source: string; videoDuration?: number | null }) => void;
+  onExtracted: (content: { title: string; text: string; source: string; videoDuration?: number | null; outputType?: "video" | "slide" }) => void;
   isLoading: boolean;
   setIsLoading: (v: boolean) => void;
   setError: (v: string) => void;
@@ -19,6 +19,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
   const [titleFocused, setTitleFocused] = useState(false);
   const [textFocused, setTextFocused]   = useState(false);
   const [videoDuration, setVideoDuration] = useState<number>(180);
+  const [outputType, setOutputType] = useState<"video" | "slide">("video");
   const fileRef = useRef<HTMLInputElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -32,7 +33,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
       });
       if (!res.ok) throw new Error((await res.json()).detail ?? "Trích xuất thất bại");
       const data = await res.json();
-      onExtracted({ ...data, videoDuration });
+      onExtracted({ ...data, videoDuration, outputType });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể trích xuất URL");
     } finally { setIsLoading(false); }
@@ -45,7 +46,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
       const res = await fetch(`${API}/extract/file`, { method: "POST", body: form });
       if (!res.ok) throw new Error((await res.json()).detail ?? "Trích xuất thất bại");
       const data = await res.json();
-      onExtracted({ ...data, videoDuration });
+      onExtracted({ ...data, videoDuration, outputType });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể trích xuất file");
     } finally { setIsLoading(false); }
@@ -64,14 +65,57 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
       text: pastedText.trim(),
       source: "Dán trực tiếp",
       videoDuration,
+      outputType,
     });
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-      {/* ── Video Duration Selector ── */}
+      {/* ── Output Type Selector ── */}
       <div>
+        <div style={{
+          fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
+          textTransform: "uppercase", color: "var(--accent2)",
+          marginBottom: 10, display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <span style={{ width: 20, height: 1, background: "var(--accent)", display: "inline-block" }} />
+          Output Type
+        </div>
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10,
+          background: "rgba(255,255,255,0.03)", padding: 6,
+          borderRadius: "var(--r-lg)", border: "1px solid var(--gray-3)",
+        }}>
+          {([
+            { label: "Video", sublabel: "MP4 · HD", val: "video" as const },
+            { label: "Slide", sublabel: "PPTX · editable", val: "slide" as const },
+          ]).map((opt) => {
+            const active = outputType === opt.val;
+            return (
+              <button key={opt.val} onClick={() => setOutputType(opt.val)} disabled={isLoading}
+                style={{
+                  padding: "14px 8px", borderRadius: "calc(var(--r-lg) - 4px)",
+                  background: active ? "linear-gradient(135deg, #f97316, #ea580c)" : "transparent",
+                  color: active ? "#000000" : "var(--gray-5)",
+                  border: "none", fontSize: 13, fontWeight: active ? 800 : 600,
+                  cursor: "pointer", transition: "all 0.25s var(--ease-out)",
+                  boxShadow: active ? "0 4px 12px rgba(249,115,22,0.25)" : "none",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                }}
+                onMouseEnter={(e) => { if (!active && !isLoading) { e.currentTarget.style.color = "var(--white)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; } }}
+                onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = "var(--gray-5)"; e.currentTarget.style.background = "transparent"; } }}
+              >
+                <span style={{ fontWeight: 800, fontSize: 13 }}>{opt.label}</span>
+                <span style={{ fontSize: 10, opacity: active ? 0.7 : 0.6, fontWeight: 600 }}>{opt.sublabel}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Video Duration Selector (hidden for slide) ── */}
+      {outputType === "video" && <div>
         <div style={{
           fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
           textTransform: "uppercase", color: "var(--accent2)",
@@ -138,6 +182,7 @@ export function InputPanel({ onExtracted, isLoading, setIsLoading, setError }: P
           })}
         </div>
       </div>
+      }
 
       {/* ── Tab Switcher (Text-only, Minimalist, Premium) ── */}
       <div>
