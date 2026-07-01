@@ -47,6 +47,54 @@ export default function Home() {
 
   const [hasDuplicateConflict, setHasDuplicateConflict] = useState(false);
   const [tabId, setTabId] = useState("");
+
+  // ── Session persistence (fixes Mac swipe-back losing state) ──────────────
+  const SESSION_KEY = "xnew_draft_session";
+
+  function saveSession(plan: ScenePlan | null, currentStage: Stage) {
+    if (!plan || currentStage === "dashboard" || currentStage === "input" || currentStage === "generating") {
+      localStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ plan, stage: currentStage, savedAt: Date.now() }));
+    } catch { /* quota exceeded — silently skip */ }
+  }
+
+  function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  // Restore saved session on mount (before hash routing kicks in)
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      const { plan, stage: savedStage, savedAt } = JSON.parse(raw);
+      // Discard sessions older than 24 hours
+      if (!plan || !savedStage || Date.now() - savedAt > 86_400_000) {
+        clearSession();
+        return;
+      }
+      const validStages: Stage[] = ["preview", "htmlPreview", "build"];
+      if (validStages.includes(savedStage)) {
+        setScenePlan(plan);
+        setStage(savedStage);
+        window.location.hash = savedStage;
+      }
+    } catch { clearSession(); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist whenever scenePlan or stage changes
+  useEffect(() => {
+    saveSession(scenePlan, stage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenePlan, stage]);
+  // ─────────────────────────────────────────────────────────────────────────
   const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
 
   // Initialize unique tab ID in sessionStorage (safe for F5 refreshes)
@@ -231,6 +279,7 @@ export default function Home() {
     setScenePlan(null);
     setStreamBuffer("");
     setError("");
+    clearSession();
     go("input");
   }
 
@@ -239,6 +288,7 @@ export default function Home() {
     setScenePlan(null);
     setStreamBuffer("");
     setError("");
+    clearSession();
     go("dashboard");
   }
 
