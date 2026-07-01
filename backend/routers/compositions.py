@@ -97,30 +97,6 @@ THEMES: dict[str, dict] = {
         "vibe": "công nghệ lạnh giá tối giản tinh khiết như băng đá, sắc nét với ánh sáng xanh lam và bạc mờ, kết hợp bento hoặc các ô trong suốt",
         "fx": "frosted glass reflection, paper thin border grids, cold ice ambient pulse, crisp typographic fades",
     },
-    "retro-arcade": {
-        "name": "Retro Arcade",
-        "bg": "#0b020f", "bg2": "#150622", "surface": "#220c35",
-        "accent": "#eab308", "accent2": "#c084fc", "accent3": "#22c55e",
-        "text1": "#faf5ff", "text2": "#d8b4fe",
-        "vibe": "phòng máy chơi game retro arcade 8-bit hoài cổ, rực rỡ sắc màu tím neon kết hợp vàng chanh và xanh lá, font monospace cá tính",
-        "fx": "CRT scanlines scanning, brutalist solid drop shadows, pixel particle fall, retro flash accents",
-    },
-    "monochrome-pro": {
-        "name": "Monochrome Pro",
-        "bg": "#050505", "bg2": "#121212", "surface": "#1e1e1e",
-        "accent": "#ffffff", "accent2": "#a1a1aa", "accent3": "#52525b",
-        "text1": "#ffffff", "text2": "#d4d4d8",
-        "vibe": "tối giản mực đen trên giấy trắng và xám tro cao cấp, phong cách triển lãm thời trang hiện đại, typography đậm đà đối lập, khoảng trắng lớn",
-        "fx": "stark contrast fade-in, thin hand-drawn separators, organic bento lines, elegant slide transitions",
-    },
-    "coffee-editorial": {
-        "name": "Coffee Editorial",
-        "bg": "#120e0a", "bg2": "#1f1812", "surface": "#2d241b",
-        "accent": "#a16207", "accent2": "#fef08a", "accent3": "#ca8a04",
-        "text1": "#fdf8f5", "text2": "#d7ccc8",
-        "vibe": "không gian ấm áp mộc mạc của quán cà phê gỗ cổ điển, kết hợp tone kem oatmeal nhẹ và nâu đất terracotta trầm ấm",
-        "fx": "paper noise grain overlay, rounded soft card corners, sepia vintage color wash, warm breathing glows",
-    },
     "ocean-depths": {
         "name": "Ocean Depths",
         "bg": "#020712", "bg2": "#051125", "surface": "#0a1c3b",
@@ -136,22 +112,6 @@ THEMES: dict[str, dict] = {
         "text1": "#faf5ff", "text2": "#e9d5ff",
         "vibe": "không gian vũ trụ cinematic sâu thẳm huyền bí với dải ngân hà nebula tím và supernova hồng rực rỡ giữa nền không gian tối đặc",
         "fx": "twinkling stars, nebula particle drift, cosmic dust float, celestial gravity waves, gradient texts",
-    },
-    "copper-steampunk": {
-        "name": "Copper Steampunk",
-        "bg": "#0f0a07", "bg2": "#1c120c", "surface": "#2d1d13",
-        "accent": "#b45309", "accent2": "#ea580c", "accent3": "#ca8a04",
-        "text1": "#fffbeb", "text2": "#fde8d0",
-        "vibe": "thời kỳ cơ khí hơi nước Steampunk cổ điển, chất liệu đồng đỏ xước bóng metallic phối màu gỉ sắt trầm mặc độc lạ",
-        "fx": "revolving gears (CSS keyframes rotation), steam exhaust animation, brushed metal textures, industrial frame borders",
-    },
-    "cyberpunk-glitch": {
-        "name": "Cyberpunk Glitch",
-        "bg": "#0a010c", "bg2": "#15021a", "surface": "#24042d",
-        "accent": "#f43f5e", "accent2": "#a3e635", "accent3": "#d946ef",
-        "text1": "#fff1f2", "text2": "#fca5a5",
-        "vibe": "cyberpunk đường phố neon lập loè chói tai dưới mưa đêm, tương phản cao giữa hồng sen, xanh lime acid và tím chớp giật",
-        "fx": "RGB glitch text distortion, scanning hazard stripes flashing, neon buzz effect, visual noise, raw cyber grids",
     },
     "bento-minimal": {
         "name": "Bento Minimal",
@@ -184,14 +144,6 @@ THEMES: dict[str, dict] = {
         "text1": "#fdf4ff", "text2": "#f5d0fe",
         "vibe": "pastel ngọt ngào mộng mơ Kawaii tươi trẻ năng động, sự pha trộn dễ thương giữa đào mọng, soda bạc hà và oải hương",
         "fx": "confetti falling sparkles, rising soap bubbles, heart pop shapes, round bouncing card entrances",
-    },
-    "royal-velvet": {
-        "name": "Royal Velvet",
-        "bg": "#0b030b", "bg2": "#1b071a", "surface": "#2b0d28",
-        "accent": "#6b21a8", "accent2": "#ca8a04", "accent3": "#991b1b",
-        "text1": "#fdf4ff", "text2": "#f3e8ff",
-        "vibe": "nhung hoàng gia cổ điển quý tộc sang trọng, sự kết hợp giữa tím hoàng cung thâm sâu, vàng gold lá lánh và đỏ rượu vang quý phái",
-        "fx": "velvet cloth shimmer, delicate gold ornament frames, slow cinematic dissolving transitions",
     },
     "neon-green-overdrive": {
         "name": "Neon Green Overdrive",
@@ -2268,6 +2220,8 @@ NGÔN NGỮ: tiếng Việt có dấu. Giữ nguyên văn narration/title/visual
 
 CSS framework + GSAP timeline + font Inter đã được inject server-side (phông JetBrains Mono đã bị loại bỏ hoàn toàn để chống lỗi chữ tiếng Việt).
 
+🏷️ BRAND: Tên thương hiệu là **XNEW** (không phải TechBeat, không phải TECHBEAT). Khi cần điền tên vào .status-pill, badge, caption, eyebrow — luôn dùng "XNEW NEWS", "XNEW STUDIO", hoặc "XNEW" tùy context.
+
 Class có sẵn (DÙNG, không tự viết):
 LAYOUT: .scene/.split/.centered/.hero/.magazine/.data, .layout, .info-col, .visual-col
 TEXT: .badge, .title-xl, .title-hero, .subtitle, .body-text, .caption, .grad-text, .outline-text, .mega-num
@@ -2598,7 +2552,7 @@ QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
        <div class="aurora-glow" style="top:-10%; left:-15%; background:radial-gradient(circle, var(--accent), transparent);"></div>
        <div class="aurora-glow" style="bottom:-15%; right:-10%; background:radial-gradient(circle, var(--accent2), transparent);"></div>
        <div class="animated-grid"></div>
-       <div class="ghost-text" style="top:5%; left:5%;">TECHBEAT</div>
+       <div class="ghost-text" style="top:5%; left:5%;">XNEW</div>
        <div class="particle-field"></div>
        <div class="status-pill">● ON AIR · LIVE</div>
        <div class="layout">
@@ -2647,7 +2601,7 @@ QUY TẮC HTML BẮT BUỘC (UI/UX PRO MAX)
          <div id="s1-badge" class="badge shimmer-fast">📺 NEW SHOW</div>
          <h1 id="s1-title" class="title-hero outline-text">{{tiêu đề lớn}}</h1>
          <p id="s1-subtitle" class="subtitle">{{tagline ≤ 8 chữ}}</p>
-         <div id="s1-desc" class="caption">PHIÊN BẢN 2026 · TECHBEAT STUDIO</div>
+         <div id="s1-desc" class="caption">PHIÊN BẢN 2026 · XNEW STUDIO</div>
        </div>
        <div class="corner-bracket tl"></div><div class="corner-bracket tr"></div>
        <div class="corner-bracket bl"></div><div class="corner-bracket br"></div>
@@ -4057,7 +4011,7 @@ def inject_missing_scene_placeholders(html: str, scenes: list[ScenePayload], mis
             f'\n      <div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">'
             f'\n        <div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>'
             f'\n        <div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE {scene_num_padded}</div>'
-            f'\n        <div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; TECHBEAT</div>'
+            f'\n        <div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; XNEW</div>'
             f'\n      </div>'
             f'\n    </div>'
             f'\n  </div>'

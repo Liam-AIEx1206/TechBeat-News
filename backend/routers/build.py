@@ -1290,7 +1290,7 @@ def patch_html_timing(
           '<div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;justify-content:center;">' +
             '<div class="badge" style="background:var(--surface,#141420);">📺 &nbsp; ON AIR</div>' +
             '<div class="badge" style="background:var(--surface,#141420);">▶ &nbsp; SCENE ' + sceneNumPadded + '</div>' +
-            '<div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; TECHBEAT</div>' +
+            '<div class="badge" style="background:var(--surface,#141420);">🎬 &nbsp; XNEW</div>' +
           '</div>' +
         '</div>';
       root.appendChild(ph);

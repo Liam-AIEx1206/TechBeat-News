@@ -50,18 +50,12 @@ export type ThemeId =
   | "gold-editorial"
   | "sunset-glow"
   | "iceberg-tech"
-  | "retro-arcade"
-  | "monochrome-pro"
-  | "coffee-editorial"
   | "ocean-depths"
   | "space-odyssey"
-  | "copper-steampunk"
-  | "cyberpunk-glitch"
   | "bento-minimal"
   | "forest-eco"
   | "brutalist-bold"
   | "pop-candy"
-  | "royal-velvet"
   | "neon-green-overdrive";
 
 export interface Theme {
@@ -222,48 +216,6 @@ export const THEMES: Theme[] = [
     vibe: "công nghệ lạnh giá tối giản tinh khiết như băng đá, sắc nét với ánh sáng xanh lam và bạc mờ, kết hợp bento hoặc các ô trong suốt",
   },
   {
-    id: "retro-arcade",
-    name: "Retro Arcade",
-    tagline: "8-bit gaming console",
-    bg: "#0b020f",
-    bg2: "#150622",
-    surface: "#220c35",
-    accent: "#eab308",
-    accent2: "#c084fc",
-    accent3: "#22c55e",
-    text1: "#faf5ff",
-    text2: "#d8b4fe",
-    vibe: "phòng máy chơi game retro arcade 8-bit hoài cổ, rực rỡ sắc màu tím neon kết hợp vàng chanh và xanh lá, font monospace",
-  },
-  {
-    id: "monochrome-pro",
-    name: "Monochrome Pro",
-    tagline: "High contrast minimalism",
-    bg: "#050505",
-    bg2: "#121212",
-    surface: "#1e1e1e",
-    accent: "#ffffff",
-    accent2: "#a1a1aa",
-    accent3: "#52525b",
-    text1: "#ffffff",
-    text2: "#d4d4d8",
-    vibe: "tối giản mực đen trên giấy trắng và xám tro cao cấp, phong cách triển lãm thời trang hiện đại, typography đậm đà đối lập",
-  },
-  {
-    id: "coffee-editorial",
-    name: "Coffee Editorial",
-    tagline: "Cozy warm vintage",
-    bg: "#120e0a",
-    bg2: "#1f1812",
-    surface: "#2d241b",
-    accent: "#a16207",
-    accent2: "#fef08a",
-    accent3: "#ca8a04",
-    text1: "#fdf8f5",
-    text2: "#d7ccc8",
-    vibe: "không gian ấm áp mộc mạc của quán cà phê gỗ cổ điển, kết hợp tone kem oatmeal nhẹ và nâu đất terracotta trầm ấm",
-  },
-  {
     id: "ocean-depths",
     name: "Ocean Depths",
     tagline: "Deep sea marine tech",
@@ -290,34 +242,6 @@ export const THEMES: Theme[] = [
     text1: "#faf5ff",
     text2: "#e9d5ff",
     vibe: "không gian vũ trụ cinematic sâu thẳm huyền bí với dải ngân hà nebula tím và supernova hồng rực rỡ",
-  },
-  {
-    id: "copper-steampunk",
-    name: "Copper Steampunk",
-    tagline: "Industrial gear rusty",
-    bg: "#0f0a07",
-    bg2: "#1c120c",
-    surface: "#2d1d13",
-    accent: "#b45309",
-    accent2: "#ea580c",
-    accent3: "#ca8a04",
-    text1: "#fffbeb",
-    text2: "#fde8d0",
-    vibe: "thời kỳ cơ khí hơi nước Steampunk cổ điển, chất liệu đồng đỏ xước bóng metallic phối màu gỉ sắt trầm mặc độc lạ",
-  },
-  {
-    id: "cyberpunk-glitch",
-    name: "Cyberpunk Glitch",
-    tagline: "Acid neon streets",
-    bg: "#0a010c",
-    bg2: "#15021a",
-    surface: "#24042d",
-    accent: "#f43f5e",
-    accent2: "#a3e635",
-    accent3: "#d946ef",
-    text1: "#fff1f2",
-    text2: "#fca5a5",
-    vibe: "cyberpunk đường phố neon lập loè chói tai dưới mưa đêm, tương phản cao giữa hồng sen, xanh lá acid và tím chớp giật",
   },
   {
     id: "bento-minimal",
@@ -374,20 +298,6 @@ export const THEMES: Theme[] = [
     text1: "#fdf4ff",
     text2: "#f5d0fe",
     vibe: "pastel ngọt ngào mộng mơ Kawaii tươi trẻ năng động, sự pha trộn dễ thương giữa đào mọng, soda bạc hà và oải hương",
-  },
-  {
-    id: "royal-velvet",
-    name: "Royal Velvet",
-    tagline: "Classic royal violet",
-    bg: "#0b030b",
-    bg2: "#1b071a",
-    surface: "#2b0d28",
-    accent: "#6b21a8",
-    accent2: "#ca8a04",
-    accent3: "#991b1b",
-    text1: "#fdf4ff",
-    text2: "#f3e8ff",
-    vibe: "nhung hoàng gia cổ điển quý tộc sang trọng, sự kết hợp giữa tím hoàng cung thâm sâu, vàng gold lá lánh và đỏ rượu vang quý phái",
   },
   {
     id: "neon-green-overdrive",

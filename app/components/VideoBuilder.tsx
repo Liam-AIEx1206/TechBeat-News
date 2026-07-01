@@ -5,6 +5,7 @@ import type { ScenePlan } from "@/types/scene";
 import { useSession } from "next-auth/react";
 import { useClientRender, uploadRenderedVideo, saveErrorLog } from "./ClientRenderer";
 import { Palette, Mic, AudioLines } from "lucide-react";
+import { GalaxyCanvas } from "./GalaxyCanvas";
 
 interface Props {
   scenePlan: ScenePlan;
@@ -390,174 +391,304 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
   const fullVideoUrl = videoUrl ? `${API}${videoUrl}` : "";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Error banner */}
       {error && (
-        <div className="fade-up px-4 py-3 rounded-xl text-sm"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)" }}>
+        <div style={{ padding: "12px 18px", borderRadius: 14, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)", fontSize: 13 }}>
           Lỗi: {error}
         </div>
       )}
 
-      {/* Header card */}
-      <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-3)", borderRadius: "var(--r-xl)", padding: "clamp(20px,3vw,32px)" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
-          <div>
-            <div className="hero-eyebrow" style={{ marginBottom: 10 }}>
-              {done ? "✓ Video sẵn sàng" : running ? "Đang dựng..." : "Chuẩn bị dựng"}
-            </div>
-            <h2 style={{ fontSize: "clamp(20px,2.5vw,32px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 8 }}>
-              {scenePlan.title}
-            </h2>
-            <p style={{ fontSize: 12, color: "var(--gray-5)" }}>
-              <span style={{ color: "var(--accent2)", fontWeight: 700 }}>{scenePlan.scenes.length} phân cảnh</span>
-              {" · "}{renderMode === "client" ? "1280×720" : "1920×1080"} · 30fps
-              {ttsEngine && (<>{" · "}<span style={{ color: "#67e8f9", fontWeight: 700 }}>TTS: {ttsEngine}</span></>)}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {/* Total elapsed timer */}
-            {(running || done) && (
+      {/* ── Main build panel ── */}
+      <div style={{
+        background: "linear-gradient(180deg, rgba(20,15,11,0.72) 0%, rgba(10,8,6,0.82) 100%)",
+        border: `1px solid ${done ? "rgba(34,197,94,0.35)" : "rgba(249,115,22,0.32)"}`,
+        borderRadius: 28,
+        overflow: "hidden",
+        position: "relative",
+        boxShadow: done
+          ? "0 0 0 1px rgba(34,197,94,0.08), 0 24px 60px -24px rgba(34,197,94,0.35), inset 0 1px 0 rgba(255,255,255,0.05)"
+          : running
+          ? "0 0 0 1px rgba(249,115,22,0.12), 0 24px 70px -20px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.06)"
+          : "0 0 0 1px rgba(249,115,22,0.06), 0 20px 60px -28px rgba(249,115,22,0.28), inset 0 1px 0 rgba(255,255,255,0.05)",
+        transition: "border-color 1.2s ease, box-shadow 1.2s ease",
+      }}>
+        {/* Top ambient glow — shifts color by state */}
+        <div style={{
+          position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)",
+          width: 800, height: 280, pointerEvents: "none", zIndex: 0,
+          background: running
+            ? "radial-gradient(ellipse at top, rgba(249,115,22,0.22) 0%, transparent 65%)"
+            : done
+            ? "radial-gradient(ellipse at top, rgba(34,197,94,0.14) 0%, transparent 65%)"
+            : "radial-gradient(ellipse at top, rgba(249,115,22,0.12) 0%, transparent 65%)",
+          transition: "background 1.2s ease",
+        }} />
+
+        {/* ── Header ── */}
+        <div style={{ padding: "36px 44px 32px", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 32, flexWrap: "wrap" }}>
+
+            {/* Left: status + title + meta */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Status pill */}
               <div style={{
-                display: "flex", flexDirection: "column", alignItems: "flex-end",
-                padding: "8px 14px", borderRadius: "var(--r)",
-                background: done ? "rgba(34,197,94,0.08)" : "var(--gray-2)",
-                border: done ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--gray-3)",
-                minWidth: 110,
+                display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 20,
+                padding: "5px 14px", borderRadius: 99,
+                background: running ? "rgba(249,115,22,0.1)" : done ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.05)",
+                border: `1px solid ${running ? "rgba(249,115,22,0.28)" : done ? "rgba(34,197,94,0.28)" : "rgba(255,255,255,0.1)"}`,
               }}>
-                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)" }}>Tổng thời gian</span>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 800, color: done ? "#22c55e" : "var(--accent)" }}>
-                  {fmtMs(totalElapsed)}
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                  background: running ? "#f97316" : done ? "#22c55e" : "var(--gray-4)",
+                  boxShadow: running ? "0 0 8px rgba(249,115,22,0.8)" : done ? "0 0 8px rgba(34,197,94,0.8)" : "none",
+                  animation: running ? "dot-blink 1.2s ease-in-out infinite" : "none",
+                }} />
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", color: running ? "var(--accent)" : done ? "#22c55e" : "var(--gray-5)" }}>
+                  {done ? "Video sẵn sàng" : running ? "Đang dựng..." : "Chuẩn bị dựng"}
                 </span>
               </div>
-            )}
 
-            {!running && !done && (
-              <div className="segmented-control" style={{
-                display: "flex",
-                background: "var(--gray-2)",
-                border: "1px solid var(--gray-3)",
-                borderRadius: "99px",
-                padding: 3,
-                gap: 4
+              <h2 style={{
+                fontSize: "clamp(22px, 2.8vw, 40px)", fontWeight: 900,
+                letterSpacing: "-0.035em", lineHeight: 1.06, color: "var(--white)", marginBottom: 18,
+                display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
               }}>
-                <button
-                  onClick={() => setRenderMode("client")}
-                  disabled={!supported}
-                  className={`btn-segment ${renderMode === "client" ? "active" : ""}`}
-                  style={{
-                    padding: "6px 14px",
-                    borderRadius: "99px",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    border: "none",
-                    cursor: supported ? "pointer" : "not-allowed",
-                    background: renderMode === "client" ? "var(--accent)" : "transparent",
-                    color: renderMode === "client" ? "var(--black)" : (supported ? "var(--gray-5)" : "var(--gray-3)"),
-                    transition: "all 0.25s ease",
-                    opacity: supported ? 1 : 0.5,
-                  }}
-                  title={!supported ? "Trình duyệt không hỗ trợ WebCodecs" : "Dựng trực tiếp trên máy của bạn (WebCodecs - Nhanh, không đợi hàng đợi)"}
-                >
-                  Client
-                </button>
-                <button
-                  onClick={() => setRenderMode("server")}
-                  className={`btn-segment ${renderMode === "server" ? "active" : ""}`}
-                  style={{
-                    padding: "6px 14px",
-                    borderRadius: "99px",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    border: "none",
-                    cursor: "pointer",
-                    background: renderMode === "server" ? "var(--accent)" : "transparent",
-                    color: renderMode === "server" ? "var(--black)" : "var(--gray-5)",
-                    transition: "all 0.25s ease",
-                  }}
-                  title="Dựng trên máy chủ VPS (Playwright + FFmpeg - Dành cho máy yếu hoặc di động)"
-                >
-                  ☁ Server
-                </button>
-              </div>
-            )}
+                {scenePlan.title}
+              </h2>
 
-            {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
-            {!running && (
-              <button onClick={build} className="btn-primary magnetic">
-                <span>{done ? "Dựng lại" : "Bắt đầu dựng"}</span>
-              </button>
-            )}
-            {running && (
-              <button onClick={() => { 
-                if (window.confirm("Hệ thống đang dựng video. Nếu huỷ bây giờ, tiến trình sẽ dừng lại và dữ liệu chưa hoàn tất sẽ bị mất.\n\nBạn có chắc chắn muốn huỷ không?")) {
-                  abortRef.current?.abort(); cancelRender(); setRunning(false); 
-                }
-              }} className="btn-ghost"
-                style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}>
-                Huỷ
-              </button>
-            )}
+              {/* Metadata pills */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {[
+                  { label: `${scenePlan.scenes.length} phân cảnh`, cyan: false },
+                  { label: renderMode === "client" ? "1280×720" : "1920×1080", cyan: false },
+                  { label: "30fps", cyan: false },
+                  ...(ttsEngine ? [{ label: `TTS · ${ttsEngine}`, cyan: true }] : []),
+                ].map((p, i) => (
+                  <span key={i} style={{
+                    fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 99,
+                    border: `1px solid ${p.cyan ? "rgba(103,232,249,0.25)" : "rgba(255,255,255,0.1)"}`,
+                    color: p.cyan ? "#67e8f9" : "var(--gray-5)",
+                    background: p.cyan ? "rgba(103,232,249,0.05)" : "transparent",
+                  }}>{p.label}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: big timer + controls */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 16, flexShrink: 0 }}>
+              {(running || done) && (
+                <div style={{
+                  textAlign: "right", padding: "18px 24px", borderRadius: 18,
+                  background: done ? "rgba(34,197,94,0.07)" : "rgba(249,115,22,0.07)",
+                  border: `1px solid ${done ? "rgba(34,197,94,0.2)" : "rgba(249,115,22,0.15)"}`,
+                }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 8 }}>Elapsed</div>
+                  <div style={{
+                    fontFamily: "var(--font-mono)", fontSize: 34, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em",
+                    color: done ? "#22c55e" : "var(--accent)",
+                    textShadow: done ? "0 0 24px rgba(34,197,94,0.5)" : "0 0 24px rgba(249,115,22,0.45)",
+                  }}>
+                    {fmtMs(totalElapsed)}
+                  </div>
+                </div>
+              )}
+
+              {/* Controls */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                {/* Render mode toggle */}
+                {!running && !done && (
+                  <div style={{
+                    display: "flex", background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: 3, gap: 3,
+                  }}>
+                    <button onClick={() => setRenderMode("client")} disabled={!supported}
+                      style={{
+                        padding: "7px 15px", borderRadius: 99, fontSize: 11, fontWeight: 800, border: "none",
+                        cursor: supported ? "pointer" : "not-allowed",
+                        background: renderMode === "client" ? "var(--accent)" : "transparent",
+                        color: renderMode === "client" ? "#000" : supported ? "var(--gray-5)" : "var(--gray-3)",
+                        transition: "all 0.2s", opacity: supported ? 1 : 0.4,
+                      }}
+                      title={!supported ? "Trình duyệt không hỗ trợ WebCodecs" : "Render bằng WebCodecs"}
+                    >Client</button>
+                    <button onClick={() => setRenderMode("server")}
+                      style={{
+                        padding: "7px 15px", borderRadius: 99, fontSize: 11, fontWeight: 800, border: "none",
+                        cursor: "pointer",
+                        background: renderMode === "server" ? "var(--accent)" : "transparent",
+                        color: renderMode === "server" ? "#000" : "var(--gray-5)",
+                        transition: "all 0.2s",
+                      }}
+                      title="Render trên server VPS"
+                    >☁ Server</button>
+                  </div>
+                )}
+                {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
+                {!running && (
+                  <button onClick={build} className="btn-primary magnetic">
+                    <span>{done ? "Dựng lại" : "Bắt đầu dựng"}</span>
+                  </button>
+                )}
+                {running && (
+                  <button onClick={() => {
+                    if (window.confirm("Hệ thống đang dựng video. Nếu huỷ bây giờ, tiến trình sẽ dừng lại.\n\nBạn có chắc chắn muốn huỷ không?")) {
+                      abortRef.current?.abort(); cancelRender(); setRunning(false);
+                    }
+                  }} className="btn-ghost" style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--red)" }}>
+                    Huỷ
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stage grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-          {STAGES.map((s, idx) => {
-            const state = stageStates[s.key];
-            const detail = s.key === "render" && renderMode === "client" && !stageDetail[s.key]
-              ? "Dựng trên trình duyệt (WebCodecs)"
-              : stageDetail[s.key] || s.detail;
-            const elapsed = stageElapsed[s.key];
-            return (
-              <div key={s.key} className={`stage-card ${state === "active" ? "stage-active" : state === "done" ? "stage-done" : state === "error" ? "stage-error" : ""}`}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+        {/* Thin divider */}
+        <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0.07) 70%, transparent)", margin: "0 44px", position: "relative", zIndex: 1 }} />
+
+        {/* ── Stage pipeline (horizontal, flex-based connectors) ── */}
+        <div style={{ padding: "28px 44px 32px", position: "relative", zIndex: 1 }}>
+          {/* Top row: icons + connectors inline */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 20 }}>
+            {STAGES.map((s, idx) => {
+              const state = stageStates[s.key];
+              const isActive = state === "active";
+              const isDone   = state === "done";
+              const isError  = state === "error";
+              // connector to the right of this node (not after the last)
+              const nextState = idx < STAGES.length - 1 ? stageStates[STAGES[idx + 1].key] : null;
+              const connectorDone = isDone && (nextState === "done" || nextState === "active");
+
+              return (
+                <div key={s.key} style={{ display: "flex", alignItems: "center", flex: idx < STAGES.length - 1 ? "1" : "0 0 auto" }}>
+                  {/* Icon node */}
                   <div style={{
-                    position: "relative", width: 28, height: 28, borderRadius: "var(--r-sm)",
+                    width: 52, height: 52, borderRadius: 15, flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 12, fontWeight: 900, flexShrink: 0,
-                    background: state === "active" ? "var(--accent)" : state === "done" ? "rgba(34,197,94,0.15)" : state === "error" ? "rgba(239,68,68,0.15)" : "var(--gray-3)",
-                    color: state === "active" ? "var(--black)" : state === "done" ? "var(--green)" : state === "error" ? "var(--red)" : "var(--gray-5)",
+                    fontSize: 17, fontWeight: 900, position: "relative",
+                    backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+                    background: isActive ? "linear-gradient(135deg, #f97316, #ea580c)"
+                               : isDone ? "rgba(34,197,94,0.14)"
+                               : isError ? "rgba(239,68,68,0.12)"
+                               : "rgba(255,255,255,0.07)",
+                    border: isActive ? "1.5px solid rgba(249,115,22,0.6)"
+                           : isDone ? "1px solid rgba(34,197,94,0.35)"
+                           : isError ? "1px solid rgba(239,68,68,0.25)"
+                           : "1px solid rgba(255,255,255,0.14)",
+                    color: isActive ? "#fff" : isDone ? "#22c55e" : isError ? "var(--red)" : "var(--gray-3)",
+                    boxShadow: isActive ? "0 8px 24px -4px rgba(249,115,22,0.5)" : isDone ? "0 0 12px rgba(34,197,94,0.18)" : "0 4px 16px -6px rgba(0,0,0,0.5)",
+                    transition: "all 0.35s ease",
                   }}>
-                    {state === "done" ? "✓" : state === "error" ? "!" : idx + 1}
-                    {state === "active" && (
-                      <span style={{ position: "absolute", inset: 0, borderRadius: "var(--r-sm)", border: "1px solid var(--accent)", animation: "ping 1.2s ease-out infinite" }} />
+                    {isDone ? (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 10l4.5 4.5L16 6" stroke="#22c55e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : isError ? "!" : idx + 1}
+                    {isActive && (
+                      <span style={{
+                        position: "absolute", inset: -7, borderRadius: 22,
+                        border: "1.5px solid rgba(249,115,22,0.35)",
+                        animation: "ping 1.5s ease-out infinite",
+                      }} />
                     )}
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: "var(--white)", flex: 1 }}>{s.label}</span>
-                  {/* Per-stage timer */}
-                  {elapsed > 0 && (
-                    <span style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 11, fontWeight: 700,
-                      color: state === "active" ? "var(--accent)" : state === "done" ? "#22c55e" : "var(--gray-5)",
+
+                  {/* Connector line to next node */}
+                  {idx < STAGES.length - 1 && (
+                    <div style={{
+                      flex: 1, height: 2, margin: "0 6px",
+                      background: "rgba(255,255,255,0.07)",
+                      borderRadius: 1, overflow: "hidden",
                     }}>
-                      {fmtMs(elapsed)}
-                    </span>
+                      <div style={{
+                        height: "100%",
+                        width: connectorDone ? "100%" : isActive ? "50%" : "0%",
+                        background: connectorDone
+                          ? "linear-gradient(90deg, #22c55e, #86efac)"
+                          : "linear-gradient(90deg, #f97316, #fb923c)",
+                        transition: "width 0.7s ease",
+                        boxShadow: (connectorDone || isActive) ? "0 0 6px rgba(249,115,22,0.4)" : "none",
+                      }} />
+                    </div>
                   )}
                 </div>
-                <p style={{ fontSize: 11, color: "var(--gray-5)", lineHeight: 1.5, minHeight: 28 }}>
-                  {detail || s.detail}
-                </p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {/* Bottom row: labels aligned under each icon */}
+          <div style={{ display: "flex" }}>
+            {STAGES.map((s, idx) => {
+              const state = stageStates[s.key];
+              const detail = s.key === "render" && renderMode === "client" && !stageDetail[s.key]
+                ? "Render trên trình duyệt (WebCodecs)"
+                : stageDetail[s.key] || s.detail;
+              const elapsed = stageElapsed[s.key];
+              const isActive = state === "active";
+              const isDone   = state === "done";
+
+              return (
+                <div key={s.key} style={{
+                  flex: idx < STAGES.length - 1 ? "1" : "0 0 auto",
+                  paddingRight: idx < STAGES.length - 1 ? 8 : 0,
+                }}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 800, marginBottom: 4,
+                    color: isActive ? "var(--white)" : isDone ? "rgba(255,255,255,0.55)" : "var(--gray-4)",
+                  }}>
+                    {s.label}
+                  </div>
+                  <div style={{ fontSize: 10, color: isActive ? "rgba(251,146,60,0.9)" : "var(--gray-4)", lineHeight: 1.5, maxWidth: 120 }}>
+                    {detail}
+                  </div>
+                  {elapsed > 0 && (
+                    <div style={{
+                      fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, marginTop: 5,
+                      color: isActive ? "var(--accent)" : isDone ? "#22c55e" : "var(--gray-5)",
+                    }}>
+                      {fmtMs(elapsed)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Progress */}
+        {/* ── Render progress bar ── */}
         {(running || done) && stageStates.render !== "pending" && (
-          <div style={{ marginTop: 20 }} className="fade-up">
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 800, marginBottom: 8 }}>
-              <span style={{ textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--gray-5)" }}>Render progress</span>
-              <span style={{ color: "var(--accent2)" }}>{progress}%</span>
+          <div style={{ padding: "0 44px 36px", position: "relative", zIndex: 1 }} className="fade-up">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)" }}>Render Progress</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 800, color: done ? "#22c55e" : "var(--accent)" }}>{progress}%</span>
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
+            <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", position: "relative", overflow: "visible" }}>
+              <div style={{
+                height: "100%", borderRadius: 3,
+                width: `${progress}%`,
+                background: done
+                  ? "linear-gradient(90deg, #16a34a, #22c55e, #4ade80)"
+                  : "linear-gradient(90deg, #c2410c, #f97316, #fb923c)",
+                transition: "width 0.35s ease",
+                boxShadow: done ? "0 0 16px rgba(34,197,94,0.55)" : "0 0 16px rgba(249,115,22,0.65)",
+                position: "relative",
+              }}>
+                {!done && progress > 2 && progress < 100 && (
+                  <span style={{
+                    position: "absolute", right: -4, top: "50%", transform: "translateY(-50%)",
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: "#fff", boxShadow: "0 0 12px rgba(249,115,22,0.95)",
+                  }} />
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Composition LLM stream preview */}
+      {/* ── Composition LLM stream ── */}
       {(stageStates.composition === "active" || (compStream && stageStates.composition === "done")) && compStream && (
         <div className="terminal p-4 fade-up" style={{ borderColor: "rgba(168,85,247,0.2)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -567,22 +698,15 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
               </div>
               <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(168,85,247,0.65)" }}>composition.html (live stream)</span>
             </div>
-            <span style={{ fontSize: 10, color: "var(--gray-5)", fontFamily: "var(--font-mono)" }}>
-              {compChars.toLocaleString()} ký tự
-            </span>
+            <span style={{ fontSize: 10, color: "var(--gray-5)", fontFamily: "var(--font-mono)" }}>{compChars.toLocaleString()} ký tự</span>
           </div>
-          <pre ref={compRef} style={{
-            maxHeight: 220, overflow: "auto",
-            whiteSpace: "pre-wrap", wordBreak: "break-all",
-            lineHeight: 1.6, fontSize: 11,
-            color: "rgba(216,180,254,0.85)",
-          }}>
+          <pre ref={compRef} style={{ maxHeight: 220, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all", lineHeight: 1.6, fontSize: 11, color: "rgba(216,180,254,0.85)" }}>
             {compStream}
           </pre>
         </div>
       )}
 
-      {/* Render log */}
+      {/* ── Render log ── */}
       {(running || renderLog.length > 0) && stageStates.render !== "pending" && (
         <div className="terminal p-4 fade-up">
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -597,68 +721,90 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
         </div>
       )}
 
-      {/* Video result */}
+      {/* ── Video result ── */}
       {done && fullVideoUrl && (
-        <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-3)", borderRadius: "var(--r-xl)", padding: "clamp(20px,3vw,32px)" }} className="fade-up">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
-            <div>
-              <div className="hero-eyebrow" style={{ marginBottom: 8 }}>✓ Video đã render xong</div>
-              <p style={{ fontSize: 15, fontWeight: 800, color: "var(--white)" }}>{scenePlan.title}.mp4</p>
-              <p style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 6 }}>
-                Tổng thời gian dựng: <span style={{ color: "#22c55e", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{fmtMs(totalElapsed)}</span>
-                {Object.entries(stageElapsed).filter(([, v]) => v > 0).map(([k, v]) => (
-                  <span key={k} style={{ marginLeft: 12, color: "var(--gray-5)" }}>
-                    {k}: <span style={{ color: "var(--accent2)", fontFamily: "var(--font-mono)" }}>{fmtMs(v)}</span>
-                  </span>
-                ))}
-              </p>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <a href={fullVideoUrl} download className="btn-ghost" style={{ fontSize: 12 }}>⬇ Tải xuống</a>
-              <a href={fullVideoUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ fontSize: 12 }}>
-                <span>↗ Mở tab mới</span>
-              </a>
-            </div>
-          </div>
-          <video src={fullVideoUrl} controls style={{ width: "100%", borderRadius: "var(--r-lg)", background: "#000", aspectRatio: "16/9" }} />
-          {videoPath && (
-            <p style={{ fontSize: 10, marginTop: 12, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "var(--gray-2)", padding: "8px 12px", borderRadius: "var(--r-sm)", wordBreak: "break-all" }}>
-              {videoPath}
-            </p>
-          )}
+        <div style={{
+          background: "linear-gradient(180deg, rgba(11,18,13,0.72) 0%, rgba(6,10,7,0.82) 100%)",
+          border: "1px solid rgba(34,197,94,0.35)",
+          borderRadius: 28, overflow: "hidden", position: "relative",
+          boxShadow: "0 0 0 1px rgba(34,197,94,0.08), 0 24px 60px -24px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+        }} className="fade-up">
+          <GalaxyCanvas accentHue={140} starCount={110} nebulaOpacity={0.12} />
+          {/* Green glow top */}
+          <div style={{
+            position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)",
+            width: 600, height: 180, pointerEvents: "none", zIndex: 0,
+            background: "radial-gradient(ellipse at top, rgba(34,197,94,0.14) 0%, transparent 65%)",
+          }} />
 
-          {/* Build Summary */}
-          {buildLog.length > 0 && (
-            <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: "var(--r)", background: "var(--gray-2)", border: "1px solid var(--gray-3)" }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 10 }}>
-                Build Summary — Models & Tools
+          <div style={{ padding: "32px 40px", position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 20, marginBottom: 24 }}>
+              <div>
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 14,
+                  padding: "5px 14px", borderRadius: 99,
+                  background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.28)",
+                }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px rgba(34,197,94,0.8)" }} />
+                  <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", color: "#22c55e" }}>Video đã render xong</span>
+                </div>
+                <p style={{ fontSize: 17, fontWeight: 900, color: "var(--white)", letterSpacing: "-0.02em", marginBottom: 10 }}>
+                  {scenePlan.title}<span style={{ color: "var(--gray-5)", fontWeight: 500 }}>.mp4</span>
+                </p>
+                <p style={{ fontSize: 11, color: "var(--gray-5)" }}>
+                  Tổng thời gian: <span style={{ color: "#22c55e", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{fmtMs(totalElapsed)}</span>
+                  {Object.entries(stageElapsed).filter(([, v]) => v > 0).map(([k, v]) => (
+                    <span key={k} style={{ marginLeft: 12 }}>
+                      {k}: <span style={{ color: "var(--accent2)", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{fmtMs(v)}</span>
+                    </span>
+                  ))}
+                </p>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {buildLog.map((line, i) => {
-                  let icon = null;
-                  let text = line;
-                  if (line.startsWith("🎨 ")) {
-                    icon = <Palette size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />;
-                    text = line.replace("🎨 ", "");
-                  } else if (line.startsWith("🎙️ ")) {
-                    icon = <Mic size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />;
-                    text = line.replace("🎙️ ", "");
-                  } else if (line.startsWith("🎤 ")) {
-                    icon = <AudioLines size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />;
-                    text = line.replace("🎤 ", "");
-                  }
-                  return (
-                    <div key={i} style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--accent2)", lineHeight: 1.5 }}>
-                      {icon}{text}
-                    </div>
-                  );
-                })}
+              <div style={{ display: "flex", gap: 8 }}>
+                <a href={fullVideoUrl} download className="btn-ghost" style={{ fontSize: 12 }}>⬇ Tải xuống</a>
+                <a href={fullVideoUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ fontSize: 12 }}>
+                  <span>↗ Mở tab mới</span>
+                </a>
               </div>
             </div>
-          )}
+
+            <video src={fullVideoUrl} controls style={{ width: "100%", borderRadius: 16, background: "#000", aspectRatio: "16/9" }} />
+
+            {videoPath && (
+              <p style={{ fontSize: 10, marginTop: 14, fontFamily: "var(--font-mono)", color: "var(--gray-4)", background: "rgba(255,255,255,0.03)", padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", wordBreak: "break-all" }}>
+                {videoPath}
+              </p>
+            )}
+
+            {buildLog.length > 0 && (
+              <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gray-5)", marginBottom: 10 }}>Build Summary — Models & Tools</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {buildLog.map((line, i) => {
+                    let icon = null;
+                    let text = line;
+                    if (line.startsWith("🎨 ")) { icon = <Palette size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />; text = line.replace("🎨 ", ""); }
+                    else if (line.startsWith("🎙️ ")) { icon = <Mic size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />; text = line.replace("🎙️ ", ""); }
+                    else if (line.startsWith("🎤 ")) { icon = <AudioLines size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: "-3px" }} />; text = line.replace("🎤 ", ""); }
+                    return (
+                      <div key={i} style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--accent2)", lineHeight: 1.5 }}>
+                        {icon}{text}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
-      <style>{`@keyframes ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }`}</style>
+
+      <style>{`
+        @keyframes ping {
+          0%   { transform: scale(1); opacity: 0.8; }
+          100% { transform: scale(2); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }

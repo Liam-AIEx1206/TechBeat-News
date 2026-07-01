@@ -10,20 +10,6 @@ interface Props {
 export function ThemePicker({ value, onChange }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{
-          fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
-          textTransform: "uppercase", color: "var(--gray-5)",
-          display: "flex", alignItems: "center", gap: 8,
-        }}>
-          <span style={{ width: 16, height: 1, background: "var(--accent)" }} />
-          Bảng màu chủ đạo
-        </div>
-        <span style={{ fontSize: 11, color: "var(--gray-5)", fontFamily: "var(--font-mono)" }}>
-          {THEMES.length} themes
-        </span>
-      </div>
-
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",

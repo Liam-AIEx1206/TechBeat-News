@@ -7,6 +7,7 @@ import { SceneList } from "@/components/SceneList";
 import { VideoBuilder } from "@/components/VideoBuilder";
 import { UserMenu } from "@/components/UserMenu";
 import { ThemePicker } from "@/components/ThemePicker";
+import { GalaxyCanvas } from "@/components/GalaxyCanvas";
 import { VoicePicker } from "@/components/VoicePicker";
 import { HtmlPreviewStage } from "@/components/HtmlPreviewStage";
 import {
@@ -18,13 +19,14 @@ import {
   ClipReveal,
 } from "@/components/StageTransition";
 import { motion } from "motion/react";
+import { Palette, Mic } from "lucide-react";
 import type { ExtractedContent, ScenePlan, ThemeId } from "@/types/scene";
-import { DEFAULT_THEME, getTheme } from "@/types/scene";
+import { DEFAULT_THEME, getTheme, THEMES } from "@/types/scene";
 
 type Stage = "dashboard" | "input" | "generating" | "preview" | "htmlPreview" | "build";
 
 const TICKER_ITEMS = [
-  "TECHBEAT LIVE",
+  "XNEW LIVE",
   "AI bản tin tự động",
   "Render 1080p · 30fps",
   "Powered by GPT-4o + HyperFrames",
@@ -50,10 +52,10 @@ export default function Home() {
   // Initialize unique tab ID in sessionStorage (safe for F5 refreshes)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    let id = sessionStorage.getItem("techbeat_tab_id");
+    let id = sessionStorage.getItem("xnew_tab_id");
     if (!id) {
       id = Math.random().toString(36).substring(2, 9);
-      sessionStorage.setItem("techbeat_tab_id", id);
+      sessionStorage.setItem("xnew_tab_id", id);
     }
     setTabId(id);
   }, []);
@@ -63,20 +65,20 @@ export default function Home() {
     if (typeof window === "undefined" || !tabId) return;
 
     const checkTabStatus = () => {
-      const activeTabId = localStorage.getItem("techbeat_active_tab_id");
-      const lastSeenStr = localStorage.getItem("techbeat_active_tab_last_seen");
+      const activeTabId = localStorage.getItem("xnew_active_tab_id");
+      const lastSeenStr = localStorage.getItem("xnew_active_tab_last_seen");
       const now = Date.now();
       const lastSeen = lastSeenStr ? parseInt(lastSeenStr, 10) : 0;
       const isActiveTabDead = !activeTabId || (now - lastSeen > 4000);
 
       if (activeTabId === tabId) {
         // We are the active tab, update heartbeat
-        localStorage.setItem("techbeat_active_tab_last_seen", now.toString());
+        localStorage.setItem("xnew_active_tab_last_seen", now.toString());
         setHasDuplicateConflict(false);
       } else if (isActiveTabDead) {
         // No active tab or it died, we claim it
-        localStorage.setItem("techbeat_active_tab_id", tabId);
-        localStorage.setItem("techbeat_active_tab_last_seen", now.toString());
+        localStorage.setItem("xnew_active_tab_id", tabId);
+        localStorage.setItem("xnew_active_tab_last_seen", now.toString());
         setHasDuplicateConflict(false);
         console.log(`[TabManager] Claimed active status for tabId: ${tabId}`);
       } else {
@@ -93,10 +95,10 @@ export default function Home() {
 
     // Clean up active tab registration if we close the tab cleanly
     const handleUnload = () => {
-      const activeTabId = localStorage.getItem("techbeat_active_tab_id");
+      const activeTabId = localStorage.getItem("xnew_active_tab_id");
       if (activeTabId === tabId) {
-        localStorage.removeItem("techbeat_active_tab_id");
-        localStorage.removeItem("techbeat_active_tab_last_seen");
+        localStorage.removeItem("xnew_active_tab_id");
+        localStorage.removeItem("xnew_active_tab_last_seen");
       }
     };
     window.addEventListener("beforeunload", handleUnload);
@@ -247,27 +249,110 @@ export default function Home() {
 
       {confirmDialog && (
         <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)",
-          zIndex: 100000, display: "flex", alignItems: "center", justifyContent: "center"
+          position: "fixed", inset: 0,
+          background: "rgba(0,0,0,0.75)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          zIndex: 100000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 24,
         }}>
           <div style={{
-            background: "var(--gray-1)", border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "var(--r-lg)", padding: 32, maxWidth: 420, width: "100%",
-            textAlign: "center", boxShadow: "0 24px 64px rgba(0,0,0,0.6)"
+            position: "relative",
+            background: "linear-gradient(160deg, #161616 0%, #111111 100%)",
+            border: "1px solid rgba(249,115,22,0.25)",
+            borderRadius: 20,
+            padding: "36px 32px 28px",
+            maxWidth: 400,
+            width: "100%",
+            textAlign: "center",
+            boxShadow: "0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset",
+            overflow: "hidden",
           }}>
-            <div style={{ fontSize: 32, marginBottom: 20 }}>⚠️</div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 12, color: "var(--white)", letterSpacing: "-0.01em" }}>
-              Xác nhận
+            {/* Glow accent top */}
+            <div style={{
+              position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)",
+              width: 200, height: 120,
+              background: "radial-gradient(ellipse, rgba(249,115,22,0.18) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Icon */}
+            <div style={{
+              width: 52, height: 52, borderRadius: 16,
+              background: "rgba(249,115,22,0.12)",
+              border: "1px solid rgba(249,115,22,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 20px",
+              fontSize: 22,
+            }}>⚠</div>
+
+            <h3 style={{
+              fontSize: 17, fontWeight: 800, marginBottom: 10,
+              color: "var(--white)", letterSpacing: "-0.02em",
+            }}>
+              Confirm action
             </h3>
-            <p style={{ fontSize: 14, color: "var(--gray-5)", marginBottom: 32, lineHeight: 1.6 }}>
+            <p style={{
+              fontSize: 13, color: "var(--gray-5)", marginBottom: 28,
+              lineHeight: 1.65, maxWidth: 320, margin: "0 auto 28px",
+            }}>
               {confirmDialog.message}
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button onClick={() => setConfirmDialog(null)} className="btn-ghost" style={{ flex: 1, padding: "12px 0", fontSize: 14, fontWeight: 700 }}>
-                Hủy
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setConfirmDialog(null)}
+                style={{
+                  flex: 1,
+                  padding: "12px 16px",
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "var(--gray-6)",
+                  fontSize: 13, fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.color = "var(--white)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  e.currentTarget.style.color = "var(--gray-6)";
+                }}
+              >
+                Cancel
               </button>
-              <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="btn-primary" style={{ flex: 1, padding: "12px 0", fontSize: 14, fontWeight: 700 }}>
-                Đồng ý
+              <button
+                onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }}
+                style={{
+                  flex: 1,
+                  padding: "12px 16px",
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #f97316, #ea580c)",
+                  border: "none",
+                  color: "#000",
+                  fontSize: 13, fontWeight: 800,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  boxShadow: "0 4px 16px rgba(249,115,22,0.35)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "linear-gradient(135deg, #fb923c, #f97316)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(249,115,22,0.5)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "linear-gradient(135deg, #f97316, #ea580c)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(249,115,22,0.35)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                Confirm
               </button>
             </div>
           </div>
@@ -319,7 +404,7 @@ export default function Home() {
               color: "var(--gray-6)",
               marginBottom: 28,
             }}>
-              Bạn đang mở một tab TechBeat khác. Để tránh xung đột dữ liệu và lỗi trong quá trình tạo video, vui lòng đóng tab này và tiếp tục sử dụng tab đầu tiên.
+              Bạn đang mở một tab xnew khác. Để tránh xung đột dữ liệu và lỗi trong quá trình tạo video, vui lòng đóng tab này và tiếp tục sử dụng tab đầu tiên.
             </p>
             <div style={{
               display: "flex",
@@ -387,9 +472,13 @@ export default function Home() {
           />
         )}
         {stage === "build" && scenePlan && (
-          <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px clamp(20px,4vw,48px)" }}>
-            <VideoBuilder scenePlan={scenePlan} onBack={() => go("htmlPreview")} />
-          </main>
+          <div style={{ position: "relative", minHeight: "100vh" }}>
+            {/* Full-page galaxy background */}
+            <GalaxyCanvas accentHue={28} starCount={200} nebulaOpacity={0.08} />
+            <main style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "32px clamp(20px,4vw,48px)" }}>
+              <VideoBuilder scenePlan={scenePlan} onBack={() => go("htmlPreview")} />
+            </main>
+          </div>
         )}
       </StageTransition>
     </div>
@@ -442,11 +531,11 @@ function AppHeader({
       >
         <div className="logo-mark" style={{ background: "transparent" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="TechBeat" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
+          <img src="/xnew-logo.svg" alt="xnew" width={32} height={32} style={{ objectFit: "cover", borderRadius: "inherit" }} />
         </div>
         <div style={{ textAlign: "left", lineHeight: 1.1 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em" }}>
-            Tech<span style={{ color: "var(--accent)" }}>Beat</span>
+          <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.03em", textTransform: "uppercase" }}>
+            X<span style={{ color: "var(--accent)" }}>NEW</span>
           </div>
           <div style={{ fontSize: 9, color: "var(--gray-5)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
             AI News Studio
@@ -1104,7 +1193,11 @@ function InputStage({
   onExtracted: (c: ExtractedContent) => void;
 }) {
   return (
+    <div style={{ position: "relative", minHeight: "100vh" }}>
+      {/* Full-page galaxy background */}
+      <GalaxyCanvas accentHue={28} starCount={200} nebulaOpacity={0.08} />
     <main style={{
+      position: "relative", zIndex: 1,
       maxWidth: 1280, margin: "0 auto",
       padding: "clamp(40px, 6vw, 80px) clamp(20px, 4vw, 48px)",
       display: "grid",
@@ -1239,6 +1332,7 @@ function InputStage({
         </p>
       </ClipReveal>
     </main>
+    </div>
   );
 }
 
@@ -1253,7 +1347,11 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
   const charCount = buffer.length;
 
   return (
+    <div style={{ position: "relative", minHeight: "100vh" }}>
+      {/* Full-page galaxy background */}
+      <GalaxyCanvas accentHue={28} starCount={200} nebulaOpacity={0.08} />
     <main style={{
+      position: "relative", zIndex: 1,
       maxWidth: 900, margin: "0 auto",
       padding: "clamp(40px, 8vw, 96px) clamp(20px, 4vw, 48px)",
     }}>
@@ -1332,6 +1430,7 @@ function GeneratingStage({ buffer, onCancel }: { buffer: string; onCancel: () =>
         </button>
       </div>
     </main>
+    </div>
   );
 }
 
@@ -1348,7 +1447,10 @@ function PreviewStage({
   const theme = getTheme(themeId);
 
   return (
-    <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px clamp(20px,4vw,48px)" }}>
+    <div style={{ position: "relative", minHeight: "100vh" }}>
+      {/* Full-page galaxy background */}
+      <GalaxyCanvas accentHue={28} starCount={200} nebulaOpacity={0.07} />
+    <main style={{ position: "relative", zIndex: 1, maxWidth: 1280, margin: "0 auto", padding: "32px clamp(20px,4vw,48px)" }}>
       <div className="fade-up" style={{ marginBottom: 28 }}>
         <div className="hero-eyebrow" style={{ marginBottom: 14 }}>
           Bước 2 · Xem trước & chỉnh sửa
@@ -1374,55 +1476,95 @@ function PreviewStage({
         </div>
       </div>
 
-      {/* Theme picker card */}
-      <div className="fade-up" style={{
-        marginBottom: 24,
-        padding: "clamp(20px,3vw,28px)",
-        background: "var(--gray-1)",
-        border: "1px solid var(--gray-3)",
-        borderRadius: "var(--r-xl)",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        <div style={{
-          position: "absolute", top: -80, right: -80,
-          width: 240, height: 240, borderRadius: "50%",
-          background: `radial-gradient(circle, ${theme.accent}26, transparent 70%)`,
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative" }}>
-          <ThemePicker
-            value={themeId}
-            onChange={(id) => setScenePlan({ ...scenePlan, theme: id })}
-          />
-        </div>
-      </div>
+      {/* Theme + Voice split layout */}
+      <div className="fade-up" style={{ display: "flex", gap: 16, marginBottom: 32, alignItems: "stretch" }}>
 
-      {/* Voice picker card */}
-      <div className="fade-up" style={{
-        marginBottom: 32,
-        padding: "clamp(20px,3vw,28px)",
-        background: "var(--gray-1)",
-        border: "1px solid var(--gray-3)",
-        borderRadius: "var(--r-xl)",
-        position: "relative",
-        overflow: "hidden",
-      }}>
+        {/* Left: Theme picker */}
         <div style={{
-          position: "absolute", top: -60, left: -60,
-          width: 200, height: 200, borderRadius: "50%",
-          background: `radial-gradient(circle, ${theme.accent2}22, transparent 70%)`,
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative" }}>
-          <VoicePicker
-            value={scenePlan.voiceId}
-            onChange={(id) => setScenePlan({ ...scenePlan, voiceId: id })}
-          />
+          flex: 1, minWidth: 0,
+          background: "radial-gradient(ellipse at 70% 20%, #0e0906 0%, #080808 60%)",
+          border: "1px solid rgba(249,115,22,0.15)",
+          borderRadius: "var(--r-xl)",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex", flexDirection: "column",
+        }}>
+          <GalaxyCanvas accentHue={28} starCount={120} nebulaOpacity={0.10} />
+          {/* Panel header */}
+          <div style={{
+            position: "relative", zIndex: 1,
+            padding: "18px 24px 14px",
+            borderBottom: "1px solid rgba(249,115,22,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.25)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+              }}><Palette size={15} color="var(--accent)" /></div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)" }}>Theme Video</div>
+                <div style={{ fontSize: 10, color: "var(--gray-5)", marginTop: 1 }}>Chọn bảng màu cho slide</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--gray-5)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 99, border: "1px solid rgba(255,255,255,0.07)" }}>
+              {THEMES.length} themes
+            </span>
+          </div>
+          <div style={{ position: "relative", zIndex: 1, flex: 1, padding: "clamp(14px,2vw,20px)", overflowY: "auto" }}>
+            <ThemePicker
+              value={themeId}
+              onChange={(id) => setScenePlan({ ...scenePlan, theme: id })}
+            />
+          </div>
         </div>
+
+        {/* Right: Voice picker */}
+        <div style={{
+          flex: 1, minWidth: 0,
+          background: "radial-gradient(ellipse at 30% 20%, #06080e 0%, #080808 60%)",
+          border: "1px solid rgba(99,102,241,0.15)",
+          borderRadius: "var(--r-xl)",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex", flexDirection: "column",
+        }}>
+          <GalaxyCanvas accentHue={240} starCount={120} nebulaOpacity={0.08} />
+          {/* Panel header */}
+          <div style={{
+            position: "relative", zIndex: 1,
+            padding: "18px 24px 14px",
+            borderBottom: "1px solid rgba(99,102,241,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+              }}><Mic size={15} color="#818cf8" /></div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase", color: "#818cf8" }}>Giọng đọc TTS</div>
+                <div style={{ fontSize: 10, color: "var(--gray-5)", marginTop: 1 }}>Chọn giọng đọc & diễn viên ảo</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--gray-5)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 99, border: "1px solid rgba(255,255,255,0.07)" }}>
+              8 giọng
+            </span>
+          </div>
+          <div style={{ position: "relative", zIndex: 1, flex: 1, padding: "clamp(14px,2vw,20px)", overflowY: "auto" }}>
+            <VoicePicker
+              value={scenePlan.voiceId}
+              onChange={(id) => setScenePlan({ ...scenePlan, voiceId: id })}
+            />
+          </div>
+        </div>
+
       </div>
 
       <SceneList scenePlan={scenePlan} onChange={setScenePlan} />
     </main>
+    </div>
   );
 }

@@ -15,10 +15,10 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TechBeat — Tin công nghệ thành video mỗi ngày",
+  title: "xnew — Tin công nghệ thành video mỗi ngày",
   description: "Biến link tin công nghệ thành video tóm tắt tiếng Việt chỉ trong vài phút. Powered by GPT-4o + HyperFrames.",
   icons: {
-    icon: "/logo.svg?v=3",
+    icon: "/xnew-logo.svg?v=1",
   },
 };
 

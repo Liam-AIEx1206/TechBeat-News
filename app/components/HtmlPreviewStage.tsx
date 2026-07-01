@@ -7,6 +7,7 @@ import { ScenePreviewIframe } from "./ScenePreviewIframe";
 import { ImagePicker } from "./ImagePicker";
 import { ThemePicker } from "./ThemePicker";
 import { VoicePicker } from "./VoicePicker";
+import { GalaxyCanvas } from "./GalaxyCanvas";
 
 interface Props {
   scenePlan: ScenePlan;
@@ -494,7 +495,9 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
   }
 
   return (
-    <main style={{ maxWidth: 1480, margin: "0 auto", padding: "24px clamp(16px,3vw,32px)" }}>
+    <div style={{ position: "relative", minHeight: "100vh" }}>
+      <GalaxyCanvas accentHue={28} starCount={200} nebulaOpacity={0.07} />
+    <main style={{ position: "relative", zIndex: 1, maxWidth: 1480, margin: "0 auto", padding: "24px clamp(16px,3vw,32px)" }}>
       {/* Inject spin keyframe */}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
@@ -1114,5 +1117,6 @@ export function HtmlPreviewStage({ scenePlan, setScenePlan, onBack, onBuild }: P
         />
       )}
     </main>
+    </div>
   );
 }

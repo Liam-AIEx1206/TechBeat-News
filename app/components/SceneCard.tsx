@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { Scene } from "@/types/scene";
-import { ImagePicker } from "./ImagePicker";
 
 interface Props {
   scene: Scene;
@@ -17,12 +16,9 @@ interface Props {
 export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst, isLast }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft]     = useState<Scene>(scene);
-  const [pickerOpen, setPickerOpen] = useState(false);
 
   function save()   { onUpdate(draft); setEditing(false); }
   function cancel() { setDraft(scene); setEditing(false); }
-
-  const pickerQuery = scene.imageQuery?.trim() || scene.title;
 
   if (editing) {
     return (
@@ -68,8 +64,7 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
   }
 
   return (
-    <>
-      <div className="scene-card group">
+    <div className="scene-card group">
         <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
           {/* Index */}
           <div style={{
@@ -79,34 +74,6 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
           }}>
             {scene.index + 1}
           </div>
-
-          {/* Thumbnail */}
-          <button onClick={() => setPickerOpen(true)}
-            style={{
-              flexShrink: 0, width: 72, height: 72, borderRadius: "var(--r-sm)",
-              background: "var(--gray-2)", border: "1px solid var(--gray-3)",
-              overflow: "hidden", position: "relative", transition: "border-color 0.2s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(249,115,22,0.5)")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--gray-3)")}
-            title={scene.imageUrl ? "Thay ảnh" : "Chọn ảnh"}>
-            {scene.imageUrl ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={scene.imageUrl} alt={scene.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />
-                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: "var(--white)", background: "var(--accent)", padding: "3px 8px", borderRadius: 99 }}>Đổi</span>
-                </div>
-              </>
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                <span style={{ fontSize: 20 }}>Ảnh</span>
-                <span style={{ fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--gray-4)" }}>Ảnh</span>
-              </div>
-            )}
-          </button>
 
           {/* Content */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -129,7 +96,6 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--gray-3)" }}>
           {onMoveUp && <button onClick={onMoveUp} disabled={isFirst} className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px", opacity: isFirst ? 0.3 : 1 }}>↑</button>}
           {onMoveDown && <button onClick={onMoveDown} disabled={isLast} className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px", opacity: isLast ? 0.3 : 1 }}>↓</button>}
-          <button onClick={() => setPickerOpen(true)} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>Ảnh</button>
           <button onClick={() => { setDraft(scene); setEditing(true); }} className="btn-ghost" style={{ fontSize: 11, padding: "5px 12px" }}>✎ Sửa</button>
           <button onClick={onDelete} style={{ fontSize: 11, padding: "5px 12px", borderRadius: "var(--r)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--red)", background: "transparent", fontWeight: 700, transition: "background 0.2s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
@@ -137,11 +103,6 @@ export function SceneCard({ scene, onUpdate, onDelete, onMoveUp, onMoveDown, isF
             ✕ Xoá
           </button>
         </div>
-      </div>
-
-      <ImagePicker open={pickerOpen} initialQuery={pickerQuery}
-        onClose={() => setPickerOpen(false)}
-        onPick={(url) => onUpdate({ ...scene, imageUrl: url })} />
-    </>
+    </div>
   );
 }
