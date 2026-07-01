@@ -34,20 +34,57 @@ function fmtMs(ms: number): string {
 
 export function VideoBuilder({ scenePlan, onBack }: Props) {
   const { data: session } = useSession();
+
+  // ── Build-state persistence (survives Mac swipe-back / refresh) ───────────
+  const BUILD_KEY = "xnew_build_state";
+  type PersistedBuild = {
+    title: string;
+    done: boolean;
+    videoUrl: string;
+    videoPath: string;
+    stageStates: Record<StageKey, StageState>;
+    stageElapsed: Record<StageKey, number>;
+    totalElapsed: number;
+    error: string;
+    renderMode: "client" | "server";
+    savedAt: number;
+  };
+  function loadBuild(): PersistedBuild | null {
+    try {
+      const raw = localStorage.getItem(BUILD_KEY);
+      if (!raw) return null;
+      const b: PersistedBuild = JSON.parse(raw);
+      // Only restore if same video and session < 24h old
+      if (b.title !== scenePlan.title) return null;
+      if (Date.now() - b.savedAt > 86_400_000) { localStorage.removeItem(BUILD_KEY); return null; }
+      return b;
+    } catch { return null; }
+  }
+  function saveBuild(patch: Partial<Omit<PersistedBuild, "title" | "savedAt">>) {
+    try {
+      const prev = loadBuild() ?? {} as Partial<PersistedBuild>;
+      localStorage.setItem(BUILD_KEY, JSON.stringify({ ...prev, ...patch, title: scenePlan.title, savedAt: Date.now() }));
+    } catch { /* quota — skip */ }
+  }
+  function clearBuild() { localStorage.removeItem(BUILD_KEY); }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const saved = loadBuild();
+
   const [running, setRunning]         = useState(false);
-  const [done, setDone]               = useState(false);
-  const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>({ composition:"pending", save:"pending", tts:"pending", whisper:"pending", render:"pending" });
+  const [done, setDone]               = useState(saved?.done ?? false);
+  const [stageStates, setStageStates] = useState<Record<StageKey, StageState>>(saved?.stageStates ?? { composition:"pending", save:"pending", tts:"pending", whisper:"pending", render:"pending" });
   const [stageDetail, setStageDetail] = useState<Record<StageKey, string>>({ composition:"", save:"", tts:"", whisper:"", render:"" });
   const [stageStart,  setStageStart]  = useState<Record<StageKey, number | null>>({ composition:null, save:null, tts:null, whisper:null, render:null });
-  const [stageElapsed,setStageElapsed]= useState<Record<StageKey, number>>({ composition:0, save:0, tts:0, whisper:0, render:0 });
+  const [stageElapsed,setStageElapsed]= useState<Record<StageKey, number>>(saved?.stageElapsed ?? { composition:0, save:0, tts:0, whisper:0, render:0 });
   const [totalStart,  setTotalStart]  = useState<number | null>(null);
-  const [totalElapsed, setTotalElapsed] = useState<number>(0);
+  const [totalElapsed, setTotalElapsed] = useState<number>(saved?.totalElapsed ?? 0);
   const [renderLog, setRenderLog]     = useState<string[]>([]);
   const [compStream, setCompStream]   = useState<string>("");
   const [compChars, setCompChars]     = useState(0);
-  const [videoUrl, setVideoUrl]       = useState("");
-  const [videoPath, setVideoPath]     = useState("");
-  const [error, setError]             = useState("");
+  const [videoUrl, setVideoUrl]       = useState(saved?.videoUrl ?? "");
+  const [videoPath, setVideoPath]     = useState(saved?.videoPath ?? "");
+  const [error, setError]             = useState(saved?.error ?? "");
   const [progress, setProgress]       = useState(0);
   const [ttsEngine, setTtsEngine]     = useState("");
   const [buildLog,  setBuildLog]      = useState<string[]>([]);
@@ -57,7 +94,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
   const compRef  = useRef<HTMLPreElement>(null);
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-  const [renderMode, setRenderMode] = useState<"client" | "server">("client");
+  const [renderMode, setRenderMode] = useState<"client" | "server">(saved?.renderMode ?? "client");
   const [supported, setSupported] = useState<boolean>(true);
 
   const { startRender, cancelRender, progress: clientProgress, isRendering: clientRendering } = useClientRender();
@@ -143,6 +180,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
     setStageElapsed({ composition:0, save:0, tts:0, whisper:0, render:0 });
     setTotalStart(startNow);
     setTotalElapsed(0);
+    clearBuild(); // reset persisted state for fresh build
 
     const abort = new AbortController(); abortRef.current = abort;
     try {
@@ -278,7 +316,9 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
         if (uploadRes.videoPath) setVideoPath(uploadRes.videoPath);
         if (assetsData.buildLog) setBuildLog(assetsData.buildLog);
         setDone(true);
-        setTotalElapsed(performance.now() - startNow);
+        const elapsed1 = performance.now() - startNow;
+        setTotalElapsed(elapsed1);
+        saveBuild({ done: true, videoUrl: uploadRes.videoUrl ?? "", videoPath: uploadRes.videoPath ?? "", stageStates: { composition:"done", save:"done", tts:"done", whisper:"done", render:"done" }, stageElapsed: { composition:0, save:0, tts:0, whisper:0, render:0 }, totalElapsed: elapsed1, error: "", renderMode });
 
       } else {
         // Server mode (Original)
@@ -332,7 +372,9 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
             if (ev.videoPath) setVideoPath(ev.videoPath as string);
             if (ev.buildLog) setBuildLog(ev.buildLog as string[]);
             setDone(true);
-            setTotalElapsed(performance.now() - startNow);
+            const elapsed2 = performance.now() - startNow;
+            setTotalElapsed(elapsed2);
+            saveBuild({ done: true, videoUrl: (ev.videoUrl as string) ?? "", videoPath: (ev.videoPath as string) ?? "", stageStates: { composition:"done", save:"done", tts:"done", whisper:"done", render:"done" }, stageElapsed: { composition:0, save:0, tts:0, whisper:0, render:0 }, totalElapsed: elapsed2, error: "", renderMode });
           } else if (ev.type === "error") {
             finishStage((ev.stage as StageKey) ?? "composition", "error", (ev.message as string) ?? "Lỗi");
             if (ev.log) setRenderLog(p => [...p, "── error ──", ev.log as string]);
@@ -525,7 +567,7 @@ export function VideoBuilder({ scenePlan, onBack }: Props) {
                     >☁ Server</button>
                   </div>
                 )}
-                {!running && !done && <button onClick={onBack} className="btn-ghost">← Quay lại</button>}
+                {!running && !done && <button onClick={() => { clearBuild(); onBack(); }} className="btn-ghost">← Quay lại</button>}
                 {!running && (
                   <button onClick={build} className="btn-primary magnetic">
                     <span>{done ? "Dựng lại" : "Bắt đầu dựng"}</span>
