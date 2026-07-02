@@ -74,58 +74,152 @@ def sse(data: dict) -> str:
 
 # ── SVG slide prompt ──────────────────────────────────────────────────────────
 
-_SVG_SYSTEM = """Bạn là chuyên gia thiết kế slide trình chiếu. Nhiệm vụ: tạo 1 slide SVG hoàn chỉnh theo yêu cầu.
+_SVG_SYSTEM = """\
+You are an expert presentation designer. Output ONE complete, publication-quality SVG slide.
 
-QUY TẮC SVG BẮT BUỘC:
-- Kích thước cố định: width="1280" height="720" (16:9)
-- Tất cả phần tử dùng absolute coordinates (x, y, width, height — KHÔNG dùng %)
-- Nền slide: rect x="0" y="0" width="1280" height="720" fill=BG_COLOR
-- Font chỉ dùng: Arial, Helvetica, sans-serif (cross-platform)
-- Text tiếng Việt phải render đúng — dùng thẻ <text> với dominant-baseline="hanging"
-- Không dùng <foreignObject>, không dùng HTML bên trong SVG
-- Không dùng <use href="...">, không dùng external images (chỉ inline hoặc bỏ qua ảnh)
-- SVG phải self-contained, không cần font download
+═══════════ CANVAS ═══════════
+width="1280" height="720" viewBox="0 0 1280 720"  ← EXACT, non-negotiable (Canva 16:9)
 
-CẤU TRÚC SLIDE:
-1. Background: gradient hoặc solid, dùng màu BG từ theme
-2. Header bar: rect màu ACCENT, cao ~80px, chứa số slide + tiêu đề
-3. Body: nội dung chính — bullet points từ narration, bố cục rõ ràng
-4. Accent elements: đường kẻ, viền, badge màu ACCENT2/ACCENT3
-5. Footer: tên bài/nguồn, nhỏ và mờ
+═══════════ TECHNICAL RULES (HARD) ═══════════
+• All coordinates absolute (x, y, width, height) — NO percentages
+• Colors: HEX only. Transparency = fill-opacity / stroke-opacity (NEVER rgba or fill="rgba(...)")
+• Fonts: inline style only — NO <style>, NO class, NO @font-face
+• Font stack MUST end with: Arial, Helvetica, sans-serif
+• NO <foreignObject>, NO <use href="...">, NO <mask>, NO <script>, NO <animate>
+• NO HTML entities (&nbsp; &mdash; etc.) — use raw Unicode or XML entities (&amp; &lt; &gt;)
+• clip-path allowed ONLY on <image> elements
+• Every linearGradient / radialGradient MUST be defined inside <defs>
+• filter (shadow) MUST be defined inside <defs>
+• One logical text line = ONE <text> + multiple <tspan> children (NEVER adjacent <text> for same line)
+• Wrap related elements in <g id="..."> groups (3–8 top-level groups per slide)
+• SVG must be completely self-contained and valid XML
 
-OUTPUT: Chỉ trả về code SVG thuần túy, bắt đầu bằng <svg và kết thúc bằng </svg>.
-KHÔNG thêm markdown, KHÔNG thêm giải thích, KHÔNG bọc trong ```svg.
+═══════════ TYPOGRAPHY RAMP ═══════════
+body = 28px  (base unit)
+  footnote/label  : 16px   (0.57× body)
+  annotation      : 20px   (0.71×)
+  body text       : 28px   (1.00×)
+  subtitle/lead   : 36px   (1.28×)
+  section title   : 44px   (1.57×)
+  slide title     : 56px   (2.00×)
+  hero/cover      : 80–96px (2.8–3.4×)
+line-height: 1.45 for dense blocks, 1.7 for large-type/breathing blocks
+NEVER shrink below 20px. Widen/heighten card to fit — don't shrink the font.
+Lift key numbers/contrasts with <tspan fill="ACCENT" font-weight="bold">
+
+═══════════ SHADOW RECIPE ═══════════
+Use ONLY when element genuinely floats above background. Max 2 tiers:
+  resting  → stdDeviation="8" dy="4" flood-opacity="0.08"
+  raised   → stdDeviation="14" dy="8" flood-opacity="0.16"
+Flat peer-grid cards get NO shadow. Dark BG: skip shadow (invisible anyway).
+
+Standard shadow <defs> block:
+<defs>
+  <filter id="sh" x="-15%" y="-15%" width="140%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
+    <feOffset dx="0" dy="5" result="ob"/>
+    <feFlood flood-color="#000000" flood-opacity="0.12" result="sc"/>
+    <feComposite in="sc" in2="ob" operator="in" result="s"/>
+    <feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+
+═══════════ SPACING & LAYOUT ═══════════
+Safe margins: left/right 80px, top 60px, bottom 50px → content area 1120×610
+Card padding: 32–48px inside; card radius: 16–24px
+Column gutters: 24px for 2-col, 20px for 3-col, 16px for 4-col
+Proximity: group related elements with tight spacing; separate unrelated groups
+
+═══════════ OUTPUT ═══════════
+Return ONLY the raw SVG code — start with <svg and end with </svg>.
+NO markdown fences, NO explanation, NO comments outside the SVG.
 """
 
-def _build_svg_prompt(scene: ScenePayload, theme_id: str | None, slide_num: int, total_slides: int) -> str:
+# 4 layout templates, rotated by slide index
+_LAYOUT_TEMPLATES = [
+    # 0 = HERO COVER / CHAPTER OPENER
+    """LAYOUT: HERO / ANCHOR PAGE
+- Full-bleed gradient background covering entire canvas
+- Large centered title (80–96px, bold, white or TEXT1)
+- Subtitle or lead line below (36px, TEXT2, lighter weight)
+- Decorative accent bar or geometric shape (60–80px tall, full-width strip OR diagonal stripe) in ACCENT color
+- Slide number badge bottom-right, small footnote label top-left
+- NO bullet points — this is an impact page with breathing room
+- Optional: large translucent ghost number or abstract shape in background""",
+
+    # 1 = CONTENT WITH VISUAL WEIGHT
+    """LAYOUT: CONTENT CARD GRID
+- Dark header bar (60–72px tall) spanning full width with ACCENT left border (8px), contains slide title (44px bold)
+- Body area split into 2 or 3 equal cards side by side
+- Each card: rounded rect (rx=20), subtle fill (BG2 or slightly lighter than BG), raised shadow on hover card
+- Inside each card: accent icon placeholder (48×48 circle or square in ACCENT color, top), bold number or short label (56px ACCENT), 2–3 lines body text (28px TEXT2)
+- Accent horizontal rule (3px, ACCENT) separating header from body
+- Footer: slide counter + deck title, 16px, TEXT2""",
+
+    # 2 = DATA / STATS SPOTLIGHT
+    """LAYOUT: STATS SPOTLIGHT
+- Split layout: LEFT 55% = main narrative, RIGHT 45% = visual stat panel
+- Left: section title (44px), body paragraphs (28px, 1.45 line-height), ACCENT accent bar left edge
+- Right panel: dark card (BG2, rx=24, shadow), 1–3 large KPI numbers (80–96px, ACCENT bold), small labels below each (20px, TEXT2)
+- Key numbers/percentages highlighted with <tspan fill="ACCENT" font-weight="bold"> inline
+- Horizontal gradient divider between left and right
+- Footer strip with slide meta""",
+
+    # 3 = LIST / NARRATIVE
+    """LAYOUT: STRUCTURED LIST
+- Header zone (top 130px): title (56px bold, TEXT1) + subtitle (28px, TEXT2), left-aligned with 80px margin
+- Accent bar: full-width rect (4px tall, ACCENT) below header zone
+- Body: 3–5 items, each as a row with:
+    • Colored circle or square bullet (24px, ACCENT, left margin 80px)
+    • Item label (32px, bold, TEXT1) + short description (24px, TEXT2) on same row or below
+    • Light separator line between items (1px, 8% opacity)
+- Keep generous vertical spacing (min 28px between rows)
+- Optional right-side decorative vertical bar (ACCENT2, 4px wide, 80% height)
+- Slide number bottom-right""",
+]
+
+
+def _build_svg_prompt(scene: "ScenePayload", theme_id: str | None, slide_num: int, total_slides: int) -> str:
     t = get_theme(theme_id)
-    bullets = "\n".join(
-        f"  - {line.strip()}"
-        for line in scene.narration.split(".")
-        if line.strip()
-    )
-    return f"""Tạo slide {slide_num}/{total_slides} cho bài trình chiếu.
 
-THEME: {t['name']}
-Màu nền (BG): {t['bg']}
-Màu nền phụ (BG2): {t['bg2']}
-Màu accent chính (ACCENT): {t['accent']}
-Màu accent phụ (ACCENT2): {t['accent2']}
-Màu accent 3 (ACCENT3): {t['accent3']}
-Màu text chính (TEXT1): {t['text1']}
-Màu text phụ (TEXT2): {t['text2']}
-Phong cách: {t['vibe']}
+    # Choose layout: slide 1 (or last) gets HERO; others rotate 1→2→3→1→2→3
+    if slide_num == 1 or slide_num == total_slides:
+        layout = _LAYOUT_TEMPLATES[0]
+    else:
+        layout = _LAYOUT_TEMPLATES[1 + ((slide_num - 2) % 3)]
 
-TIÊU ĐỀ SLIDE: {scene.title}
+    # Parse narration into concise bullet points
+    sentences = [s.strip() for s in re.split(r'[.。!?！？\n]', scene.narration) if len(s.strip()) > 10]
+    bullets = "\n".join(f"  • {s}" for s in sentences[:5])
 
-NỘI DUNG (narration để tóm thành bullet points):
-{scene.narration}
+    return f"""=== SLIDE {slide_num} of {total_slides} ===
 
-BULLET POINTS GỢI Ý:
+TITLE: {scene.title}
+
+CONTENT BULLETS:
 {bullets}
 
-Tạo SVG 1280x720 đẹp, professional, thể hiện đúng theme {t['name']} với màu sắc trên.
-"""
+VISUAL DESCRIPTION: {scene.visualDescription}
+
+=== COLOR PALETTE (USE ONLY THESE HEX VALUES) ===
+BG (background):        {t['bg']}
+BG2 (card/surface):     {t['bg2']}
+ACCENT (primary):       {t['accent']}
+ACCENT2 (secondary):    {t['accent2']}
+ACCENT3 (tertiary):     {t['accent3']}
+TEXT1 (heading):        {t['text1']}
+TEXT2 (body/muted):     {t['text2']}
+STYLE VIBE:             {t['vibe']}
+
+=== REQUIRED LAYOUT FOR THIS SLIDE ===
+{layout}
+
+=== SLIDE CONTEXT ===
+Deck title: {scene.title if slide_num == 1 else "(see title above)"}
+Slide {slide_num} of {total_slides} — {"Opening slide" if slide_num == 1 else "Closing slide" if slide_num == total_slides else "Content slide"}
+
+Now generate the complete SVG (1280×720). Return ONLY raw SVG, no explanation."""
+
 
 # ── /gen-slide-one ────────────────────────────────────────────────────────────
 
@@ -164,7 +258,7 @@ async def gen_slide_one(body: GenSlideOneRequest):
             model_kind="composition", kwargs_factory=_kwargs
         )
 
-    raw = resp.choices[0].message.content or ""
+    raw: str = (resp.choices[0].message.content or "")  # type: ignore[union-attr]
     svg = _extract_svg(raw)
 
     return {"svg": svg, "sceneIndex": body.sceneIndex, "provider": provider, "model": model}
@@ -235,7 +329,7 @@ async def _build_slides_stream(req: BuildSlidesRequest) -> AsyncGenerator[str, N
         from svg_to_pptx import create_pptx_with_native_svg  # type: ignore[import]
 
         slide_notes = {
-            str((svg_dir / f"slide_{i+1:02d}.svg").name): req.scenes[i].narration
+            (svg_dir / f"slide_{i+1:02d}.svg").name: req.scenes[i].narration
             for i in range(min(len(svg_paths), len(req.scenes)))
         }
 
