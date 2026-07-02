@@ -120,3 +120,16 @@ async def cleanup_old_sessions():
 @app.on_event("startup")
 async def startup():
     asyncio.create_task(cleanup_old_sessions())
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    # Release the shared Chromium used by the slide visual-review renderer.
+    # Use the SAME instance slides.py loaded (it holds the live browser).
+    try:
+        import sys as _sys
+        mod = _sys.modules.get("_slidelib_svg_render")
+        if mod is not None:
+            await mod.shutdown()
+    except Exception:
+        pass

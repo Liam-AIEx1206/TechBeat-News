@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Slide export pipeline: ScenePlan → LLM gen SVG per slide → svg_to_pptx → .pptx
+Slide export pipeline: ScenePlan → LLM gen SVG → visual-review → svg_to_pptx → .pptx
+
+Gen flow per slide (gen-slide-one):
+  1. LLM sinh SVG theo layout archetype + design system (ported from PPT Master)
+  2. Inject ảnh thật của scene, embed <use data-icon> thành vector
+  3. VISUAL-REVIEW LOOP (à la PPT Master's visual_review.py): render SVG→PNG bằng
+     Playwright, cho vision model NHÌN và tự sửa tràn chữ / đè icon / lệch khung —
+     lặp tối đa SLIDE_REFINE_PASSES lần. Đây là mắt xích single-shot không thay được:
+     model không đo được chiều rộng chữ nếu không thấy kết quả render.
 
 Endpoints:
   POST /gen-slide-one  — gen SVG cho 1 slide (dùng cho slidePreview + regen)
@@ -24,8 +32,16 @@ from middleware.concurrency import limiter
 
 import importlib.util as _ilu
 
+# Cache loaded lib modules so module-level state (e.g. svg_render's shared
+# browser) persists across requests instead of re-importing — and re-launching
+# a Chromium — on every call.
+_LIB_CACHE: dict = {}
+
 def _load_lib(name: str):
     """Load a module from backend/lib/ by name, bypassing sys.path IDE issues."""
+    cached = _LIB_CACHE.get(name)
+    if cached is not None:
+        return cached
     spec = _ilu.spec_from_file_location(
         name,
         Path(__file__).resolve().parent.parent / "lib" / f"{name}.py",
@@ -34,6 +50,10 @@ def _load_lib(name: str):
         raise ImportError(f"Cannot find lib/{name}.py")
     mod = _ilu.module_from_spec(spec)
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    _LIB_CACHE[name] = mod
+    # Also register under a stable name so other modules (e.g. app shutdown)
+    # can reach the SAME instance and its live browser.
+    sys.modules.setdefault(f"_slidelib_{name}", mod)
     return mod
 
 def _load_lib_pkg(name: str):
@@ -150,6 +170,20 @@ Safe margins: left/right 80px, top 60px, bottom 50px → content area 1120×610
 Card padding: 32–48px inside; card radius: 16–24px
 Column gutters: 24px for 2-col, 20px for 3-col, 16px for 4-col
 Proximity: tight spacing within a group; clear separation between groups
+
+═══════════ ANTI-OVERFLOW (the #1 cause of ugly slides — obey strictly) ═══════════
+You cannot see your output, so budget text conservatively. Rough width: a glyph ≈ 0.55×font-size px.
+• A text string must FIT inside its container width. Estimate width = chars × font-size × 0.55.
+  If it exceeds the container, DO ONE OF: (a) wrap into multiple <tspan x=".." dy="1.3em"> lines,
+  (b) drop one ramp step, (c) widen the container. NEVER let text cross a card/canvas edge.
+• Card titles: with 3 cards (~360px each, ~300px usable) keep the title ≤ ~10 chars at 30–34px,
+  OR wrap to 2 lines. A long word like "Backtesting"/"Hiệu quả đầu tư" at 44px WILL overflow a
+  narrow card — use ≤32px and/or wrap. Reserve 44–60px titles for full-width headers only.
+• ICON ↔ TEXT: never place an icon and a text baseline at the same coordinates. Put the icon
+  (and its tinted container) ABOVE the label (icon bottom ≥12px above text top) or to its LEFT
+  (icon right edge + 12px ≤ text x). An icon overlapping the title is a hard failure.
+• Every element's bounding box stays within 0–1280 × 0–720, honoring the safe margins.
+• Body lines in a column: wrap so no line exceeds the column width; 2–4 short lines beat 1 wide line.
 
 ═══════════ IMAGE PLACEMENT (only when brief has IMAGE ASSET) ═══════════
 <image href="__SLIDE_IMAGE__" x=".." y=".." width=".." height=".." preserveAspectRatio="xMidYMid slice"
@@ -450,6 +484,111 @@ def _embed_icons_svg(svg: str) -> str:
         return svg
 
 
+# ── Visual-review loop (render → vision critique → fix), à la PPT Master ─────
+
+_REFINE_SYSTEM = """\
+You are a meticulous presentation-design QA engineer with a pixel-perfect eye.
+You are shown a RENDERED PNG (1280×720) of an SVG slide AND its exact SVG source.
+Your ONE job: find and FIX every visual defect, then return the corrected SVG.
+
+DEFECTS TO HUNT (in priority order):
+1. TEXT OVERFLOW / CLIPPING — any text whose glyphs cross its container edge or the
+   canvas edge, or get cut off. This is the #1 defect. Fixes: shrink the font one
+   ramp step, wrap the string into multiple <tspan> lines (dy≈1.3×font-size), widen/
+   heighten the container, or shorten wording while keeping meaning. A single long
+   word that overflows a narrow card → move to a wider layout or reduce its size.
+2. ELEMENT COLLISION / OVERLAP — icons sitting ON TOP of text, text over text, an
+   icon container overlapping a title. Icons must sit ABOVE or to the LEFT of their
+   label with a clear ≥12px gap — NEVER at the same coordinates as text.
+3. OFF-CANVAS content — anything positioned partly/fully outside 0–1280 × 0–720.
+   Pull it back inside the 80/60/50px safe margins.
+4. IMBALANCE — one column crammed while half the canvas is empty; elements not
+   aligned to a shared grid; wildly uneven card heights. Rebalance to use the space.
+5. ILLEGIBILITY — text color too close to its background; text over a busy image
+   region with no scrim.
+
+HARD CONSTRAINTS (keep them — they gate PPTX export):
+• Keep viewBox="0 0 1280 720" and width/height exactly.
+• Preserve ALL textual content and every <image> href verbatim (you may re-position/
+  resize, never delete meaning or swap image URLs). Icons already embedded as paths
+  stay as-is; do not reintroduce <use data-icon>.
+• HEX colors only; opacity via fill-opacity/stroke-opacity (no rgba). No <style>,
+  <foreignObject>, <mask>, <script>, group opacity. Font stacks end in Arial, Helvetica, sans-serif.
+• Only rework layout/sizing/wrapping/positioning/color — do NOT redesign from scratch.
+
+OUTPUT PROTOCOL:
+• If the slide is already clean (no defect above), reply with EXACTLY: NO_CHANGES_NEEDED
+• Otherwise return ONLY the full corrected SVG — start with <svg, end with </svg>.
+  No markdown fences, no explanation.
+"""
+
+
+async def _refine_svg_visually(
+    svg: str, scene: "ScenePayload", max_passes: int = 1
+) -> tuple[str, int]:
+    """Render the SVG, let a vision model see + fix layout defects, repeat.
+
+    Returns (possibly-improved svg, passes_applied). Fully fail-soft: any render
+    or LLM hiccup returns the best SVG produced so far."""
+    import base64 as _b64
+
+    try:
+        renderer = _load_lib("svg_render")
+    except Exception as e:
+        print(f"[slides] svg_render unavailable, skip refine: {e}")
+        return svg, 0
+
+    applied = 0
+    for _ in range(max(0, max_passes)):
+        png = await renderer.render_svg_to_png(svg)
+        if not png:
+            break
+        b64 = _b64.b64encode(png).decode("ascii")
+        instruction = (
+            "Here is the rendered slide (PNG) and its SVG source. "
+            "Fix every visual defect per your rules — especially text overflow, "
+            "clipping, and icon/text collisions — then return the corrected SVG "
+            "(or NO_CHANGES_NEEDED).\n\n"
+            f"SLIDE TITLE (for context): {scene.title}\n\n"
+            "=== CURRENT SVG SOURCE ===\n" + svg
+        )
+        content = [
+            {"type": "text", "text": instruction},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+        ]
+        try:
+            def _kwargs(_provider: str) -> dict:
+                return {
+                    "messages": [
+                        {"role": "system", "content": _REFINE_SYSTEM},
+                        {"role": "user", "content": content},
+                    ],
+                    "temperature": 0.3,
+                    "max_tokens": 8000,
+                    "stream": False,
+                }
+            async with limiter._llm_sem:
+                resp, _prov, _model = await chat_completions_with_fallback(
+                    model_kind="composition", kwargs_factory=_kwargs
+                )
+        except Exception as e:
+            print(f"[slides] visual-refine LLM call failed: {e}")
+            break
+
+        raw = (resp.choices[0].message.content or "").strip()  # type: ignore[union-attr]
+        if not raw or "NO_CHANGES_NEEDED" in raw.upper()[:64]:
+            break
+        fixed = _extract_svg(raw)
+        if not fixed or "<svg" not in fixed:
+            break
+        fixed = _inject_scene_image(fixed, scene)
+        fixed = _embed_icons_svg(fixed)
+        svg = fixed
+        applied += 1
+
+    return svg, applied
+
+
 class GenSlideOneRequest(BaseModel):
     title: str
     scenes: list[ScenePayload]
@@ -457,6 +596,17 @@ class GenSlideOneRequest(BaseModel):
     theme: str | None = None
     sceneIndex: int          # 0-based
     sessionId: str | None = None
+    refinePasses: int | None = None  # None → env SLIDE_REFINE_PASSES (default 1)
+
+
+def _refine_passes(req_value: int | None) -> int:
+    if req_value is not None:
+        return max(0, min(3, req_value))
+    import os
+    try:
+        return max(0, min(3, int(os.getenv("SLIDE_REFINE_PASSES", "1"))))
+    except ValueError:
+        return 1
 
 
 @router.post("/gen-slide-one")
@@ -495,9 +645,17 @@ async def gen_slide_one(body: GenSlideOneRequest):
     svg = _inject_scene_image(svg, scene)
     svg = _embed_icons_svg(svg)
 
+    # Visual-review loop: render → vision model sees + fixes overflow/collision → repeat.
+    # This is the mechanism (à la PPT Master's visual_review) that a single LLM pass
+    # cannot replace — the model literally cannot measure text width without seeing it.
+    refined = 0
+    passes = _refine_passes(body.refinePasses)
+    if passes > 0:
+        svg, refined = await _refine_svg_visually(svg, scene, max_passes=passes)
+
     return {
         "svg": svg, "sceneIndex": body.sceneIndex, "layout": layout_key,
-        "provider": provider, "model": model,
+        "refinePasses": refined, "provider": provider, "model": model,
     }
 
 
