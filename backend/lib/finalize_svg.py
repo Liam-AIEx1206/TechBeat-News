@@ -267,6 +267,80 @@ def finalize_project(
     return True
 
 
+# ── Per-file API (used by backend/routers/slides.py) ─────────────────────────
+
+GLOBAL_ICONS_DIR = Path(__file__).parent.parent / 'templates' / 'icons'
+
+
+def embed_icons_in_svg_string(svg_content: str, icons_dir: Path | None = None) -> str:
+    """Embed <use data-icon="..."/> placeholders in an in-memory SVG string.
+
+    Round-trips through a temp file because embed_icons operates on files.
+    Returns the (possibly unchanged) SVG string; never raises.
+    """
+    import tempfile
+    if 'data-icon=' not in svg_content:
+        return svg_content
+    icons = icons_dir or GLOBAL_ICONS_DIR
+    if not icons.is_dir():
+        return svg_content
+    try:
+        with tempfile.NamedTemporaryFile(
+            'w', suffix='.svg', encoding='utf-8', delete=False
+        ) as tmp:
+            tmp.write(svg_content)
+            tmp_path = Path(tmp.name)
+        try:
+            embed_icons_in_file(tmp_path, icons, dry_run=False, verbose=False)
+            return tmp_path.read_text(encoding='utf-8')
+        finally:
+            tmp_path.unlink(missing_ok=True)
+    except Exception:
+        return svg_content
+
+
+def finalize_svg_file(
+    input_path: Path | str,
+    output_path: Path | str | None = None,
+    *,
+    icons_dir: Path | None = None,
+    embed_icons: bool = True,
+    align_images: bool = True,
+    verbose: bool = False,
+) -> bool:
+    """Finalize ONE SVG file in place (or copy to output_path first).
+
+    Steps (each optional, each fail-soft):
+      1. embed-icons  — replace <use data-icon="lib/name"/> with real vectors
+      2. align-images — aspect-align (slice/meet) + Base64-embed <image> refs
+
+    Text flattening and rounded-rect conversion are handled natively inside
+    svg_to_pptx, so they are intentionally NOT run here.
+    """
+    src = Path(input_path)
+    dst = Path(output_path) if output_path else src
+    if not src.exists():
+        return False
+    if dst != src:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+
+    icons = icons_dir or GLOBAL_ICONS_DIR
+    if embed_icons and icons.is_dir():
+        try:
+            embed_icons_in_file(dst, icons, dry_run=False, verbose=verbose)
+        except Exception as e:
+            if verbose:
+                safe_print(f"   [WARN] embed-icons skipped ({dst.name}): {e}")
+    if align_images:
+        try:
+            align_and_embed_images_in_svg(dst, verbose=verbose)
+        except Exception as e:
+            if verbose:
+                safe_print(f"   [WARN] align-images skipped ({dst.name}): {e}")
+    return True
+
+
 def main() -> None:
     """Run the CLI entry point."""
     parser = argparse.ArgumentParser(
