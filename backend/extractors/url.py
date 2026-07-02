@@ -4,15 +4,11 @@ import trafilatura
 from bs4 import BeautifulSoup
 
 
-# MSN article ID pattern: /ar-XXXXX...
 MSN_ID_RE = re.compile(r"/ar-([A-Za-z0-9]+)")
+GITHUB_REPO_RE = re.compile(r"https?://github\.com/([^/]+)/([^/?#]+?)(?:\.git)?(?:[/?#].*)?$")
 
 
 async def _try_msn_api(url: str, client: httpx.AsyncClient) -> dict | None:
-    """
-    MSN articles are JS-rendered. Their detail API returns clean JSON.
-    Endpoint pattern: https://assets.msn.com/content/view/v3/Detail/{locale}/{articleId}
-    """
     if "msn.com" not in url:
         return None
     m = MSN_ID_RE.search(url)
@@ -20,7 +16,6 @@ async def _try_msn_api(url: str, client: httpx.AsyncClient) -> dict | None:
         return None
     article_id = m.group(1)
 
-    # Locale from URL: /vi-vn/, /en-us/, etc.
     loc_match = re.search(r"msn\.com/([a-z]{2}-[a-z]{2})/", url)
     locale = loc_match.group(1) if loc_match else "vi-vn"
 
@@ -38,25 +33,80 @@ async def _try_msn_api(url: str, client: httpx.AsyncClient) -> dict | None:
     if not body_html:
         return None
 
-    # Strip HTML — keep paragraph text
     soup = BeautifulSoup(body_html, "html.parser")
     paras = [p.get_text(" ", strip=True) for p in soup.find_all(["p", "h2", "h3"])]
     paras = [p for p in paras if len(p) > 30]
     text = "\n\n".join(paras) if paras else soup.get_text(" ", strip=True)
 
-    # Try to find canonical / source URL (MSN re-publishes from real outlets)
     source_url = data.get("provider", {}).get("profileId") or data.get("absoluteUrl") or url
-
     return {"title": title or "Untitled", "text": text, "source": source_url}
+
+
+async def _try_github_api(url: str, client: httpx.AsyncClient) -> dict | None:
+    m = GITHUB_REPO_RE.match(url)
+    if not m:
+        return None
+    owner, repo = m.group(1), m.group(2)
+
+    gh_headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "xnew-extractor/1.0",
+    }
+    api_base = f"https://api.github.com/repos/{owner}/{repo}"
+
+    try:
+        r = await client.get(api_base, headers=gh_headers)
+        if r.status_code != 200:
+            return None
+        meta = r.json()
+    except Exception:
+        return None
+
+    title: str = meta.get("full_name", f"{owner}/{repo}")
+    description: str = meta.get("description") or ""
+    topics: str = ", ".join(meta.get("topics") or [])
+    stars: int = meta.get("stargazers_count", 0)
+    language: str = meta.get("language") or ""
+
+    readme_text = ""
+    try:
+        r2 = await client.get(f"{api_base}/readme", headers=gh_headers)
+        if r2.status_code == 200:
+            import base64 as _b64
+            raw = _b64.b64decode(r2.json()["content"]).decode("utf-8", errors="replace")
+            raw = re.sub(r"!\[.*?\]\(.*?\)", "", raw)
+            raw = re.sub(r"\[!\[.*?\]\(.*?\)\]\(.*?\)", "", raw)
+            raw = re.sub(r"<[^>]+>", " ", raw)
+            readme_text = raw[:15000].strip()
+    except Exception:
+        pass
+
+    parts = [f"GitHub repository: {title}"]
+    if description:
+        parts.append(f"Description: {description}")
+    if language:
+        parts.append(f"Primary language: {language}")
+    if stars:
+        parts.append(f"Stars: {stars}")
+    if topics:
+        parts.append(f"Topics: {topics}")
+    if readme_text:
+        parts.append("\n--- README ---\n" + readme_text)
+
+    text = "\n".join(parts)
+    if len(text) < 100:
+        return None
+    return {"title": title, "text": text, "source": url}
 
 
 async def extract_from_url(url: str) -> dict:
     """
     Extract clean article content from URL.
     Strategy:
-      1. Special handlers for known JS-rendered sites (MSN)
-      2. trafilatura (best for news articles)
-      3. BeautifulSoup fallback
+      1. GitHub repos → GitHub REST API (README + metadata)
+      2. MSN articles → MSN assets API
+      3. trafilatura (best for news articles)
+      4. BeautifulSoup fallback
     Raises ValueError if no usable content can be found.
     """
     headers = {
@@ -68,6 +118,11 @@ async def extract_from_url(url: str) -> dict:
     }
 
     async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+        # ── Special handler: GitHub ──
+        github_result = await _try_github_api(url, client)
+        if github_result and len(github_result["text"]) >= 200:
+            return {**github_result, "text": github_result["text"][:20000]}
+
         # ── Special handler: MSN ──
         msn_result = await _try_msn_api(url, client)
         if msn_result and len(msn_result["text"]) >= 200:
@@ -112,7 +167,8 @@ async def extract_from_url(url: str) -> dict:
                         "newsletter", "subscribe", "social", "share-", "related-",
                         "comments", "sidebar", "cookie")
         for el in soup.find_all(True, class_=True):
-            cls = " ".join(el.get("class", [])).lower()
+            classes = el.get("class")
+            cls = " ".join(classes if isinstance(classes, list) else [classes or ""]).lower()
             if any(p in cls for p in bad_patterns):
                 el.decompose()
 
@@ -134,14 +190,18 @@ async def extract_from_url(url: str) -> dict:
     if not title:
         soup = BeautifulSoup(raw_html, "html.parser")
         og = soup.find("meta", property="og:title")
-        if og and og.get("content"):
-            title = og["content"].strip()
-        elif soup.find("title"):
-            title = soup.find("title").get_text(strip=True)
-        elif soup.find("h1"):
-            title = soup.find("h1").get_text(strip=True)
+        og_content = og.get("content") if og else None
+        if og_content and isinstance(og_content, str):
+            title = og_content.strip()
         else:
-            title = "Untitled"
+            h_title = soup.find("title")
+            h1 = soup.find("h1")
+            if h_title:
+                title = h_title.get_text(strip=True)
+            elif h1:
+                title = h1.get_text(strip=True)
+            else:
+                title = "Untitled"
 
     for sep in [" | ", " - ", " — ", " · "]:
         if sep in title and len(title.split(sep)[0]) > 20:
@@ -150,7 +210,7 @@ async def extract_from_url(url: str) -> dict:
 
     text = (text or "").strip()
 
-    # ── Validation: empty content means JS-rendered or paywall ──
+    # ── Validation ──
     if len(text) < 200:
         if "msn.com" in url:
             raise ValueError(
