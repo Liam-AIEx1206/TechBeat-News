@@ -1,0 +1,67 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bgWash" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="__BG__"/>
+    <stop offset="55%" stop-color="__BG2__"/>
+    <stop offset="100%" stop-color="__BG__"/>
+  </linearGradient>
+  <radialGradient id="glow" cx="78%" cy="30%" r="55%">
+    <stop offset="0%" stop-color="__ACCENT__" stop-opacity="0.14"/>
+    <stop offset="60%" stop-color="__ACCENT__" stop-opacity="0.04"/>
+    <stop offset="100%" stop-color="__ACCENT__" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="titleBar" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="__ACCENT__"/>
+    <stop offset="100%" stop-color="__ACCENT3__"/>
+  </linearGradient>
+</defs>
+
+<g id="background">
+  <rect x="0" y="0" width="1280" height="720" fill="url(#bgWash)"/>
+  <rect x="0" y="0" width="1280" height="720" fill="url(#glow)"/>
+  <line x1="0" y1="600" x2="1280" y2="600" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.10"/>
+</g>
+
+<g id="ghost">
+  <text x="1252" y="486" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="300" font-weight="bold" fill="__ACCENT__" fill-opacity="0.06" letter-spacing="-8">2026</text>
+</g>
+
+<g id="decor">
+  <path d="M 80 64 L 80 100 M 80 64 L 116 64" stroke="__ACCENT__" stroke-width="3" fill="none"/>
+  <path d="M 1200 656 L 1200 620 M 1200 656 L 1164 656" stroke="__ACCENT__" stroke-width="3" fill="none"/>
+  <g fill="__TEXT2__" fill-opacity="0.28">
+    <circle cx="1096" cy="588" r="2.5"/><circle cx="1120" cy="588" r="2.5"/><circle cx="1144" cy="588" r="2.5"/><circle cx="1168" cy="588" r="2.5"/>
+    <circle cx="1096" cy="564" r="2.5"/><circle cx="1120" cy="564" r="2.5"/><circle cx="1144" cy="564" r="2.5"/><circle cx="1168" cy="564" r="2.5"/>
+    <circle cx="1096" cy="540" r="2.5"/><circle cx="1120" cy="540" r="2.5"/><circle cx="1144" cy="540" r="2.5"/><circle cx="1168" cy="540" r="2.5"/>
+  </g>
+  <line x1="944" y1="64" x2="1200" y2="64" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.18"/>
+  <text x="1200" y="94" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="__TEXT2__" letter-spacing="4">TECHBEAT NEWS</text>
+</g>
+
+<g id="kicker">
+  <rect x="80" y="176" width="252" height="40" rx="20" fill="__ACCENT__" fill-opacity="0.14"/>
+  <rect x="80" y="176" width="252" height="40" rx="20" fill="none" stroke="__ACCENT__" stroke-width="1" stroke-opacity="0.55"/>
+  <circle cx="106" cy="196" r="5" fill="__ACCENT__"/>
+  <text x="122" y="203" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" fill="__ACCENT2__" letter-spacing="3">RA MẮT 6/2026</text>
+</g>
+
+<g id="title">
+  <text x="80" y="330" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="bold" fill="__TEXT1__" letter-spacing="-2">Kỷ nguyên AI</text>
+  <text x="80" y="428" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="bold" letter-spacing="-2" fill="__TEXT1__">tăng tốc <tspan fill="__ACCENT__">10×</tspan></text>
+  <rect x="84" y="462" width="180" height="6" rx="3" fill="url(#titleBar)"/>
+</g>
+
+<g id="subtitle">
+  <text x="80" y="524" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="__TEXT2__">Hai mô hình mới của Anthropic thay đổi cuộc chơi —</text>
+  <text x="80" y="566" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="__TEXT2__">nhanh hơn, rẻ hơn và an toàn hơn.</text>
+</g>
+
+<g id="meta">
+  <rect x="80" y="628" width="176" height="36" rx="18" fill="__SURFACE__"/>
+  <text x="168" y="651" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">Bản tin công nghệ</text>
+  <rect x="272" y="628" width="132" height="36" rx="18" fill="__SURFACE__"/>
+  <text x="338" y="651" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">06 · 2026</text>
+  <rect x="420" y="628" width="120" height="36" rx="18" fill="none" stroke="__ACCENT__" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="480" y="651" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="__ACCENT2__">7 slides</text>
+</g>
+</svg>

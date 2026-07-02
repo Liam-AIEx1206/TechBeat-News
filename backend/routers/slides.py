@@ -42,10 +42,13 @@ def _load_lib(name: str):
     cached = _LIB_CACHE.get(name)
     if cached is not None:
         return cached
-    spec = _ilu.spec_from_file_location(
-        name,
-        Path(__file__).resolve().parent.parent / "lib" / f"{name}.py",
-    )
+    lib_dir = Path(__file__).resolve().parent.parent / "lib"
+    # lib/ phải có trong sys.path TRƯỚC khi exec: finalize_svg.py import
+    # console_encoding/svg_finalize ngay ở top-level. Thiếu dòng này, embed
+    # icon fail thầm lặng → icon container rỗng trên slide.
+    if str(lib_dir) not in sys.path:
+        sys.path.insert(0, str(lib_dir))
+    spec = _ilu.spec_from_file_location(name, lib_dir / f"{name}.py")
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot find lib/{name}.py")
     mod = _ilu.module_from_spec(spec)
@@ -364,6 +367,61 @@ def _pick_layout(scene: "ScenePayload", slide_num: int, total_slides: int, used:
     return "split_asym"
 
 
+# ── Reference slides (hand-crafted, visually verified premium templates) ─────
+# The single biggest quality lever: the model imitates a COMPLETE beautiful
+# slide instead of inventing composition from prose rules — same mechanism as
+# PPT Master's reference_style.svg.
+
+_SLIDE_REFS_DIR = Path(__file__).resolve().parent.parent / "templates" / "slide_refs"
+
+_REF_FOR_LAYOUT: dict[str, str] = {
+    "cover_hero": "ref_cover",
+    "card_grid": "ref_cards",
+    "kpi_stats": "ref_kpi",
+    "split_asym": "ref_split",
+    "timeline_process": "ref_timeline",
+    "ending_cta": "ref_ending",
+    "comparison": "ref_cards",       # closest structure: header + peer panels
+    "quote_breathing": "ref_ending", # closest structure: centered statement + breathing
+}
+
+
+def _reference_block(layout_key: str, theme: dict) -> str:
+    """Return the palette-substituted reference SVG for this layout, wrapped in
+    imitation instructions. Empty string if the ref file is missing."""
+    ref_name = _REF_FOR_LAYOUT.get(layout_key)
+    if not ref_name:
+        return ""
+    ref_path = _SLIDE_REFS_DIR / f"{ref_name}.svg"
+    try:
+        svg = ref_path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    for token, key in (
+        ("__BG__", "bg"), ("__BG2__", "bg2"), ("__SURFACE__", "surface"),
+        ("__ACCENT__", "accent"), ("__ACCENT2__", "accent2"), ("__ACCENT3__", "accent3"),
+        ("__TEXT1__", "text1"), ("__TEXT2__", "text2"),
+    ):
+        svg = svg.replace(token, theme.get(key, theme.get("bg2", "#111111")))
+    return f"""
+=== REFERENCE SLIDE (quality bar — study it, then match it) ===
+Below is a complete, hand-crafted slide in this exact layout and palette. It IS the
+quality standard: composition, decorative finishing (ghost element, kicker, gradient
+rules, chips, corner accents), icon usage, spacing, and text-fitting are all correct.
+
+YOUR JOB: produce a slide of the SAME visual caliber for the CONTENT in this brief.
+• IMITATE: structure, density, alignment grid, decor vocabulary, font sizes, container
+  proportions, how icons sit in tinted containers, how text is wrapped to fit.
+• REPLACE: every text string, number, icon choice, and label with THIS slide's content.
+• ADAPT: block count to the content (2–4 items — resize/redistribute containers evenly,
+  keep the reference's margins), and column widths to the actual text lengths.
+• Do NOT copy the reference's content verbatim. Do NOT degrade its finishing.
+
+{svg}
+=== END REFERENCE ===
+"""
+
+
 def _icon_block(theme_id: str | None) -> str:
     lib = _THEME_ICON_LIB.get(theme_id or "", _DEFAULT_ICON_LIB)
     return f"""=== APPROVED ICON LIST (use 2–6 icons per slide; ONLY these names) ===
@@ -432,11 +490,11 @@ STYLE VIBE:             {t['vibe']}
 
 === REQUIRED LAYOUT FOR THIS SLIDE ===
 {layout}
-
+{_reference_block(layout_key or "split_asym", t)}
 === SLIDE CONTEXT ===
 Slide {slide_num} of {total_slides} — {"Opening slide" if slide_num == 1 else "Closing slide" if slide_num == total_slides else "Content slide"}
 
-Now generate the complete SVG (1280×720). Return ONLY raw SVG, no explanation."""
+Now generate the complete SVG (1280×720) at the reference's quality level. Return ONLY raw SVG, no explanation."""
 
 
 # ── /gen-slide-one ────────────────────────────────────────────────────────────
@@ -474,13 +532,67 @@ def _inject_scene_image(svg: str, scene: "ScenePayload") -> str:
     return _RE_IMAGE_EL.sub(_clean, svg)
 
 
+_ICONS_ROOT = Path(__file__).resolve().parent.parent / "templates" / "icons"
+_ICON_SEARCH_LIBS = ("phosphor-duotone", "chunk-filled", "tabler-filled", "tabler-outline", "simple-icons")
+
+
+def _fix_unresolved_icons(svg: str) -> str:
+    """Rewrite data-icon names that don't exist on disk to the closest real
+    icon (exact name in another lib, then fuzzy match), so icon containers are
+    never left empty. Unfixable names are stripped after embedding anyway."""
+    import difflib
+
+    names = set(re.findall(r'data-icon="([^"]+)"', svg))
+    for full in names:
+        lib, _, icon = full.partition("/")
+        if not icon:  # bare name — embed_icons resolves these itself
+            continue
+        if (_ICONS_ROOT / lib / f"{icon}.svg").exists():
+            continue
+        fixed = None
+        # 1. Same icon name in another library
+        for cand in _ICON_SEARCH_LIBS:
+            if (_ICONS_ROOT / cand / f"{icon}.svg").exists():
+                fixed = f"{cand}/{icon}"
+                break
+        # 2. Fuzzy match within the requested (or default) library
+        if fixed is None:
+            base = _ICONS_ROOT / (lib if (_ICONS_ROOT / lib).is_dir() else _DEFAULT_ICON_LIB)
+            try:
+                stems = [p.stem for p in base.glob("*.svg")]
+                close = difflib.get_close_matches(icon, stems, n=1, cutoff=0.55)
+                if close:
+                    fixed = f"{base.name}/{close[0]}"
+            except OSError:
+                pass
+        if fixed:
+            print(f"[slides] icon fallback: {full} → {fixed}")
+            svg = svg.replace(f'data-icon="{full}"', f'data-icon="{fixed}"')
+        else:
+            print(f"[slides] icon KHÔNG resolve được, sẽ bị strip: {full}")
+    return svg
+
+
+_RE_LEFTOVER_USE = re.compile(r'<use\b[^>]*data-icon="[^"]*"[^>]*/?>(?:\s*</use>)?', re.IGNORECASE)
+
+
 def _embed_icons_svg(svg: str) -> str:
     """Embed <use data-icon> placeholders server-side so browser preview and
-    PPTX export both render real vectors. Fail-soft: returns input on error."""
+    PPTX export both render real vectors. Unresolvable names are fuzzy-fixed
+    first and any survivors stripped (an empty <use> renders as nothing but
+    would leave its tinted container looking like a blank blob — the refine
+    pass then cleans the container). Fail-soft: returns input on error."""
     try:
+        svg = _fix_unresolved_icons(svg)
         fin = _load_lib("finalize_svg")
-        return fin.embed_icons_in_svg_string(svg)
-    except Exception:
+        svg = fin.embed_icons_in_svg_string(svg)
+        leftovers = _RE_LEFTOVER_USE.findall(svg)
+        if leftovers:
+            print(f"[slides] stripping {len(leftovers)} unresolved icon placeholder(s)")
+            svg = _RE_LEFTOVER_USE.sub("", svg)
+        return svg
+    except Exception as e:
+        print(f"[slides] embed icons lỗi (giữ nguyên SVG): {e}")
         return svg
 
 
@@ -502,9 +614,16 @@ DEFECTS TO HUNT (in priority order):
    label with a clear ≥12px gap — NEVER at the same coordinates as text.
 3. OFF-CANVAS content — anything positioned partly/fully outside 0–1280 × 0–720.
    Pull it back inside the 80/60/50px safe margins.
-4. IMBALANCE — one column crammed while half the canvas is empty; elements not
-   aligned to a shared grid; wildly uneven card heights. Rebalance to use the space.
-5. ILLEGIBILITY — text color too close to its background; text over a busy image
+4. EMPTY ICON CONTAINERS — a plain filled circle/rounded-square "blob" with nothing
+   inside (its icon failed to load). Either remove the empty container entirely (shift
+   the text left/up to close the gap) or replace it with a bold index digit ("01") or
+   a 10px accent dot. Never ship a blank blob.
+5. BADGE/KICKER COLLISION — a pill badge or kicker label overlapping the title glyphs.
+   Move it fully ABOVE the title with ≥20px clearance.
+6. IMBALANCE / DEAD SPACE — one corner crammed while ≥35% of the canvas sits empty,
+   elements not on a shared grid, wildly uneven card heights. Redistribute content to
+   fill the layout's intended zones (enlarge type, expand containers, re-space rows).
+7. ILLEGIBILITY — text color too close to its background; text over a busy image
    region with no scrim.
 
 HARD CONSTRAINTS (keep them — they gate PPTX export):
@@ -542,6 +661,10 @@ async def _refine_svg_visually(
     for _ in range(max(0, max_passes)):
         png = await renderer.render_svg_to_png(svg)
         if not png:
+            # Nói to lên: thiếu render là mất luôn tầng QA thị giác —
+            # thường do Playwright/Chromium chưa cài trong môi trường chạy.
+            print("[slides] ⚠ visual-review BỎ QUA: render PNG thất bại "
+                  "(kiểm tra Playwright/Chromium: `playwright install chromium`)")
             break
         b64 = _b64.b64encode(png).decode("ascii")
         instruction = (

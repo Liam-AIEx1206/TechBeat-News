@@ -1,0 +1,75 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bgWash" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="__BG__"/>
+    <stop offset="100%" stop-color="__BG2__"/>
+  </linearGradient>
+  <linearGradient id="rule" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="__ACCENT__"/>
+    <stop offset="100%" stop-color="__ACCENT3__"/>
+  </linearGradient>
+  <linearGradient id="heroBar" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="__ACCENT__"/>
+    <stop offset="100%" stop-color="__ACCENT2__"/>
+  </linearGradient>
+</defs>
+
+<g id="background">
+  <rect x="0" y="0" width="1280" height="720" fill="url(#bgWash)"/>
+  <text x="60" y="700" font-family="Arial, Helvetica, sans-serif" font-size="190" font-weight="bold" fill="__TEXT1__" fill-opacity="0.04">42%</text>
+</g>
+
+<g id="header">
+  <text x="80" y="60" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" fill="__ACCENT2__" letter-spacing="4">SỐ LIỆU</text>
+  <text x="80" y="122" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="bold" fill="__TEXT1__">Trải nghiệm người dùng đổi chiều</text>
+  <rect x="82" y="146" width="140" height="5" rx="2.5" fill="url(#rule)"/>
+</g>
+
+<g id="hero-metric">
+  <text x="80" y="330" font-family="Arial, Helvetica, sans-serif" font-size="150" font-weight="bold" fill="__ACCENT__" letter-spacing="-4">42<tspan font-size="80">%</tspan></text>
+  <text x="80" y="382" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="__TEXT2__">yêu cầu bị chuyển hướng sai trong tuần đầu —</text>
+  <text x="80" y="420" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="__TEXT2__">cao <tspan fill="__ACCENT2__" font-weight="bold">gấp 3 lần</tspan> ngưỡng chấp nhận được.</text>
+</g>
+
+<g id="secondary-kpis">
+  <rect x="80" y="480" width="300" height="120" rx="16" fill="__SURFACE__" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <use data-icon="phosphor-duotone/users" x="108" y="516" width="36" height="36" fill="__ACCENT__"/>
+  <text x="164" y="536" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="bold" fill="__TEXT1__">85%</text>
+  <text x="164" y="570" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT2__">lập trình viên thất vọng</text>
+
+  <rect x="404" y="480" width="300" height="120" rx="16" fill="__SURFACE__" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <use data-icon="phosphor-duotone/chart-line" x="432" y="516" width="36" height="36" fill="__ACCENT__"/>
+  <text x="488" y="536" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="bold" fill="__TEXT1__">60%</text>
+  <text x="488" y="570" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT2__">startup cân nhắc rời đi</text>
+</g>
+
+<g id="chart-panel">
+  <rect x="760" y="200" width="440" height="400" rx="20" fill="__SURFACE__" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <text x="792" y="252" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" fill="__TEXT1__">Tỷ lệ lỗi theo nền tảng</text>
+  <line x1="792" y1="268" x2="1168" y2="268" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+
+  <text x="792" y="322" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT1__">Fable 5</text>
+  <rect x="792" y="336" width="376" height="18" rx="9" fill="__TEXT2__" fill-opacity="0.10"/>
+  <rect x="792" y="336" width="316" height="18" rx="9" fill="url(#heroBar)"/>
+  <text x="1168" y="326" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" fill="__ACCENT2__">42%</text>
+
+  <text x="792" y="402" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT2__">Mythos 5</text>
+  <rect x="792" y="416" width="376" height="18" rx="9" fill="__TEXT2__" fill-opacity="0.10"/>
+  <rect x="792" y="416" width="264" height="18" rx="9" fill="__TEXT2__" fill-opacity="0.35"/>
+  <text x="1168" y="406" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT2__">35%</text>
+
+  <text x="792" y="482" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT2__">Thế hệ cũ</text>
+  <rect x="792" y="496" width="376" height="18" rx="9" fill="__TEXT2__" fill-opacity="0.10"/>
+  <rect x="792" y="496" width="210" height="18" rx="9" fill="__TEXT2__" fill-opacity="0.35"/>
+  <text x="1168" y="486" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="__TEXT2__">28%</text>
+
+  <use data-icon="phosphor-duotone/arrow-up" x="792" y="540" width="22" height="22" fill="__ACCENT__"/>
+  <text x="824" y="558" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="__TEXT2__">Fable 5 vượt mọi nền tảng về tỷ lệ lỗi</text>
+</g>
+
+<g id="footer">
+  <line x1="80" y1="640" x2="720" y2="640" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <text x="80" y="672" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">Khảo sát nhà phát triển · 6/2026</text>
+  <text x="1200" y="672" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">4 / 7</text>
+</g>
+</svg>

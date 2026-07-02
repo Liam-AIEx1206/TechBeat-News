@@ -1,0 +1,52 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bgWash" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="__BG__"/>
+    <stop offset="100%" stop-color="__BG2__"/>
+  </linearGradient>
+  <clipPath id="imgClip"><rect x="700" y="120" width="500" height="440" rx="20"/></clipPath>
+</defs>
+
+<g id="background">
+  <rect x="0" y="0" width="1280" height="720" fill="url(#bgWash)"/>
+  <text x="60" y="690" font-family="Arial, Helvetica, sans-serif" font-size="170" font-weight="bold" fill="__TEXT1__" fill-opacity="0.04">03</text>
+</g>
+
+<g id="left-column">
+  <rect x="80" y="120" width="5" height="440" rx="2.5" fill="__ACCENT__"/>
+  <text x="116" y="148" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" fill="__ACCENT2__" letter-spacing="4">DIỄN BIẾN</text>
+  <text x="116" y="216" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="bold" fill="__TEXT1__">Cú sốc từ</text>
+  <text x="116" y="276" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="bold" fill="__TEXT1__">chính phủ</text>
+
+  <text x="116" y="340" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="__TEXT2__">Ngày <tspan fill="__ACCENT2__" font-weight="bold">12/6/2026</tspan>, lệnh cấm xuất</text>
+  <text x="116" y="374" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="__TEXT2__">khẩu được ban hành khẩn cấp.</text>
+
+  <g id="point-1">
+    <circle cx="140" cy="446" r="24" fill="__ACCENT__" fill-opacity="0.15"/>
+    <use data-icon="phosphor-duotone/shield-check" x="124" y="430" width="32" height="32" fill="__ACCENT__"/>
+    <text x="184" y="442" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="bold" fill="__TEXT1__">Lỗ hổng bảo mật</text>
+    <text x="184" y="470" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="__TEXT2__">Fable 5 trở thành rủi ro cấp quốc gia</text>
+  </g>
+  <g id="point-2">
+    <circle cx="140" cy="530" r="24" fill="__ACCENT__" fill-opacity="0.15"/>
+    <use data-icon="phosphor-duotone/lock" x="124" y="514" width="32" height="32" fill="__ACCENT__"/>
+    <text x="184" y="526" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="bold" fill="__TEXT1__">Nguy cơ an ninh mạng</text>
+    <text x="184" y="554" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="__TEXT2__">Siêu AI có thể bị lợi dụng tấn công</text>
+  </g>
+</g>
+
+<g id="visual">
+  <rect x="712" y="132" width="500" height="440" rx="20" fill="__ACCENT__" fill-opacity="0.10"/>
+  <image href="__SLIDE_IMAGE__" x="700" y="120" width="500" height="440" preserveAspectRatio="xMidYMid slice" clip-path="url(#imgClip)"/>
+  <rect x="700" y="120" width="500" height="440" rx="20" fill="none" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.18"/>
+  <rect x="724" y="508" width="286" height="36" rx="18" fill="__BG__" fill-opacity="0.82"/>
+  <circle cx="746" cy="526" r="5" fill="__ACCENT__"/>
+  <text x="762" y="533" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT1__">Trụ sở cơ quan quản lý · Washington</text>
+</g>
+
+<g id="footer">
+  <line x1="80" y1="632" x2="1200" y2="632" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <text x="80" y="666" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">Sự kiện Anthropic · 2026</text>
+  <text x="1200" y="666" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">3 / 7</text>
+</g>
+</svg>

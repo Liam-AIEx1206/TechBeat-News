@@ -1,0 +1,68 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bgWash" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="__BG__"/>
+    <stop offset="100%" stop-color="__BG2__"/>
+  </linearGradient>
+  <linearGradient id="leadCard" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="__ACCENT__" stop-opacity="0.16"/>
+    <stop offset="100%" stop-color="__ACCENT__" stop-opacity="0.05"/>
+  </linearGradient>
+  <linearGradient id="rule" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="__ACCENT__"/>
+    <stop offset="100%" stop-color="__ACCENT3__"/>
+  </linearGradient>
+</defs>
+
+<g id="background">
+  <rect x="0" y="0" width="1280" height="720" fill="url(#bgWash)"/>
+  <text x="1256" y="700" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="200" font-weight="bold" fill="__TEXT1__" fill-opacity="0.04">02</text>
+</g>
+
+<g id="header">
+  <text x="80" y="60" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" fill="__ACCENT2__" letter-spacing="4">TÍNH NĂNG</text>
+  <text x="80" y="122" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="bold" fill="__TEXT1__">Ba trụ cột của nền tảng</text>
+  <rect x="82" y="146" width="140" height="5" rx="2.5" fill="url(#rule)"/>
+  <text x="1200" y="60" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">Vibe-Trading · 2026</text>
+</g>
+
+<g id="card-lead">
+  <rect x="80" y="200" width="400" height="360" rx="20" fill="url(#leadCard)" stroke="__ACCENT__" stroke-width="1.5" stroke-opacity="0.6"/>
+  <text x="448" y="268" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="bold" fill="__ACCENT__" fill-opacity="0.18">01</text>
+  <circle cx="148" cy="268" r="34" fill="__ACCENT__" fill-opacity="0.16"/>
+  <use data-icon="phosphor-duotone/chart-line" x="124" y="244" width="48" height="48" fill="__ACCENT__"/>
+  <text x="112" y="358" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="bold" fill="__TEXT1__">Backtesting</text>
+  <text x="112" y="398" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">Kiểm tra chiến lược trên dữ liệu</text>
+  <text x="112" y="430" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">lịch sử trước khi giao dịch thật.</text>
+  <text x="112" y="512" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="bold" fill="__ACCENT__">99.2%<tspan font-size="20" fill="__TEXT2__" font-weight="normal">  độ chính xác</tspan></text>
+</g>
+
+<g id="card-2">
+  <rect x="504" y="200" width="336" height="360" rx="20" fill="__SURFACE__" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <text x="808" y="268" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="bold" fill="__TEXT1__" fill-opacity="0.08">02</text>
+  <circle cx="572" cy="268" r="34" fill="__ACCENT__" fill-opacity="0.14"/>
+  <use data-icon="phosphor-duotone/broadcast" x="548" y="244" width="48" height="48" fill="__ACCENT__"/>
+  <text x="536" y="358" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="bold" fill="__TEXT1__">Đa kênh</text>
+  <text x="536" y="398" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">Tích hợp Telegram và Slack,</text>
+  <text x="536" y="430" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">theo dõi lệnh theo thời gian</text>
+  <text x="536" y="462" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">thực ở mọi nơi.</text>
+</g>
+
+<g id="card-3">
+  <rect x="864" y="200" width="336" height="360" rx="20" fill="__SURFACE__" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <text x="1168" y="268" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="bold" fill="__TEXT1__" fill-opacity="0.08">03</text>
+  <circle cx="932" cy="268" r="34" fill="__ACCENT__" fill-opacity="0.14"/>
+  <use data-icon="phosphor-duotone/trophy" x="908" y="244" width="48" height="48" fill="__ACCENT__"/>
+  <text x="896" y="358" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="bold" fill="__TEXT1__">Hiệu quả</text>
+  <text x="896" y="398" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">Quyết định nhanh và chính</text>
+  <text x="896" y="430" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">xác hơn, tiết kiệm hàng giờ</text>
+  <text x="896" y="462" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="__TEXT2__">theo dõi thị trường.</text>
+</g>
+
+<g id="footer">
+  <line x1="80" y1="632" x2="1200" y2="632" stroke="__TEXT2__" stroke-width="1" stroke-opacity="0.12"/>
+  <text x="80" y="668" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">Tính năng nổi bật</text>
+  <circle cx="1160" cy="662" r="4" fill="__ACCENT__"/>
+  <text x="1200" y="668" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="__TEXT2__">2 / 7</text>
+</g>
+</svg>
