@@ -167,13 +167,18 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
           })}
         </div>
 
-        {/* Middle: SVG preview */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 32, background: "rgba(0,0,0,0.3)" }}>
-          <div style={{ width: "100%", maxWidth: 854, aspectRatio: "16/9", position: "relative", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-2)", background: "#08080f" }}>
+        {/* Middle: SVG preview — chiếm tối đa không gian, SVG scale theo khung */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.3)", minWidth: 0 }}>
+          <div style={{ width: "100%", maxWidth: "min(1400px, calc((100vh - 220px) * 16 / 9))", aspectRatio: "16/9", position: "relative", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-2)", background: "#08080f", boxShadow: "0 24px 80px rgba(0,0,0,0.55)" }}>
             {svgs[activeIdx] ? (
               <div
-                dangerouslySetInnerHTML={{ __html: svgs[activeIdx] }}
-                style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                dangerouslySetInnerHTML={{
+                  __html: svgs[activeIdx].replace(
+                    /<svg\b/i,
+                    '<svg style="width:100%;height:100%;display:block" preserveAspectRatio="xMidYMid meet"'
+                  ),
+                }}
+                style={{ width: "100%", height: "100%" }}
               />
             ) : genStates[activeIdx] === "loading" ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12, color: "var(--gray-5)" }}>

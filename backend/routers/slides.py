@@ -120,6 +120,10 @@ width="1280" height="720" viewBox="0 0 1280 720"  ← EXACT, non-negotiable (Can
 • Wrap related elements in <g id="..."> groups (3–8 top-level groups per slide)
 • NEVER invent external image URLs. The ONLY allowed <image> href value is the literal token
   __SLIDE_IMAGE__ — and only when the brief provides an IMAGE ASSET section
+• NO IMAGE ASSET section in the brief → do NOT draw ANY image element, empty image frame,
+  photo placeholder box, or photo caption chip. Build that visual zone from native elements
+  instead (icon composition, hero number, mini chart, stat panel). An empty picture frame
+  on the final slide is a hard failure.
 • SVG must be completely self-contained and valid XML
 
 ═══════════ ICONS (real vector icons — USE THEM) ═══════════
@@ -415,6 +419,9 @@ YOUR JOB: produce a slide of the SAME visual caliber for the CONTENT in this bri
 • REPLACE: every text string, number, icon choice, and label with THIS slide's content.
 • ADAPT: block count to the content (2–4 items — resize/redistribute containers evenly,
   keep the reference's margins), and column widths to the actual text lengths.
+• If the reference contains an <image> panel but this brief has NO IMAGE ASSET section,
+  REPLACE that panel with a native visual of the same size (icon composition, KPI stack,
+  or a mini bar/donut chart) — never an empty frame with a caption.
 • Do NOT copy the reference's content verbatim. Do NOT degrade its finishing.
 
 {svg}
@@ -511,6 +518,124 @@ def _layout_for_index(scenes: list["ScenePayload"], idx: int) -> str:
 
 _IMAGE_TOKEN = "__SLIDE_IMAGE__"
 _RE_IMAGE_EL = re.compile(r'<image\b[^>]*>(?:\s*</image>)?', re.IGNORECASE)
+
+# ── Auto image: scene thiếu ảnh → tự tìm qua Openverse (cùng nguồn images.py) ─
+# Slide có ảnh thật là đòn bẩy "wow" lớn nhất; scene planner luôn sinh imageQuery
+# cho luồng video nhưng luồng slide trước đây bỏ phí trường này.
+
+_IMAGE_FRIENDLY_LAYOUTS = {"cover_hero", "split_asym", "ending_cta", "quote_breathing"}
+_auto_image_cache: dict[str, str | None] = {}
+
+
+async def _auto_pick_image(scene: "ScenePayload") -> str | None:
+    """Tìm 1 ảnh CC ngang (width ≥640) cho scene qua Openverse. Fail-soft."""
+    import os
+    if os.getenv("SLIDE_AUTO_IMAGE", "1") not in ("1", "true", "yes"):
+        return None
+    query = (scene.imageQuery or "").strip()
+    if not query:
+        return None
+    if query in _auto_image_cache:
+        return _auto_image_cache[query]
+
+    url: str | None = None
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+            r = await client.get(
+                "https://api.openverse.org/v1/images/",
+                params={"q": query, "page_size": 10, "mature": "false"},
+                headers={"User-Agent": "TechBeat/1.0 (slide-gen)", "Accept": "application/json"},
+            )
+            if r.status_code == 200:
+                for it in r.json().get("results", []):
+                    w, h, u = it.get("width") or 0, it.get("height") or 0, it.get("url")
+                    if not u:
+                        continue
+                    if w >= 640 and (h == 0 or w >= h * 0.75):  # đủ nét, không quá dọc
+                        url = u
+                        break
+    except Exception as e:
+        print(f"[slides] auto-image bỏ qua ({query[:40]}): {e}")
+    _auto_image_cache[query] = url
+    if url:
+        print(f"[slides] auto-image: '{query[:50]}' → {url[:80]}")
+    return url
+
+
+# ── Deterministic text-overflow detector ─────────────────────────────────────
+# Vision model đôi khi bỏ sót tràn chữ; phép đo hình học thì không. Ước lượng
+# bề rộng chữ (Arial ≈ 0.58×font-size/ký tự) rồi so với mép canvas và mép
+# container gần nhất; danh sách lỗi được feed thẳng vào vòng refine.
+
+_RE_RECT = re.compile(r'<rect\b([^>]*)>', re.IGNORECASE)
+_RE_TEXT_EL = re.compile(r'<text\b([^>]*)>(.*?)</text>', re.IGNORECASE | re.DOTALL)
+_RE_TSPAN = re.compile(r'<tspan\b([^>]*)>(.*?)</tspan>', re.IGNORECASE | re.DOTALL)
+
+
+def _attr_f(attrs: str, name: str) -> float | None:
+    m = re.search(rf'{name}="([-\d.]+)', attrs)
+    try:
+        return float(m.group(1)) if m else None
+    except ValueError:
+        return None
+
+
+def _measure_text_overflows(svg: str) -> list[str]:
+    """Trả về danh sách mô tả các dòng chữ tràn mép (canvas hoặc card)."""
+    containers: list[tuple[float, float, float, float]] = []
+    for m in _RE_RECT.finditer(svg):
+        a = m.group(1)
+        x, y = _attr_f(a, "x") or 0.0, _attr_f(a, "y") or 0.0
+        w, h = _attr_f(a, "width"), _attr_f(a, "height")
+        if w and h and w >= 140 and h >= 70 and w < 1280:  # chỉ card/panel, bỏ bg + chip nhỏ
+            containers.append((x, y, w, h))
+
+    issues: list[str] = []
+    for m in _RE_TEXT_EL.finditer(svg):
+        attrs, inner = m.group(1), m.group(2)
+        fo = _attr_f(attrs, "fill-opacity")
+        if fo is not None and fo <= 0.3:
+            continue  # ghost trang trí — được phép tràn
+        fs = _attr_f(attrs, "font-size") or 24.0
+        anchor_m = re.search(r'text-anchor="(\w+)"', attrs)
+        anchor = anchor_m.group(1) if anchor_m else "start"
+        base_x = _attr_f(attrs, "x") or 0.0
+        base_y = _attr_f(attrs, "y") or 0.0
+
+        # từng dòng logic: text trực tiếp + mỗi tspan (tspan có thể reset x/font-size)
+        lines: list[tuple[float, float, str]] = []
+        direct = re.sub(r'<tspan\b.*?</tspan>', '', inner, flags=re.IGNORECASE | re.DOTALL)
+        direct = re.sub(r'<[^>]+>', '', direct).strip()
+        if direct:
+            lines.append((base_x, fs, direct))
+        for tm in _RE_TSPAN.finditer(inner):
+            ta, ttxt = tm.group(1), re.sub(r'<[^>]+>', '', tm.group(2)).strip()
+            if not ttxt:
+                continue
+            tx = _attr_f(ta, "x")
+            tfs = _attr_f(ta, "font-size") or fs
+            # tspan không reset x → nối tiếp dòng trước, bỏ qua (đo dòng chính đã đủ)
+            if tx is None:
+                continue
+            lines.append((tx, tfs, ttxt))
+
+        for lx, lfs, ltext in lines:
+            est = len(ltext) * lfs * 0.58
+            left = lx - est if anchor == "end" else lx - est / 2 if anchor == "middle" else lx
+            right = left + est
+            snippet = ltext[:36] + ("…" if len(ltext) > 36 else "")
+            if right > 1272 or left < 8:
+                issues.append(f'"{snippet}" (font {lfs:.0f}px) tràn mép canvas (ước right≈{right:.0f})')
+                continue
+            inside = [c for c in containers if c[0] <= lx <= c[0] + c[2] and c[1] <= base_y <= c[1] + c[3]]
+            if inside:
+                c = min(inside, key=lambda r: r[2] * r[3])
+                if right > c[0] + c[2] - 8:
+                    issues.append(
+                        f'"{snippet}" (font {lfs:.0f}px) tràn mép phải card (card right={c[0]+c[2]:.0f}, text right≈{right:.0f})'
+                    )
+    return issues[:10]
 
 
 def _inject_scene_image(svg: str, scene: "ScenePayload") -> str:
@@ -659,26 +784,40 @@ async def _refine_svg_visually(
 
     applied = 0
     for _ in range(max(0, max_passes)):
+        measured = _measure_text_overflows(svg)
         png = await renderer.render_svg_to_png(svg)
         if not png:
-            # Nói to lên: thiếu render là mất luôn tầng QA thị giác —
-            # thường do Playwright/Chromium chưa cài trong môi trường chạy.
-            print("[slides] ⚠ visual-review BỎ QUA: render PNG thất bại "
+            # Nói to lên: thiếu render là mất tầng QA thị giác — thường do
+            # Playwright/Chromium chưa cài trong môi trường chạy.
+            print("[slides] ⚠ visual-review: render PNG thất bại "
                   "(kiểm tra Playwright/Chromium: `playwright install chromium`)")
-            break
-        b64 = _b64.b64encode(png).decode("ascii")
+            if not measured:
+                break
+            # Vẫn cứu được: sửa mù theo danh sách lỗi ĐO ĐƯỢC bằng hình học.
+            print(f"[slides] fallback text-only refine với {len(measured)} lỗi đo được")
+
+        measured_block = ""
+        if measured:
+            measured_block = (
+                "\n=== MEASURED DEFECTS (geometric analysis — you MUST fix every one) ===\n"
+                + "\n".join(f"• {d}" for d in measured) + "\n"
+            )
+
         instruction = (
-            "Here is the rendered slide (PNG) and its SVG source. "
-            "Fix every visual defect per your rules — especially text overflow, "
-            "clipping, and icon/text collisions — then return the corrected SVG "
-            "(or NO_CHANGES_NEEDED).\n\n"
-            f"SLIDE TITLE (for context): {scene.title}\n\n"
-            "=== CURRENT SVG SOURCE ===\n" + svg
+            ("Here is the rendered slide (PNG) and its SVG source. "
+             if png else
+             "No render available — work from the SVG source and the measured defects. ")
+            + "Fix every visual defect per your rules — especially text overflow, "
+              "clipping, empty icon containers, and icon/text collisions — then return "
+              "the corrected SVG (or NO_CHANGES_NEEDED).\n"
+            + measured_block
+            + f"\nSLIDE TITLE (for context): {scene.title}\n\n"
+            + "=== CURRENT SVG SOURCE ===\n" + svg
         )
-        content = [
-            {"type": "text", "text": instruction},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
-        ]
+        content: list[dict] = [{"type": "text", "text": instruction}]
+        if png:
+            b64 = _b64.b64encode(png).decode("ascii")
+            content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}})
         try:
             def _kwargs(_provider: str) -> dict:
                 return {
@@ -743,6 +882,13 @@ async def gen_slide_one(body: GenSlideOneRequest):
     total = len(body.scenes)
     layout_key = _layout_for_index(body.scenes, body.sceneIndex)
     outline = [s.title for s in body.scenes]
+
+    # Scene chưa có ảnh + layout hợp ảnh → tự tìm ảnh thật (Openverse, fail-soft)
+    auto_image_url: str | None = None
+    if not scene.imageUrl and layout_key in _IMAGE_FRIENDLY_LAYOUTS:
+        auto_image_url = await _auto_pick_image(scene)
+        if auto_image_url:
+            scene = scene.model_copy(update={"imageUrl": auto_image_url})
     prompt = _build_svg_prompt(
         scene, body.theme, body.sceneIndex + 1, total,
         layout_key=layout_key, outline=outline,
@@ -778,7 +924,8 @@ async def gen_slide_one(body: GenSlideOneRequest):
 
     return {
         "svg": svg, "sceneIndex": body.sceneIndex, "layout": layout_key,
-        "refinePasses": refined, "provider": provider, "model": model,
+        "refinePasses": refined, "autoImageUrl": auto_image_url,
+        "provider": provider, "model": model,
     }
 
 
