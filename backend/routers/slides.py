@@ -309,11 +309,12 @@ async def _build_slides_stream(req: BuildSlidesRequest) -> AsyncGenerator[str, N
         svg_paths.append(svg_path)
     yield sse({"type": "status", "message": "Đang xử lý SVG (finalize)..."})
 
-    # 2. Finalize SVG (expand <use>, flatten tspan)
+    # 2. Finalize SVG (flatten tspan, fix rounded rects)
     try:
-        from finalize_svg import finalize_svg_file  # type: ignore[import]
+        from finalize_svg import process_flatten_text, process_rounded_rect  # type: ignore[import]
         for svg_path in svg_paths:
-            finalize_svg_file(svg_path, svg_path)
+            process_flatten_text(svg_path)
+            process_rounded_rect(svg_path)
     except Exception as e:
         yield sse({"type": "warning", "message": f"finalize_svg bỏ qua: {e}"})
 
