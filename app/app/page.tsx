@@ -1135,9 +1135,12 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {history.map((h) => {
                 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+                const isSlide = h.type === "slide";
                 const videoUrl = h.video_url || "";
                 const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
-                
+                const pptxUrl = h.pptx_url || "";
+                const pptxFullUrl = pptxUrl.startsWith("http") ? pptxUrl : (pptxUrl ? `${API}${pptxUrl}` : "");
+
                 return (
                   <div
                     key={h.id}
@@ -1154,6 +1157,10 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                       transition: "all 0.2s",
                     }}
                     onClick={() => {
+                      if (isSlide) {
+                        if (pptxFullUrl) window.open(pptxFullUrl, "_blank");
+                        return;
+                      }
                       setActiveVideoUrl(videoFullUrl);
                       setActiveVideoTitle(h.title);
                     }}
@@ -1170,7 +1177,9 @@ function Dashboard({ onStart }: { onStart: () => void }) {
                         {new Date(h.created_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                       <div className="badge badge-accent" style={{ background: "rgba(249,115,22,0.06)", borderColor: "rgba(249,115,22,0.15)", fontSize: 8, padding: "2px 6px" }}>
-                        {Math.floor(h.duration / 60)}:{(h.duration % 60).toString().padStart(2, '0')}
+                        {isSlide
+                          ? `${h.slide_count ?? "?"} slide`
+                          : `${Math.floor(h.duration / 60)}:${(h.duration % 60).toString().padStart(2, '0')}`}
                       </div>
                     </div>
                   </div>

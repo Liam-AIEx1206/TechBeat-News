@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import type { ScenePlan } from "@/types/scene";
 
 interface Props {
@@ -47,9 +48,12 @@ function loadSvgs(title: string): string[] {
 
 export function SlideExporter({ scenePlan, onBack }: Props) {
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email ?? "";
   const saved = loadBuild(scenePlan.title);
 
   const [running, setRunning]           = useState(false);
+  const [downloading, setDownloading]   = useState(false);
   const [done, setDone]                 = useState(saved?.done ?? false);
   const [pptxUrl, setPptxUrl]           = useState<string>(saved?.pptxUrl ?? "");
   const [error, setError]               = useState<string>(saved?.error ?? "");
@@ -89,7 +93,7 @@ export function SlideExporter({ scenePlan, onBack }: Props) {
     try {
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(userEmail ? { "x-user-email": userEmail } : {}) },
         body: JSON.stringify({
           title: scenePlan.title,
           scenes: scenePlan.scenes,
@@ -271,9 +275,38 @@ export function SlideExporter({ scenePlan, onBack }: Props) {
             File PPTX với native DrawingML shapes — có thể chỉnh sửa trực tiếp trong PowerPoint / Keynote / LibreOffice / Canva.
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a href={fullPptxUrl} download className="btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
-              <span>⬇ Tải xuống PPTX</span>
-            </a>
+            {/* Tải qua fetch→blob thay vì <a href download>: URL backend là
+                cross-origin ở dev nên browser BỎ QUA thuộc tính download và
+                điều hướng thẳng tới file → bắn dialog "Leave site?" rất khó
+                chịu. Blob + object URL tải trong nền, không rời trang. */}
+            <button
+              onClick={async () => {
+                if (downloading) return;
+                setDownloading(true);
+                try {
+                  const res = await fetch(fullPptxUrl);
+                  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${scenePlan.title.replace(/[\\/:*?"<>|]/g, "_")}.pptx`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 5000);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Tải file thất bại");
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+              disabled={downloading}
+              className="btn-primary"
+              style={{ fontSize: 13, opacity: downloading ? 0.6 : 1 }}
+            >
+              <span>{downloading ? "Đang tải..." : "⬇ Tải xuống PPTX"}</span>
+            </button>
             {/* Browser không render được .pptx — "mở tab mới" chỉ tải lại file.
                 Xem online cần Office viewer của Microsoft, và viewer đó phải
                 tải được file → chỉ hoạt động khi app deploy public (không

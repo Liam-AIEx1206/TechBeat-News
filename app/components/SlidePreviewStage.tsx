@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import type { ScenePlan, Scene } from "@/types/scene";
 import { getTheme } from "@/types/scene";
 import { ImagePicker } from "@/components/ImagePicker";
@@ -30,6 +31,10 @@ function saveSvgCache(title: string, svgs: string[]) {
 
 export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }: Props) {
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const { data: session } = useSession();
+  // x-user-email: backend dùng để ghi chi phí LLM vào tài khoản user (như video)
+  const userEmail = session?.user?.email ?? "";
+  const authHeaders: Record<string, string> = userEmail ? { "x-user-email": userEmail } : {};
   const [svgs, setSvgs] = useState<string[]>(() => loadSvgCache(scenePlan.title));
   const [activeIdx, setActiveIdx] = useState(0);
   const [genStates, setGenStates] = useState<("pending" | "loading" | "done" | "error")[]>(
@@ -57,7 +62,7 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
     try {
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           title: scenePlan.title,
           scenes,
@@ -83,7 +88,7 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
       setErrors(p => { const n = [...p]; n[idx] = err instanceof Error ? err.message : "Lỗi"; return n; });
       setGenStates(p => { const n = [...p]; n[idx] = "error"; return n; });
     }
-  }, [scenePlan, endpoint]);
+  }, [scenePlan, endpoint, userEmail]);  // eslint-disable-line react-hooks/exhaustive-deps -- authHeaders derive từ userEmail
 
   // ── Đổi ảnh: KHÔNG regen nội dung nếu slide đã có khung ảnh sẵn ──────────
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
@@ -127,16 +132,40 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
     }
   }
 
-  async function genAll_() {
+  // Gen TUẦN TỰ (như luồng video): xong slide này mới sang slide kế —
+  // mỗi slide một call riêng đủ context, không nhồi cả deck vào một lần gen.
+  async function genSequential(indices: number[]) {
+    if (indices.length === 0) return;
     abortRef.current?.abort();
     const abort = new AbortController();
     abortRef.current = abort;
     setGenAll(true);
-    for (let i = 0; i < scenePlan.scenes.length; i++) {
+    for (const i of indices) {
       if (abort.signal.aborted) break;
+      setActiveIdx(i); // preview bám theo slide đang gen để user xem tiến độ
       await genSlide(i, abort.signal);
     }
     setGenAll(false);
+  }
+
+  /** Regen toàn bộ deck từ đầu */
+  function genAll_() {
+    return genSequential(scenePlan.scenes.map((_, i) => i));
+  }
+
+  /** Các slide CHƯA gen xong (pending/error) theo thứ tự */
+  const remainingIdxs = genStates
+    .map((s, i) => (s === "done" || s === "loading" ? -1 : i))
+    .filter(i => i >= 0);
+
+  /** Gen đúng 1 slide kế tiếp chưa xong */
+  function genNext() {
+    if (remainingIdxs.length > 0) return genSequential([remainingIdxs[0]]);
+  }
+
+  /** Gen lần lượt tất cả slide còn lại (không regen slide đã xong) */
+  function genRemaining() {
+    return genSequential(remainingIdxs);
   }
 
   function stopGen() { abortRef.current?.abort(); setGenAll(false); }
@@ -162,9 +191,21 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
           {genAll ? (
             <button onClick={stopGen} className="btn-ghost" style={{ fontSize: 13, color: "var(--red)" }}>⬛ Dừng</button>
           ) : (
-            <button onClick={genAll_} disabled={anyLoading} className="btn-ghost" style={{ fontSize: 13 }}>
-              ↺ Gen tất cả
-            </button>
+            <>
+              {remainingIdxs.length > 0 && (
+                <button onClick={genNext} disabled={anyLoading} className="btn-ghost" style={{ fontSize: 13, borderColor: "rgba(249,115,22,0.35)", color: "var(--accent2)" }}>
+                  ▶ Gen slide tiếp theo
+                </button>
+              )}
+              {remainingIdxs.length > 1 && (
+                <button onClick={genRemaining} disabled={anyLoading} className="btn-ghost" style={{ fontSize: 13, borderColor: "rgba(249,115,22,0.35)", color: "var(--accent2)" }}>
+                  ⏩ Gen {remainingIdxs.length} slide còn lại
+                </button>
+              )}
+              <button onClick={genAll_} disabled={anyLoading} className="btn-ghost" style={{ fontSize: 13 }}>
+                ↺ Gen lại tất cả
+              </button>
+            </>
           )}
           <button
             onClick={() => {

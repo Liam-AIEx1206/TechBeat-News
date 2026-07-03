@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 from typing import AsyncGenerator
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -866,22 +866,36 @@ OUTPUT PROTOCOL:
 """
 
 
+def _resp_usage(resp) -> tuple[int, int]:
+    """(prompt_tokens, completion_tokens) từ response OpenAI-compatible, 0 nếu thiếu."""
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return 0, 0
+    try:
+        return int(getattr(u, "prompt_tokens", 0) or 0), int(getattr(u, "completion_tokens", 0) or 0)
+    except (TypeError, ValueError):
+        return 0, 0
+
+
 async def _refine_svg_visually(
     svg: str, scene: "ScenePayload", max_passes: int = 1
-) -> tuple[str, int]:
+) -> tuple[str, int, int, int]:
     """Render the SVG, let a vision model see + fix layout defects, repeat.
 
-    Returns (possibly-improved svg, passes_applied). Fully fail-soft: any render
-    or LLM hiccup returns the best SVG produced so far."""
+    Returns (possibly-improved svg, passes_applied, primary_prompt_tokens,
+    primary_completion_tokens) — token của các call rơi vào provider primary,
+    dùng tính chi phí. Fully fail-soft: any render or LLM hiccup returns the
+    best SVG produced so far."""
     import base64 as _b64
 
     try:
         renderer = _load_lib("svg_render")
     except Exception as e:
         print(f"[slides] svg_render unavailable, skip refine: {e}")
-        return svg, 0
+        return svg, 0, 0, 0
 
     applied = 0
+    prim_in = prim_out = 0
     for _ in range(max(0, max_passes)):
         measured = _measure_text_overflows(svg) + _measure_image_text_overlaps(svg)
         png = await renderer.render_svg_to_png(svg)
@@ -936,6 +950,11 @@ async def _refine_svg_visually(
             print(f"[slides] visual-refine LLM call failed: {e}")
             break
 
+        if _prov == "primary":
+            u_in, u_out = _resp_usage(resp)
+            prim_in += u_in
+            prim_out += u_out
+
         raw = (resp.choices[0].message.content or "").strip()  # type: ignore[union-attr]
         if not raw or "NO_CHANGES_NEEDED" in raw.upper()[:64]:
             break
@@ -947,7 +966,7 @@ async def _refine_svg_visually(
         svg = fixed
         applied += 1
 
-    return svg, applied
+    return svg, applied, prim_in, prim_out
 
 
 # ── /replace-slide-image ──────────────────────────────────────────────────────
@@ -1001,7 +1020,7 @@ def _refine_passes(req_value: int | None) -> int:
 
 
 @router.post("/gen-slide-one")
-async def gen_slide_one(body: GenSlideOneRequest):
+async def gen_slide_one(body: GenSlideOneRequest, request: Request):
     """Gen SVG cho 1 slide. Trả JSON {svg, sceneIndex, provider, model}."""
     if body.sceneIndex < 0 or body.sceneIndex >= len(body.scenes):
         from fastapi import HTTPException
@@ -1043,13 +1062,36 @@ async def gen_slide_one(body: GenSlideOneRequest):
     svg = _inject_scene_image(svg, scene)
     svg = _embed_icons_svg(svg)
 
+    # Token của call chính (chỉ provider primary mới tính tiền)
+    prim_in = prim_out = 0
+    if provider == "primary":
+        prim_in, prim_out = _resp_usage(resp)
+        if prim_in == 0 and prim_out == 0:  # proxy không trả usage → ước lượng
+            prim_in, prim_out = len(prompt) // 4 + len(_SVG_SYSTEM) // 4, len(raw) // 4
+
     # Visual-review loop: render → vision model sees + fixes overflow/collision → repeat.
     # This is the mechanism (à la PPT Master's visual_review) that a single LLM pass
     # cannot replace — the model literally cannot measure text width without seeing it.
     refined = 0
     passes = _refine_passes(body.refinePasses)
     if passes > 0:
-        svg, refined = await _refine_svg_visually(svg, scene, max_passes=passes)
+        svg, refined, r_in, r_out = await _refine_svg_visually(svg, scene, max_passes=passes)
+        prim_in += r_in
+        prim_out += r_out
+
+    # Ghi chi phí LLM cho user (cùng cơ chế + đơn giá với luồng video)
+    try:
+        from routers.history import get_optional_user_email, add_user_cost
+        user_email = await get_optional_user_email(request)
+        if user_email and (prim_in or prim_out):
+            cost = (prim_in * 0.005 / 1000) + (prim_out * 0.015 / 1000)
+            add_user_cost(
+                user_email, "llm", cost,
+                detail=f"slide {body.sceneIndex + 1}/{total}: {model} "
+                       f"({prim_in} prompt tokens, {prim_out} completion tokens, {refined} refine)",
+            )
+    except Exception as e:
+        print(f"[slides] ghi chi phí bỏ qua: {e}")
 
     return {
         "svg": svg, "sceneIndex": body.sceneIndex, "layout": layout_key,
@@ -1133,7 +1175,7 @@ class BuildSlidesRequest(BaseModel):
     slideFormat: str = "ppt169"  # canvas format cho pptx_builder (PPT 16:9 = 1280×720)
 
 
-async def _build_slides_stream(req: BuildSlidesRequest) -> AsyncGenerator[str, None]:
+async def _build_slides_stream(req: BuildSlidesRequest, user_email: str | None = None) -> AsyncGenerator[str, None]:
     session_id = req.sessionId or uuid.uuid4().hex[:8]
     project_root = _get_project_root(session_id)
     slides_dir = project_root / "slides"
@@ -1218,6 +1260,47 @@ async def _build_slides_stream(req: BuildSlidesRequest) -> AsyncGenerator[str, N
 
     pptx_url = f"/slides/{pptx_name}"
     file_size_mb = round(dest_path.stat().st_size / 1_048_576, 2)
+
+    # 5. Lưu lịch sử (cùng cơ chế db.json với video: per-user nếu đăng nhập)
+    try:
+        import datetime
+        global_root = _get_project_root()
+        if user_email:
+            history_dir = global_root / "history" / "users" / user_email
+            prefix = f"/static-history/users/{user_email}/"
+        else:
+            history_dir = global_root / "history"
+            prefix = "/static-history/"
+        slides_hist_dir = history_dir / "slides"
+        slides_hist_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        hist_pptx_name = f"slides_{timestamp}.pptx"
+        shutil.copy2(dest_path, slides_hist_dir / hist_pptx_name)
+
+        db_path = history_dir / "db.json"
+        history_list = []
+        if db_path.exists():
+            try:
+                history_list = json.loads(db_path.read_text(encoding="utf-8"))
+            except Exception:
+                history_list = []
+        history_list.insert(0, {
+            "id": timestamp,
+            "title": req.title,
+            "type": "slide",
+            "pptx_url": f"{prefix}slides/{hist_pptx_name}",
+            "slide_count": total,
+            "html_url": "",
+            "video_url": "",
+            "duration": 0,
+            "created_at": datetime.datetime.now().isoformat(),
+        })
+        db_path.write_text(json.dumps(history_list, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[history] Saved slide deck snapshot {timestamp} under {history_dir}")
+    except Exception as he:
+        print(f"[history ERROR] Failed to save slide history: {he}")
+
     yield sse({
         "type": "done",
         "pptxUrl": pptx_url,
@@ -1228,9 +1311,11 @@ async def _build_slides_stream(req: BuildSlidesRequest) -> AsyncGenerator[str, N
 
 
 @router.post("/build-slides")
-async def build_slides(body: BuildSlidesRequest):
+async def build_slides(body: BuildSlidesRequest, request: Request):
+    from routers.history import get_optional_user_email
+    user_email = await get_optional_user_email(request)
     return StreamingResponse(
-        _build_slides_stream(body),
+        _build_slides_stream(body, user_email=user_email),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

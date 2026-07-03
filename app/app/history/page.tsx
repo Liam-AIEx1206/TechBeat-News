@@ -15,6 +15,10 @@ interface HistoryItem {
   error?: string;
   log_url?: string;
   rendered_by?: string;
+  /* Slide deck entries (type === "slide") */
+  type?: string;
+  pptx_url?: string;
+  slide_count?: number;
 }
 
 interface AdminUser {
@@ -503,8 +507,11 @@ export default function HistoryPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       {items.map((item, idx) => {
                         const isFailed = item.status === "failed";
+                        const isSlide = item.type === "slide";
                         const videoUrl = item.video_url || "";
                         const videoFullUrl = videoUrl.startsWith("http") ? videoUrl : (videoUrl ? `${API}${videoUrl}` : "");
+                        const pptxUrl = item.pptx_url || "";
+                        const pptxFullUrl = pptxUrl.startsWith("http") ? pptxUrl : (pptxUrl ? `${API}${pptxUrl}` : "");
                         
                         return (
                           <motion.div
@@ -553,11 +560,37 @@ export default function HistoryPage() {
                             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                               {!isFailed && (
                                 <div className="badge badge-accent" style={{ background: "rgba(255,255,255,0.03)", borderColor: "var(--gray-3)", color: "var(--gray-6)" }}>
-                                  {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
+                                  {isSlide
+                                    ? `${item.slide_count ?? "?"} slide · PPTX`
+                                    : `${Math.floor(item.duration / 60)}:${(item.duration % 60).toString().padStart(2, '0')}`}
                                 </div>
                               )}
 
-                              {!isFailed && videoFullUrl && (
+                              {!isFailed && isSlide && pptxFullUrl && (
+                                <button
+                                  onClick={async () => {
+                                    // fetch→blob: tránh navigation (dialog Leave site) và ép đúng tên file
+                                    try {
+                                      const res = await fetch(pptxFullUrl);
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `${item.title.replace(/[\\/:*?"<>|]/g, "_")}.pptx`;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      a.remove();
+                                      setTimeout(() => URL.revokeObjectURL(url), 5000);
+                                    } catch { window.open(pptxFullUrl, "_blank"); }
+                                  }}
+                                  className="btn-primary"
+                                  style={{ padding: "8px 16px", fontSize: 11, background: "var(--accent)", color: "var(--black)" }}
+                                >
+                                  <span>⬇ Tải PPTX</span>
+                                </button>
+                              )}
+
+                              {!isFailed && !isSlide && videoFullUrl && (
                                 <button
                                   onClick={() => {
                                     setActiveVideoUrl(videoFullUrl);
