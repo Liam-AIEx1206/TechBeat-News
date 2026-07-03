@@ -19,11 +19,14 @@ interface Props {
   initialQuery: string;
   onClose: () => void;
   onPick: (url: string) => void;
+  /** Ẩn nút "Không dùng ảnh" — dùng khi picker chỉ phục vụ THAY ảnh
+   *  (vd. SlidePreviewStage), nơi bỏ ảnh hoàn toàn không phải use-case. */
+  hideRemoveOption?: boolean;
 }
 
 type Tab = "search" | "upload";
 
-export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
+export function ImagePicker({ open, initialQuery, onClose, onPick, hideRemoveOption }: Props) {
   const [tab, setTab]         = useState<Tab>("search");
   const [query, setQuery]     = useState(initialQuery);
   const [loading, setLoading] = useState(false);
@@ -124,15 +127,17 @@ export function ImagePicker({ open, initialQuery, onClose, onPick }: Props) {
             <h3 className="text-sm font-bold" style={{ color: "var(--text-1)" }}>Chọn ảnh cho phân cảnh</h3>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => { onPick(""); onClose(); }}
-              className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
-              style={{ border: "1px solid rgba(248,113,113,0.25)", color: "var(--red)", background: "transparent" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.08)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              Không dùng ảnh
-            </button>
+            {!hideRemoveOption && (
+              <button
+                onClick={() => { onPick(""); onClose(); }}
+                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
+                style={{ border: "1px solid rgba(248,113,113,0.25)", color: "var(--red)", background: "transparent" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.08)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                Không dùng ảnh
+              </button>
+            )}
             <button onClick={onClose} className="btn-ghost text-xs px-3 py-1.5">✕ Đóng</button>
           </div>
         </div>

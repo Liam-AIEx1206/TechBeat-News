@@ -191,6 +191,10 @@ You cannot see your output, so budget text conservatively. Rough width: a glyph 
   (icon right edge + 12px ≤ text x). An icon overlapping the title is a hard failure.
 • Every element's bounding box stays within 0–1280 × 0–720, honoring the safe margins.
 • Body lines in a column: wrap so no line exceeds the column width; 2–4 short lines beat 1 wide line.
+• IMAGE ↔ TEXT (hard wall): compute the <image>'s bounding box FIRST, then keep every text line's
+  estimated bbox (see width formula above) fully outside it with ≥20px clearance. When a layout puts
+  text beside an image, treat the image's near edge as a column boundary — wrap text before reaching it,
+  never let it run underneath the image.
 
 ═══════════ IMAGE PLACEMENT (only when brief has IMAGE ASSET) ═══════════
 <image href="__SLIDE_IMAGE__" x=".." y=".." width=".." height=".." preserveAspectRatio="xMidYMid slice"
@@ -278,10 +282,17 @@ _LAYOUTS: dict[str, str] = {
 - NO bullet lists on the cover. Generous whitespace is the point""",
 
     "split_asym": """LAYOUT: ASYMMETRIC SPLIT (3:7 or 4:6) — editorial content page
-- LEFT narrow column (~380–450px): kicker + slide title 54–60px bold (2–3 lines), short lead 26–28px TEXT2,
-  vertical accent bar 4–6px full column height at x=80, slide number ghost digit bottom-left
-- RIGHT wide zone: the substance — 2–4 content blocks, each = icon in tinted container + bold label 30–32px + 1–2 lines 26px TEXT2
-  OR (if IMAGE ASSET given) a large rounded image panel (rx=20, slice) with a caption chip overlapping its bottom edge
+- LEFT column x=80 to x=600 (width EXACTLY 520px, hard boundary): kicker + slide title 54–60px bold
+  (2–3 lines), short lead 26–28px TEXT2, vertical accent bar 4–6px full column height at x=80,
+  slide number ghost digit bottom-left. EVERY text line in this column — title, lead, block labels,
+  block descriptions — MUST wrap so its right edge stays ≤ x=580 (100px gap before the image/right zone
+  starts at x=700). Never let a line run the text-column width past this boundary — that is what makes
+  text collide with the image; wrap earlier / shorten instead.
+- RIGHT zone x=700 to x=1200 (500px): EITHER 2–4 content blocks (icon in tinted container + bold label
+  30–32px + 1–2 lines 26px TEXT2, all confined to x=700–1200) OR — if IMAGE ASSET given — a large rounded
+  image panel (rx=20, slice, spanning this exact x=700–1200 zone) with a caption chip overlapping its
+  bottom edge. The image panel's left edge (x=700) is a hard wall: no text from the left column may
+  cross it, and the image itself never extends left of x=700 into the text column.
 - Blocks separated by whitespace or 1px rules (12% opacity), NOT four identical boxes — vary block heights with content
 - Footer: thin rule + deck title 16px TEXT2 left, page number right""",
 
@@ -593,6 +604,84 @@ def _attr_f(attrs: str, name: str) -> float | None:
         return None
 
 
+class _TextLine:
+    __slots__ = ("x", "y", "font_size", "anchor", "text")
+
+    def __init__(self, x: float, y: float, font_size: float, anchor: str, text: str):
+        self.x, self.y, self.font_size, self.anchor, self.text = x, y, font_size, anchor, text
+
+    @property
+    def left(self) -> float:
+        est = self.est_width
+        return self.x - est if self.anchor == "end" else self.x - est / 2 if self.anchor == "middle" else self.x
+
+    @property
+    def est_width(self) -> float:
+        return len(self.text) * self.font_size * 0.58
+
+    @property
+    def right(self) -> float:
+        return self.left + self.est_width
+
+    @property
+    def top(self) -> float:
+        return self.y - self.font_size * 0.8  # ascent chiếm phần lớn chiều cao chữ
+
+    @property
+    def bottom(self) -> float:
+        return self.y + self.font_size * 0.25  # descent nhỏ
+
+    @property
+    def snippet(self) -> str:
+        return self.text[:36] + ("…" if len(self.text) > 36 else "")
+
+
+def _extract_text_lines(svg: str) -> list[_TextLine]:
+    """Trích mọi dòng chữ THẬT (bỏ ghost trang trí fill-opacity≤0.3) thành các
+    _TextLine có bbox ước lượng — dùng chung cho overflow-check và overlap-check.
+    """
+    lines: list[_TextLine] = []
+    for m in _RE_TEXT_EL.finditer(svg):
+        attrs, inner = m.group(1), m.group(2)
+        fo = _attr_f(attrs, "fill-opacity")
+        if fo is not None and fo <= 0.3:
+            continue  # ghost trang trí — không tính là nội dung thật
+        fs = _attr_f(attrs, "font-size") or 24.0
+        anchor_m = re.search(r'text-anchor="(\w+)"', attrs)
+        anchor = anchor_m.group(1) if anchor_m else "start"
+        base_x = _attr_f(attrs, "x") or 0.0
+        base_y = _attr_f(attrs, "y") or 0.0
+
+        # Dựng danh sách dòng logic. Quy tắc:
+        #  • text trực tiếp trước tspan đầu tiên = dòng đầu (tại base_x)
+        #  • tspan có x hoặc dy → xuống DÒNG MỚI (x = tspan.x hoặc base_x)
+        #  • tspan không x không dy → NỐI TIẾP dòng hiện tại (cộng độ dài)
+        raw: list[list] = []  # [x, y, font-size, text]
+        direct = re.sub(r'<tspan\b.*?</tspan>', '', inner, flags=re.IGNORECASE | re.DOTALL)
+        direct = re.sub(r'<[^>]+>', '', direct).strip()
+        if direct:
+            raw.append([base_x, base_y, fs, direct])
+        cur_y = base_y
+        for tm in _RE_TSPAN.finditer(inner):
+            ta, ttxt = tm.group(1), re.sub(r'<[^>]+>', '', tm.group(2)).strip()
+            if not ttxt:
+                continue
+            tx = _attr_f(ta, "x")
+            tdy = _attr_f(ta, "dy")
+            has_dy = tdy is not None
+            tfs = _attr_f(ta, "font-size") or fs
+            if has_dy:
+                cur_y += tdy  # type: ignore[operator]
+            if tx is not None or has_dy or not raw:
+                raw.append([tx if tx is not None else base_x, cur_y, tfs, ttxt])
+            else:
+                raw[-1][3] += ttxt  # cùng dòng — cộng dồn để đo tổng bề rộng
+
+        for lx, ly, lfs, ltext in raw:
+            lines.append(_TextLine(lx, ly, lfs, anchor, ltext))
+    return lines
+
+
 def _measure_text_overflows(svg: str) -> list[str]:
     """Trả về danh sách mô tả các dòng chữ tràn mép (canvas hoặc card)."""
     containers: list[tuple[float, float, float, float]] = []
@@ -604,55 +693,48 @@ def _measure_text_overflows(svg: str) -> list[str]:
             containers.append((x, y, w, h))
 
     issues: list[str] = []
-    for m in _RE_TEXT_EL.finditer(svg):
-        attrs, inner = m.group(1), m.group(2)
-        fo = _attr_f(attrs, "fill-opacity")
-        if fo is not None and fo <= 0.3:
-            continue  # ghost trang trí — được phép tràn
-        fs = _attr_f(attrs, "font-size") or 24.0
-        anchor_m = re.search(r'text-anchor="(\w+)"', attrs)
-        anchor = anchor_m.group(1) if anchor_m else "start"
-        base_x = _attr_f(attrs, "x") or 0.0
-        base_y = _attr_f(attrs, "y") or 0.0
-
-        # Dựng danh sách dòng logic. Quy tắc:
-        #  • text trực tiếp trước tspan đầu tiên = dòng đầu (tại base_x)
-        #  • tspan có x hoặc dy → xuống DÒNG MỚI (x = tspan.x hoặc base_x)
-        #  • tspan không x không dy → NỐI TIẾP dòng hiện tại (cộng độ dài)
-        lines: list[list] = []  # [x, font-size, text]
-        direct = re.sub(r'<tspan\b.*?</tspan>', '', inner, flags=re.IGNORECASE | re.DOTALL)
-        direct = re.sub(r'<[^>]+>', '', direct).strip()
-        if direct:
-            lines.append([base_x, fs, direct])
-        for tm in _RE_TSPAN.finditer(inner):
-            ta, ttxt = tm.group(1), re.sub(r'<[^>]+>', '', tm.group(2)).strip()
-            if not ttxt:
-                continue
-            tx = _attr_f(ta, "x")
-            tdy = _attr_f(ta, "dy")
-            has_dy = tdy is not None or re.search(r'dy="[^"]+"', ta) is not None
-            tfs = _attr_f(ta, "font-size") or fs
-            if tx is not None or has_dy or not lines:
-                lines.append([tx if tx is not None else base_x, tfs, ttxt])
-            else:
-                lines[-1][2] += ttxt  # cùng dòng — cộng dồn để đo tổng bề rộng
-
-        for lx, lfs, ltext in lines:
-            est = len(ltext) * lfs * 0.58
-            left = lx - est if anchor == "end" else lx - est / 2 if anchor == "middle" else lx
-            right = left + est
-            snippet = ltext[:36] + ("…" if len(ltext) > 36 else "")
-            if right > 1272 or left < 8:
-                issues.append(f'"{snippet}" (font {lfs:.0f}px) tràn mép canvas (ước right≈{right:.0f})')
-                continue
-            inside = [c for c in containers if c[0] <= lx <= c[0] + c[2] and c[1] <= base_y <= c[1] + c[3]]
-            if inside:
-                c = min(inside, key=lambda r: r[2] * r[3])
-                if right > c[0] + c[2] - 8:
-                    issues.append(
-                        f'"{snippet}" (font {lfs:.0f}px) tràn mép phải card (card right={c[0]+c[2]:.0f}, text right≈{right:.0f})'
-                    )
+    for line in _extract_text_lines(svg):
+        if line.right > 1272 or line.left < 8:
+            issues.append(f'"{line.snippet}" (font {line.font_size:.0f}px) tràn mép canvas (ước right≈{line.right:.0f})')
+            continue
+        inside = [c for c in containers if c[0] <= line.x <= c[0] + c[2] and c[1] <= line.y <= c[1] + c[3]]
+        if inside:
+            c = min(inside, key=lambda r: r[2] * r[3])
+            if line.right > c[0] + c[2] - 8:
+                issues.append(
+                    f'"{line.snippet}" (font {line.font_size:.0f}px) tràn mép phải card '
+                    f'(card right={c[0]+c[2]:.0f}, text right≈{line.right:.0f})'
+                )
     return issues[:10]
+
+
+_RE_IMAGE_TAG = re.compile(r'<image\b([^>]*)>', re.IGNORECASE)
+
+
+def _measure_image_text_overlaps(svg: str) -> list[str]:
+    """Trả về danh sách mô tả chữ bị ảnh (<image>) đè lên — bug slide 2 của
+    user: cột chữ tràn vào vùng ảnh vì model không chừa đủ khoảng trống."""
+    images: list[tuple[float, float, float, float]] = []
+    for m in _RE_IMAGE_TAG.finditer(svg):
+        a = m.group(1)
+        x, y = _attr_f(a, "x") or 0.0, _attr_f(a, "y") or 0.0
+        w, h = _attr_f(a, "width"), _attr_f(a, "height")
+        if w and h:
+            images.append((x, y, w, h))
+    if not images:
+        return []
+
+    issues: list[str] = []
+    for line in _extract_text_lines(svg):
+        for ix, iy, iw, ih in images:
+            # AABB overlap giữa bbox chữ và bbox ảnh
+            if line.right > ix + 4 and line.left < ix + iw - 4 and line.bottom > iy + 4 and line.top < iy + ih - 4:
+                issues.append(
+                    f'"{line.snippet}" (font {line.font_size:.0f}px, y={line.y:.0f}) bị ảnh đè lên '
+                    f'(ảnh vùng x={ix:.0f}-{ix+iw:.0f}, y={iy:.0f}-{iy+ih:.0f}) — thu hẹp cột chữ hoặc dịch/thu nhỏ ảnh'
+                )
+                break
+    return issues[:8]
 
 
 def _inject_scene_image(svg: str, scene: "ScenePayload") -> str:
@@ -801,7 +883,7 @@ async def _refine_svg_visually(
 
     applied = 0
     for _ in range(max(0, max_passes)):
-        measured = _measure_text_overflows(svg)
+        measured = _measure_text_overflows(svg) + _measure_image_text_overlaps(svg)
         png = await renderer.render_svg_to_png(svg)
         if not png:
             # Nói to lên: thiếu render là mất tầng QA thị giác — thường do
@@ -866,6 +948,35 @@ async def _refine_svg_visually(
         applied += 1
 
     return svg, applied
+
+
+# ── /replace-slide-image ──────────────────────────────────────────────────────
+# Thay MỘT ảnh trong SVG đã sinh mà KHÔNG gọi LLM — giữ nguyên chữ/layout/icon.
+# Dùng khi user không ưng ảnh auto-pick và tự chọn ảnh khác từ ImagePicker.
+
+_RE_FIRST_IMAGE_HREF = re.compile(
+    r'(<image\b[^>]*?(?:xlink:)?href=")([^"]*)(")', re.IGNORECASE
+)
+
+
+class ReplaceSlideImageRequest(BaseModel):
+    svg: str
+    newImageUrl: str
+
+
+@router.post("/replace-slide-image")
+async def replace_slide_image(body: ReplaceSlideImageRequest):
+    """Swap href của <image> đầu tiên trong SVG, không đụng chữ/icon/layout.
+
+    replaced=False khi SVG chưa có khung ảnh (layout không có <image>) — lúc đó
+    frontend phải regen thật để model vẽ ra một khung ảnh trong bố cục.
+    """
+    m = _RE_FIRST_IMAGE_HREF.search(body.svg)
+    if not m:
+        return {"svg": body.svg, "replaced": False}
+    escaped = body.newImageUrl.replace("&", "&amp;")
+    new_svg = body.svg[: m.start()] + m.group(1) + escaped + m.group(3) + body.svg[m.end():]
+    return {"svg": new_svg, "replaced": True}
 
 
 class GenSlideOneRequest(BaseModel):

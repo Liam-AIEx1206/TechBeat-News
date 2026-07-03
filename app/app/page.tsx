@@ -21,7 +21,7 @@ import {
   ClipReveal,
 } from "@/components/StageTransition";
 import { motion } from "motion/react";
-import { Palette, Mic } from "lucide-react";
+import { Palette, Mic, LayoutGrid } from "lucide-react";
 import type { ExtractedContent, ScenePlan, ThemeId } from "@/types/scene";
 import { DEFAULT_THEME, getTheme, THEMES } from "@/types/scene";
 
@@ -1531,6 +1531,7 @@ function PreviewStage({
 }) {
   const themeId: ThemeId = scenePlan.theme ?? DEFAULT_THEME;
   const theme = getTheme(themeId);
+  const isSlideOutput = scenePlan.outputType === "slide";
 
   return (
     <div style={{ position: "relative", minHeight: "100vh" }}>
@@ -1557,15 +1558,17 @@ function PreviewStage({
               boxShadow: `0 12px 32px -4px ${theme.accent}99`,
             }}
           >
-            <span>→ Xem trước HTML</span>
+            {isSlideOutput
+              ? <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><LayoutGrid size={16} /> Xem trước Slide →</span>
+              : <span>→ Xem trước HTML</span>}
           </button>
         </div>
       </div>
 
-      {/* Theme + Voice split layout */}
+      {/* Theme (+ Voice, chỉ luồng video) split layout */}
       <div className="fade-up" style={{ display: "flex", gap: 16, marginBottom: 32, alignItems: "stretch" }}>
 
-        {/* Left: Theme picker */}
+        {/* Theme picker — full width ở luồng slide (không cần giọng đọc) */}
         <div style={{
           flex: 1, minWidth: 0,
           background: "radial-gradient(ellipse at 70% 20%, #0e0906 0%, #080808 60%)",
@@ -1590,7 +1593,9 @@ function PreviewStage({
                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
               }}><Palette size={15} color="var(--accent)" /></div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)" }}>Theme Video</div>
+                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)" }}>
+                  {isSlideOutput ? "Theme Slide" : "Theme Video"}
+                </div>
                 <div style={{ fontSize: 10, color: "var(--gray-5)", marginTop: 1 }}>Chọn bảng màu cho slide</div>
               </div>
             </div>
@@ -1606,7 +1611,8 @@ function PreviewStage({
           </div>
         </div>
 
-        {/* Right: Voice picker */}
+        {/* Voice picker — chỉ hiện ở luồng video, slide không cần TTS */}
+        {!isSlideOutput && (
         <div style={{
           flex: 1, minWidth: 0,
           background: "radial-gradient(ellipse at 30% 20%, #06080e 0%, #080808 60%)",
@@ -1646,6 +1652,7 @@ function PreviewStage({
             />
           </div>
         </div>
+        )}
 
       </div>
 

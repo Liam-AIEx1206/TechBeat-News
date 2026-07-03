@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import type { ScenePlan } from "@/types/scene";
+import type { ScenePlan, Scene } from "@/types/scene";
 import { getTheme } from "@/types/scene";
+import { ImagePicker } from "@/components/ImagePicker";
+import { ImageIcon } from "lucide-react";
 
 interface Props {
   scenePlan: ScenePlan;
@@ -41,8 +43,15 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
   const endpoint = process.env.NODE_ENV === "development"
     ? `${API}/gen-slide-one`
     : `/api/proxy/gen-slide-one`;
+  const replaceImageEndpoint = process.env.NODE_ENV === "development"
+    ? `${API}/replace-slide-image`
+    : `/api/proxy/replace-slide-image`;
 
-  const genSlide = useCallback(async (idx: number, abort?: AbortSignal) => {
+  // scenesOverride: dùng khi vừa đổi 1 field (vd. imageUrl) và cần regen NGAY
+  // bằng giá trị mới — setScenePlan là async nên đọc từ closure scenePlan.scenes
+  // ngay sau khi gọi setScenePlan sẽ dính giá trị CŨ.
+  const genSlide = useCallback(async (idx: number, abort?: AbortSignal, scenesOverride?: Scene[]) => {
+    const scenes = scenesOverride ?? scenePlan.scenes;
     setGenStates(p => { const n = [...p]; n[idx] = "loading"; return n; });
     setErrors(p => { const n = [...p]; n[idx] = null; return n; });
     try {
@@ -51,7 +60,7 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: scenePlan.title,
-          scenes: scenePlan.scenes,
+          scenes,
           totalDuration: scenePlan.totalDuration,
           theme: scenePlan.theme,
           sceneIndex: idx,
@@ -75,6 +84,48 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
       setGenStates(p => { const n = [...p]; n[idx] = "error"; return n; });
     }
   }, [scenePlan, endpoint]);
+
+  // ── Đổi ảnh: KHÔNG regen nội dung nếu slide đã có khung ảnh sẵn ──────────
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [imageSwapping, setImageSwapping] = useState(false);
+  const activeSvg = svgs[activeIdx];
+  const activeHasImage = !!activeSvg && /<image\b/i.test(activeSvg);
+
+  async function handleImagePick(url: string) {
+    if (!url) return; // hideRemoveOption=true nên nhánh này thực tế không kích hoạt
+    if (activeHasImage && activeSvg) {
+      // Swap nhẹ: chỉ đổi href, giữ nguyên chữ/icon/layout đã sinh — không gọi LLM.
+      setImageSwapping(true);
+      try {
+        const res = await fetch(replaceImageEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ svg: activeSvg, newImageUrl: url }),
+        });
+        if (!res.ok) throw new Error((await res.json()).detail ?? "Lỗi đổi ảnh");
+        const data = await res.json();
+        if (data.replaced) {
+          setSvgs(prev => {
+            const next = [...prev];
+            next[activeIdx] = data.svg;
+            saveSvgCache(scenePlan.title, next);
+            return next;
+          });
+        }
+      } catch (err) {
+        setErrors(p => { const n = [...p]; n[activeIdx] = err instanceof Error ? err.message : "Lỗi đổi ảnh"; return n; });
+      } finally {
+        setImageSwapping(false);
+      }
+    } else {
+      // Slide chưa có khung ảnh — không thể "chỉ thay vị trí ảnh" vì chưa có
+      // vị trí nào cả. Gán imageUrl vào scene rồi regen ĐÚNG slide này để
+      // model vẽ ra bố cục có ảnh.
+      const nextScenes = scenePlan.scenes.map((s, i) => i === activeIdx ? { ...s, imageUrl: url } : s);
+      setScenePlan({ ...scenePlan, scenes: nextScenes });
+      genSlide(activeIdx, undefined, nextScenes);
+    }
+  }
 
   async function genAll_() {
     abortRef.current?.abort();
@@ -229,6 +280,29 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
             />
           </div>
 
+          {/* Ảnh minh họa */}
+          {svgs[activeIdx] && (
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gray-5)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Ảnh minh họa
+              </div>
+              <button
+                onClick={() => setImagePickerOpen(true)}
+                disabled={imageSwapping}
+                className="btn-ghost"
+                style={{ width: "100%", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: imageSwapping ? 0.6 : 1 }}
+              >
+                <ImageIcon size={14} />
+                {imageSwapping ? "Đang đổi ảnh..." : activeHasImage ? "Đổi ảnh khác" : "Thêm ảnh cho slide"}
+              </button>
+              <div style={{ fontSize: 10, color: "var(--gray-6)", marginTop: 6, lineHeight: 1.5 }}>
+                {activeHasImage
+                  ? "Chỉ thay vị trí ảnh — chữ và bố cục giữ nguyên, không cần regen."
+                  : "Slide này chưa có khung ảnh — chọn ảnh sẽ regen lại slide để thêm khung."}
+              </div>
+            </div>
+          )}
+
           {/* Error */}
           {errors[activeIdx] && (
             <div style={{ padding: "8px 12px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 11, color: "#ef4444" }}>
@@ -251,6 +325,14 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
           </div>
         </div>
       </div>
+
+      <ImagePicker
+        open={imagePickerOpen}
+        initialQuery={scenePlan.scenes[activeIdx]?.imageQuery || scenePlan.scenes[activeIdx]?.title || ""}
+        onClose={() => setImagePickerOpen(false)}
+        onPick={handleImagePick}
+        hideRemoveOption
+      />
     </div>
   );
 }
