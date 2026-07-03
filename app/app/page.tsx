@@ -229,6 +229,7 @@ export default function Home() {
           content: content.text,
           title: content.title,
           videoDuration: content.videoDuration,
+          outputType: content.outputType ?? "video",
         }),
         signal: abort.signal,
       });

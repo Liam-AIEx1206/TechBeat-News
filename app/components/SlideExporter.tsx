@@ -268,13 +268,27 @@ export function SlideExporter({ scenePlan, onBack }: Props) {
             {scenePlan.title}<span style={{ color: "var(--gray-5)", fontWeight: 400 }}>.pptx</span>
           </div>
           <div style={{ fontSize: 12, color: "var(--gray-5)" }}>
-            File PPTX với native DrawingML shapes — có thể chỉnh sửa trực tiếp trong PowerPoint / Keynote / LibreOffice.
+            File PPTX với native DrawingML shapes — có thể chỉnh sửa trực tiếp trong PowerPoint / Keynote / LibreOffice / Canva.
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a href={fullPptxUrl} download className="btn-ghost" style={{ textDecoration: "none", fontSize: 13 }}>⬇ Tải xuống</a>
-            <a href={fullPptxUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
-              <span>↗ Mở tab mới</span>
+            <a href={fullPptxUrl} download className="btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
+              <span>⬇ Tải xuống PPTX</span>
             </a>
+            {/* Browser không render được .pptx — "mở tab mới" chỉ tải lại file.
+                Xem online cần Office viewer của Microsoft, và viewer đó phải
+                tải được file → chỉ hoạt động khi app deploy public (không
+                phải localhost). */}
+            {typeof window !== "undefined" && !/^(localhost|127\.|192\.168\.|10\.)/.test(window.location.hostname) && (
+              <a
+                href={`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(new URL(fullPptxUrl, window.location.origin).href)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-ghost"
+                style={{ textDecoration: "none", fontSize: 13 }}
+              >
+                ↗ Xem online (PowerPoint)
+              </a>
+            )}
           </div>
         </div>
       )}

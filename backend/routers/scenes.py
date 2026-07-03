@@ -204,25 +204,71 @@ class ScenesRequest(BaseModel):
     content: str
     title: str
     videoDuration: int | None = None
+    outputType: str | None = None  # "video" (mặc định) | "slide"
+
+
+def build_slide_directive(word_count: int, char_count: int, is_short: bool) -> str:
+    """Chỉ thị kịch bản cho ĐẦU RA SLIDE (PPTX) — số slide theo nội dung,
+    không theo thời lượng video. Mỗi scene = 1 slide."""
+    if is_short:
+        depth_rule = (
+            f"- NỘI DUNG GỐC NGẮN ({word_count} từ — link báo / gợi ý chủ đề): đóng vai biên tập viên, "
+            f"LÀM GIÀU nội dung — mỗi khía cạnh khai triển thành slide riêng (bối cảnh → chi tiết chính → "
+            f"số liệu/thông số → ví dụ thực tế → tác động/ý nghĩa). Mục tiêu 10–16 slide nội dung có chiều sâu, "
+            f"không bịa số liệu quan trọng nếu nội dung gốc không có — dùng bối cảnh ngành thay thế.\n"
+        )
+    else:
+        depth_rule = (
+            f"- NỘI DUNG GỐC DÀI ({word_count} từ): TUYỆT ĐỐI KHÔNG TÓM TẮT. Phủ 100% nội dung theo đúng "
+            f"trình tự tài liệu gốc, không lược bỏ số liệu / mốc thời gian / tên riêng / thông số nào. "
+            f"Số slide KHÔNG GIỚI HẠN — nội dung cần bao nhiêu slide thì tạo bấy nhiêu.\n"
+        )
+    return (
+        "\n\n⚠️ ĐẦU RA LÀ SLIDE THUYẾT TRÌNH (PPTX) — KHÔNG PHẢI VIDEO (BẮT BUỘC TUÂN THỦ):\n"
+        "- Không có giọng đọc hay thời lượng. Trường \"narration\" = nội dung cốt lõi slide đó sẽ trình bày "
+        "(40–70 từ tiếng Việt, trọn vẹn MỘT ý — người thiết kế slide sẽ chuyển thành bullet/số liệu/bố cục).\n"
+        "- CẤU TRÚC DECK: Scene đầu = slide mở đầu (hook + khái quát); scene cuối = slide kết luận/tác động. "
+        "Ở giữa: chia nội dung thành các PHẦN LỚN rõ ràng, mỗi phần triển khai thành 2–4 slide tuỳ độ giàu "
+        "nội dung của phần đó — mỗi slide đúng MỘT ý nhỏ trọn vẹn, không nhồi nhiều ý vào một slide.\n"
+        + depth_rule +
+        "- Tiêu đề mỗi slide ngắn gọn (3–7 từ), các slide cùng một phần lớn nên có tiêu đề liên quan nhau "
+        "để deck có mạch kể.\n"
+        "- \"duration\" mỗi scene đặt 15 (giá trị kỹ thuật, không có ý nghĩa hiển thị); "
+        "totalDuration = 15 × số scene.\n"
+        "- Vẫn giữ nguyên schema JSON hiện tại (title, scenes[], totalDuration...)."
+    )
 
 
 def sse(data: dict) -> str:
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-async def stream_scenes(content: str, title: str, video_duration: int | None = None):
+async def stream_scenes(content: str, title: str, video_duration: int | None = None,
+                        output_type: str | None = None):
     from middleware.concurrency import limiter
-    
+
+    is_slide = (output_type == "slide")
+
     async with limiter._llm_sem:
         full_text = ""
         groq_max = int(os.getenv("GROQ_MAX_SCENES", "5"))
+        if is_slide:
+            # Slide mode không bị trần thời lượng — cho phép deck dài hơn hẳn
+            # kể cả khi rơi xuống Groq fallback.
+            groq_max = max(groq_max, 16)
 
-        # Detect short content (less than 60 words or 300 chars)
+        # Detect short content — slide mode dùng ngưỡng rộng hơn: một bài báo
+        # ~400-500 từ vẫn là "ngắn" với một deck slide (cần làm giàu), trong
+        # khi tài liệu dán dài mới cần chế độ phủ-100%-không-tóm-tắt.
         word_count = len(content.strip().split())
         char_count = len(content.strip())
         is_short_prompt = word_count < 60 or char_count < 300
+        is_short_for_slides = word_count < 600 or char_count < 4000
 
-        if is_short_prompt:
+        if is_slide:
+            # Slide không có khái niệm thời lượng — vô hiệu mọi logic duration.
+            video_duration = None
+        elif is_short_prompt:
             # Force at least 1-minute duration for short contents/prompts
             if video_duration is None or video_duration < 60:
                 video_duration = 60
@@ -239,7 +285,9 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
                 f"Nội dung:\n{content}"
             )
 
-            if is_short_prompt:
+            if is_slide:
+                prompt += build_slide_directive(word_count, char_count, is_short_for_slides)
+            elif is_short_prompt:
                 prompt += (
                     f"\n\n⚠️ NỘI DUNG CUNG CẤP RẤT NGẮN ({word_count} từ, {char_count} ký tự) HOẶC LÀ GỢI Ý CHỦ ĐỀ.\n"
                     f"- Bạn BẮT BUỘC phải đóng vai trò là một biên tập viên tin tức, tự động phát triển, mở rộng ý và viết kịch bản chi tiết dựa trên gợi ý ngắn này.\n"
@@ -247,7 +295,7 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
                     f"- Tuyệt đối KHÔNG viết tóm tắt ngắn ngủn. Phải viết đủ dài để đạt đúng thời lượng."
                 )
 
-            if video_duration and video_duration > 0:
+            if not is_slide and video_duration and video_duration > 0:
                 if video_duration <= 60:
                     n_scenes = "exactly 4"
                     words_per_scene = "45-55"
@@ -268,7 +316,7 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
                     f"Narration súc tích nhưng đầy đủ thông tin, KHÔNG lan man, viết vừa đủ dài để đạt đúng thời lượng yêu cầu. "
                     f"Nếu viết quá ngắn, video sẽ bị thiếu thời lượng trầm trọng (ví dụ 1 phút but chỉ có 35s). Đây là yêu cầu TUYỆT ĐỐI."
                 )
-            elif video_duration == -1:
+            elif not is_slide and video_duration == -1:
                 prompt += (
                     f"\n\n⚠️ YÊU CẦU ĐẶC BIỆT (KHÔNG TÓM TẮT - KHÔNG GIỚI HẠN THỜI LƯỢNG):\n"
                     f"- BẮT BUỘC tạo Phân cảnh 1 (Scene 1) là Phân cảnh Intro (Giới thiệu/Khái quát) dài khoảng 1-2 phút (từ 150 đến 250 từ narration) khái quát toàn bộ nội dung chính sẽ nói trong video được sinh ra từ tư liệu người dùng. Kịch bản phần intro này do AI tự thiết kế, viết một cách lôi cuốn, sinh động nhất.\n"
@@ -335,7 +383,7 @@ async def stream_scenes(content: str, title: str, video_duration: int | None = N
 @router.post("/generate-scenes")
 async def generate_scenes(body: ScenesRequest):
     return StreamingResponse(
-        stream_scenes(body.content, body.title, body.videoDuration),
+        stream_scenes(body.content, body.title, body.videoDuration, body.outputType),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
