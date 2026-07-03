@@ -544,17 +544,29 @@ async def _auto_pick_image(scene: "ScenePayload") -> str | None:
         async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
             r = await client.get(
                 "https://api.openverse.org/v1/images/",
-                params={"q": query, "page_size": 10, "mature": "false"},
+                params={"q": query, "page_size": 20, "mature": "false"},
                 headers={"User-Agent": "TechBeat/1.0 (slide-gen)", "Accept": "application/json"},
             )
             if r.status_code == 200:
+                # Openverse (ảnh CC/Flickr) khớp ngữ nghĩa yếu — phải gate bằng
+                # relevance: từ khóa của query phải xuất hiện trong title/tags.
+                # Ảnh lạc đề còn tệ hơn không có ảnh (visual native đã đẹp sẵn).
+                q_tokens = {t for t in re.findall(r"[a-z]{4,}", query.lower())}
+                best: tuple[int, int, str] | None = None  # (score, width, url)
                 for it in r.json().get("results", []):
                     w, h, u = it.get("width") or 0, it.get("height") or 0, it.get("url")
-                    if not u:
+                    if not u or w < 640 or (h and w < h * 0.75):
                         continue
-                    if w >= 640 and (h == 0 or w >= h * 0.75):  # đủ nét, không quá dọc
-                        url = u
-                        break
+                    hay = (it.get("title") or "").lower() + " " + " ".join(
+                        (t.get("name") or "") for t in (it.get("tags") or [])
+                    ).lower()
+                    score = sum(1 for t in q_tokens if t in hay)
+                    if score >= 1 and (best is None or (score, w) > (best[0], best[1])):
+                        best = (score, w, u)
+                if best:
+                    url = best[2]
+                else:
+                    print(f"[slides] auto-image: '{query[:50]}' — không ảnh nào đủ liên quan, dùng visual native")
     except Exception as e:
         print(f"[slides] auto-image bỏ qua ({query[:40]}): {e}")
     _auto_image_cache[query] = url
@@ -603,22 +615,27 @@ def _measure_text_overflows(svg: str) -> list[str]:
         base_x = _attr_f(attrs, "x") or 0.0
         base_y = _attr_f(attrs, "y") or 0.0
 
-        # từng dòng logic: text trực tiếp + mỗi tspan (tspan có thể reset x/font-size)
-        lines: list[tuple[float, float, str]] = []
+        # Dựng danh sách dòng logic. Quy tắc:
+        #  • text trực tiếp trước tspan đầu tiên = dòng đầu (tại base_x)
+        #  • tspan có x hoặc dy → xuống DÒNG MỚI (x = tspan.x hoặc base_x)
+        #  • tspan không x không dy → NỐI TIẾP dòng hiện tại (cộng độ dài)
+        lines: list[list] = []  # [x, font-size, text]
         direct = re.sub(r'<tspan\b.*?</tspan>', '', inner, flags=re.IGNORECASE | re.DOTALL)
         direct = re.sub(r'<[^>]+>', '', direct).strip()
         if direct:
-            lines.append((base_x, fs, direct))
+            lines.append([base_x, fs, direct])
         for tm in _RE_TSPAN.finditer(inner):
             ta, ttxt = tm.group(1), re.sub(r'<[^>]+>', '', tm.group(2)).strip()
             if not ttxt:
                 continue
             tx = _attr_f(ta, "x")
+            tdy = _attr_f(ta, "dy")
+            has_dy = tdy is not None or re.search(r'dy="[^"]+"', ta) is not None
             tfs = _attr_f(ta, "font-size") or fs
-            # tspan không reset x → nối tiếp dòng trước, bỏ qua (đo dòng chính đã đủ)
-            if tx is None:
-                continue
-            lines.append((tx, tfs, ttxt))
+            if tx is not None or has_dy or not lines:
+                lines.append([tx if tx is not None else base_x, tfs, ttxt])
+            else:
+                lines[-1][2] += ttxt  # cùng dòng — cộng dồn để đo tổng bề rộng
 
         for lx, lfs, ltext in lines:
             est = len(ltext) * lfs * 0.58
@@ -866,9 +883,10 @@ def _refine_passes(req_value: int | None) -> int:
         return max(0, min(3, req_value))
     import os
     try:
-        return max(0, min(3, int(os.getenv("SLIDE_REFINE_PASSES", "1"))))
+        # Mặc định 2: vòng 1 sửa theo defects đo được + nhìn render, vòng 2 xác nhận.
+        return max(0, min(3, int(os.getenv("SLIDE_REFINE_PASSES", "2"))))
     except ValueError:
-        return 1
+        return 2
 
 
 @router.post("/gen-slide-one")
