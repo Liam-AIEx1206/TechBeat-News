@@ -110,7 +110,14 @@ def _make_async(p: Provider) -> AsyncOpenAI | None:
     key = _resolve_provider_key(p)
     if not key:
         return None
-    client = AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=25.0)
+    # LLM_TIMEOUT: heavy calls (SVG composition + vision-refine với ảnh base64,
+    # generate tới 8000 token) dễ vượt 25s trên proxy chậm → APITimeoutError
+    # giả, khiến provider bị disable 5 phút và kéo sập cả deck. Nới rộng mặc định.
+    try:
+        _timeout = float(os.getenv("LLM_TIMEOUT", "90"))
+    except ValueError:
+        _timeout = 90.0
+    client = AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=_timeout)
     _async_clients[p.name] = client
     return client
 
@@ -201,6 +208,22 @@ def _is_quota_or_billing_error(e: Exception) -> bool:
     return False
 
 
+def _is_auth_error(e: Exception) -> bool:
+    """Key hỏng/hết hạn/không đủ quyền của MỘT provider → nên bỏ qua provider
+    đó và thử provider kế, KHÔNG abort cả chain (một fallback key hết hạn
+    không được phép làm chết request khi provider khác còn sống)."""
+    msg = str(e).lower()
+    if any(k in msg for k in (
+        "invalid api key", "invalid_api_key", "expired_api_key", "expired api key",
+        "unauthorized", "authentication",
+    )):
+        return True
+    if type(e).__name__ in ("AuthenticationError", "PermissionDeniedError"):
+        return True
+    code = getattr(e, "status_code", None) or getattr(e, "code", None)
+    return code in (401, 403)
+
+
 # ─── Public API ──────────────────────────────────────────────────────────
 
 async def chat_completions_with_fallback(*, model_kind: str, kwargs_factory=None, **kwargs):
@@ -250,6 +273,14 @@ async def chat_completions_with_fallback(*, model_kind: str, kwargs_factory=None
         except Exception as e:
             tried.append(f"{p.name}={type(e).__name__}")
             last_err = e
+            if _is_auth_error(e):
+                # Key hỏng/hết hạn → disable LÂU HƠN (30') vì không tự khỏi như
+                # quota, rồi thử provider kế thay vì abort cả chain.
+                print(f"[llm] Provider '{p.name}' KEY LỖI/HẾT HẠN ({type(e).__name__}: {e}). "
+                      f"Bỏ qua provider này 30 phút, thử provider kế. "
+                      f"→ Cần cập nhật lại API key của '{p.name}' trong .env.")
+                _disabled_until[p.name] = time.time() + 1800
+                continue
             if not _is_quota_or_billing_error(e):
                 print(f"[llm] Provider '{p.name}' failed with non-quota error "
                       f"({type(e).__name__}: {e}). Aborting chain.")

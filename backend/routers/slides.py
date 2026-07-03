@@ -941,6 +941,7 @@ async def _refine_svg_visually(
                     "temperature": 0.3,
                     "max_tokens": 8000,
                     "stream": False,
+                    "timeout": 150,  # vision + ảnh base64 + sinh SVG dài → cần nhiều thời gian
                 }
             async with limiter._llm_sem:
                 resp, _prov, _model = await chat_completions_with_fallback(
@@ -1052,10 +1053,21 @@ async def gen_slide_one(body: GenSlideOneRequest, request: Request):
                 "temperature": 0.65,
                 "max_tokens": 8000,
                 "stream": False,
+                "timeout": 150,  # SVG gen nặng — nới rộng để không time-out giả
             }
-        resp, provider, model = await chat_completions_with_fallback(
-            model_kind="composition", kwargs_factory=_kwargs
-        )
+        try:
+            resp, provider, model = await chat_completions_with_fallback(
+                model_kind="composition", kwargs_factory=_kwargs
+            )
+        except Exception as e:
+            # Hết provider / key lỗi → trả lỗi SẠCH cho frontend hiển thị,
+            # không để 500 ASGI traceback tràn log.
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=503,
+                detail="Không gen được slide: tất cả LLM provider đều lỗi hoặc hết hạn key. "
+                       "Kiểm tra OPENAI_API_KEY / GROQ_API_KEY trong .env.",
+            ) from e
 
     raw: str = (resp.choices[0].message.content or "")  # type: ignore[union-attr]
     svg = _extract_svg(raw)
