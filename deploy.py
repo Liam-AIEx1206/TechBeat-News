@@ -15,7 +15,7 @@ def make_tarfile(output_filename, source_dir):
         if name.endswith('.env') or name.endswith('.env.local') or name.endswith('.env.production') or name.endswith('.env.development'):
             return None
             
-        excludes = ['.git', 'node_modules', '.next', '__pycache__', '.venv', 'playwright_cache', 'my-video/renders', 'my-video/history', 'my-video/sessions', '.pytest_cache', '.conda', '.agents', '.gemini', '.cache', '.npm', 'scripts']
+        excludes = ['.git', 'node_modules', '.next', '__pycache__', '.venv', 'playwright_cache', 'my-video/renders', 'my-video/history', 'my-video/sessions', '.pytest_cache', '.conda', '.agents', '.gemini', '.cache', '.npm', 'scripts', 'ppt-master-ref']
         if any(f"/{ex}/" in f"/{name}/" or name.endswith(f"/{ex}") for ex in excludes):
             return None
         if name.endswith('.tar.gz') or name.endswith('.zip'):
