@@ -52,6 +52,10 @@ def _load_lib(name: str):
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot find lib/{name}.py")
     mod = _ilu.module_from_spec(spec)
+    # Đăng ký vào sys.modules TRƯỚC khi exec: module dùng @dataclass với field
+    # kiểu list/dict cần cls.__module__ tra được trong sys.modules lúc định nghĩa
+    # (nếu không → AttributeError khi exec). Tên lib của ta không đụng stdlib.
+    sys.modules.setdefault(name, mod)
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
     _LIB_CACHE[name] = mod
     # Also register under a stable name so other modules (e.g. app shutdown)
@@ -1352,3 +1356,31 @@ async def build_slides(body: BuildSlidesRequest, request: Request):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ── /styles ── chọn phong cách (oh-my-ppt style packs) thay vì chỉ chọn màu ───
+
+@router.get("/styles")
+async def list_styles_endpoint():
+    """Liệt kê style pack có trong backend/templates/styles/ (mỗi thư mục =
+    style.json + SKILL.md + preview.html theo format oh-my-ppt)."""
+    try:
+        sp = _load_lib("style_packs")
+        return {"styles": [s.public() for s in sp.list_styles()]}
+    except Exception as e:
+        print(f"[slides] list styles lỗi: {e}")
+        return {"styles": []}
+
+
+@router.get("/styles/{style_id}/preview")
+async def style_preview_endpoint(style_id: str):
+    """Trả preview.html của style (dùng làm thumbnail trong StylePicker)."""
+    from fastapi.responses import HTMLResponse, Response
+    try:
+        sp = _load_lib("style_packs")
+        p = sp.preview_path(style_id)
+        if p is None:
+            return Response(status_code=404)
+        return HTMLResponse(p.read_text(encoding="utf-8"))
+    except Exception:
+        return Response(status_code=404)

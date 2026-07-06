@@ -1,0 +1,17 @@
+{
+  "label": "Cyber Orange",
+  "labelEn": "Cyber Orange",
+  "description": "Bản tin công nghệ tối cao cấp, accent cam ấm, gradient amber, hoạ tiết scan-line và corner bracket — không khí editorial premium.",
+  "category": "tech",
+  "aliases": ["news", "broadcast", "editorial-dark"],
+  "palette": {
+    "bg": "#08080f",
+    "bg2": "#0f0f1a",
+    "surface": "#141420",
+    "accent": "#f97316",
+    "accent2": "#fb923c",
+    "accent3": "#fbbf24",
+    "text1": "#f5f3ff",
+    "text2": "#a09db8"
+  }
+}
