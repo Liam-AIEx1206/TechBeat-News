@@ -13,7 +13,7 @@ import { writeHtmlToPptx, type HtmlToPptxSlide } from '../vendor/main/utils/html
 import {
   extractHtmlPageToPptxSlide,
   closePptxBrowser
-} from './renderer-playwright'
+} from '../vendor/main/utils/html-pptx/renderer'
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..')
 

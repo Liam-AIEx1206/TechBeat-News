@@ -1,0 +1,10 @@
+{
+  "name": "electron",
+  "version": "38.0.0",
+  "description": "Headless shim: đủ API surface Electron mà code main-process oh-my-ppt chạm tới, để chạy nguyên vẹn trên Node server",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  }
+}

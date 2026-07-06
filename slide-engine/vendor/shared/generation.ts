@@ -1,0 +1,417 @@
+export interface UploadedAsset {
+  id: string
+  fileName: string
+  originalName: string
+  relativePath: string
+  absolutePath?: string
+  mimeType: string
+  size: number
+  createdAt: number
+}
+
+export interface ParseDocumentPlanPayload {
+  files: Array<{
+    path: string
+    name?: string
+  }>
+  modelConfigId?: string
+  topic?: string
+  existingBrief?: string
+}
+
+export interface SourceDocumentPlan {
+  version: 1
+  confidence: 'high' | 'medium' | 'low'
+  sourceDocumentPath?: string
+  sourceDocumentName?: string
+  pageSkeleton: DocumentPlanPageSkeletonItem[]
+}
+
+export interface PrepareReferenceDocumentPayload {
+  files: Array<{
+    path: string
+    name?: string
+  }>
+}
+
+export interface ParseImageReferencePayload {
+  file: {
+    path: string
+    name?: string
+  }
+  modelConfigId?: string
+}
+
+export interface ParsedDocumentPlanResult {
+  topic: string
+  pageCount: number
+  briefText: string
+  pageSkeleton?: DocumentPlanPageSkeletonItem[]
+  sourcePlan?: SourceDocumentPlan
+  files: Array<{
+    name: string
+    type: 'markdown' | 'text' | 'csv' | 'docx' | 'image'
+    characterCount: number
+    path: string
+  }>
+}
+
+export interface DocumentPlanPageSkeletonItem {
+  id?: string
+  pageNumber: number
+  title: string
+  role: 'chapter-divider' | 'content'
+  sourceHeading: string
+  headingLevel: number
+  lineStart: number
+  lineEnd: number
+  reason: string
+}
+
+export const isInternalDocumentPlanPageReason = (reason: string): boolean => {
+  const normalized = reason.toLowerCase()
+  return (
+    normalized.includes('major # heading') ||
+    normalized.includes('leaf ## section') ||
+    normalized.includes('standalone level-') ||
+    normalized.includes('section has substantial own body')
+  )
+}
+
+export interface PreparedReferenceDocumentResult {
+  files: ParsedDocumentPlanResult['files']
+}
+
+export interface PptxImportPayload {
+  filePath: string
+  title?: string
+  styleId?: string | null
+  modelConfigId?: string
+}
+
+export interface PptxImportProgressPayload {
+  sessionId?: string
+  stage: 'reading' | 'parsing' | 'media' | 'pages' | 'index' | 'database' | 'completed'
+  progress: number
+  label: string
+  pageNumber?: number
+  totalPages?: number
+}
+
+export interface PptxImportResult {
+  sessionId: string
+  pageCount: number
+  warnings: string[]
+}
+
+export interface FontRef {
+  source: 'google' | 'uploaded'
+  family: string
+  id?: string
+}
+
+export type FontSelection =
+  | { mode: 'auto' }
+  | {
+      mode: 'pair'
+      title: FontRef
+      body: FontRef
+    }
+
+export const normalizeFontSelection = (value: unknown): FontSelection => {
+  const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  if (record.mode !== 'pair') return { mode: 'auto' }
+  const title =
+    record.title && typeof record.title === 'object'
+      ? (record.title as Record<string, unknown>)
+      : {}
+  const body =
+    record.body && typeof record.body === 'object' ? (record.body as Record<string, unknown>) : {}
+  const titleFamily = typeof title.family === 'string' ? title.family.trim() : ''
+  const bodyFamily = typeof body.family === 'string' ? body.family.trim() : ''
+  if (!titleFamily || !bodyFamily) return { mode: 'auto' }
+  const titleSource = title.source === 'uploaded' ? 'uploaded' : 'google'
+  const bodySource = body.source === 'uploaded' ? 'uploaded' : 'google'
+  return {
+    mode: 'pair',
+    title: {
+      source: titleSource,
+      family: titleFamily,
+      id: typeof title.id === 'string' ? title.id : undefined
+    },
+    body: {
+      source: bodySource,
+      family: bodyFamily,
+      id: typeof body.id === 'string' ? body.id : undefined
+    }
+  }
+}
+
+export interface GenerateStartPayload {
+  sessionId: string
+  modelConfigId?: string
+  userMessage: string
+  type?: 'deck' | 'page'
+  chatType?: 'main' | 'page'
+  resetVisualStyle?: boolean
+  persistUserMessage?: boolean
+  chatPageId?: string
+  selectPageIds?: string[]
+  selectedPageId?: string
+  htmlPath?: string
+  selector?: string
+  elementTag?: string
+  elementText?: string
+  imagePaths?: string[]
+  videoPaths?: string[]
+  docPaths?: string[]
+  animationPreferences?: AnimationPreferencesPayload
+}
+
+export interface SwitchSessionStylePayload {
+  sessionId: string
+  styleId: string
+  modelConfigId?: string
+}
+
+export type RetrySessionStylePayload = SwitchSessionStylePayload & {
+  failedRunId?: string
+}
+
+export type RetryDeckEditPayload = GenerateStartPayload & {
+  failedRunId?: string
+}
+
+export const MAX_SELECTED_PAGES = 50
+export const MAX_STYLE_SWITCH_PAGES = 500
+
+export const normalizeSelectPageIds = (value: unknown, limit = MAX_SELECTED_PAGES): string[] => {
+  if (!Array.isArray(value)) return []
+  const normalized = Array.from(
+    new Set(
+      value.map((item) => String(item || '').trim()).filter((item) => /^[a-z0-9_-]+$/i.test(item))
+    )
+  )
+  if (normalized.length > limit) {
+    throw new Error(`一次最多选择 ${limit} 页`)
+  }
+  return normalized
+}
+
+export interface GenerateRetryFailedPayload {
+  sessionId: string
+  modelConfigId?: string
+  userMessage?: string
+  failedRunId?: string
+}
+
+export type AnimationPreferenceId =
+  | 'fade'
+  | 'fade-up'
+  | 'fade-down'
+  | 'fade-left'
+  | 'fade-right'
+  | 'scale-in'
+  | 'slide-up'
+  | 'slide-down'
+  | 'slide-left'
+  | 'slide-right'
+  | 'fly-in'
+  | 'wipe'
+  | 'zoom-in'
+  | 'spin-in'
+  | 'pulse-soft'
+  | 'pulse'
+  | 'pulse-strong'
+  | 'grow-shrink-soft'
+  | 'grow-shrink'
+  | 'grow-shrink-strong'
+
+export interface AnimationPreferencesPayload {
+  ids: AnimationPreferenceId[]
+}
+
+const ANIMATION_PREFERENCE_IDS = new Set<AnimationPreferenceId>([
+  'fade',
+  'fade-up',
+  'fade-down',
+  'fade-left',
+  'fade-right',
+  'scale-in',
+  'slide-up',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'fly-in',
+  'wipe',
+  'zoom-in',
+  'spin-in',
+  'pulse-soft',
+  'pulse',
+  'pulse-strong',
+  'grow-shrink-soft',
+  'grow-shrink',
+  'grow-shrink-strong'
+])
+
+export const normalizeAnimationPreferences = (
+  value: unknown
+): AnimationPreferencesPayload | null => {
+  const rawIds = Array.isArray((value as AnimationPreferencesPayload | null)?.ids)
+    ? (value as AnimationPreferencesPayload).ids
+    : Array.isArray(value)
+      ? value
+      : []
+  const ids = Array.from(
+    new Set(
+      rawIds
+        .map((item) => String(item || '').trim())
+        .filter((item): item is AnimationPreferenceId =>
+          ANIMATION_PREFERENCE_IDS.has(item as AnimationPreferenceId)
+        )
+    )
+  )
+  const selected = ids.slice(0, 3)
+  return selected.length > 0 ? { ids: selected } : null
+}
+
+export type AnimationPreferenceSourceRun = {
+  session_id: string
+  animation_preferences: string | null
+}
+
+/**
+ * Inherit animation preferences from a prior generation run — but only when an
+ * explicit source run is supplied AND it belongs to the same session. A missing
+ * or stale source run must never block retry; degrade to no preferences.
+ * See docs/design/session-create-animation-preferences-design.md (run 字段持久化).
+ */
+export const resolveInheritedAnimationPreferences = (
+  sourceRun: AnimationPreferenceSourceRun | null | undefined,
+  sessionId: string
+): AnimationPreferencesPayload | null => {
+  if (!sourceRun || sourceRun.session_id !== sessionId) return null
+  try {
+    return normalizeAnimationPreferences(
+      sourceRun.animation_preferences ? JSON.parse(sourceRun.animation_preferences) : null
+    )
+  } catch {
+    return null
+  }
+}
+
+export interface GenerateAddPagePayload {
+  sessionId: string
+  modelConfigId?: string
+  userMessage: string
+  insertAfterPageNumber: number
+}
+
+export interface GenerateRetrySinglePagePayload {
+  sessionId: string
+  modelConfigId?: string
+  pageId: string
+}
+
+export interface GeneratedPagePayload {
+  id?: string
+  focusPage?: boolean
+  pageNumber: number
+  title: string
+  contentOutline?: string | null
+  html: string
+  htmlPath?: string
+  pageId?: string
+  sourceUrl?: string
+}
+
+export interface PageStatusPayload {
+  id?: string
+  pageNumber: number
+  title: string
+  pageId?: string
+  htmlPath?: string
+  error?: string
+}
+
+export interface GenerateStagePayload {
+  runId: string
+  sessionId?: string
+  stage: string
+  label: string
+  progress?: number
+  currentPage?: number
+  totalPages?: number
+  completedPageCount?: number
+  failedPageCount?: number
+  timestamp?: string
+  activityKind?: 'edit' | 'style-switch' | 'single-page-retry'
+}
+
+export type GenerateChunkEvent =
+  | {
+      type: 'stage_started' | 'stage_progress'
+      payload: GenerateStagePayload
+    }
+  | {
+      type: 'llm_status'
+      payload: GenerateStagePayload & {
+        provider?: string
+        model?: string
+        detail?: string
+      }
+    }
+  | {
+      type: 'assistant_message'
+      payload: {
+        id?: string
+        runId: string
+        sessionId?: string
+        content: string
+        chatType?: 'main' | 'page'
+        pageId?: string
+        timestamp?: string
+        activityKind?: 'edit' | 'style-switch' | 'single-page-retry'
+      }
+    }
+  | {
+      type: 'page_generated'
+      payload: GenerateStagePayload & GeneratedPagePayload
+    }
+  | {
+      type: 'page_updated'
+      payload: GenerateStagePayload & GeneratedPagePayload
+    }
+  | {
+      type: 'page_planned'
+      payload: GenerateStagePayload & PageStatusPayload
+    }
+  | {
+      type: 'page_started' | 'page_failed'
+      payload: GenerateStagePayload & PageStatusPayload
+    }
+  | {
+      type: 'run_completed'
+      payload: {
+        runId: string
+        sessionId?: string
+        totalPages: number
+        completedPageCount?: number
+        failedPageCount?: number
+        timestamp?: string
+        activityKind?: 'edit' | 'style-switch' | 'single-page-retry'
+      }
+    }
+  | {
+      type: 'run_error'
+      payload: {
+        runId: string
+        sessionId?: string
+        message: string
+        cancelled?: boolean
+        completedPageCount?: number
+        failedPageCount?: number
+        timestamp?: string
+        activityKind?: 'edit' | 'style-switch' | 'single-page-retry'
+      }
+    }

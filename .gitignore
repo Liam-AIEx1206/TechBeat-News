@@ -71,3 +71,5 @@ my-video/sessions/
 oh-my-ppt/
 slide-engine/node_modules/
 slide-engine/out/
+slide-engine/data/
+slide-engine/boot.log
