@@ -729,10 +729,20 @@ def _measure_image_text_overlaps(svg: str) -> list[str]:
         for ix, iy, iw, ih in images:
             # AABB overlap giữa bbox chữ và bbox ảnh
             if line.right > ix + 4 and line.left < ix + iw - 4 and line.bottom > iy + 4 and line.top < iy + ih - 4:
-                issues.append(
-                    f'"{line.snippet}" (font {line.font_size:.0f}px, y={line.y:.0f}) bị ảnh đè lên '
-                    f'(ảnh vùng x={ix:.0f}-{ix+iw:.0f}, y={iy:.0f}-{iy+ih:.0f}) — thu hẹp cột chữ hoặc dịch/thu nhỏ ảnh'
-                )
+                # Ảnh nằm bên phải (mép trái ảnh ≥ 600) → chữ phải WRAP trước mép trái ảnh.
+                if ix >= 600:
+                    wall = ix - 24
+                    issues.append(
+                        f'"{line.snippet}" (font {line.font_size:.0f}px, y={line.y:.0f}) ĐÈ LÊN ẢNH bên phải '
+                        f'(ảnh bắt đầu tại x={ix:.0f}). BẮT BUỘC: wrap dòng này để mọi ký tự kết thúc TRƯỚC '
+                        f'x={wall:.0f} (ngắt thành nhiều <tspan> dòng, hoặc giảm 1 bậc font). '
+                        f'Cột chữ trái chỉ được dùng vùng x=80–{wall:.0f}.'
+                    )
+                else:
+                    issues.append(
+                        f'"{line.snippet}" (font {line.font_size:.0f}px, y={line.y:.0f}) đè lên ảnh '
+                        f'(ảnh vùng x={ix:.0f}-{ix+iw:.0f}, y={iy:.0f}-{iy+ih:.0f}) — dịch chữ ra khỏi vùng ảnh hoặc thu nhỏ/dời ảnh'
+                    )
                 break
     return issues[:8]
 
@@ -741,17 +751,28 @@ def _inject_scene_image(svg: str, scene: "ScenePayload") -> str:
     """Substitute the __SLIDE_IMAGE__ token with the scene's real image URL.
     Drops <image> elements the LLM emitted without a usable asset (token left
     dangling, or hallucinated external URLs)."""
+    import html as _html
     url = scene.imageUrl or ""
     has_asset = url.startswith(("http://", "https://", "data:image/"))
+    # URL thật của scene (đã escape & → &amp;) để nhận diện lại ở vòng refine —
+    # nếu không, refine gọi _inject lần 2 sẽ tưởng URL Flickr thật là URL bịa và
+    # XÓA MẤT ảnh (bug: ảnh biến mất + detector overlap không còn thấy ảnh).
+    real_escaped = url.replace("&", "&amp;")
 
     def _clean(m: re.Match) -> str:
         el = m.group(0)
         if _IMAGE_TOKEN in el:
-            return el.replace(_IMAGE_TOKEN, url.replace("&", "&amp;")) if has_asset else ""
-        href = re.search(r'(?:xlink:)?href="([^"]*)"', el)
-        if href and href.group(1).startswith(("http://", "https://")):
-            return ""  # hallucinated external URL — remove
-        return el
+            return el.replace(_IMAGE_TOKEN, real_escaped) if has_asset else ""
+        href_m = re.search(r'(?:xlink:)?href="([^"]*)"', el)
+        if not href_m:
+            return el
+        href = href_m.group(1)
+        if not href.startswith(("http://", "https://")):
+            return el  # local/relative/data — giữ nguyên
+        # http(s): CHỈ giữ nếu đúng là ảnh thật của scene (so cả bản escape lẫn raw)
+        if has_asset and (href == real_escaped or _html.unescape(href) == url):
+            return el
+        return ""  # URL ngoài lạ (model bịa) — bỏ
 
     return _RE_IMAGE_EL.sub(_clean, svg)
 
