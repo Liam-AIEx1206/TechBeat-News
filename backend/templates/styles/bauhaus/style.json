@@ -1,0 +1,18 @@
+{
+  "style": "bauhaus",
+  "name": {
+    "zh": "包豪斯",
+    "en": "Bauhaus"
+  },
+  "description": "A geometric manifesto of primary colors colliding, each page vibrates with Mondrian-inspired visuals.",
+  "category": "Bold · Statement",
+  "aliases": [
+    "bauhaus",
+    "包豪斯",
+    "几何",
+    "原色"
+  ],
+  "styleCase": "艺术视觉、品牌营销、产品发布",
+  "version": "2.0.1",
+  "source": "builtin"
+}

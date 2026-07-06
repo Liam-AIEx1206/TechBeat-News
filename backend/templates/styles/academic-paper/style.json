@@ -1,0 +1,18 @@
+{
+  "style": "academic-paper",
+  "name": {
+    "zh": "学术论文",
+    "en": "Academic Paper"
+  },
+  "description": "Deep navy blue on a white background exudes academic rigor and inherent persuasiveness.",
+  "category": "Light · Professional",
+  "aliases": [
+    "academic",
+    "论文",
+    "学术",
+    "研究"
+  ],
+  "styleCase": "学术研究、教学科普、商业汇报",
+  "version": "2.0.1",
+  "source": "builtin"
+}

@@ -1,0 +1,18 @@
+{
+  "style": "retro-tv",
+  "name": {
+    "zh": "复古电视",
+    "en": "Retro Tv"
+  },
+  "description": "A warm yellow screen flickers with amber light, transporting you back to the CRT era in the living room.",
+  "category": "Magazine · Editorial",
+  "aliases": [
+    "retro",
+    "tv",
+    "复古",
+    "CRT"
+  ],
+  "styleCase": "杂志编辑、品牌营销、生活方式",
+  "version": "2.0.1",
+  "source": "builtin"
+}

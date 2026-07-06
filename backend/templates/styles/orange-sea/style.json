@@ -1,0 +1,19 @@
+{
+  "style": "orange-sea",
+  "name": {
+    "zh": "晴橙落日海",
+    "en": "Sunset Bay"
+  },
+  "description": "A healing gradient of clear sky blue, soft apricot white, and sunset orange.",
+  "category": "Warm · Healing",
+  "aliases": [
+    "落日海",
+    "晴橙",
+    "治愈",
+    "海边",
+    "夕阳"
+  ],
+  "styleCase": "旅游出行、疗愈冥想、教学科普",
+  "version": "2.0.2",
+  "source": "builtin"
+}

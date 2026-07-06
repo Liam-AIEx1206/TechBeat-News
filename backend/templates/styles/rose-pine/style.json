@@ -1,0 +1,18 @@
+{
+  "style": "rose-pine",
+  "name": {
+    "zh": "玫瑰松",
+    "en": "Rose Pine"
+  },
+  "description": "Roses bloom silently in a dark purple forest, where design and code coexist gently.",
+  "category": "Dark · Tech",
+  "aliases": [
+    "rose",
+    "pine",
+    "玫瑰",
+    "柔和暗色"
+  ],
+  "styleCase": "技术分享、艺术视觉、教学科普",
+  "version": "2.0.1",
+  "source": "builtin"
+}

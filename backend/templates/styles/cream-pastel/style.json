@@ -1,0 +1,19 @@
+{
+  "style": "cream-pastel",
+  "name": {
+    "zh": "奶油温柔 · 高级感",
+    "en": "Cream Pastel"
+  },
+  "description": "A gentle and sophisticated blend of cream white, bean paste pink, and matcha green.",
+  "category": "Light · Soft",
+  "aliases": [
+    "奶油",
+    "温柔",
+    "豆沙粉",
+    "抹茶",
+    "高级"
+  ],
+  "styleCase": "餐饮美食、生活方式、亲子儿童",
+  "version": "2.0.2",
+  "source": "builtin"
+}

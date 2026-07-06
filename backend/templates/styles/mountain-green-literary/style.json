@@ -1,0 +1,21 @@
+{
+  "style": "mountain-green-literary",
+  "name": {
+    "zh": "山野葱郁",
+    "en": "Mountain Green Literary"
+  },
+  "description": "A literary summer captured in deep green mountains and yellow grasslands.",
+  "category": "Illustration · Hand-drawn",
+  "aliases": [
+    "山野",
+    "夏天",
+    "深绿",
+    "文艺",
+    "奔跑",
+    "mountain",
+    "山峦"
+  ],
+  "styleCase": "旅游出行、教学科普、生活方式",
+  "version": "2.0.2",
+  "source": "builtin"
+}

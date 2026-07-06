@@ -1,0 +1,20 @@
+{
+  "style": "gradient-cosmic",
+  "name": {
+    "zh": "梦幻分界·星河烟火",
+    "en": "Gradient Cosmic"
+  },
+  "description": "Deep indigo and dark night gold-orange create an epic, dreamlike contrast.",
+  "category": "Dark · Minimalist",
+  "aliases": [
+    "星河",
+    "烟火",
+    "梦幻",
+    "cosmic",
+    "epic",
+    "夜空"
+  ],
+  "styleCase": "影视音乐、艺术视觉、年度庆典",
+  "version": "2.0.2",
+  "source": "builtin"
+}

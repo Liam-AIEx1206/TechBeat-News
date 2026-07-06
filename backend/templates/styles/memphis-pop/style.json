@@ -1,0 +1,18 @@
+{
+  "style": "memphis-pop",
+  "name": {
+    "zh": "孟菲斯波普",
+    "en": "Memphis Pop"
+  },
+  "description": "Neon gradients splash across the canvas, embodying a never-ending Memphis party vibe.",
+  "category": "Bold · Statement",
+  "aliases": [
+    "memphis",
+    "pop",
+    "孟菲斯",
+    "波普"
+  ],
+  "styleCase": "品牌营销、产品发布、教学科普",
+  "version": "2.0.1",
+  "source": "builtin"
+}

@@ -1,0 +1,17 @@
+{
+  "style": "blueprint",
+  "name": {
+    "zh": "蓝图",
+    "en": "Blueprint"
+  },
+  "description": "Light blue lines weave a grid on a deep blue background, a dream canvas for architects.",
+  "category": "Dramatic · Cinematic",
+  "aliases": [
+    "blueprint",
+    "工程",
+    "架构"
+  ],
+  "styleCase": "技术分享、产品发布、商业汇报",
+  "version": "2.0.1",
+  "source": "builtin"
+}

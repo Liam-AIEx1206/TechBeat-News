@@ -1,0 +1,20 @@
+{
+  "style": "chinese-cream-blossom",
+  "name": {
+    "zh": "中国传统色·米白樱粉",
+    "en": "Chinese Cream Blossom"
+  },
+  "description": "Rice paper beige paired with cherry blossom pink, embodying gentle elegance in traditional style.",
+  "category": "Light · Soft",
+  "aliases": [
+    "米白",
+    "樱粉",
+    "温柔",
+    "cream",
+    "blossom",
+    "国风"
+  ],
+  "styleCase": "婚庆浪漫、生活方式、传统文化",
+  "version": "2.0.1",
+  "source": "builtin"
+}

@@ -1,0 +1,17 @@
+{
+  "style": "nord",
+  "name": {
+    "zh": "北欧",
+    "en": "Nord"
+  },
+  "description": "A deep night blue background reflects icy blue glimmers, creating a quiet space for contemplation.",
+  "category": "Dark · Tech",
+  "aliases": [
+    "nord",
+    "北欧",
+    "清冷"
+  ],
+  "styleCase": "技术分享、产品发布、教学科普",
+  "version": "2.0.1",
+  "source": "builtin"
+}

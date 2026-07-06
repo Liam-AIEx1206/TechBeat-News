@@ -1,0 +1,19 @@
+{
+  "style": "tokyo-night",
+  "name": {
+    "zh": "东京夜",
+    "en": "Tokyo Night"
+  },
+  "description": "A deep blue backdrop illuminated by a cyan halo, a visual monologue for late-night programmers.",
+  "category": "Dark · Tech",
+  "aliases": [
+    "tokyo",
+    "night",
+    "东京",
+    "蓝夜",
+    "tech-dark"
+  ],
+  "styleCase": "技术分享、教学科普、产品发布",
+  "version": "2.0.1",
+  "source": "builtin"
+}

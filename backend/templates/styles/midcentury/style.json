@@ -1,0 +1,17 @@
+{
+  "style": "midcentury",
+  "name": {
+    "zh": "世纪中叶",
+    "en": "Midcentury"
+  },
+  "description": "Mustard yellow meets burnt orange and teal, creating an eternally cozy mid-century living room feel.",
+  "category": "Magazine · Editorial",
+  "aliases": [
+    "midcentury",
+    "复古",
+    "家居"
+  ],
+  "styleCase": "杂志编辑、艺术视觉、生活方式",
+  "version": "2.0.1",
+  "source": "builtin"
+}

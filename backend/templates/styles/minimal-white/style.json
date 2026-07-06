@@ -1,0 +1,20 @@
+{
+  "style": "minimal-white",
+  "name": {
+    "zh": "极简白",
+    "en": "Minimal White"
+  },
+  "description": "An extreme sense of sophistication through minimalism, where negative space speaks volumes.",
+  "category": "Light · Minimalist",
+  "aliases": [
+    "minimal",
+    "light",
+    "简约",
+    "简约白",
+    "clean",
+    "minimal-light"
+  ],
+  "styleCase": "技术分享、商业汇报、教学科普",
+  "version": "2.0.1",
+  "source": "builtin"
+}

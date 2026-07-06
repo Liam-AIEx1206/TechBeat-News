@@ -1,0 +1,18 @@
+{
+  "style": "neo-brutalism",
+  "name": {
+    "zh": "新野兽派",
+    "en": "Neo Brutalism"
+  },
+  "description": "Bold lines and hard shadows express your viewpoint with uncompromising strength.",
+  "category": "Bold · Statement",
+  "aliases": [
+    "neubrutalism",
+    "brutal",
+    "野兽派",
+    "新野兽派"
+  ],
+  "styleCase": "融资路演、品牌营销、产品发布",
+  "version": "2.0.1",
+  "source": "builtin"
+}

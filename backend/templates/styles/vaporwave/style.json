@@ -1,0 +1,17 @@
+{
+  "style": "vaporwave",
+  "name": {
+    "zh": "蒸汽波",
+    "en": "Vaporwave"
+  },
+  "description": "Deep purple gradients blend with pink and cyan, evoking nostalgia that reaches deep into consciousness.",
+  "category": "Dramatic · Cinematic",
+  "aliases": [
+    "vaporwave",
+    "蒸汽",
+    "美学"
+  ],
+  "styleCase": "时尚潮流、艺术视觉、品牌营销",
+  "version": "2.0.2",
+  "source": "builtin"
+}

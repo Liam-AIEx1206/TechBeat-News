@@ -1,0 +1,17 @@
+{
+  "style": "rainbow-gradient",
+  "name": {
+    "zh": "彩虹渐变",
+    "en": "Rainbow Gradient"
+  },
+  "description": "A flowing rainbow on a white background, celebrating every moment.",
+  "category": "Dramatic · Cinematic",
+  "aliases": [
+    "rainbow",
+    "彩虹",
+    "欢乐"
+  ],
+  "styleCase": "年度庆典、品牌营销、亲子儿童",
+  "version": "2.0.1",
+  "source": "builtin"
+}

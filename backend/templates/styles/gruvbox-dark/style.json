@@ -1,0 +1,17 @@
+{
+  "style": "gruvbox-dark",
+  "name": {
+    "zh": "Gruvbox 暗",
+    "en": "Gruvbox Dark"
+  },
+  "description": "Amber and moss green glow warmly within a soft gray, creating a terminal aesthetic that feels inviting.",
+  "category": "Dark · Tech",
+  "aliases": [
+    "gruvbox",
+    "复古深色",
+    "terminal"
+  ],
+  "styleCase": "技术分享、教学科普、产品发布",
+  "version": "2.0.1",
+  "source": "builtin"
+}

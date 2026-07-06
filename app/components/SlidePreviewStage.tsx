@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import type { ScenePlan, Scene } from "@/types/scene";
 import { getTheme } from "@/types/scene";
@@ -44,6 +44,24 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
   const [genAll, setGenAll] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const theme = getTheme(scenePlan.theme);
+
+  // Luồng slide dùng styleId (không phải theme màu) — hiển thị tên style đã chọn
+  // thay vì luôn "Cyber Orange" (theme mặc định). Resolve styleId → label từ /styles.
+  const [styleLabel, setStyleLabel] = useState("");
+  useEffect(() => {
+    if (!scenePlan.styleId) return;
+    const listUrl = process.env.NODE_ENV === "development" ? `${API}/styles` : `/api/proxy/styles`;
+    let alive = true;
+    fetch(listUrl)
+      .then(r => r.json())
+      .then(d => {
+        if (!alive) return;
+        const found = (d.styles ?? []).find((s: { id: string; label: string }) => s.id === scenePlan.styleId);
+        if (found?.label) setStyleLabel(found.label);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [scenePlan.styleId, API]);
 
   const endpoint = process.env.NODE_ENV === "development"
     ? `${API}/gen-slide-one`
@@ -184,7 +202,9 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em" }}>{scenePlan.title}</div>
           <div style={{ fontSize: 12, color: "var(--gray-5)", marginTop: 2 }}>
-            {scenePlan.scenes.length} slide · Theme: {theme.name}
+            {scenePlan.scenes.length} slide · {scenePlan.styleId
+              ? `Style: ${styleLabel || scenePlan.styleId}`
+              : `Theme: ${theme.name}`}
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

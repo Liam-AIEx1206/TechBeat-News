@@ -1,0 +1,18 @@
+{
+  "style": "sunset-warm",
+  "name": {
+    "zh": "日落暖",
+    "en": "Sunset Warm"
+  },
+  "description": "Orange, coral, and amber hues blanket the sky, where warmth itself tells a story.",
+  "category": "Warm · Healing",
+  "aliases": [
+    "sunset",
+    "暖",
+    "日落",
+    "生活方式"
+  ],
+  "styleCase": "年度庆典、生活方式、品牌营销",
+  "version": "2.0.1",
+  "source": "builtin"
+}

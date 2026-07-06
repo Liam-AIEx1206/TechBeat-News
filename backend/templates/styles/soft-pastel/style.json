@@ -1,0 +1,19 @@
+{
+  "style": "soft-pastel",
+  "name": {
+    "zh": "柔和马卡龙",
+    "en": "Soft Pastel"
+  },
+  "description": "Macaron hues gently blend on the canvas, soft as a morning greeting.",
+  "category": "Light · Soft",
+  "aliases": [
+    "pastel",
+    "soft",
+    "马卡龙",
+    "柔和",
+    "soft-pastel"
+  ],
+  "styleCase": "产品发布、生活方式、亲子儿童",
+  "version": "2.0.1",
+  "source": "builtin"
+}

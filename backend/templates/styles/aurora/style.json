@@ -1,0 +1,17 @@
+{
+  "style": "aurora",
+  "name": {
+    "zh": "极光",
+    "en": "Aurora"
+  },
+  "description": "An aurora gradient melts into a blur, creating a naturally dreamy cover page.",
+  "category": "Dramatic · Cinematic",
+  "aliases": [
+    "aurora",
+    "极光",
+    "封面"
+  ],
+  "styleCase": "影视音乐、产品发布、年度庆典",
+  "version": "2.0.2",
+  "source": "builtin"
+}

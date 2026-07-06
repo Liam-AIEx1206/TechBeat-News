@@ -1,0 +1,18 @@
+{
+  "style": "glassmorphism",
+  "name": {
+    "zh": "磨砂玻璃",
+    "en": "Glassmorphism"
+  },
+  "description": "Frosted glass with shifting light spots creates a magical play of shadows, reminiscent of an Apple event.",
+  "category": "Dramatic · Cinematic",
+  "aliases": [
+    "glass",
+    "玻璃",
+    "磨砂",
+    "frosted"
+  ],
+  "styleCase": "产品发布、品牌营销、艺术视觉",
+  "version": "2.0.1",
+  "source": "builtin"
+}

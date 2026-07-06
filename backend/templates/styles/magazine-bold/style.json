@@ -1,0 +1,17 @@
+{
+  "style": "magazine-bold",
+  "name": {
+    "zh": "杂志大字",
+    "en": "Magazine Bold"
+  },
+  "description": "Oversized serifs leap off creamy pages, making every turn feel like a cover reveal.",
+  "category": "Magazine · Editorial",
+  "aliases": [
+    "magazine",
+    "bold",
+    "大字杂志"
+  ],
+  "styleCase": "杂志编辑、品牌营销、艺术视觉",
+  "version": "2.0.1",
+  "source": "builtin"
+}

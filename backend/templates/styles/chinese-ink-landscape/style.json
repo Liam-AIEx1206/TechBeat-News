@@ -1,0 +1,20 @@
+{
+  "style": "chinese-ink-landscape",
+  "name": {
+    "zh": "中式水墨意境·山水",
+    "en": "Chinese Ink Landscape"
+  },
+  "description": "Warm sand and rice colors against a backdrop of gray-green mountains evoke a vast landscape.",
+  "category": "Oriental · Traditional",
+  "aliases": [
+    "山水",
+    "水墨",
+    "青灰",
+    "landscape",
+    "ink",
+    "远山"
+  ],
+  "styleCase": "旅游出行、传统文化、艺术视觉",
+  "version": "2.0.2",
+  "source": "builtin"
+}

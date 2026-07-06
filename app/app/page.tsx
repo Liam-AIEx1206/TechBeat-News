@@ -1676,7 +1676,9 @@ function PreviewStage({
 
       </div>
 
-      <SceneList scenePlan={scenePlan} onChange={setScenePlan} />
+      {/* Luồng slide: bước 2 chỉ để chọn style + xem slide mẫu — không hiện danh
+          sách phân cảnh. Nội dung từng slide sửa ở bước 3 (Xem trước). */}
+      {!isSlideOutput && <SceneList scenePlan={scenePlan} onChange={setScenePlan} />}
     </main>
     </div>
   );

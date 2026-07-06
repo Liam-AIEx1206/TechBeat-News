@@ -1,0 +1,19 @@
+{
+  "style": "starry-dust",
+  "name": {
+    "zh": "星屑柔光 · 童话感",
+    "en": "Starry Dust"
+  },
+  "description": "Soft light in misty purple, champagne pink, and starry blue conjures a fairy-tale ambiance.",
+  "category": "Vibrant · Creative",
+  "aliases": [
+    "星屑",
+    "柔光",
+    "童话",
+    "梦幻",
+    "少女"
+  ],
+  "styleCase": "亲子儿童、婚庆浪漫、品牌营销",
+  "version": "2.0.1",
+  "source": "builtin"
+}

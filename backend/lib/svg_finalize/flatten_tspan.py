@@ -114,6 +114,32 @@ def get_attr(elem: ET.Element | None, name: str, default: str | None = None) -> 
     return elem.get(name) if elem is not None and name in elem.attrib else default
 
 
+def parse_length_to_px(val: str | None, font_size: float = 16.0) -> float | None:
+    """Parse a length attribute (which may be in em or px) and convert it to pixels."""
+    if val is None:
+        return None
+    val_str = val.strip()
+    m = num_re.match(val_str)
+    if not m:
+        return None
+    try:
+        num = float(m.group(1))
+        if "em" in val_str:
+            return num * font_size
+        return num
+    except ValueError:
+        return None
+
+
+def _get_font_size_px(elem: ET.Element) -> float | None:
+    """Read font-size from an attribute or inline style."""
+    size = parse_first_number(get_attr(elem, "font-size"))
+    if size is not None:
+        return size
+    style_size = parse_style(get_attr(elem, "style")).get("font-size")
+    return parse_first_number(style_size)
+
+
 def compute_line_positions(
     text_el: ET.Element,
     tspan_el: ET.Element,
@@ -124,7 +150,7 @@ def compute_line_positions(
     Compute absolute x,y for a tspan based on parent <text> current baseline and tspan's x/y/dx/dy.
     Returns (new_x, new_y).
     """
-    del text_el
+    font_size = _get_font_size_px(tspan_el) or _get_font_size_px(text_el) or 16.0
     # Prefer explicit x/y on tspan
     t_x_attr = get_attr(tspan_el, "x")
     t_y_attr = get_attr(tspan_el, "y")
@@ -132,17 +158,17 @@ def compute_line_positions(
     t_dy_attr = get_attr(tspan_el, "dy")
 
     if t_x_attr is not None:
-        nx = parse_first_number(t_x_attr)
+        nx = parse_length_to_px(t_x_attr, font_size)
     elif t_dx_attr is not None:
-        dx = parse_first_number(t_dx_attr) or 0.0
+        dx = parse_length_to_px(t_dx_attr, font_size) or 0.0
         nx = (cur_x or 0.0) + dx
     else:
         nx = cur_x
 
     if t_y_attr is not None:
-        ny = parse_first_number(t_y_attr)
+        ny = parse_length_to_px(t_y_attr, font_size)
     elif t_dy_attr is not None:
-        dy = parse_first_number(t_dy_attr) or 0.0
+        dy = parse_length_to_px(t_dy_attr, font_size) or 0.0
         ny = (cur_y or 0.0) + dy
     else:
         ny = cur_y
@@ -251,24 +277,16 @@ def _build_paragraph_child_view(
     return view, synthetic_first
 
 
-def _get_font_size_px(elem: ET.Element) -> float | None:
-    """Read font-size from an attribute or inline style."""
-    size = parse_first_number(get_attr(elem, "font-size"))
-    if size is not None:
-        return size
-    style_size = parse_style(get_attr(elem, "style")).get("font-size")
-    return parse_first_number(style_size)
-
 
 def _classify_paragraph_block(
     text_el: ET.Element,
     is_svg_tag,
     is_new_line_tspan,
-) -> tuple[float, list[float], list[bool], list[list[ET.Element]], ET.Element | None] | None:
+) -> tuple[float, list[float], list[bool], list[list[ET.Element]], ET.Element | None, float] | None:
     """Detect a mergeable paragraph block.
 
     Returns ``(base_line_height_px, extra_space_before_px_per_line,
-    is_soft_break_per_line, line_groups, synthetic_first_line)`` if the children
+    is_soft_break_per_line, line_groups, synthetic_first_line, first_dy_shift)`` if the children
     form a mergeable paragraph. Each list has one entry per direct-child tspan
     (line), including a synthetic first line when the source used leading text:
 
@@ -285,14 +303,13 @@ def _classify_paragraph_block(
       - Every logical line starts with a new-line tspan.
       - Direct-child inline formatting tspans without x/y/dy are allowed only
         after a line starts; they are normalized into the previous line.
-      - First line-break tspan has dy == 0 (or no dy).
-      - All subsequent line-break tspans use positive dy (no <y>).
       - dy values cluster around a single minimum "base line-height";
         any larger dy must be ≤ MAX_DY_MULTIPLIER × base. Anything larger
         is treated as a section break and rejected.
       - Every line-break tspan that sets x repeats the parent <text>'s x.
       - No nested tspan inside any line carries x/y/dy.
     """
+    font_size = _get_font_size_px(text_el) or 16.0
     base_x = parse_first_number(get_attr(text_el, "x"))
     child_view = _build_paragraph_child_view(text_el, is_svg_tag)
     if child_view is None:
@@ -318,6 +335,7 @@ def _classify_paragraph_block(
 
     # First pass: validate per-line structural rules and collect dy values.
     dy_values: list[float] = []  # one per line (0 for first)
+    first_dy_shift = 0.0
     for idx, group in enumerate(line_groups):
         tspan = group[0]
 
@@ -332,11 +350,10 @@ def _classify_paragraph_block(
                 return None
 
         t_dy_raw = get_attr(tspan, "dy")
-        t_dy = parse_first_number(t_dy_raw) if t_dy_raw is not None else None
+        t_dy = parse_length_to_px(t_dy_raw, font_size) if t_dy_raw is not None else None
 
         if idx == 0:
-            if t_dy is not None and abs(t_dy) > 1e-6:
-                return None
+            first_dy_shift = t_dy if t_dy is not None else 0.0
             dy_values.append(0.0)
         else:
             if t_dy is None or t_dy <= 0:
@@ -352,8 +369,7 @@ def _classify_paragraph_block(
     if not positive_dys:
         return None
     base = min(positive_dys)
-    font_size = _get_font_size_px(text_el)
-    if font_size is not None and base > font_size * MAX_DY_MULTIPLIER + DY_TOLERANCE_PX:
+    if base > font_size * MAX_DY_MULTIPLIER + DY_TOLERANCE_PX:
         return None
 
     extras: list[float] = [0.0]  # first line never has space-before
@@ -377,7 +393,7 @@ def _classify_paragraph_block(
         extras.append(0.0 if is_soft else extra)
         soft_breaks.append(is_soft)
 
-    return base, extras, soft_breaks, line_groups, synthetic_first
+    return base, extras, soft_breaks, line_groups, synthetic_first, first_dy_shift
 
 
 def _emit_mergeable_paragraph(
@@ -467,7 +483,10 @@ def flatten_text_with_tspans(
         t_dy_attr = get_attr(tspan, "dy")
         t_y_attr = get_attr(tspan, "y")
         t_x_attr = get_attr(tspan, "x")
-        dy_val = parse_first_number(t_dy_attr) if t_dy_attr is not None else None
+        parent = parent_map.get(tspan)
+        parent_font_size = _get_font_size_px(parent) if parent is not None else 16.0
+        font_size = _get_font_size_px(tspan) or parent_font_size or 16.0
+        dy_val = parse_length_to_px(t_dy_attr, font_size) if t_dy_attr is not None else None
         # Has its own y attribute, or has non-zero dy, or has its own x attribute (indicating a new line)
         if t_y_attr is not None:
             return True
@@ -514,7 +533,10 @@ def flatten_text_with_tspans(
         if merge_paragraphs:
             paragraph = _classify_paragraph_block(text_el, is_svg_tag, is_new_line_tspan)
             if paragraph is not None:
-                base_dy, extras, soft_breaks, line_groups, synthetic_first = paragraph
+                base_dy, extras, soft_breaks, line_groups, synthetic_first, first_dy_shift = paragraph
+                if abs(first_dy_shift) > 1e-6:
+                    parent_y = parse_first_number(get_attr(text_el, "y")) or 0.0
+                    text_el.set("y", format_number(parent_y + first_dy_shift))
                 _emit_mergeable_paragraph(
                     text_el,
                     base_dy,

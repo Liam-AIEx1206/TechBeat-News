@@ -1,0 +1,22 @@
+{
+  "style": "industrial-kaizen",
+  "name": {
+    "zh": "表格 · 现代周报",
+    "en": "Tabular Business"
+  },
+  "description": "A restrained palette of neutral tones drives a professional business aesthetic.",
+  "category": "Light · Professional",
+  "aliases": [
+    "表格",
+    "table",
+    "tabular",
+    "周报",
+    "报表",
+    "商务表格",
+    "kaizen",
+    "grid"
+  ],
+  "styleCase": "商业汇报、年度庆典、技术分享",
+  "version": "2.0.1",
+  "source": "builtin"
+}

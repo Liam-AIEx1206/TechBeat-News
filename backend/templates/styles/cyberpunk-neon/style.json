@@ -1,0 +1,19 @@
+{
+  "style": "cyberpunk-neon",
+  "name": {
+    "zh": "赛博霓虹",
+    "en": "Cyberpunk Neon"
+  },
+  "description": "Neon pink and cyan tear through a pure black night, heralding a future that demands readiness.",
+  "category": "Dramatic · Cinematic",
+  "aliases": [
+    "cyberpunk",
+    "neon",
+    "赛博",
+    "霓虹",
+    "cyberpunk"
+  ],
+  "styleCase": "技术分享、品牌营销、产品发布",
+  "version": "2.0.1",
+  "source": "builtin"
+}

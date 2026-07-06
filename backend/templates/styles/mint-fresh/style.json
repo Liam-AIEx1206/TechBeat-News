@@ -1,0 +1,19 @@
+{
+  "style": "mint-fresh",
+  "name": {
+    "zh": "薄荷清新 · 高级绿",
+    "en": "Mint Fresh"
+  },
+  "description": "A sophisticated green palette with low saturation and high brightness.",
+  "category": "Natural · Organic",
+  "aliases": [
+    "薄荷",
+    "绿色系",
+    "清新",
+    "高级绿",
+    "植物"
+  ],
+  "styleCase": "餐饮美食、疗愈冥想、教学科普",
+  "version": "2.0.2",
+  "source": "builtin"
+}

@@ -1,0 +1,18 @@
+{
+  "style": "sharp-mono",
+  "name": {
+    "zh": "锐利黑白",
+    "en": "Sharp Mono"
+  },
+  "description": "Black and white cut through visual noise with a sharpness that is deeply rooted.",
+  "category": "Bold · Statement",
+  "aliases": [
+    "sharp",
+    "mono",
+    "黑白",
+    "纯黑白"
+  ],
+  "styleCase": "融资路演、品牌营销、艺术视觉",
+  "version": "2.0.1",
+  "source": "builtin"
+}

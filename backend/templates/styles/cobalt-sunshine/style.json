@@ -1,0 +1,19 @@
+{
+  "style": "cobalt-sunshine",
+  "name": {
+    "zh": "明黄钴蓝 · 活力专业",
+    "en": "Cobalt Sunshine"
+  },
+  "description": "High-saturation complementary colors of bright yellow and cobalt blue create a striking contrast.",
+  "category": "Vibrant · Creative",
+  "aliases": [
+    "明黄钴蓝",
+    "互补色",
+    "活力",
+    "专业",
+    "撞色"
+  ],
+  "styleCase": "融资路演、产品发布、品牌营销",
+  "version": "2.0.1",
+  "source": "builtin"
+}

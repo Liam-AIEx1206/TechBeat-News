@@ -1,0 +1,17 @@
+{
+  "style": "arctic-cool",
+  "name": {
+    "zh": "北极冷",
+    "en": "Arctic Cool"
+  },
+  "description": "An icy blue gradient embodies calm rationality, giving dignity to data.",
+  "category": "Dark · Minimalist",
+  "aliases": [
+    "arctic",
+    "冷",
+    "商业分析"
+  ],
+  "styleCase": "商业汇报、产品发布、技术分享",
+  "version": "2.0.1",
+  "source": "builtin"
+}

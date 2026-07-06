@@ -1,0 +1,20 @@
+{
+  "style": "dreamy-pink-gradient",
+  "name": {
+    "zh": "渐变美学·樱粉雾蓝",
+    "en": "Dreamy Pink Gradient"
+  },
+  "description": "A gradient of cherry blossom pink, misty purple, and deep indigo evokes dreamy romance.",
+  "category": "Vibrant · Creative",
+  "aliases": [
+    "渐变",
+    "樱粉",
+    "雾蓝",
+    "dreamy",
+    "gradient",
+    "梦幻"
+  ],
+  "styleCase": "时尚潮流、婚庆浪漫、品牌营销",
+  "version": "2.0.2",
+  "source": "builtin"
+}

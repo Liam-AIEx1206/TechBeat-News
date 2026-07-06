@@ -1,0 +1,18 @@
+{
+  "style": "engineering-whiteprint",
+  "name": {
+    "zh": "工程白图",
+    "en": "Engineering Whiteprint"
+  },
+  "description": "Navy ink sketches blueprints on coordinate paper, visualizing engineering thought.",
+  "category": "Light · Professional",
+  "aliases": [
+    "engineering",
+    "工程",
+    "白图",
+    "坐标纸"
+  ],
+  "styleCase": "技术分享、商业汇报、产品发布",
+  "version": "2.0.1",
+  "source": "builtin"
+}

@@ -1,0 +1,19 @@
+{
+  "style": "dopamine-clash",
+  "name": {
+    "zh": "多巴胺活力撞色",
+    "en": "Dopamine Clash"
+  },
+  "description": "High-saturation clashes of light purple, bright green, and rose pink embody youthful energy.",
+  "category": "Vibrant · Creative",
+  "aliases": [
+    "dopamine",
+    "多巴胺",
+    "撞色",
+    "活力",
+    "年轻"
+  ],
+  "styleCase": "品牌营销、产品发布、年度庆典",
+  "version": "2.0.1",
+  "source": "builtin"
+}
