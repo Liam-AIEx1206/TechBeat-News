@@ -463,8 +463,26 @@ def _build_svg_prompt(
     total_slides: int,
     layout_key: str | None = None,
     outline: list[str] | None = None,
+    style=None,  # style_packs.Style — khi user chọn 1 STYLE (oh-my-ppt) thay vì màu
 ) -> str:
-    t = get_theme(theme_id)
+    # Nguồn palette + design-spec:
+    #   • có style → palette của style + SKILL.md làm spec chính (bám phong cách)
+    #   • không    → theme màu như cũ
+    style_spec_block = ""
+    if style is not None:
+        t = dict(style.palette)
+        t.setdefault("vibe", (style.description or style.label))
+        spec = (style.skill_md or "").strip()
+        if spec:
+            style_spec_block = (
+                "\n=== STYLE SPEC (BẮT BUỘC bám theo — đây là phong cách deck đã chọn) ===\n"
+                f"Phong cách: {style.label}" + (f" ({style.label_en})" if style.label_en else "") + "\n"
+                + spec
+                + "\n=== HẾT STYLE SPEC ===\n"
+                "Khi STYLE SPEC và các gợi ý khác mâu thuẫn về màu/font/hoạ tiết, ƯU TIÊN STYLE SPEC.\n"
+            )
+    else:
+        t = get_theme(theme_id)
     layout = _LAYOUTS.get(layout_key or "", "") or _LAYOUTS["split_asym"]
 
     # Parse narration into concise bullet points
@@ -506,8 +524,8 @@ ACCENT2 (secondary):    {t['accent2']}
 ACCENT3 (tertiary):     {t['accent3']}
 TEXT1 (heading):        {t['text1']}
 TEXT2 (body/muted):     {t['text2']}
-STYLE VIBE:             {t['vibe']}
-{image_block}
+STYLE VIBE:             {t.get('vibe', '')}
+{style_spec_block}{image_block}
 {_icon_block(theme_id)}
 
 === REQUIRED LAYOUT FOR THIS SLIDE ===
@@ -1032,6 +1050,7 @@ class GenSlideOneRequest(BaseModel):
     sceneIndex: int          # 0-based
     sessionId: str | None = None
     refinePasses: int | None = None  # None → env SLIDE_REFINE_PASSES (default 1)
+    styleId: str | None = None       # chọn style pack (oh-my-ppt) thay vì chỉ theme màu
 
 
 def _refine_passes(req_value: int | None) -> int:
@@ -1057,6 +1076,14 @@ async def gen_slide_one(body: GenSlideOneRequest, request: Request):
     layout_key = _layout_for_index(body.scenes, body.sceneIndex)
     outline = [s.title for s in body.scenes]
 
+    # Style pack (oh-my-ppt) nếu user chọn — palette + SKILL.md làm design-spec
+    style_obj = None
+    if body.styleId:
+        try:
+            style_obj = _load_lib("style_packs").get_style(body.styleId)
+        except Exception as e:
+            print(f"[slides] nạp style '{body.styleId}' lỗi: {e}")
+
     # Scene chưa có ảnh + layout hợp ảnh → tự tìm ảnh thật (Openverse, fail-soft)
     auto_image_url: str | None = None
     if not scene.imageUrl and layout_key in _IMAGE_FRIENDLY_LAYOUTS:
@@ -1065,7 +1092,7 @@ async def gen_slide_one(body: GenSlideOneRequest, request: Request):
             scene = scene.model_copy(update={"imageUrl": auto_image_url})
     prompt = _build_svg_prompt(
         scene, body.theme, body.sceneIndex + 1, total,
-        layout_key=layout_key, outline=outline,
+        layout_key=layout_key, outline=outline, style=style_obj,
     )
 
     async with limiter._llm_sem:
