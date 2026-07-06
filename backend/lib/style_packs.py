@@ -133,12 +133,26 @@ def _load_one(d: Path) -> Style | None:
     declared = meta.get("palette") or meta.get("colors") or meta.get("theme")
     palette = _derive_palette(hexes, declared if isinstance(declared, dict) else None)
 
-    label = (meta.get("label") or meta.get("name") or d.name.replace("-", " ").replace("_", " ").title())
+    # oh-my-ppt: name = {"zh": "...", "en": "..."}; cũng chấp nhận label dạng chuỗi.
+    nm = meta.get("name")
+    label_en = ""
+    if isinstance(nm, dict):
+        label = nm.get("en") or nm.get("zh") or ""
+        label_en = str(nm.get("en") or "")
+    elif isinstance(nm, str):
+        label = nm
+    else:
+        label = meta.get("label") or ""
+    if not label:
+        label = d.name.replace("-", " ").replace("_", " ").title()
+    if not label_en:
+        label_en = str(meta.get("labelEn") or meta.get("label_en") or "")
+
     return Style(
-        id=d.name,
+        id=str(meta.get("style") or d.name),
         label=str(label),
-        label_en=str(meta.get("labelEn") or meta.get("label_en") or ""),
-        description=str(meta.get("description") or "")[:400],
+        label_en=label_en,
+        description=str(meta.get("description") or meta.get("styleCase") or "")[:400],
         category=str(meta.get("category") or ""),
         aliases=[str(a) for a in (meta.get("aliases") or []) if isinstance(a, str)],
         skill_md=skill,

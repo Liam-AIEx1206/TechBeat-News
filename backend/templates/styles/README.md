@@ -16,12 +16,20 @@ styles/
 
 ## Cách thêm style từ oh-my-ppt (bạn clone repo họ về)
 
-1. `git clone https://github.com/arcsin1/oh-my-ppt` (hoặc dùng bản build).
-2. Tìm thư mục chứa style — thường ở `resources/styles/` hoặc do tool
-   `arcsin1/style-generate-skill` sinh ra (mỗi style là 1 folder 3 file).
-3. **Copy nguyên thư mục style** (giữ đủ `style.json` + `SKILL.md` + `preview.html`)
-   vào đây, mỗi style một thư mục con. Tên thư mục = `style-id`.
-4. Restart backend (hoặc chỉ cần đổi file — loader cache theo mtime, tự nạp lại).
+Đã xác nhận: oh-my-ppt để 74 style ở `resources/styles/<tên>/`, mỗi style đúng
+3 file `style.json` + `SKILL.md` + `preview.html`.
+
+```powershell
+git clone https://github.com/arcsin1/oh-my-ppt.git D:\oh-my-ppt
+# copy TẤT CẢ 74 style vào app (mỗi style giữ nguyên thư mục 3 file)
+Copy-Item "D:\oh-my-ppt\resources\styles\*" -Destination "D:\AI_Video_Edit\backend\templates\styles\" -Recurse
+```
+
+Restart backend là xong (loader cache theo mtime nên đổi/thêm file tự nạp lại).
+
+**Lưu ý:** `SKILL.md` của oh-my-ppt viết bằng tiếng Trung — KHÔNG sao. Model đọc
+hiểu spec (màu/typography/layout là ngôn ngữ trung tính) và vẫn sinh slide chữ
+Việt. `style.json` dùng `name:{zh,en}` — loader lấy tên tiếng Anh làm nhãn.
 
 Không cần chỉnh gì thêm: loader đọc khoan dung, `/styles` tự liệt kê, StylePicker
 tự hiện thumbnail từ `preview.html`.
