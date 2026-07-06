@@ -101,16 +101,88 @@ async function bootstrap(): Promise<void> {
     res.json({ channels: __listIpcChannels() })
   })
 
-  // Adapter tổng quát: gọi thẳng một ipc channel gốc của oh-my-ppt
+  // Adapter tổng quát: gọi thẳng một ipc channel gốc của oh-my-ppt.
+  // Body {__args:[...]} = đúng chữ ký ipcRenderer.invoke(channel, ...args);
+  // body thường (object) giữ tương thích các route REST cũ.
   app.post('/invoke/:channel', async (req, res) => {
     try {
-      const result = await __invokeIpc(req.params.channel, req.body ?? {})
-      res.json({ ok: true, result })
+      const body = req.body ?? {}
+      const args = Array.isArray(body.__args) ? body.__args : [body]
+      const result = await __invokeIpc(req.params.channel, ...args)
+      res.json({ ok: true, result: rewriteLocalUrls(result) })
     } catch (error) {
       res.status(500).json({
         ok: false,
         error: error instanceof Error ? error.message : String(error)
       })
+    }
+  })
+
+  // ── Web renderer (UI gốc oh-my-ppt chạy trong browser) ────────────────────
+  app.use('/app', express.static(path.join(process.cwd(), 'renderer-dist')))
+
+  // SSE fan TẤT CẢ webContents.send — bridge phía browser dispatch theo channel
+  app.get('/events/all', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive'
+    })
+    res.write(': connected\n\n')
+    const onSend = (payload: { channel: string; args: unknown[] }): void => {
+      res.write(`data: ${JSON.stringify(rewriteLocalUrls(payload))}\n\n`)
+    }
+    __electronShimBus.on('webcontents-send', onSend)
+    const keepAlive = setInterval(() => res.write(': ping\n\n'), 15000)
+    req.on('close', () => {
+      clearInterval(keepAlive)
+      __electronShimBus.off('webcontents-send', onSend)
+    })
+  })
+
+  // File server thay cho file:// + local-asset:// (giới hạn trong data/resources)
+  app.get(/^\/fs\/(.+)/, (req, res) => {
+    try {
+      const raw = decodeURIComponent(req.params[0])
+      const abs = path.resolve(raw)
+      const roots = [dataDirOf(), path.join(process.cwd(), 'resources')].map((r) => path.resolve(r))
+      if (!roots.some((root) => abs.startsWith(root))) {
+        res.status(403).json({ error: 'ngoài phạm vi cho phép' })
+        return
+      }
+      if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
+        res.status(404).json({ error: 'không thấy file' })
+        return
+      }
+      res.sendFile(abs)
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
+  // Upload (bridge getPathForFile): browser không có path local
+  app.post('/upload', express.raw({ type: '*/*', limit: '200mb' }), (req, res) => {
+    try {
+      const uploadDir = path.join(dataDirOf(), 'uploads')
+      fs.mkdirSync(uploadDir, { recursive: true })
+      // multipart đơn giản: tách phần body sau header boundary
+      const contentType = String(req.headers['content-type'] || '')
+      const boundary = contentType.split('boundary=')[1]
+      if (!boundary) throw new Error('thiếu multipart boundary')
+      const buf = req.body as Buffer
+      const marker = Buffer.from('\r\n\r\n')
+      const headerEnd = buf.indexOf(marker)
+      const head = buf.slice(0, headerEnd).toString('utf-8')
+      const nameMatch = /filename="([^"]+)"/.exec(head)
+      const filename = nameMatch ? path.basename(nameMatch[1]) : `upload-${Date.now()}`
+      const tail = Buffer.from(`\r\n--${boundary}--`)
+      const endIdx = buf.lastIndexOf(tail)
+      const content = buf.slice(headerEnd + marker.length, endIdx > 0 ? endIdx : undefined)
+      const outPath = path.join(uploadDir, `${Date.now()}-${filename}`)
+      fs.writeFileSync(outPath, content)
+      res.json({ path: outPath })
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : String(error) })
     }
   })
 
@@ -216,6 +288,33 @@ async function bootstrap(): Promise<void> {
   app.listen(PORT, () => {
     log.info(`[server] slide-engine chạy tại http://localhost:${PORT}`)
   })
+}
+
+/**
+ * Deep-rewrite URL nội bộ Electron → HTTP route browser dùng được:
+ *  file:///E:/x/y.html  → /fs/E:/x/y.html   (iframe preview, asset)
+ *  local-asset://<path> → /fs/<path>
+ */
+function rewriteLocalUrls<T>(value: T): T {
+  if (typeof value === 'string') {
+    let out: string = value
+    if (out.includes('file://')) {
+      out = out.replace(/file:\/\/\/?/g, '/fs/')
+    }
+    if (out.includes('local-asset://')) {
+      out = out.replace(/local-asset:\/\//g, '/fs/')
+    }
+    return out as unknown as T
+  }
+  if (Array.isArray(value)) return value.map((v) => rewriteLocalUrls(v)) as unknown as T
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = rewriteLocalUrls(v)
+    }
+    return out as unknown as T
+  }
+  return value
 }
 
 function dataDirOf(): string {
