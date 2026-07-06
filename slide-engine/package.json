@@ -1,0 +1,25 @@
+{
+  "name": "slide-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "XNEW slide engine — oh-my-ppt generation & PPTX export pipeline, headless (Playwright thay Electron BrowserWindow)",
+  "type": "module",
+  "scripts": {
+    "spike:pptx": "tsx src/spike-pptx.ts"
+  },
+  "dependencies": {
+    "@chenglou/pretext": "^0.0.6",
+    "electron-log": "file:./shims/electron-log",
+    "fflate": "^0.8.2",
+    "fonteditor-core": "^2.6.3",
+    "playwright": "^1.49.0",
+    "pngjs": "^7.0.0",
+    "woff2-encoder": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pngjs": "^6.0.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

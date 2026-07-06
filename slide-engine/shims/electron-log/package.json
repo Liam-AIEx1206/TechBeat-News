@@ -1,0 +1,12 @@
+{
+  "name": "electron-log",
+  "version": "5.0.0-shim",
+  "description": "Console shim so oh-my-ppt main-process code runs outside Electron unchanged",
+  "type": "module",
+  "main": "./main.js",
+  "exports": {
+    ".": "./main.js",
+    "./main.js": "./main.js",
+    "./main": "./main.js"
+  }
+}

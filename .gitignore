@@ -66,3 +66,8 @@ my-video/sessions/
 *.tar.gz
 *.tar
 *.zip
+
+# oh-my-ppt reference clone (vendor nguồn — xem slide-engine/VENDOR.md)
+oh-my-ppt/
+slide-engine/node_modules/
+slide-engine/out/
