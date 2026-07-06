@@ -18,6 +18,7 @@ export interface ScenePlan {
   scenes: Scene[];
   totalDuration: number;
   theme?: ThemeId;
+  styleId?: string;   // style pack (oh-my-ppt) đã chọn — luồng slide dùng thay theme màu
   voiceId?: string;
   compositionHtml?: string;
   sceneRegenFlags?: boolean[];

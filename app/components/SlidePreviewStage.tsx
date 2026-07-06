@@ -68,6 +68,7 @@ export function SlidePreviewStage({ scenePlan, setScenePlan, onBack, onExport }:
           scenes,
           totalDuration: scenePlan.totalDuration,
           theme: scenePlan.theme,
+          styleId: scenePlan.styleId,
           sceneIndex: idx,
           sessionId: scenePlan.sessionId,
         }),

@@ -7,6 +7,7 @@ import { SceneList } from "@/components/SceneList";
 import { VideoBuilder } from "@/components/VideoBuilder";
 import { UserMenu } from "@/components/UserMenu";
 import { ThemePicker } from "@/components/ThemePicker";
+import { StylePicker } from "@/components/StylePicker";
 import { GalaxyCanvas } from "@/components/GalaxyCanvas";
 import { VoicePicker } from "@/components/VoicePicker";
 import { HtmlPreviewStage } from "@/components/HtmlPreviewStage";
@@ -1604,20 +1605,29 @@ function PreviewStage({
               }}><Palette size={15} color="var(--accent)" /></div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)" }}>
-                  {isSlideOutput ? "Theme Slide" : "Theme Video"}
+                  {isSlideOutput ? "Style Slide" : "Theme Video"}
                 </div>
-                <div style={{ fontSize: 10, color: "var(--gray-5)", marginTop: 1 }}>Chọn bảng màu cho slide</div>
+                <div style={{ fontSize: 10, color: "var(--gray-5)", marginTop: 1 }}>
+                  {isSlideOutput ? "Chọn phong cách (màu + font + hoạ tiết)" : "Chọn bảng màu cho slide"}
+                </div>
               </div>
             </div>
             <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--gray-5)", background: "rgba(255,255,255,0.04)", padding: "3px 8px", borderRadius: 99, border: "1px solid rgba(255,255,255,0.07)" }}>
-              {THEMES.length} themes
+              {isSlideOutput ? "style packs" : `${THEMES.length} themes`}
             </span>
           </div>
           <div style={{ position: "relative", zIndex: 1, flex: 1, padding: "clamp(14px,2vw,20px)", overflowY: "auto" }}>
-            <ThemePicker
-              value={themeId}
-              onChange={(id) => setScenePlan({ ...scenePlan, theme: id })}
-            />
+            {isSlideOutput ? (
+              <StylePicker
+                value={scenePlan.styleId}
+                onChange={(id) => setScenePlan({ ...scenePlan, styleId: id })}
+              />
+            ) : (
+              <ThemePicker
+                value={themeId}
+                onChange={(id) => setScenePlan({ ...scenePlan, theme: id })}
+              />
+            )}
           </div>
         </div>
 
