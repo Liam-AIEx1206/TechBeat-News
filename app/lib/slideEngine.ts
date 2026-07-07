@@ -48,6 +48,11 @@ async function invoke<T = unknown>(channel: string, ...args: unknown[]): Promise
   return data.result as T;
 }
 
+/** URL slide mẫu của style (preview.html) qua proxy. */
+export function stylePreviewUrl(styleKey: string): string {
+  return `${P}/styles/${encodeURIComponent(styleKey)}/preview`;
+}
+
 export async function listStyles(): Promise<StyleItem[]> {
   const r = await fetch(`${P}/styles`).then((x) => x.json());
   return r.items ?? [];

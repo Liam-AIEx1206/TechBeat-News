@@ -6,7 +6,7 @@ import {
   listStyles, listFonts, createSession, startGenerate, getSession,
   subscribeProgress, retryFailedPages, pageUrl, exportDownloadUrl,
   editPage, getPageMessages, addPage, deletePage, reorderPages,
-  generateSpeech, getSpeech, hasActiveRun, saveAsTemplate,
+  generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle,
 } from "@/lib/slideEngine";
@@ -84,6 +84,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
+  const [preview, setPreview] = useState<StyleItem | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -165,20 +166,22 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         <div style={{ color: "var(--gray-5)", fontSize: 13, padding: 20 }}>Đang tải phong cách…</div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 12, maxHeight: 380, overflowY: "auto", padding: 4 }}>
-          {filtered.map((s) => {
-            const active = s.id === styleId;
-            return (
-              <button key={s.id} type="button" onClick={() => setStyleId(s.id)} style={{
-                textAlign: "left", cursor: "pointer", padding: 14, borderRadius: 12,
-                background: active ? "rgba(249,115,22,0.10)" : "rgba(255,255,255,0.03)",
-                border: active ? "1.5px solid var(--accent)" : "1px solid var(--gray-3)",
-              }}>
-                {s.category && <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: active ? "var(--accent)" : "var(--gray-5)", marginBottom: 6 }}>{s.category}</div>}
-                <div style={{ fontSize: 13, fontWeight: 700, color: active ? "var(--accent)" : "var(--white)" }}>{s.name?.en || s.label}</div>
-                {s.description && <div style={{ fontSize: 10, color: "var(--gray-5)", lineHeight: 1.4, marginTop: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{s.description}</div>}
-              </button>
-            );
-          })}
+          {filtered.map((s) => (
+            <StyleCard key={s.id} style={s} active={s.id === styleId} onSelect={() => setStyleId(s.id)} onZoom={() => setPreview(s)} />
+          ))}
+        </div>
+      )}
+
+      {preview && (
+        <div onClick={() => setPreview(null)} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{preview.name?.en || preview.label}</span>
+            <button onClick={() => setPreview(null)} className="btn-ghost" style={{ fontSize: 12 }}>✕ Đóng</button>
+          </div>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(1100px,92vw)", aspectRatio: "16/9", borderRadius: 14, overflow: "hidden", border: "1px solid var(--gray-3)", background: "#0b0b12" }}>
+            <ScaledSlideFrame url={stylePreviewUrl(preview.styleKey)} title={preview.label} frameKey={`stp-${preview.id}`} />
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); setStyleId(preview.id); setPreview(null); }} className="btn-primary" style={{ fontSize: 13 }}>Chọn style này</button>
         </div>
       )}
 
@@ -539,6 +542,41 @@ function SpeechPanel({ sessionId, page }: { sessionId: string; page?: GeneratedP
 }
 
 const miniBtn: CSSProperties = { flex: 1, fontSize: 11, padding: "3px 0", borderRadius: 6, border: "1px solid var(--gray-3)", background: "rgba(255,255,255,0.04)", color: "var(--gray-6)", cursor: "pointer" };
+
+/** Thẻ style: tên tiếng Anh + slide mẫu thật (thumbnail nạp lazy khi lướt tới) + phóng to. */
+function StyleCard({ style, active, onSelect, onZoom }: { style: StyleItem; active: boolean; onSelect: () => void; onZoom: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || seen) return;
+    const io = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) { setSeen(true); io.disconnect(); }
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [seen]);
+  return (
+    <div ref={ref} onClick={onSelect} style={{
+      cursor: "pointer", borderRadius: 12, overflow: "hidden",
+      background: active ? "rgba(249,115,22,0.10)" : "rgba(255,255,255,0.03)",
+      border: active ? "1.5px solid var(--accent)" : "1px solid var(--gray-3)",
+    }}>
+      <div style={{ position: "relative", aspectRatio: "16/9", background: "#0b0b12", borderBottom: "1px solid var(--gray-2)" }}>
+        {seen ? <ScaledSlideFrame url={stylePreviewUrl(style.styleKey)} title={style.label} frameKey={`th-${style.id}`} />
+              : <div style={{ width: "100%", height: "100%" }} />}
+        <button onClick={(e) => { e.stopPropagation(); onZoom(); }} title="Xem lớn" style={{
+          position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 6,
+          background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff",
+          fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        }}>⤢</button>
+      </div>
+      <div style={{ padding: "8px 10px", fontSize: 12, fontWeight: 700, color: active ? "var(--accent)" : "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {style.name?.en || style.label}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Trang slide oh-my-ppt là canvas CỐ ĐỊNH 1600×900, không tự co (fit nằm ở

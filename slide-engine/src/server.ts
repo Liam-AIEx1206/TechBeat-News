@@ -206,6 +206,18 @@ async function bootstrap(): Promise<void> {
     })
   })
 
+  // Slide mẫu của 1 style (preview.html tự chứa trong resources/styles/<key>)
+  app.get('/styles/:key/preview', (req, res) => {
+    try {
+      const key = req.params.key.replace(/[^a-z0-9-]/gi, '')
+      const fp = path.join(process.cwd(), 'resources', 'styles', key, 'preview.html')
+      if (!fs.existsSync(fp)) { res.status(404).json({ error: 'không có slide mẫu' }); return }
+      res.type('html').send(fs.readFileSync(fp, 'utf-8'))
+    } catch (error) {
+      res.status(404).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
   // Styles cho picker
   app.get('/styles', async (_req, res) => {
     try {
