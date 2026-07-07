@@ -427,9 +427,9 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
         </div>
 
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.3)", minWidth: 0, position: "relative" }}>
-          <div style={{ width: "100%", maxWidth: "min(1200px, calc((100vh - 180px) * 16 / 9))", aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-2)", background: "#08080f" }}>
+          <div style={{ width: "100%", maxWidth: "min(1400px, calc((100vh - 180px) * 16 / 9))", aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-2)", background: "#08080f" }}>
             {activePage && pageUrl(activePage) ? (
-              <iframe key={`${activePage.id}-${refreshKey}`} src={`${pageUrl(activePage)}?k=${refreshKey}`} title={activePage.title} scrolling="no" style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
+              <ScaledSlideFrame url={`${pageUrl(activePage)}?k=${refreshKey}`} title={activePage.title} frameKey={`${activePage.id}-${refreshKey}`} />
             ) : (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--gray-5)", fontSize: 13 }}>Đang tải…</div>
             )}
@@ -462,7 +462,7 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
       {present && activePage && (
         <div onClick={() => setPresent(false)} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ width: "min(100vw, calc(100vh * 16 / 9))", aspectRatio: "16/9" }} onClick={(e) => e.stopPropagation()}>
-            <iframe key={activePage.id} src={pageUrl(activePage)} title={activePage.title} scrolling="no" style={{ width: "100%", height: "100%", border: "none" }} />
+            <ScaledSlideFrame url={pageUrl(activePage)} title={activePage.title} frameKey={`present-${activePage.id}`} />
           </div>
           <div style={{ position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)", fontSize: 12, color: "rgba(255,255,255,0.6)" }}>← → chuyển · ESC thoát · {active + 1}/{pages.length}</div>
         </div>
@@ -539,6 +539,43 @@ function SpeechPanel({ sessionId, page }: { sessionId: string; page?: GeneratedP
 }
 
 const miniBtn: CSSProperties = { flex: 1, fontSize: 11, padding: "3px 0", borderRadius: 6, border: "1px solid var(--gray-3)", background: "rgba(255,255,255,0.04)", color: "var(--gray-6)", cursor: "pointer" };
+
+/**
+ * Trang slide oh-my-ppt là canvas CỐ ĐỊNH 1600×900, không tự co (fit nằm ở
+ * index-runtime của deck container). Nên phải scale ở phía ta: render iframe
+ * đúng 1600×900 rồi transform scale vừa khung → không cắt, không lệch.
+ */
+function ScaledSlideFrame({ url, title, frameKey }: { url: string; title: string; frameKey: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.clientWidth, h = el.clientHeight;
+      if (w && h) setScale(Math.min(w / 1600, h / 900));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <iframe
+        key={frameKey}
+        src={url}
+        title={title}
+        scrolling="no"
+        style={{
+          width: 1600, height: 900, border: "none", flexShrink: 0,
+          transform: `scale(${scale})`, transformOrigin: "center center",
+          visibility: scale ? "visible" : "hidden",
+        }}
+      />
+    </div>
+  );
+}
 
 /* ─────────────────────────  styles  ───────────────────────── */
 const fieldLabel: CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--gray-5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" };
