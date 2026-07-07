@@ -165,6 +165,11 @@ export async function getSpeech(sessionId: string): Promise<any> {
   return invoke("speech:getScript", { sessionId });
 }
 
+/** Lưu deck hiện tại thành template tái dùng. */
+export async function saveAsTemplate(sessionId: string, name: string): Promise<{ id: string }> {
+  return invoke("templates:createFromSession", { sessionId, name });
+}
+
 /** true nếu session còn run generate/edit đang chạy. */
 export async function hasActiveRun(sessionId: string): Promise<boolean> {
   try {

@@ -6,7 +6,7 @@ import {
   listStyles, listFonts, createSession, startGenerate, getSession,
   subscribeProgress, retryFailedPages, pageUrl, exportDownloadUrl,
   editPage, getPageMessages, addPage, deletePage, reorderPages,
-  generateSpeech, getSpeech, hasActiveRun,
+  generateSpeech, getSpeech, hasActiveRun, saveAsTemplate,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle,
 } from "@/lib/slideEngine";
@@ -349,6 +349,7 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={onBack} className="btn-ghost" style={{ fontSize: 12 }}>← Slide khác</button>
           {failed > 0 && <button onClick={() => { retryFailedPages(sessionId); waitIdleThenRefresh("Đang gen lại trang lỗi…"); }} className="btn-ghost" style={{ fontSize: 12, color: "var(--accent2,#fb923c)" }}>↻ Gen lại {failed} lỗi</button>}
+          <button onClick={async () => { const n = prompt("Tên template:", title); if (n?.trim()) { try { await saveAsTemplate(sessionId, n.trim()); alert("Đã lưu template ✓"); } catch (e) { alert(e instanceof Error ? e.message : "Lưu template lỗi"); } } }} className="btn-ghost" style={{ fontSize: 12 }}>💾 Lưu template</button>
           <button onClick={() => setPresent(true)} className="btn-ghost" style={{ fontSize: 12 }}>▶ Trình chiếu</button>
           {(["pptx", "pdf", "png"] as ExportKind[]).map((k) => (
             <button key={k} onClick={() => handleExport(k)} disabled={!!exporting} className={k === "pptx" ? "btn-primary" : "btn-ghost"} style={{ fontSize: 12, opacity: exporting && exporting !== k ? 0.5 : 1 }}>
