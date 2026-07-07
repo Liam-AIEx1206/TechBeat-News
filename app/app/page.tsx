@@ -1046,6 +1046,26 @@ function Dashboard({ onStart }: { onStart: () => void }) {
             </motion.button>
 
             <motion.a
+              href="/slide"
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="btn-ghost"
+              style={{
+                padding: "18px 28px",
+                fontSize: 12,
+                borderRadius: "var(--r-full)",
+                borderColor: "rgba(249,115,22,0.4)",
+                backdropFilter: "blur(10px)",
+                background: "rgba(249,115,22,0.06)",
+                color: "var(--accent)",
+                textDecoration: "none",
+                fontWeight: 700,
+              }}
+            >
+              🖼 Tạo Slide (AI)
+            </motion.a>
+
+            <motion.a
               href="/history"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.98 }}
