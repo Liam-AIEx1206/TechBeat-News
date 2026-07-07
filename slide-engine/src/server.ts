@@ -13,7 +13,8 @@ import path from 'path'
 import fs from 'fs'
 import log from 'electron-log/main.js'
 import { BrowserWindow } from 'electron'
-import { __invokeIpc, __listIpcChannels, __electronShimBus, __setNextSavePath } from 'electron'
+import { __invokeIpc, __listIpcChannels, __electronShimBus, __setNextSavePath, __setNextOpenDir } from 'electron'
+import { zipSync } from 'fflate'
 import { PPTDatabase } from '../vendor/main/db/database'
 import { AgentManager } from '../vendor/main/agent'
 import { setupIPC } from '../vendor/main/ipc'
@@ -280,6 +281,51 @@ async function bootstrap(): Promise<void> {
         throw new Error(`Export không tạo ra file (${JSON.stringify(result)})`)
       }
       res.download(filePath, path.basename(filePath))
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
+  // Xuất PDF
+  app.post('/sessions/:id/export/pdf', async (req, res) => {
+    try {
+      const outDir = path.join(dataDirOf(), 'exports')
+      fs.mkdirSync(outDir, { recursive: true })
+      const outPath = path.join(outDir, `${req.params.id}-${Date.now()}.pdf`)
+      __setNextSavePath(outPath)
+      const result = (await __invokeIpc('export:pdf', { sessionId: req.params.id })) as {
+        path?: string
+        filePath?: string
+      }
+      const filePath = result?.filePath || result?.path || outPath
+      if (!fs.existsSync(filePath)) throw new Error(`Export PDF thất bại (${JSON.stringify(result)})`)
+      res.download(filePath, path.basename(filePath))
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
+  // Xuất PNG → gom thư mục ảnh thành 1 file .zip trả về
+  app.post('/sessions/:id/export/png', async (req, res) => {
+    try {
+      const parent = path.join(dataDirOf(), 'exports')
+      fs.mkdirSync(parent, { recursive: true })
+      __setNextOpenDir(parent)
+      const result = (await __invokeIpc('export:png', { sessionId: req.params.id })) as {
+        path?: string
+        directoryPath?: string
+      }
+      const dir = result?.directoryPath || result?.path
+      if (!dir || !fs.existsSync(dir)) throw new Error(`Export PNG thất bại (${JSON.stringify(result)})`)
+      const files: Record<string, Uint8Array> = {}
+      for (const name of fs.readdirSync(dir)) {
+        const fp = path.join(dir, name)
+        if (fs.statSync(fp).isFile()) files[name] = new Uint8Array(fs.readFileSync(fp))
+      }
+      const zip = zipSync(files)
+      res.setHeader('Content-Type', 'application/zip')
+      res.setHeader('Content-Disposition', `attachment; filename="slides-${req.params.id}.zip"`)
+      res.end(Buffer.from(zip))
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : String(error) })
     }
