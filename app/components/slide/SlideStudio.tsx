@@ -29,7 +29,7 @@ export function SlideStudio() {
         />
       )}
       {step === "generating" && (
-        <GeneratingStep sessionId={sessionId} title={title} onDone={(pages) => { setInitialPages(pages); setStep("preview"); }} />
+        <GeneratingStep sessionId={sessionId} title={title} onDone={(pages) => { setInitialPages(pages); setStep("preview"); }} onBack={() => setStep("input")} />
       )}
       {step === "preview" && (
         <PreviewStep sessionId={sessionId} title={title} initialPages={initialPages} onBack={() => setStep("input")} />
@@ -194,21 +194,44 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
 }
 
 /* ─────────────────────────  STEP 2 · GENERATING  ───────────────────────── */
-function GeneratingStep({ sessionId, title, onDone }: { sessionId: string; title: string; onDone: (pages: GeneratedPage[]) => void }) {
+// Nhãn tiến độ engine (zh) → tiếng Việt theo stage
+const STAGE_VI: Record<string, string> = {
+  preflight: "Đang chuẩn bị", planning: "Đang lập dàn ý",
+  generating: "Đang tạo trang", page: "Đang tạo trang",
+  finalize: "Đang hoàn tất", finalizing: "Đang hoàn tất",
+};
+function viLabel(p: any): string | null {
+  if (p?.stage && STAGE_VI[p.stage]) return STAGE_VI[p.stage];
+  const l = p?.label;
+  if (typeof l === "string" && !/[一-鿿]/.test(l)) return l; // giữ nếu không phải chữ Trung
+  return null;
+}
+
+function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: string; title: string; onDone: (pages: GeneratedPage[]) => void; onBack: () => void }) {
   const [pages, setPages] = useState<GeneratedPage[]>([]);
   const [label, setLabel] = useState("Đang chuẩn bị…");
   const [progress, setProgress] = useState(4);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState("");
   const doneRef = useRef(false);
+  const idleMissRef = useRef(0);
 
   useEffect(() => {
+    const fail = (msg: string) => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      setError(msg || "Sinh slide thất bại.");
+    };
     const unsub = subscribeProgress((ev) => {
+      const type = ev?.type ?? ev?.payload?.type;
+      if (type === "run_error" || type === "run_aborted") { fail(ev?.message ?? ev?.payload?.message ?? "Sinh slide bị huỷ/timeout."); return; }
       const p = ev?.payload ?? ev;
-      if (p?.label) setLabel(p.label);
+      const vl = viLabel(p); if (vl) setLabel(vl);
       if (typeof p?.progress === "number") setProgress(Math.max(4, Math.min(99, p.progress)));
       if (typeof p?.totalPages === "number") setTotal(p.totalPages);
     });
     const poll = setInterval(async () => {
+      if (doneRef.current) return;
       try {
         const data = await getSession(sessionId);
         setPages(data.generatedPages);
@@ -216,17 +239,35 @@ function GeneratingStep({ sessionId, title, onDone }: { sessionId: string; title
         const gc = Number((data.session as any)?.generated_count ?? data.generatedPages.filter((x) => x.status === "completed").length);
         const fc = Number((data.session as any)?.failed_count ?? data.generatedPages.filter((x) => x.status === "failed").length);
         if (pc > 0) setTotal(pc);
-        if (!doneRef.current && pc > 0 && gc + fc >= pc) {
+        if (pc > 0 && gc + fc >= pc) {
           doneRef.current = true;
           setProgress(100);
           clearInterval(poll); unsub();
           const finalPages = data.generatedPages;
           setTimeout(() => onDone(finalPages), 500);
+          return;
+        }
+        // Không còn run chạy mà chưa có trang nào xong → thất bại/nghẽn
+        if (gc === 0) {
+          if (!(await hasActiveRun(sessionId))) {
+            if (++idleMissRef.current >= 3) { clearInterval(poll); unsub(); fail("Run đã dừng nhưng chưa tạo được trang nào — thường do LLM timeout hoặc trả sai định dạng. Thử lại hoặc đổi model mạnh hơn."); }
+          } else idleMissRef.current = 0;
         }
       } catch { /* thử lại nhịp sau */ }
     }, 1500);
     return () => { clearInterval(poll); unsub(); };
   }, [sessionId]);
+
+  if (error) {
+    return (
+      <main style={{ maxWidth: 620, margin: "0 auto", padding: "64px clamp(16px,4vw,48px)", textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+        <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>Sinh slide thất bại</h1>
+        <p style={{ fontSize: 13, color: "var(--gray-6)", lineHeight: 1.6, marginBottom: 24 }}>{error}</p>
+        <button onClick={onBack} className="btn-primary" style={{ fontSize: 13 }}>← Thử lại</button>
+      </main>
+    );
+  }
 
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "48px clamp(16px,4vw,48px)", textAlign: "center" }}>
