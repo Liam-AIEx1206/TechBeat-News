@@ -447,9 +447,9 @@ async function seedModelConfigFromEnv(): Promise<void> {
   await __invokeIpc('settings:save', { storagePath: storageDir })
 
   const provider = process.env.SLIDE_ENGINE_MODEL_PROVIDER || 'openai'
-  // Mặc định gpt-4o (mạnh, ổn định cho planner oh-my-ppt). gpt-4o-mini hay lỗi
-  // "页面计划格式异常"/timeout ở deck nhiều trang.
-  const model = process.env.SLIDE_ENGINE_MODEL || 'gpt-4o'
+  // deepseek-chat: model oh-my-ppt khuyen nghi #1 (README) — tuan thu "doc SKILL.md
+  // truoc khi viet trang" cua skills progressive-disclosure tot hon gpt-4o/mini.
+  const model = process.env.SLIDE_ENGINE_MODEL || 'deepseek-chat'
   const baseUrl = process.env.SLIDE_ENGINE_BASE_URL || process.env.OPENAI_BASE_URL || ''
   // listModelConfigs trả MẢNG trực tiếp → tái dùng đúng config 'xnew-default'
   const existing = (await __invokeIpc('settings:listModelConfigs')) as Array<{ id: string; name: string }>
@@ -464,6 +464,9 @@ async function seedModelConfigFromEnv(): Promise<void> {
     // Proxy OpenAI-compatible (vd api.pinkyne.com) không nhận tham số 'thinking'
     // → 429 "Unrecognized request argument supplied: thinking". 'omit' bỏ hẳn nó.
     thinkingParameterMode: 'omit',
+    // 16384 = tran cho phep cua oh-my-ppt (normalizeMaxTokens). 4096 mac dinh bo
+    // hep output → agent viet trang toi gian. Trang HTML giau thiet ke can nhieu hon.
+    maxTokens: 16384,
     active: true
   })) as { id?: string }
   if (saved?.id) await __invokeIpc('settings:setActiveModelConfig', saved.id)
