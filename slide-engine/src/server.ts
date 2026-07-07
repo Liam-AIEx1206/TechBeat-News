@@ -447,9 +447,10 @@ async function seedModelConfigFromEnv(): Promise<void> {
   await __invokeIpc('settings:save', { storagePath: storageDir })
 
   const provider = process.env.SLIDE_ENGINE_MODEL_PROVIDER || 'openai'
-  // deepseek-chat: model oh-my-ppt khuyen nghi #1 (README) — tuan thu "doc SKILL.md
-  // truoc khi viet trang" cua skills progressive-disclosure tot hon gpt-4o/mini.
-  const model = process.env.SLIDE_ENGINE_MODEL || 'deepseek-chat'
+  // gpt-5-mini: re nhat pinkyne ($0.125/1M, 10x re hon gpt-4o) VA tuan thu skill
+  // progressive-disclosure (doc SKILL.md layout) — do bang log 07/2026; kem
+  // disableTemperature vi ho gpt-5 chi nhan temperature=1.
+  const model = process.env.SLIDE_ENGINE_MODEL || 'gpt-5-mini'
   const baseUrl = process.env.SLIDE_ENGINE_BASE_URL || process.env.OPENAI_BASE_URL || ''
   // listModelConfigs trả MẢNG trực tiếp → tái dùng đúng config 'xnew-default'
   const existing = (await __invokeIpc('settings:listModelConfigs')) as Array<{ id: string; name: string }>
@@ -467,6 +468,7 @@ async function seedModelConfigFromEnv(): Promise<void> {
     // 16384 = tran cho phep cua oh-my-ppt (normalizeMaxTokens). 4096 mac dinh bo
     // hep output → agent viet trang toi gian. Trang HTML giau thiet ke can nhieu hon.
     maxTokens: 16384,
+    disableTemperature: true,
     active: true
   })) as { id?: string }
   if (saved?.id) await __invokeIpc('settings:setActiveModelConfig', saved.id)
