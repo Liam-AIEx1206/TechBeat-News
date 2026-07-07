@@ -384,12 +384,13 @@ async function seedModelConfigFromEnv(): Promise<void> {
   await __invokeIpc('settings:save', { storagePath: storageDir })
 
   const provider = process.env.SLIDE_ENGINE_MODEL_PROVIDER || 'openai'
-  const model = process.env.SLIDE_ENGINE_MODEL || process.env.OPENAI_MODEL || 'gpt-4o'
+  // Mặc định gpt-4o (mạnh, ổn định cho planner oh-my-ppt). gpt-4o-mini hay lỗi
+  // "页面计划格式异常"/timeout ở deck nhiều trang.
+  const model = process.env.SLIDE_ENGINE_MODEL || 'gpt-4o'
   const baseUrl = process.env.SLIDE_ENGINE_BASE_URL || process.env.OPENAI_BASE_URL || ''
-  const existing = (await __invokeIpc('settings:listModelConfigs')) as {
-    configs?: Array<{ id: string; name: string }>
-  }
-  const found = existing?.configs?.find((c) => c.name === 'xnew-default')
+  // listModelConfigs trả MẢNG trực tiếp → tái dùng đúng config 'xnew-default'
+  const existing = (await __invokeIpc('settings:listModelConfigs')) as Array<{ id: string; name: string }>
+  const found = Array.isArray(existing) ? existing.find((c) => c.name === 'xnew-default') : undefined
   const saved = (await __invokeIpc('settings:upsertModelConfig', {
     id: found?.id,
     name: 'xnew-default',
@@ -397,6 +398,9 @@ async function seedModelConfigFromEnv(): Promise<void> {
     model,
     apiKey,
     baseUrl,
+    // Proxy OpenAI-compatible (vd api.pinkyne.com) không nhận tham số 'thinking'
+    // → 429 "Unrecognized request argument supplied: thinking". 'omit' bỏ hẳn nó.
+    thinkingParameterMode: 'omit',
     active: true
   })) as { id?: string }
   if (saved?.id) await __invokeIpc('settings:setActiveModelConfig', saved.id)
