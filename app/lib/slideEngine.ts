@@ -48,6 +48,26 @@ async function invoke<T = unknown>(channel: string, ...args: unknown[]): Promise
   return data.result as T;
 }
 
+/** Trích nội dung từ tài liệu (docx/md/txt/csv) để làm nguồn sinh slide. */
+export async function extractDoc(file: File): Promise<{ title: string; text: string }> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const res = await fetch(`${P}/extract-doc`, { method: "POST", body: form });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+/** Trích nội dung từ link web. */
+export async function extractUrl(url: string): Promise<{ title: string; text: string }> {
+  const res = await fetch(`${P}/extract-url`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
 /** URL slide mẫu của style (preview.html) qua proxy. */
 export function stylePreviewUrl(styleKey: string): string {
   return `${P}/styles/${encodeURIComponent(styleKey)}/preview`;

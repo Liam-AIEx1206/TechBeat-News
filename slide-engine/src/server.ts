@@ -206,6 +206,57 @@ async function bootstrap(): Promise<void> {
     })
   })
 
+  // Trích text từ tài liệu upload (docx/md/txt/csv) → làm nội dung sinh slide
+  app.post('/extract-doc', express.raw({ type: '*/*', limit: '50mb' }), async (req, res) => {
+    try {
+      const ct = String(req.headers['content-type'] || '')
+      const boundary = ct.split('boundary=')[1]
+      if (!boundary) throw new Error('thiếu multipart boundary')
+      const buf = req.body as Buffer
+      const headerEnd = buf.indexOf(Buffer.from('\r\n\r\n'))
+      const head = buf.slice(0, headerEnd).toString('utf-8')
+      const nameMatch = /filename="([^"]+)"/.exec(head)
+      const filename = nameMatch ? path.basename(nameMatch[1]) : 'upload'
+      const tail = Buffer.from(`\r\n--${boundary}--`)
+      const endIdx = buf.lastIndexOf(tail)
+      const content = buf.slice(headerEnd + 4, endIdx > 0 ? endIdx : undefined)
+      const ext = path.extname(filename).toLowerCase()
+      let text = ''
+      if (ext === '.docx') {
+        const mammoth = (await import('mammoth')).default ?? (await import('mammoth'))
+        text = (await (mammoth as any).extractRawText({ buffer: content })).value
+      } else if (ext === '.md' || ext === '.txt' || ext === '.csv') {
+        text = content.toString('utf-8')
+      } else {
+        throw new Error(`Định dạng ${ext || '?'} chưa hỗ trợ (dùng docx/md/txt/csv). PDF: hãy dán nội dung hoặc chuyển sang docx.`)
+      }
+      text = text.replace(/\n{3,}/g, '\n\n').trim().slice(0, 20000)
+      res.json({ title: path.basename(filename, ext), text })
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
+  // Trích text từ link web (fetch + strip HTML)
+  app.post('/extract-url', async (req, res) => {
+    try {
+      const url = String(req.body?.url || '').trim()
+      if (!/^https?:\/\//i.test(url)) throw new Error('URL không hợp lệ')
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 XNEW-slide' } })
+      const html = await r.text()
+      const { load } = await import('cheerio')
+      const $ = load(html)
+      $('script,style,noscript,nav,header,footer,svg,iframe').remove()
+      const title = $('title').first().text().trim() || $('h1').first().text().trim() || url
+      const text = $('article').text() || $('main').text() || $('body').text()
+      const clean = text.replace(/[ \t]+/g, ' ').replace(/\n\s*\n\s*/g, '\n\n').trim().slice(0, 20000)
+      if (clean.length < 50) throw new Error('Không trích được nội dung từ trang này')
+      res.json({ title, text: clean })
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
   // Slide mẫu của 1 style (preview.html tự chứa trong resources/styles/<key>)
   app.get('/styles/:key/preview', (req, res) => {
     try {

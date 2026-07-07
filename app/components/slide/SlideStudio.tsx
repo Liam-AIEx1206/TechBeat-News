@@ -7,6 +7,7 @@ import {
   subscribeProgress, retryFailedPages, pageUrl, exportDownloadUrl,
   editPage, getPageMessages, addPage, deletePage, reorderPages,
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
+  extractDoc, extractUrl,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle,
 } from "@/lib/slideEngine";
@@ -85,6 +86,10 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState<StyleItem | null>(null);
+  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url">("topic");
+  const [content, setContent] = useState("");   // nội dung trích từ doc/url (làm userMessage)
+  const [url, setUrl] = useState("");
+  const [extracting, setExtracting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -108,7 +113,11 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         topic: topic.trim(), styleId, pageCount,
         fontSelection: (titleFontId || bodyFontId) ? { titleFontId: titleFontId || undefined, bodyFontId: bodyFontId || undefined } : null,
       });
-      await startGenerate(sid, topic.trim());
+      // Có nội dung trích từ tài liệu/link → dùng làm nguồn; nếu không thì dùng chủ đề.
+      const userMessage = content.trim()
+        ? `Chủ đề: ${topic.trim()}\n\nDựa trên nội dung sau để làm slide (giữ nguyên ý chính, tiếng Việt):\n\n${content.trim()}`
+        : topic.trim();
+      await startGenerate(sid, userMessage);
       onStarted(sid, topic.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Không tạo được phiên");
@@ -127,10 +136,52 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         <h1 style={{ fontSize: "clamp(26px,3.4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em" }}>Bạn muốn thuyết trình về điều gì?</h1>
       </div>
 
+      {/* Nguồn nội dung: chủ đề / tài liệu / link */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        {([["topic", "✍️ Chủ đề"], ["doc", "📄 Tải tài liệu"], ["url", "🔗 Dán link"]] as const).map(([k, lb]) => (
+          <button key={k} type="button" onClick={() => setSrcMode(k)} style={{
+            padding: "8px 14px", borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: "pointer",
+            background: srcMode === k ? "var(--accent)" : "rgba(255,255,255,0.04)",
+            color: srcMode === k ? "#000" : "var(--gray-5)", border: "1px solid var(--gray-3)",
+          }}>{lb}</button>
+        ))}
+      </div>
+
+      {srcMode === "doc" && (
+        <div style={{ marginBottom: 14 }}>
+          <input type="file" accept=".docx,.md,.txt,.csv" disabled={extracting}
+            onChange={async (e) => {
+              const f = e.target.files?.[0]; if (!f) return;
+              setExtracting(true); setError("");
+              try { const r = await extractDoc(f); setContent(r.text); if (!topic.trim()) setTopic(r.title); }
+              catch (er) { setError(er instanceof Error ? er.message : "Đọc tài liệu lỗi"); }
+              finally { setExtracting(false); }
+            }}
+            style={{ fontSize: 13, color: "var(--gray-6)" }} />
+          <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 6 }}>Hỗ trợ .docx .md .txt .csv (PDF: dán nội dung hoặc chuyển docx)</div>
+        </div>
+      )}
+      {srcMode === "url" && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." disabled={extracting}
+            style={{ ...selectStyle, flex: 1 }} />
+          <button type="button" disabled={extracting || !url.trim()} className="btn-ghost" style={{ fontSize: 12 }}
+            onClick={async () => {
+              setExtracting(true); setError("");
+              try { const r = await extractUrl(url.trim()); setContent(r.text); if (!topic.trim()) setTopic(r.title); }
+              catch (er) { setError(er instanceof Error ? er.message : "Trích link lỗi"); }
+              finally { setExtracting(false); }
+            }}>{extracting ? "Đang đọc…" : "Trích xuất"}</button>
+        </div>
+      )}
+      {content && srcMode !== "topic" && (
+        <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 10 }}>✓ Đã lấy {content.length.toLocaleString()} ký tự nội dung — AI sẽ dựa vào đây.</div>
+      )}
+
       {/* Chủ đề */}
-      <label style={fieldLabel}>Chủ đề / mô tả</label>
+      <label style={fieldLabel}>{srcMode === "topic" ? "Chủ đề / mô tả" : "Tiêu đề bài thuyết trình"}</label>
       <textarea
-        value={topic} onChange={(e) => setTopic(e.target.value)} rows={4}
+        value={topic} onChange={(e) => setTopic(e.target.value)} rows={srcMode === "topic" ? 4 : 2}
         placeholder="VD: Giới thiệu game Duck Out — thể loại Extraction Shooter: tổng quan, gameplay loot/shoot/escape, vũ khí, kết luận kêu gọi chơi thử."
         style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 12, color: "var(--white)", fontSize: 14, padding: "14px 16px", fontFamily: "inherit", lineHeight: 1.6, resize: "vertical" }}
       />
