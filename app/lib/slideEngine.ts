@@ -114,6 +114,65 @@ export function subscribeProgress(onEvent: (ev: any) => void): () => void {
   return () => es.close();
 }
 
+/* ── Phase 2: chỉnh sửa ─────────────────────────────────────────────────── */
+
+export interface ChatMessage {
+  id?: string;
+  role: string;          // user | assistant | system
+  content: string;
+  type?: string;
+}
+
+/** Chat-edit 1 trang: AI sửa HTML trang theo yêu cầu (type:page, chatType:page). */
+export async function editPage(sessionId: string, pageId: string, instruction: string): Promise<{ runId?: string }> {
+  const res = await fetch(`${P}/sessions/${sessionId}/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userMessage: instruction, type: "page",
+      chatType: "page", chatPageId: pageId, selectedPageId: pageId,
+    }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+export async function getPageMessages(sessionId: string, pageId: string): Promise<ChatMessage[]> {
+  return invoke<ChatMessage[]>("session:getMessages", { sessionId, chatType: "page", pageId });
+}
+
+export async function addPage(sessionId: string, userMessage: string, insertAfterPageNumber: number): Promise<{ runId?: string }> {
+  return invoke("generate:addPage", { sessionId, userMessage, insertAfterPageNumber });
+}
+
+export async function deletePage(sessionId: string, pageId: string): Promise<void> {
+  await invoke("session:deletePages", { sessionId, pageIds: [pageId] });
+}
+
+export async function reorderPages(sessionId: string, orderedPageIds: string[]): Promise<void> {
+  await invoke("session:reorderPages", { sessionId, orderedPageIds });
+}
+
+export type SpeechScope = "all" | "single";
+export type SpeechStyle = "formal" | "conversational" | "storytelling";
+
+export async function generateSpeech(sessionId: string, scope: SpeechScope, currentPageId: string, style: SpeechStyle): Promise<void> {
+  await invoke("speech:generateScript", { sessionId, scope, currentPageId, style, length: "medium" });
+}
+
+export async function getSpeech(sessionId: string): Promise<any> {
+  return invoke("speech:getScript", { sessionId });
+}
+
+/** true nếu session còn run generate/edit đang chạy. */
+export async function hasActiveRun(sessionId: string): Promise<boolean> {
+  try {
+    const r = await invoke<{ hasActiveRun?: boolean; status?: string }>("generate:state", sessionId);
+    return !!r?.hasActiveRun || r?.status === "running" || r?.status === "queued";
+  } catch { return false; }
+}
+
 export type ExportKind = "pptx" | "pdf" | "png";
 
 /** Tải file export (mở tab tải trực tiếp qua proxy). */

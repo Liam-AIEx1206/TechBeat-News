@@ -5,7 +5,10 @@ import type { CSSProperties } from "react";
 import {
   listStyles, listFonts, createSession, startGenerate, getSession,
   subscribeProgress, retryFailedPages, pageUrl, exportDownloadUrl,
+  editPage, getPageMessages, addPage, deletePage, reorderPages,
+  generateSpeech, getSpeech, hasActiveRun,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
+  type ChatMessage, type SpeechStyle,
 } from "@/lib/slideEngine";
 
 type Step = "input" | "generating" | "preview";
@@ -257,21 +260,37 @@ function GeneratingStep({ sessionId, title, onDone }: { sessionId: string; title
   );
 }
 
-/* ─────────────────────────  STEP 3 · PREVIEW + EXPORT  ───────────────────────── */
+/* ─────────────────────────  STEP 3 · EDITOR (Xem · Sửa AI · Xuất)  ───────────────────────── */
 function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: string; title: string; initialPages: GeneratedPage[]; onBack: () => void }) {
   const [pages, setPages] = useState<GeneratedPage[]>(initialPages);
   const [active, setActive] = useState(0);
   const [present, setPresent] = useState(false);
   const [exporting, setExporting] = useState<ExportKind | "">("");
-  const [retrying, setRetrying] = useState(false);
+  const [busyMsg, setBusyMsg] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [panel, setPanel] = useState<"chat" | "speech">("chat");
 
-  async function refresh() {
+  async function refresh(): Promise<GeneratedPage[]> {
     const data = await getSession(sessionId);
     setPages(data.generatedPages);
+    return data.generatedPages;
   }
-  useEffect(() => { refresh(); }, [sessionId]);
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [sessionId]);
 
+  const activePage = pages[active];
   const failed = pages.filter((p) => p.status === "failed").length;
+
+  async function waitIdleThenRefresh(label: string) {
+    setBusyMsg(label);
+    await new Promise((r) => setTimeout(r, 1500));
+    for (let i = 0; i < 80; i++) {
+      if (!(await hasActiveRun(sessionId))) break;
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+    await refresh();
+    setRefreshKey((k) => k + 1);
+    setBusyMsg("");
+  }
 
   async function handleExport(kind: ExportKind) {
     setExporting(kind);
@@ -281,16 +300,34 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `${title || "slides"}.${kind === "png" ? "zip" : kind}`;
-      a.click();
+      a.href = url; a.download = `${title || "slides"}.${kind === "png" ? "zip" : kind}`; a.click();
       URL.revokeObjectURL(url);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Export lỗi");
-    } finally { setExporting(""); }
+    } catch (e) { alert(e instanceof Error ? e.message : "Export lỗi"); }
+    finally { setExporting(""); }
   }
 
-  // Trình chiếu: phím mũi tên + ESC
+  async function handleAddPage() {
+    const desc = prompt("Nội dung trang mới cần thêm là gì?");
+    if (!desc?.trim()) return;
+    try { await addPage(sessionId, desc.trim(), activePage ? active + 1 : pages.length); await waitIdleThenRefresh("Đang thêm trang…"); }
+    catch (e) { alert(e instanceof Error ? e.message : "Thêm trang lỗi"); }
+  }
+  async function handleDeletePage(p: GeneratedPage) {
+    if (!p.id || !confirm(`Xoá trang "${p.title}"?`)) return;
+    try { setBusyMsg("Đang xoá…"); await deletePage(sessionId, p.id); await refresh(); setActive((i) => Math.max(0, i - 1)); }
+    catch (e) { alert(e instanceof Error ? e.message : "Xoá lỗi"); }
+    finally { setBusyMsg(""); }
+  }
+  async function move(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= pages.length) return;
+    const ids = pages.map((p) => p.id);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    try { setBusyMsg("Đang đổi thứ tự…"); await reorderPages(sessionId, ids); await refresh(); setActive(j); }
+    catch (e) { alert(e instanceof Error ? e.message : "Đổi thứ tự lỗi"); }
+    finally { setBusyMsg(""); }
+  }
+
   useEffect(() => {
     if (!present) return;
     const onKey = (e: KeyboardEvent) => {
@@ -302,23 +339,16 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
     return () => window.removeEventListener("keydown", onKey);
   }, [present, pages.length]);
 
-  const activePage = pages[active];
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 57px)" }}>
-      {/* Toolbar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 24px", borderBottom: "1px solid var(--gray-2)", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 24px", borderBottom: "1px solid var(--gray-2)", flexWrap: "wrap" }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 420 }}>{title}</div>
+          <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 360 }}>{title}</div>
           <div style={{ fontSize: 11, color: "var(--gray-5)" }}>{pages.length} trang {failed > 0 && <span style={{ color: "#ef4444" }}>· {failed} lỗi</span>}</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={onBack} className="btn-ghost" style={{ fontSize: 12 }}>← Làm slide khác</button>
-          {failed > 0 && (
-            <button onClick={async () => { setRetrying(true); await retryFailedPages(sessionId); setTimeout(() => { refresh(); setRetrying(false); }, 3000); }} disabled={retrying} className="btn-ghost" style={{ fontSize: 12, color: "var(--accent2,#fb923c)" }}>
-              {retrying ? "Đang gen lại…" : `↻ Gen lại ${failed} trang lỗi`}
-            </button>
-          )}
+          <button onClick={onBack} className="btn-ghost" style={{ fontSize: 12 }}>← Slide khác</button>
+          {failed > 0 && <button onClick={() => { retryFailedPages(sessionId); waitIdleThenRefresh("Đang gen lại trang lỗi…"); }} className="btn-ghost" style={{ fontSize: 12, color: "var(--accent2,#fb923c)" }}>↻ Gen lại {failed} lỗi</button>}
           <button onClick={() => setPresent(true)} className="btn-ghost" style={{ fontSize: 12 }}>▶ Trình chiếu</button>
           {(["pptx", "pdf", "png"] as ExportKind[]).map((k) => (
             <button key={k} onClick={() => handleExport(k)} disabled={!!exporting} className={k === "pptx" ? "btn-primary" : "btn-ghost"} style={{ fontSize: 12, opacity: exporting && exporting !== k ? 0.5 : 1 }}>
@@ -328,48 +358,145 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
         </div>
       </div>
 
-      {/* Body: sidebar + preview */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <div style={{ width: 200, flexShrink: 0, borderRight: "1px solid var(--gray-2)", overflowY: "auto", padding: "12px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ width: 210, flexShrink: 0, borderRight: "1px solid var(--gray-2)", overflowY: "auto", padding: "12px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
           {pages.map((p, i) => (
-            <button key={p.id} onClick={() => setActive(i)} style={{
-              padding: "10px 12px", borderRadius: 10, textAlign: "left", border: "none", cursor: "pointer",
+            <div key={p.id} style={{
+              padding: "8px 10px", borderRadius: 10,
               background: active === i ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.03)",
               borderLeft: `3px solid ${active === i ? "var(--accent)" : "transparent"}`,
             }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: active === i ? "var(--accent)" : "var(--white)", marginBottom: 2 }}>
-                Trang {i + 1} {p.status === "failed" && <span style={{ color: "#ef4444" }}>·!</span>}
-              </div>
-              <div style={{ fontSize: 10, color: "var(--gray-5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-            </button>
+              <button onClick={() => setActive(i)} style={{ display: "block", width: "100%", textAlign: "left", border: "none", background: "transparent", cursor: "pointer", padding: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: active === i ? "var(--accent)" : "var(--white)", marginBottom: 2 }}>
+                  Trang {i + 1} {p.status === "failed" && <span style={{ color: "#ef4444" }}>·!</span>}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--gray-5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
+              </button>
+              {active === i && (
+                <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+                  <button onClick={() => move(i, -1)} title="Lên" style={miniBtn}>↑</button>
+                  <button onClick={() => move(i, 1)} title="Xuống" style={miniBtn}>↓</button>
+                  <button onClick={() => handleDeletePage(p)} title="Xoá" style={{ ...miniBtn, color: "#ef4444" }}>✕</button>
+                </div>
+              )}
+            </div>
           ))}
+          <button onClick={handleAddPage} className="btn-ghost" style={{ fontSize: 11, marginTop: 6 }}>+ Thêm trang</button>
         </div>
 
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.3)", minWidth: 0 }}>
-          <div style={{ width: "100%", maxWidth: "min(1400px, calc((100vh - 180px) * 16 / 9))", aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-2)", background: "#08080f" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.3)", minWidth: 0, position: "relative" }}>
+          <div style={{ width: "100%", maxWidth: "min(1200px, calc((100vh - 180px) * 16 / 9))", aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-2)", background: "#08080f" }}>
             {activePage && pageUrl(activePage) ? (
-              <iframe key={activePage.id} src={pageUrl(activePage)} title={activePage.title} scrolling="no" style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
+              <iframe key={`${activePage.id}-${refreshKey}`} src={`${pageUrl(activePage)}?k=${refreshKey}`} title={activePage.title} scrolling="no" style={{ width: "100%", height: "100%", border: "none", display: "block" }} />
             ) : (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--gray-5)", fontSize: 13 }}>Chưa có nội dung</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--gray-5)", fontSize: 13 }}>Đang tải…</div>
             )}
           </div>
+          {busyMsg && (
+            <div style={{ position: "absolute", inset: 16, borderRadius: 12, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, color: "#fff" }}>
+              <div style={{ width: 30, height: 30, border: "3px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+              <span style={{ fontSize: 13 }}>{busyMsg}</span>
+            </div>
+          )}
+        </div>
+
+        <div style={{ width: 320, flexShrink: 0, borderLeft: "1px solid var(--gray-2)", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", borderBottom: "1px solid var(--gray-2)" }}>
+            {([["chat", "Sửa bằng AI"], ["speech", "Lời dẫn"]] as const).map(([k, lb]) => (
+              <button key={k} onClick={() => setPanel(k)} style={{
+                flex: 1, padding: "12px 8px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                background: panel === k ? "rgba(249,115,22,0.1)" : "transparent",
+                color: panel === k ? "var(--accent)" : "var(--gray-5)",
+                borderBottom: panel === k ? "2px solid var(--accent)" : "2px solid transparent",
+              }}>{lb}</button>
+            ))}
+          </div>
+          {panel === "chat"
+            ? <ChatEditPanel sessionId={sessionId} page={activePage} disabled={!!busyMsg} onEdit={(ins) => { editPage(sessionId, activePage!.pageId!, ins).catch(() => {}); waitIdleThenRefresh("AI đang sửa trang…"); }} />
+            : <SpeechPanel sessionId={sessionId} page={activePage} />}
         </div>
       </div>
 
-      {/* Trình chiếu fullscreen */}
       {present && activePage && (
         <div onClick={() => setPresent(false)} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ width: "min(100vw, calc(100vh * 16 / 9))", aspectRatio: "16/9" }} onClick={(e) => e.stopPropagation()}>
             <iframe key={activePage.id} src={pageUrl(activePage)} title={activePage.title} scrolling="no" style={{ width: "100%", height: "100%", border: "none" }} />
           </div>
-          <div style={{ position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)", fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
-            ← → chuyển trang · ESC thoát · {active + 1}/{pages.length}
-          </div>
+          <div style={{ position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)", fontSize: 12, color: "rgba(255,255,255,0.6)" }}>← → chuyển · ESC thoát · {active + 1}/{pages.length}</div>
         </div>
       )}
     </div>
   );
 }
+
+function ChatEditPanel({ sessionId, page, disabled, onEdit }: { sessionId: string; page?: GeneratedPage; disabled: boolean; onEdit: (instruction: string) => void }) {
+  const [msgs, setMsgs] = useState<ChatMessage[]>([]);
+  const [text, setText] = useState("");
+  useEffect(() => {
+    if (!page?.pageId) { setMsgs([]); return; }
+    getPageMessages(sessionId, page.pageId).then(setMsgs).catch(() => setMsgs([]));
+  }, [sessionId, page?.pageId, disabled]);
+
+  const quick = ["Đổi màu tiêu đề nổi bật hơn", "Rút gọn nội dung cho gọn", "Thêm một biểu đồ minh hoạ", "Đổi bố cục sinh động hơn"];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+        {msgs.length === 0 && <div style={{ fontSize: 12, color: "var(--gray-5)", lineHeight: 1.6 }}>Bảo AI chỉnh trang <b style={{ color: "var(--white)" }}>{page ? `#${page.pageNumber}` : ""}</b> — ví dụ đổi màu tiêu đề, thêm biểu đồ, rút gọn chữ.</div>}
+        {msgs.map((m, i) => (
+          <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "90%", padding: "8px 12px", borderRadius: 10, fontSize: 12, lineHeight: 1.5,
+            background: m.role === "user" ? "var(--accent)" : "rgba(255,255,255,0.05)", color: m.role === "user" ? "#000" : "var(--white)" }}>
+            {m.content?.slice(0, 500)}
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: 12, borderTop: "1px solid var(--gray-2)" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+          {quick.map((q) => <button key={q} disabled={disabled || !page} onClick={() => onEdit(q)} style={{ fontSize: 10, padding: "4px 8px", borderRadius: 99, border: "1px solid var(--gray-3)", background: "transparent", color: "var(--gray-6)", cursor: "pointer" }}>{q}</button>)}
+        </div>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} placeholder="Nhập yêu cầu chỉnh sửa…" disabled={disabled || !page}
+          style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 8, color: "var(--white)", fontSize: 12, padding: "8px 10px", fontFamily: "inherit", resize: "none" }} />
+        <button onClick={() => { if (text.trim()) { onEdit(text.trim()); setText(""); } }} disabled={disabled || !page || !text.trim()} className="btn-primary" style={{ width: "100%", fontSize: 12, marginTop: 6, opacity: disabled || !text.trim() ? 0.5 : 1 }}>
+          {disabled ? "Đang xử lý…" : "Gửi cho AI sửa"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SpeechPanel({ sessionId, page }: { sessionId: string; page?: GeneratedPage }) {
+  const [busy, setBusy] = useState(false);
+  const [script, setScript] = useState<string>("");
+  const [style, setStyle] = useState<SpeechStyle>("conversational");
+  async function load() { try { const s = await getSpeech(sessionId); setScript(typeof s === "string" ? s : JSON.stringify(s?.script ?? s ?? "", null, 2)); } catch { /* chưa có */ } }
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [sessionId]);
+  async function gen(scope: "all" | "single") {
+    setBusy(true);
+    try { await generateSpeech(sessionId, scope, page?.pageId || "", style); await new Promise((r) => setTimeout(r, 1200)); await load(); }
+    catch (e) { alert(e instanceof Error ? e.message : "Gen lời dẫn lỗi"); }
+    finally { setBusy(false); }
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <div style={{ padding: 12, borderBottom: "1px solid var(--gray-2)", display: "flex", flexDirection: "column", gap: 8 }}>
+        <select value={style} onChange={(e) => setStyle(e.target.value as SpeechStyle)} style={{ ...selectStyle, fontSize: 12, padding: "8px 10px" }}>
+          <option value="conversational">Giọng trò chuyện</option>
+          <option value="formal">Trang trọng</option>
+          <option value="storytelling">Kể chuyện</option>
+        </select>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => gen("single")} disabled={busy || !page} className="btn-ghost" style={{ flex: 1, fontSize: 11 }}>Trang này</button>
+          <button onClick={() => gen("all")} disabled={busy} className="btn-primary" style={{ flex: 1, fontSize: 11 }}>{busy ? "Đang tạo…" : "Cả deck"}</button>
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: 14, fontSize: 12, lineHeight: 1.7, color: "var(--gray-6)", whiteSpace: "pre-wrap" }}>
+        {script || "Chưa có lời dẫn. Bấm tạo ở trên."}
+      </div>
+    </div>
+  );
+}
+
+const miniBtn: CSSProperties = { flex: 1, fontSize: 11, padding: "3px 0", borderRadius: 6, border: "1px solid var(--gray-3)", background: "rgba(255,255,255,0.04)", color: "var(--gray-6)", cursor: "pointer" };
 
 /* ─────────────────────────  styles  ───────────────────────── */
 const fieldLabel: CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--gray-5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" };
