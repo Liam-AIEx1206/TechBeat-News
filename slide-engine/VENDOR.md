@@ -25,3 +25,9 @@ Code trong `vendor/` được bê **nguyên vẹn (byte-identical)** từ dự �
 | `vendor/main/utils/html-pptx/*.ts` (7 file, trừ renderer.ts) | `src/main/utils/html-pptx/` | Pipeline HTML → PPTX (extract + OOXML writer + fonts) |
 | `vendor/main/animation/pptx-animation-map.ts` | `src/main/animation/` | Map animation → PPTX |
 | `vendor/main/animation/data-anim-schema.ts` | `src/main/animation/` | Schema animation |
+
+## Compat patch (ngoài shim)
+
+- `vendor/shared/model-config.ts`: `DEFAULT_THINKING_PARAMETER_MODE` đổi `auto`→`omit`.
+  Lý do: proxy OpenAI-compatible (api.pinkyne.com…) reject arg `thinking` → 429; worker
+  deepagents không nhận binding config runtime nên phải đổi ở default. 1 dòng, có comment.
