@@ -14,6 +14,15 @@ import {
 
 type Step = "input" | "generating" | "preview";
 
+// Luật thiết kế tiêm vào mọi lần sinh — chống bug ảnh vỡ + ép lấp canvas + tương phản.
+// (oh-my-ppt không có ảnh upload → model hay bịa <img src="/path/to..."> gây vỡ.)
+const DESIGN_RULES = `QUY TẮC THIẾT KẾ BẮT BUỘC (tuân thủ tuyệt đối):
+1. TUYỆT ĐỐI KHÔNG dùng thẻ <img> với đường dẫn giả/placeholder (ví dụ /path/to, path/to, your-image, example.com, placeholder). Nếu không có ảnh thật thì KHÔNG chèn <img>. Thay visual bằng: khối CSS bo góc + gradient, biểu tượng emoji/icon SVG inline cỡ lớn, biểu đồ Chart.js, hoặc số liệu (big number) làm điểm nhấn.
+2. KHÔNG để lại chữ placeholder như [Your Name], [Date], [Tên]... — nếu thiếu dữ liệu thì bỏ luôn dòng đó.
+3. LẤP ĐẦY canvas 1600×900: dùng grid/flex nhiều cột, card, panel; tận dụng cả chiều cao; không để trống quá 25% trang.
+4. TƯƠNG PHẢN CAO giữa chữ và nền để đọc rõ (style pastel/sáng thì chữ phải đậm & tối màu; tránh chữ nhạt trên nền nhạt).
+5. Tiêu đề slide phải là nội dung thật (tên chủ đề), KHÔNG ghi chung chung như "Bìa"/"Slide 1".`;
+
 /* ─────────────────────────  ROOT  ───────────────────────── */
 export function SlideStudio() {
   const [step, setStep] = useState<Step>("input");
@@ -114,10 +123,10 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         fontSelection: (titleFontId || bodyFontId) ? { titleFontId: titleFontId || undefined, bodyFontId: bodyFontId || undefined } : null,
       });
       // Có nội dung trích từ tài liệu/link → dùng làm nguồn; nếu không thì dùng chủ đề.
-      const userMessage = content.trim()
+      const base = content.trim()
         ? `Chủ đề: ${topic.trim()}\n\nDựa trên nội dung sau để làm slide (giữ nguyên ý chính, tiếng Việt):\n\n${content.trim()}`
         : topic.trim();
-      await startGenerate(sid, userMessage);
+      await startGenerate(sid, `${base}\n\n${DESIGN_RULES}`);
       onStarted(sid, topic.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Không tạo được phiên");
@@ -257,8 +266,23 @@ const STAGE_VI: Record<string, string> = {
 function viLabel(p: any): string | null {
   if (p?.stage && STAGE_VI[p.stage]) return STAGE_VI[p.stage];
   const l = p?.label;
-  if (typeof l === "string" && !/[一-鿿]/.test(l)) return l; // giữ nếu không phải chữ Trung
+  if (typeof l === "string" && !/[\u4e00-\u9fff]/.test(l)) return l; // giữ nếu không phải chữ Trung
   return null;
+}
+
+/** Dịch / làm sạch message lỗi từ slide-engine (có thể là tiếng Trung). */
+function sanitizeError(msg: string, failedPages?: GeneratedPage[]): string {
+  if (!msg) return "Sinh slide thất bại.";
+  // Phát hiện chữ Trung
+  const hasChinese = /[\u4e00-\u9fff]/.test(msg);
+  if (hasChinese) {
+    if (failedPages && failedPages.length > 0) {
+      const names = failedPages.map((p) => p.title || `Trang ${p.pageNumber}`).join(", ");
+      return `Một số trang sinh thất bại (${failedPages.length} trang lỗi): ${names}. Bạn có thể thử lại các trang lỗi hoặc quay lại để sinh lại toàn bộ.`;
+    }
+    return "Slide engine gặp lỗi khi sinh trang. Vui lòng thử lại hoặc đổi model."
+  }
+  return msg;
 }
 
 function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: string; title: string; onDone: (pages: GeneratedPage[]) => void; onBack: () => void }) {
@@ -266,15 +290,19 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
   const [label, setLabel] = useState("Đang chuẩn bị…");
   const [progress, setProgress] = useState(4);
   const [total, setTotal] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
   const [error, setError] = useState("");
+  const [failedPages, setFailedPages] = useState<GeneratedPage[]>([]);
+  const [retrying, setRetrying] = useState(false);
   const doneRef = useRef(false);
   const idleMissRef = useRef(0);
 
   useEffect(() => {
-    const fail = (msg: string) => {
+    const fail = (msg: string, fp?: GeneratedPage[]) => {
       if (doneRef.current) return;
       doneRef.current = true;
-      setError(msg || "Sinh slide thất bại.");
+      setFailedPages(fp ?? []);
+      setError(sanitizeError(msg, fp));
     };
     const unsub = subscribeProgress((ev) => {
       const type = ev?.type ?? ev?.payload?.type;
@@ -293,12 +321,24 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
         const gc = Number((data.session as any)?.generated_count ?? data.generatedPages.filter((x) => x.status === "completed").length);
         const fc = Number((data.session as any)?.failed_count ?? data.generatedPages.filter((x) => x.status === "failed").length);
         if (pc > 0) setTotal(pc);
+        setCompletedCount(gc);
         if (pc > 0 && gc + fc >= pc) {
           doneRef.current = true;
-          setProgress(100);
           clearInterval(poll); unsub();
           const finalPages = data.generatedPages;
-          setTimeout(() => onDone(finalPages), 500);
+          const fp = finalPages.filter((x) => x.status === "failed");
+          if (gc === 0) {
+            // Tất cả trang đều lỗi
+            fail(`${fp.length}/${pc} trang sinh thất bại. Vui lòng thử lại.`, fp);
+          } else if (fp.length > 0) {
+            // Một số trang lỗi — vào preview nhưng highlight lỗi
+            setProgress(100);
+            setTimeout(() => onDone(finalPages), 500);
+          } else {
+            // Tất cả thành công
+            setProgress(100);
+            setTimeout(() => onDone(finalPages), 500);
+          }
           return;
         }
         // Không còn run chạy mà chưa có trang nào xong → thất bại/nghẽn
@@ -312,13 +352,51 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
     return () => { clearInterval(poll); unsub(); };
   }, [sessionId]);
 
+  async function handleRetryFailed() {
+    setRetrying(true);
+    try {
+      await retryFailedPages(sessionId);
+      // Reset về trạng thái generating
+      doneRef.current = false;
+      idleMissRef.current = 0;
+      setError("");
+      setFailedPages([]);
+      setProgress(10);
+      setLabel("Đang thử lại trang lỗi…");
+    } catch {
+      setRetrying(false);
+    }
+  }
+
   if (error) {
+    const hasFailedPages = failedPages.length > 0;
     return (
       <main style={{ maxWidth: 620, margin: "0 auto", padding: "64px clamp(16px,4vw,48px)", textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>Sinh slide thất bại</h1>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>{hasFailedPages ? "⚠️" : "❌"}</div>
+        <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>
+          {hasFailedPages ? `${failedPages.length} trang sinh thất bại` : "Sinh slide thất bại"}
+        </h1>
         <p style={{ fontSize: 13, color: "var(--gray-6)", lineHeight: 1.6, marginBottom: 24 }}>{error}</p>
-        <button onClick={onBack} className="btn-primary" style={{ fontSize: 13 }}>← Thử lại</button>
+        {hasFailedPages && (
+          <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 24, textAlign: "left" }}>
+            {failedPages.map((p, i) => (
+              <div key={i} style={{ fontSize: 12, color: "#fca5a5", padding: "3px 0" }}>• {p.title || `Trang ${p.pageNumber}`}</div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          {hasFailedPages && (
+            <button
+              onClick={handleRetryFailed}
+              disabled={retrying}
+              className="btn-primary"
+              style={{ fontSize: 13 }}
+            >
+              {retrying ? "Đang thử lại…" : "↺ Thử lại trang lỗi"}
+            </button>
+          )}
+          <button onClick={onBack} style={{ fontSize: 13, padding: "8px 18px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid var(--gray-3)", color: "var(--gray-6)", cursor: "pointer" }}>← Sinh lại từ đầu</button>
+        </div>
       </main>
     );
   }
@@ -331,7 +409,7 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
       <div style={{ height: 8, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden", marginBottom: 12 }}>
         <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#f97316,#fbbf24)", transition: "width 0.4s" }} />
       </div>
-      <div style={{ fontSize: 13, color: "var(--accent2, #fb923c)", marginBottom: 28 }}>{label} {total ? `· ${pages.filter(p => p.status === "completed").length}/${total} trang` : ""}</div>
+      <div style={{ fontSize: 13, color: "var(--accent2, #fb923c)", marginBottom: 28 }}>{label} {total ? `· ${completedCount}/${total} trang` : ""}</div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, textAlign: "left" }}>
         {(total ? Array.from({ length: total }, (_, i) => pages[i]) : pages).map((p, i) => {
