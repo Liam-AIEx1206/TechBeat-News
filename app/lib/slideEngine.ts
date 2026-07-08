@@ -234,6 +234,12 @@ export async function createFromTemplate(templateId: string, title: string, page
   return r.sessionId;
 }
 
+/** Copy template thành session editable ngay (không gọi LLM) — sửa lại nội dung sau. */
+export async function createEditableFromTemplate(templateId: string, title: string): Promise<string> {
+  const r = await invoke<{ sessionId: string }>("templates:createEditableSession", { templateId, title });
+  return r.sessionId;
+}
+
 export async function deleteTemplate(templateId: string): Promise<void> {
   await invoke("templates:delete", templateId);
 }

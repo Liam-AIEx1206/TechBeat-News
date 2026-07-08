@@ -29,7 +29,7 @@ import {
   editPage, getPageMessages, addPage, deletePage, reorderPages,
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
   extractDoc, extractUrl,
-  listVersions, rollbackToVersion, listTemplates, createFromTemplate, setIndexTransition, getIndexTransition,
+  listVersions, rollbackToVersion, listTemplates, createEditableFromTemplate, setIndexTransition, getIndexTransition,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle, type HistoryVersion, type TemplateItem, type IndexTransition,
 } from "@/lib/slideEngine";
@@ -136,10 +136,16 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState<StyleItem | null>(null);
-  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url">("topic");
+  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url" | "template">("topic");
   const [content, setContent] = useState("");   // nội dung trích từ doc/url (làm userMessage)
   const [url, setUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
+  const [templates, setTemplates] = useState<TemplateItem[]>([]);
+  const [tplId, setTplId] = useState("");
+
+  useEffect(() => {
+    if (srcMode === "template" && templates.length === 0) listTemplates().then(setTemplates).catch(() => {});
+  }, [srcMode]);
 
   useEffect(() => {
     (async () => {
@@ -158,6 +164,19 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   }, []);
 
   async function handleStart() {
+    // Từ mẫu: copy template thành session editable ngay, không cần chủ đề/gen.
+    if (srcMode === "template") {
+      if (!tplId) { setError("Chọn một mẫu."); return; }
+      setBusy(true); setError("");
+      try {
+        const tpl = templates.find((t) => t.id === tplId);
+        const sid = await createEditableFromTemplate(tplId, topic.trim() || tpl?.name || "Bản từ mẫu");
+        onStarted(sid, topic.trim() || tpl?.name || "Bản từ mẫu");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Không tạo được từ mẫu"); setBusy(false);
+      }
+      return;
+    }
     if (!topic.trim()) { setError("Nhập chủ đề trước đã."); return; }
     if (!styleId) { setError("Chọn một phong cách."); return; }
     setBusy(true); setError("");
@@ -194,7 +213,8 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         {([
           { key: "topic", label: "Chủ đề", icon: Sparkles },
           { key: "doc", label: "Tải tài liệu", icon: Upload },
-          { key: "url", label: "Dán link", icon: LinkIcon }
+          { key: "url", label: "Dán link", icon: LinkIcon },
+          { key: "template", label: "Từ mẫu", icon: LayoutTemplate }
         ] as const).map(({ key, label, icon: Icon }) => {
           const isSelected = srcMode === key;
           return (
@@ -238,17 +258,45 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
             }}>{extracting ? "Đang đọc…" : "Trích xuất"}</button>
         </div>
       )}
-      {content && srcMode !== "topic" && (
+      {content && srcMode !== "topic" && srcMode !== "template" && (
         <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 10 }}>✓ Đã lấy {content.length.toLocaleString()} ký tự nội dung — AI sẽ dựa vào đây.</div>
       )}
 
-      {/* Chủ đề */}
-      <label style={fieldLabel}>{srcMode === "topic" ? "Chủ đề / mô tả" : "Tiêu đề bài thuyết trình"}</label>
-      <textarea
-        value={topic} onChange={(e) => setTopic(e.target.value)} rows={srcMode === "topic" ? 4 : 2}
-        placeholder="VD: Giới thiệu game Duck Out — thể loại Extraction Shooter: tổng quan, gameplay loot/shoot/escape, vũ khí, kết luận kêu gọi chơi thử."
-        style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 12, color: "var(--white)", fontSize: 14, padding: "14px 16px", fontFamily: "inherit", lineHeight: 1.6, resize: "vertical" }}
-      />
+      {srcMode === "template" ? (
+        <>
+          <label style={fieldLabel}>Tên bản mới (tuỳ chọn)</label>
+          <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Để trống = dùng tên mẫu"
+            style={{ ...selectStyle, marginBottom: 16 }} />
+          <label style={fieldLabel}>Chọn mẫu đã lưu <span style={{ color: "var(--gray-5)" }}>({templates.length})</span></label>
+          {templates.length === 0 ? (
+            <div style={{ fontSize: 13, color: "var(--gray-5)", padding: "16px 0" }}>Chưa có mẫu nào. Vào một deck rồi bấm &ldquo;Lưu template&rdquo; để tạo mẫu.</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 12 }}>
+              {templates.map((t) => {
+                const on = t.id === tplId;
+                return (
+                  <button key={t.id} type="button" onClick={() => setTplId(t.id)} style={{
+                    textAlign: "left", padding: 14, borderRadius: 12, cursor: "pointer",
+                    background: on ? "rgba(249,115,22,0.1)" : "rgba(255,255,255,0.03)",
+                    border: on ? "1.5px solid var(--accent)" : "1px solid var(--gray-3)",
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: on ? "var(--accent)" : "var(--white)" }}>{t.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 3 }}>{t.pageCount ?? "?"} trang{t.styleKey ? ` · ${t.styleKey}` : ""}</div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Chủ đề */}
+          <label style={fieldLabel}>{srcMode === "topic" ? "Chủ đề / mô tả" : "Tiêu đề bài thuyết trình"}</label>
+          <textarea
+            value={topic} onChange={(e) => setTopic(e.target.value)} rows={srcMode === "topic" ? 4 : 2}
+            placeholder="VD: Giới thiệu game Duck Out — thể loại Extraction Shooter: tổng quan, gameplay loot/shoot/escape, vũ khí, kết luận kêu gọi chơi thử."
+            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 12, color: "var(--white)", fontSize: 14, padding: "14px 16px", fontFamily: "inherit", lineHeight: 1.6, resize: "vertical" }}
+          />
 
       {/* Số trang + Font */}
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginTop: 20 }}>
@@ -316,6 +364,8 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
           ))}
         </div>
       )}
+        </>
+      )}
 
       {preview && (
         <div onClick={() => setPreview(null)} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24 }}>
@@ -337,7 +387,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
 
       <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
         <button onClick={handleStart} disabled={busy} className="btn-primary" style={{ fontSize: 14, padding: "14px 28px", opacity: busy ? 0.6 : 1 }}>
-          {busy ? "Đang khởi tạo…" : "Sinh slide →"}
+          {busy ? "Đang khởi tạo…" : srcMode === "template" ? "Dùng mẫu này →" : "Sinh slide →"}
         </button>
       </div>
     </main>
