@@ -18,7 +18,10 @@ import {
   X,
   Maximize2,
   AlertTriangle,
-  XCircle
+  XCircle,
+  History,
+  LayoutTemplate,
+  RotateCcw
 } from "lucide-react";
 import {
   listStyles, listFonts, createSession, startGenerate, getSession,
@@ -26,8 +29,9 @@ import {
   editPage, getPageMessages, addPage, deletePage, reorderPages,
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
   extractDoc, extractUrl,
+  listVersions, rollbackToVersion, listTemplates, createFromTemplate, setIndexTransition, getIndexTransition,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
-  type ChatMessage, type SpeechStyle,
+  type ChatMessage, type SpeechStyle, type HistoryVersion, type TemplateItem, type IndexTransition,
 } from "@/lib/slideEngine";
 
 type Step = "input" | "generating" | "preview";
@@ -532,6 +536,10 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
   const [busyMsg, setBusyMsg] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [panel, setPanel] = useState<"chat" | "speech">("chat");
+  const [showHistory, setShowHistory] = useState(false);
+  const [transition, setTransition] = useState<IndexTransition>("none");
+
+  useEffect(() => { getIndexTransition(sessionId).then((t) => setTransition((t as IndexTransition) || "none")).catch(() => {}); }, [sessionId]);
 
   async function refresh(): Promise<GeneratedPage[]> {
     const data = await getSession(sessionId);
@@ -624,6 +632,20 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
             <Save size={14} />
             Lưu template
           </button>
+          <button onClick={() => setShowHistory(true)} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+            <History size={14} />
+            Lịch sử
+          </button>
+          <select value={transition} title="Hiệu ứng chuyển trang khi trình chiếu"
+            onChange={async (e) => { const t = e.target.value as IndexTransition; setTransition(t); try { await setIndexTransition(sessionId, t); } catch {} }}
+            style={{ ...selectStyle, width: "auto", fontSize: 12, padding: "6px 10px" }}>
+            <option value="none">Chuyển: Không</option>
+            <option value="fade">Chuyển: Mờ dần</option>
+            <option value="slide">Chuyển: Trượt</option>
+            <option value="zoom">Chuyển: Phóng</option>
+            <option value="flip">Chuyển: Lật</option>
+            <option value="cube">Chuyển: Khối 3D</option>
+          </select>
           <button onClick={() => setPresent(true)} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
             <Play size={14} />
             Trình chiếu
@@ -712,6 +734,51 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
           <div style={{ position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)", fontSize: 12, color: "rgba(255,255,255,0.6)" }}>← → chuyển · ESC thoát · {active + 1}/{pages.length}</div>
         </div>
       )}
+
+      {showHistory && (
+        <HistoryDialog sessionId={sessionId} onClose={() => setShowHistory(false)}
+          onRolledBack={() => { setShowHistory(false); waitIdleThenRefresh("Đang khôi phục phiên bản…"); }} />
+      )}
+    </div>
+  );
+}
+
+/* Lịch sử phiên bản + khôi phục (history:listVersions / rollbackToVersion) */
+function HistoryDialog({ sessionId, onClose, onRolledBack }: { sessionId: string; onClose: () => void; onRolledBack: () => void }) {
+  const [versions, setVersions] = useState<HistoryVersion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState("");
+  useEffect(() => { listVersions(sessionId).then(setVersions).catch(() => setVersions([])).finally(() => setLoading(false)); }, [sessionId]);
+
+  const kindVi: Record<string, string> = { generate: "Sinh deck", edit: "Sửa AI", addPage: "Thêm trang", deletePages: "Xoá trang", reorder: "Đổi thứ tự", rollback: "Khôi phục", styleSwitch: "Đổi style" };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "min(560px,94vw)", maxHeight: "80vh", display: "flex", flexDirection: "column", background: "linear-gradient(160deg,#161616,#101010)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--gray-2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, fontSize: 15 }}><History size={16} /> Lịch sử phiên bản</div>
+          <button onClick={onClose} className="btn-ghost" style={{ fontSize: 12 }}>✕ Đóng</button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+          {loading ? <div style={{ padding: 16, color: "var(--gray-5)", fontSize: 13 }}>Đang tải…</div>
+            : versions.length === 0 ? <div style={{ padding: 16, color: "var(--gray-5)", fontSize: 13 }}>Chưa có phiên bản nào.</div>
+            : versions.map((v) => (
+              <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, marginBottom: 8, background: v.isCurrent ? "rgba(249,115,22,0.1)" : "rgba(255,255,255,0.03)", border: v.isCurrent ? "1px solid var(--accent)" : "1px solid var(--gray-2)" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--white)" }}>{v.title || kindVi[v.kind] || v.kind}
+                    {v.isCurrent && <span style={{ marginLeft: 8, fontSize: 10, color: "var(--accent)" }}>● hiện tại</span>}</div>
+                  <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 2 }}>{kindVi[v.kind] || v.kind} · {new Date(v.createdAt).toLocaleString("vi-VN")}</div>
+                </div>
+                {!v.isCurrent && v.isRestorable && (
+                  <button disabled={!!busy} onClick={async () => { setBusy(v.id); try { await rollbackToVersion(sessionId, v.id); onRolledBack(); } catch (e) { alert(e instanceof Error ? e.message : "Khôi phục lỗi"); setBusy(""); } }}
+                    className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, flexShrink: 0 }}>
+                    <RotateCcw size={13} /> {busy === v.id ? "…" : "Khôi phục"}
+                  </button>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
     </div>
   );
 }

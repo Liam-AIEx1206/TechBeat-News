@@ -195,6 +195,60 @@ export async function saveAsTemplate(sessionId: string, name: string): Promise<{
   return invoke("templates:createFromSession", { sessionId, name });
 }
 
+/* ── Phase 3: history / template / animation ──────────────────────────── */
+
+export interface HistoryVersion {
+  id: string;
+  operationId: string;
+  title: string;
+  description: string;
+  kind: string;
+  createdAt: number;
+  isCurrent: boolean;
+  isRestorable: boolean;
+}
+
+export async function listVersions(sessionId: string): Promise<HistoryVersion[]> {
+  return invoke<HistoryVersion[]>("history:listVersions", { sessionId, limit: 50 });
+}
+
+export async function rollbackToVersion(sessionId: string, versionId: string): Promise<void> {
+  await invoke("history:rollbackToVersion", { sessionId, versionId });
+}
+
+export interface TemplateItem {
+  id: string;
+  name: string;
+  description?: string;
+  pageCount?: number;
+  styleKey?: string;
+}
+
+export async function listTemplates(): Promise<TemplateItem[]> {
+  const r = await invoke<{ items?: TemplateItem[] }>("templates:list");
+  return r?.items ?? [];
+}
+
+export async function createFromTemplate(templateId: string, title: string, pageCount: number): Promise<string> {
+  const r = await invoke<{ sessionId: string }>("templates:createSession", { templateId, title, pageCount });
+  return r.sessionId;
+}
+
+export async function deleteTemplate(templateId: string): Promise<void> {
+  await invoke("templates:delete", templateId);
+}
+
+export type IndexTransition = "none" | "fade" | "slide" | "zoom" | "flip" | "cube";
+
+export async function setIndexTransition(sessionId: string, transition: IndexTransition): Promise<void> {
+  await invoke("session:setIndexTransition", { sessionId, transition });
+}
+
+export async function getIndexTransition(sessionId: string): Promise<string> {
+  const r = await invoke<{ transition?: string }>("session:getIndexTransition", { sessionId });
+  return r?.transition ?? "none";
+}
+
 /** true nếu session còn run generate/edit đang chạy. */
 export async function hasActiveRun(sessionId: string): Promise<boolean> {
   try {
