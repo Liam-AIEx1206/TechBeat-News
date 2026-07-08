@@ -79,3 +79,4 @@ slide-engine/src/smoke-*.ts
 slide-engine/sample-test.sh
 slide-engine/sample.log
 slide-engine/out/
+slide-engine/sample2.sh

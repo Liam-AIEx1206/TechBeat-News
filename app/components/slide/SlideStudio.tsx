@@ -3,6 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
+  Sparkles,
+  Upload,
+  Link as LinkIcon,
+  ArrowLeft,
+  RefreshCw,
+  Save,
+  Play,
+  Plus,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
+  Check,
+  X,
+  Maximize2,
+  AlertTriangle,
+  XCircle
+} from "lucide-react";
+import {
   listStyles, listFonts, createSession, startGenerate, getSession,
   subscribeProgress, retryFailedPages, pageUrl, exportDownloadUrl,
   editPage, getPageMessages, addPage, deletePage, reorderPages,
@@ -71,7 +89,7 @@ function StudioHeader({ step }: { step: Step }) {
               fontSize: 12, fontWeight: 800,
             }}>
               <span style={{ width: 16, height: 16, borderRadius: "50%", background: active ? "rgba(0,0,0,0.2)" : "var(--gray-3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 }}>
-                {done ? "✓" : s.n}
+                {done ? <Check size={10} strokeWidth={3} /> : s.n}
               </span>
               {s.label}
             </div>
@@ -83,13 +101,30 @@ function StudioHeader({ step }: { step: Step }) {
   );
 }
 
+const DEFAULT_FONTS: FontItem[] = [
+  { id: "google:poppins", family: "Poppins" },
+  { id: "google:inter", family: "Inter" },
+  { id: "google:montserrat", family: "Montserrat" },
+  { id: "google:space-grotesk", family: "Space Grotesk" },
+  { id: "google:bebas-neue", family: "Bebas Neue" },
+  { id: "google:playfair-display", family: "Playfair Display" },
+  { id: "google:merriweather", family: "Merriweather" },
+  { id: "google:caveat", family: "Caveat" },
+  { id: "google:dancing-script", family: "Dancing Script" },
+  { id: "google:fira-code", family: "Fira Code" },
+  { id: "google:noto-sans-sc", family: "Noto Sans SC" },
+  { id: "google:noto-serif-sc", family: "Noto Serif SC" },
+  { id: "google:zcool-xiaowei", family: "ZCOOL XiaoWei" },
+  { id: "google:ma-shan-zheng", family: "Ma Shan Zheng" },
+];
+
 /* ─────────────────────────  STEP 1 · INPUT  ───────────────────────── */
 function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string) => void }) {
   const [topic, setTopic] = useState("");
   const [pageCount, setPageCount] = useState(6);
   const [styles, setStyles] = useState<StyleItem[]>([]);
   const [styleId, setStyleId] = useState("");
-  const [fonts, setFonts] = useState<FontItem[]>([]);
+  const [fonts, setFonts] = useState<FontItem[]>(DEFAULT_FONTS);
   const [titleFontId, setTitleFontId] = useState("");
   const [bodyFontId, setBodyFontId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -108,7 +143,10 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         const [st, ft] = await Promise.all([listStyles(), listFonts().catch(() => ({ googleFonts: [], userFonts: [] }))]);
         setStyles(st);
         if (st[0]) setStyleId(st[0].id);
-        setFonts([...(ft.googleFonts || []), ...(ft.userFonts || [])]);
+        const apiFonts = [...(ft.googleFonts || []), ...(ft.userFonts || [])];
+        if (apiFonts.length > 0) {
+          setFonts(apiFonts);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Không tải được style/font");
       } finally { setLoading(false); }
@@ -149,13 +187,24 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
 
       {/* Nguồn nội dung: chủ đề / tài liệu / link */}
       <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        {([["topic", "✍️ Chủ đề"], ["doc", "📄 Tải tài liệu"], ["url", "🔗 Dán link"]] as const).map(([k, lb]) => (
-          <button key={k} type="button" onClick={() => setSrcMode(k)} style={{
-            padding: "8px 14px", borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: "pointer",
-            background: srcMode === k ? "var(--accent)" : "rgba(255,255,255,0.04)",
-            color: srcMode === k ? "#000" : "var(--gray-5)", border: "1px solid var(--gray-3)",
-          }}>{lb}</button>
-        ))}
+        {([
+          { key: "topic", label: "Chủ đề", icon: Sparkles },
+          { key: "doc", label: "Tải tài liệu", icon: Upload },
+          { key: "url", label: "Dán link", icon: LinkIcon }
+        ] as const).map(({ key, label, icon: Icon }) => {
+          const isSelected = srcMode === key;
+          return (
+            <button key={key} type="button" onClick={() => setSrcMode(key)} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: "pointer",
+              background: isSelected ? "var(--accent)" : "rgba(255,255,255,0.04)",
+              color: isSelected ? "#000" : "var(--gray-5)", border: "1px solid var(--gray-3)",
+            }}>
+              <Icon size={13} />
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {srcMode === "doc" && (
@@ -200,21 +249,51 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
       {/* Số trang + Font */}
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginTop: 20 }}>
         <div style={{ minWidth: 200 }}>
-          <label style={fieldLabel}>Số trang: <b style={{ color: "var(--accent)" }}>{pageCount}</b></label>
-          <input type="range" min={3} max={20} value={pageCount} onChange={(e) => setPageCount(Number(e.target.value))} style={{ width: "100%", accentColor: "var(--accent)" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <label style={{ ...fieldLabel, marginBottom: 0 }}>Số trang</label>
+            <input
+              type="number"
+              min={3}
+              max={100}
+              value={pageCount}
+              onChange={(e) => {
+                const val = Math.max(3, Math.min(100, Number(e.target.value) || 3));
+                setPageCount(val);
+              }}
+              style={{
+                width: 60,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--gray-3)",
+                borderRadius: 8,
+                color: "var(--accent)",
+                fontSize: 13,
+                fontWeight: 800,
+                textAlign: "center",
+                padding: "4px 6px",
+              }}
+            />
+          </div>
+          <input
+            type="range"
+            min={3}
+            max={20}
+            value={pageCount > 20 ? 20 : pageCount}
+            onChange={(e) => setPageCount(Number(e.target.value))}
+            style={{ width: "100%", accentColor: "var(--accent)", cursor: "pointer" }}
+          />
         </div>
         <div style={{ minWidth: 180, flex: 1 }}>
           <label style={fieldLabel}>Font tiêu đề</label>
           <select value={titleFontId} onChange={(e) => setTitleFontId(e.target.value)} style={selectStyle}>
-            <option value="">AI tự chọn</option>
-            {fonts.map((f) => <option key={f.id} value={f.id}>{f.family}</option>)}
+            <option value="" style={{ background: "#18181b", color: "#fff" }}>AI tự chọn</option>
+            {fonts.map((f) => <option key={f.id} value={f.id} style={{ background: "#18181b", color: "#fff" }}>{f.family}</option>)}
           </select>
         </div>
         <div style={{ minWidth: 180, flex: 1 }}>
           <label style={fieldLabel}>Font nội dung</label>
           <select value={bodyFontId} onChange={(e) => setBodyFontId(e.target.value)} style={selectStyle}>
-            <option value="">AI tự chọn</option>
-            {fonts.map((f) => <option key={f.id} value={f.id}>{f.family}</option>)}
+            <option value="" style={{ background: "#18181b", color: "#fff" }}>AI tự chọn</option>
+            {fonts.map((f) => <option key={f.id} value={f.id} style={{ background: "#18181b", color: "#fff" }}>{f.family}</option>)}
           </select>
         </div>
       </div>
@@ -238,7 +317,10 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         <div onClick={() => setPreview(null)} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{preview.name?.en || preview.label}</span>
-            <button onClick={() => setPreview(null)} className="btn-ghost" style={{ fontSize: 12 }}>✕ Đóng</button>
+            <button onClick={() => setPreview(null)} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+              <X size={14} />
+              Đóng
+            </button>
           </div>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "min(1100px,92vw)", aspectRatio: "16/9", borderRadius: 14, overflow: "hidden", border: "1px solid var(--gray-3)", background: "#0b0b12" }}>
             <ScaledSlideFrame url={stylePreviewUrl(preview.styleKey)} title={preview.label} frameKey={`stp-${preview.id}`} />
@@ -374,7 +456,9 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
     const hasFailedPages = failedPages.length > 0;
     return (
       <main style={{ maxWidth: 620, margin: "0 auto", padding: "64px clamp(16px,4vw,48px)", textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>{hasFailedPages ? "⚠️" : "❌"}</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+          {hasFailedPages ? <AlertTriangle size={40} color="var(--accent)" /> : <XCircle size={40} color="#ef4444" />}
+        </div>
         <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>
           {hasFailedPages ? `${failedPages.length} trang sinh thất bại` : "Sinh slide thất bại"}
         </h1>
@@ -392,12 +476,16 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
               onClick={handleRetryFailed}
               disabled={retrying}
               className="btn-primary"
-              style={{ fontSize: 13 }}
+              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
             >
-              {retrying ? "Đang thử lại…" : "↺ Thử lại trang lỗi"}
+              <RefreshCw size={14} className={retrying ? "animate-spin" : ""} />
+              {retrying ? "Đang thử lại…" : "Thử lại trang lỗi"}
             </button>
           )}
-          <button onClick={onBack} style={{ fontSize: 13, padding: "8px 18px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid var(--gray-3)", color: "var(--gray-6)", cursor: "pointer" }}>← Sinh lại từ đầu</button>
+          <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, padding: "8px 18px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid var(--gray-3)", color: "var(--gray-6)", cursor: "pointer" }}>
+            <ArrowLeft size={14} />
+            Sinh lại từ đầu
+          </button>
         </div>
       </main>
     );
@@ -422,7 +510,7 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
                 width: 22, height: 22, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800,
                 background: st === "completed" ? "rgba(34,197,94,0.15)" : st === "failed" ? "rgba(239,68,68,0.15)" : "rgba(249,115,22,0.15)",
                 color: st === "completed" ? "#22c55e" : st === "failed" ? "#ef4444" : "var(--accent)",
-              }}>{st === "completed" ? "✓" : st === "failed" ? "!" : (i + 1)}</span>
+              }}>{st === "completed" ? <Check size={12} strokeWidth={3} /> : st === "failed" ? <X size={12} strokeWidth={3} /> : (i + 1)}</span>
               <span style={{ fontSize: 13, color: "var(--white)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {p?.title || `Trang ${i + 1}`}
               </span>
@@ -522,12 +610,26 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
           <div style={{ fontSize: 11, color: "var(--gray-5)" }}>{pages.length} trang {failed > 0 && <span style={{ color: "#ef4444" }}>· {failed} lỗi</span>}</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={onBack} className="btn-ghost" style={{ fontSize: 12 }}>← Slide khác</button>
-          {failed > 0 && <button onClick={() => { retryFailedPages(sessionId); waitIdleThenRefresh("Đang gen lại trang lỗi…"); }} className="btn-ghost" style={{ fontSize: 12, color: "var(--accent2,#fb923c)" }}>↻ Gen lại {failed} lỗi</button>}
-          <button onClick={async () => { const n = prompt("Tên template:", title); if (n?.trim()) { try { await saveAsTemplate(sessionId, n.trim()); alert("Đã lưu template ✓"); } catch (e) { alert(e instanceof Error ? e.message : "Lưu template lỗi"); } } }} className="btn-ghost" style={{ fontSize: 12 }}>💾 Lưu template</button>
-          <button onClick={() => setPresent(true)} className="btn-ghost" style={{ fontSize: 12 }}>▶ Trình chiếu</button>
+          <button onClick={onBack} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+            <ArrowLeft size={14} />
+            Slide khác
+          </button>
+          {failed > 0 && (
+            <button onClick={() => { retryFailedPages(sessionId); waitIdleThenRefresh("Đang gen lại trang lỗi…"); }} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--accent2,#fb923c)" }}>
+              <RefreshCw size={14} />
+              Gen lại {failed} lỗi
+            </button>
+          )}
+          <button onClick={async () => { const n = prompt("Tên template:", title); if (n?.trim()) { try { await saveAsTemplate(sessionId, n.trim()); alert("Đã lưu template ✓"); } catch (e) { alert(e instanceof Error ? e.message : "Lưu template lỗi"); } } }} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+            <Save size={14} />
+            Lưu template
+          </button>
+          <button onClick={() => setPresent(true)} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+            <Play size={14} />
+            Trình chiếu
+          </button>
           {(["pptx", "pdf", "png"] as ExportKind[]).map((k) => (
-            <button key={k} onClick={() => handleExport(k)} disabled={!!exporting} className={k === "pptx" ? "btn-primary" : "btn-ghost"} style={{ fontSize: 12, opacity: exporting && exporting !== k ? 0.5 : 1 }}>
+            <button key={k} onClick={() => handleExport(k)} disabled={!!exporting} className={k === "pptx" ? "btn-primary" : "btn-ghost"} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: exporting && exporting !== k ? 0.5 : 1 }}>
               {exporting === k ? "Đang xuất…" : `Xuất ${k.toUpperCase()}`}
             </button>
           ))}
@@ -550,14 +652,23 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
               </button>
               {active === i && (
                 <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
-                  <button onClick={() => move(i, -1)} title="Lên" style={miniBtn}>↑</button>
-                  <button onClick={() => move(i, 1)} title="Xuống" style={miniBtn}>↓</button>
-                  <button onClick={() => handleDeletePage(p)} title="Xoá" style={{ ...miniBtn, color: "#ef4444" }}>✕</button>
+                  <button onClick={() => move(i, -1)} title="Lên" style={{ ...miniBtn, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ChevronUp size={12} />
+                  </button>
+                  <button onClick={() => move(i, 1)} title="Xuống" style={{ ...miniBtn, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ChevronDown size={12} />
+                  </button>
+                  <button onClick={() => handleDeletePage(p)} title="Xoá" style={{ ...miniBtn, color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Trash2 size={12} />
+                  </button>
                 </div>
               )}
             </div>
           ))}
-          <button onClick={handleAddPage} className="btn-ghost" style={{ fontSize: 11, marginTop: 6 }}>+ Thêm trang</button>
+          <button onClick={handleAddPage} className="btn-ghost" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 11, marginTop: 6 }}>
+            <Plus size={13} />
+            Thêm trang
+          </button>
         </div>
 
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.3)", minWidth: 0, position: "relative" }}>
@@ -656,9 +767,9 @@ function SpeechPanel({ sessionId, page }: { sessionId: string; page?: GeneratedP
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div style={{ padding: 12, borderBottom: "1px solid var(--gray-2)", display: "flex", flexDirection: "column", gap: 8 }}>
         <select value={style} onChange={(e) => setStyle(e.target.value as SpeechStyle)} style={{ ...selectStyle, fontSize: 12, padding: "8px 10px" }}>
-          <option value="conversational">Giọng trò chuyện</option>
-          <option value="formal">Trang trọng</option>
-          <option value="storytelling">Kể chuyện</option>
+          <option value="conversational" style={{ background: "#18181b", color: "#fff" }}>Giọng trò chuyện</option>
+          <option value="formal" style={{ background: "#18181b", color: "#fff" }}>Trang trọng</option>
+          <option value="storytelling" style={{ background: "#18181b", color: "#fff" }}>Kể chuyện</option>
         </select>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={() => gen("single")} disabled={busy || !page} className="btn-ghost" style={{ flex: 1, fontSize: 11 }}>Trang này</button>
@@ -699,8 +810,10 @@ function StyleCard({ style, active, onSelect, onZoom }: { style: StyleItem; acti
         <button onClick={(e) => { e.stopPropagation(); onZoom(); }} title="Xem lớn" style={{
           position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 6,
           background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff",
-          fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-        }}>⤢</button>
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Maximize2 size={12} />
+        </button>
       </div>
       <div style={{ padding: "8px 10px", fontSize: 12, fontWeight: 700, color: active ? "var(--accent)" : "var(--white)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         {style.name?.en || style.label}
