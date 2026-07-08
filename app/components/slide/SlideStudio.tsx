@@ -16,12 +16,14 @@ type Step = "input" | "generating" | "preview";
 
 // Luật thiết kế tiêm vào mọi lần sinh — chống bug ảnh vỡ + ép lấp canvas + tương phản.
 // (oh-my-ppt không có ảnh upload → model hay bịa <img src="/path/to..."> gây vỡ.)
-const DESIGN_RULES = `QUY TẮC THIẾT KẾ BẮT BUỘC (tuân thủ tuyệt đối):
-1. TUYỆT ĐỐI KHÔNG dùng thẻ <img> với đường dẫn giả/placeholder (ví dụ /path/to, path/to, your-image, example.com, placeholder). Nếu không có ảnh thật thì KHÔNG chèn <img>. Thay visual bằng: khối CSS bo góc + gradient, biểu tượng emoji/icon SVG inline cỡ lớn, biểu đồ Chart.js, hoặc số liệu (big number) làm điểm nhấn.
-2. KHÔNG để lại chữ placeholder như [Your Name], [Date], [Tên]... — nếu thiếu dữ liệu thì bỏ luôn dòng đó.
-3. LẤP ĐẦY canvas 1600×900: dùng grid/flex nhiều cột, card, panel; tận dụng cả chiều cao; không để trống quá 25% trang.
-4. TƯƠNG PHẢN CAO giữa chữ và nền để đọc rõ (style pastel/sáng thì chữ phải đậm & tối màu; tránh chữ nhạt trên nền nhạt).
-5. Tiêu đề slide phải là nội dung thật (tên chủ đề), KHÔNG ghi chung chung như "Bìa"/"Slide 1".`;
+// Dùng gạch đầu dòng "—" (KHÔNG dùng "1." vì extractOutlineTitles của oh-my-ppt
+// bắt dòng "N." làm tiêu đề trang → sẽ phá outline).
+const DESIGN_RULES = `[QUY TẮC THIẾT KẾ — áp dụng cho toàn bộ slide, không phải là mục lục]
+— TUYỆT ĐỐI KHÔNG dùng thẻ <img> với đường dẫn giả/placeholder (/path/to, path/to, your-image, example.com, placeholder). Không có ảnh thật thì KHÔNG chèn <img>; thay bằng khối CSS gradient bo góc, emoji/icon SVG inline cỡ lớn, biểu đồ Chart.js, hoặc số liệu lớn làm điểm nhấn.
+— KHÔNG để chữ placeholder như [Your Name], [Date]; thiếu dữ liệu thì bỏ dòng.
+— LẤP ĐẦY canvas 1600×900: grid/flex nhiều cột, card, panel; tận dụng chiều cao; không để trống quá 25% trang.
+— TƯƠNG PHẢN CAO giữa chữ và nền (style pastel/sáng thì chữ đậm & tối màu).
+— Tiêu đề mỗi trang là nội dung thật, không ghi chung chung "Bìa"/"Slide 1".`;
 
 /* ─────────────────────────  ROOT  ───────────────────────── */
 export function SlideStudio() {
