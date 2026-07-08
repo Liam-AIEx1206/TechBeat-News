@@ -447,10 +447,9 @@ async function seedModelConfigFromEnv(): Promise<void> {
   await __invokeIpc('settings:save', { storagePath: storageDir })
 
   const provider = process.env.SLIDE_ENGINE_MODEL_PROVIDER || 'openai'
-  // gpt-5-mini: re nhat pinkyne ($0.125/1M, 10x re hon gpt-4o) VA tuan thu skill
-  // progressive-disclosure (doc SKILL.md layout) — do bang log 07/2026; kem
-  // disableTemperature vi ho gpt-5 chi nhan temperature=1.
-  const model = process.env.SLIDE_ENGINE_MODEL || 'gpt-5-mini'
+  // gpt-4o-mini: on dinh, re, tuong thich tot voi pinkyne proxy.
+  // (gpt-5-mini bi 401 quota exhausted 07/2026 — doi sang gpt-4o-mini)
+  const model = process.env.SLIDE_ENGINE_MODEL || 'gpt-5'
   const baseUrl = process.env.SLIDE_ENGINE_BASE_URL || process.env.OPENAI_BASE_URL || ''
   // listModelConfigs trả MẢNG trực tiếp → tái dùng đúng config 'xnew-default'
   const existing = (await __invokeIpc('settings:listModelConfigs')) as Array<{ id: string; name: string }>
