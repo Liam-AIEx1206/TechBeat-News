@@ -74,3 +74,8 @@ slide-engine/out/
 slide-engine/data/
 slide-engine/boot.log
 slide-engine/ohmyppt.dev.db
+slide-engine/src/probe-*.mjs
+slide-engine/src/smoke-*.ts
+slide-engine/sample-test.sh
+slide-engine/sample.log
+slide-engine/out/
