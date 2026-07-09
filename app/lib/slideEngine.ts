@@ -240,6 +240,23 @@ export async function createEditableFromTemplate(templateId: string, title: stri
   return r.sessionId;
 }
 
+/** Upload 1 file lên engine, trả path phía server (dùng cho import pptx / upload font). */
+export async function uploadToEngine(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const res = await fetch(`${P}/upload`, { method: "POST", body: form });
+  const data = await res.json();
+  if (!data.path) throw new Error(data.error || "Upload lỗi");
+  return data.path;
+}
+
+/** Import .pptx: upload → tạo template từ pptx → mở thành session editable. */
+export async function importPptxAsSession(file: File): Promise<string> {
+  const filePath = await uploadToEngine(file);
+  const tpl = await invoke<{ id: string }>("templates:importPptx", { filePath });
+  return createEditableFromTemplate(tpl.id, file.name.replace(/\.pptx$/i, ""));
+}
+
 export async function deleteTemplate(templateId: string): Promise<void> {
   await invoke("templates:delete", templateId);
 }

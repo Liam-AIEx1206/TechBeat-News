@@ -21,7 +21,8 @@ import {
   XCircle,
   History,
   LayoutTemplate,
-  RotateCcw
+  RotateCcw,
+  FileUp
 } from "lucide-react";
 import {
   listStyles, listFonts, createSession, startGenerate, getSession,
@@ -30,6 +31,7 @@ import {
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
   extractDoc, extractUrl,
   listVersions, rollbackToVersion, listTemplates, createEditableFromTemplate, setIndexTransition, getIndexTransition,
+  importPptxAsSession,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle, type HistoryVersion, type TemplateItem, type IndexTransition,
 } from "@/lib/slideEngine";
@@ -136,7 +138,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState<StyleItem | null>(null);
-  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url" | "template">("topic");
+  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url" | "template" | "pptx">("topic");
   const [content, setContent] = useState("");   // nội dung trích từ doc/url (làm userMessage)
   const [url, setUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
@@ -214,7 +216,8 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
           { key: "topic", label: "Chủ đề", icon: Sparkles },
           { key: "doc", label: "Tải tài liệu", icon: Upload },
           { key: "url", label: "Dán link", icon: LinkIcon },
-          { key: "template", label: "Từ mẫu", icon: LayoutTemplate }
+          { key: "template", label: "Từ mẫu", icon: LayoutTemplate },
+          { key: "pptx", label: "Import PPTX", icon: FileUp }
         ] as const).map(({ key, label, icon: Icon }) => {
           const isSelected = srcMode === key;
           return (
@@ -288,6 +291,21 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
             </div>
           )}
         </>
+      ) : srcMode === "pptx" ? (
+        <div style={{ padding: "8px 0 4px" }}>
+          <label style={fieldLabel}>Chọn file .pptx để mở & chỉnh sửa</label>
+          <input type="file" accept=".pptx" disabled={busy}
+            onChange={async (e) => {
+              const f = e.target.files?.[0]; if (!f) return;
+              setBusy(true); setError("");
+              try { const sid = await importPptxAsSession(f); onStarted(sid, f.name.replace(/\.pptx$/i, "")); }
+              catch (er) { setError(er instanceof Error ? er.message : "Import PPTX lỗi"); setBusy(false); }
+            }}
+            style={{ fontSize: 13, color: "var(--gray-6)" }} />
+          <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 8, lineHeight: 1.5 }}>
+            {busy ? "Đang chuyển PPTX thành slide editable…" : "PPTX sẽ được chuyển thành các trang HTML sửa được (chỉnh chữ/bố cục, chat-AI, xuất lại)."}
+          </div>
+        </div>
       ) : (
         <>
           {/* Chủ đề */}
@@ -385,11 +403,13 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
 
       {error && <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#fca5a5", fontSize: 13 }}>{error}</div>}
 
-      <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
-        <button onClick={handleStart} disabled={busy} className="btn-primary" style={{ fontSize: 14, padding: "14px 28px", opacity: busy ? 0.6 : 1 }}>
-          {busy ? "Đang khởi tạo…" : srcMode === "template" ? "Dùng mẫu này →" : "Sinh slide →"}
-        </button>
-      </div>
+      {srcMode !== "pptx" && (
+        <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={handleStart} disabled={busy} className="btn-primary" style={{ fontSize: 14, padding: "14px 28px", opacity: busy ? 0.6 : 1 }}>
+            {busy ? "Đang khởi tạo…" : srcMode === "template" ? "Dùng mẫu này →" : "Sinh slide →"}
+          </button>
+        </div>
+      )}
     </main>
   );
 }
