@@ -11,6 +11,8 @@ export interface StyleItem {
   name?: { zh?: string; en?: string };
   description?: string;
   category?: string;
+  source?: string;       // 'builtin' | 'user'
+  editable?: boolean;
 }
 
 export interface FontItem {
@@ -260,6 +262,27 @@ export async function importPptxAsSession(file: File): Promise<string> {
 export async function deleteTemplate(templateId: string): Promise<void> {
   await invoke("templates:delete", templateId);
 }
+
+/* ── Quản lý Font ─────────────────────────────────────────────────────── */
+export interface FontsData { googleFonts: FontItem[]; userFonts: FontItem[]; }
+export async function getFonts(): Promise<FontsData> { return invoke<FontsData>("fonts:list"); }
+export async function uploadFont(family: string, file: File, category = "sans-serif"): Promise<void> {
+  const p = await uploadToEngine(file);
+  await invoke("fonts:upload", { family, category, role: ["title", "body"], scripts: ["latin"], files: [{ path: p, name: file.name }] });
+}
+export async function deleteFont(fontId: string): Promise<void> { await invoke("fonts:delete", fontId); }
+
+/* ── Quản lý Style ────────────────────────────────────────────────────── */
+export interface StyleDraft { name: string; description?: string; category?: string; styleSkill?: string; styleCase?: string; palette?: unknown; }
+/** Phân tích 1 ảnh thiết kế → bản nháp style (dùng vision model). */
+export async function parseStyleImage(imageBase64: string, mimeType: string): Promise<StyleDraft> {
+  return invoke<StyleDraft>("styles:parseImage", { imageBase64, mimeType });
+}
+/** Lưu style mới từ bản nháp. */
+export async function createStyle(draft: StyleDraft): Promise<{ id: string }> {
+  return invoke<{ id: string }>("styles:create", draft);
+}
+export async function deleteStyle(styleId: string): Promise<void> { await invoke("styles:delete", styleId); }
 
 export type IndexTransition = "none" | "fade" | "slide" | "zoom" | "flip" | "cube";
 

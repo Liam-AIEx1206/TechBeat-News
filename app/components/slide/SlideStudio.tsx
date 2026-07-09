@@ -205,9 +205,14 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
 
   return (
     <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px clamp(16px,4vw,48px)" }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>Tạo slide bằng AI</div>
-        <h1 style={{ fontSize: "clamp(26px,3.4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em" }}>Bạn muốn thuyết trình về điều gì?</h1>
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>Tạo slide bằng AI</div>
+          <h1 style={{ fontSize: "clamp(26px,3.4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em" }}>Bạn muốn thuyết trình về điều gì?</h1>
+        </div>
+        <a href="/slide/library" className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
+          <LayoutTemplate size={14} /> Thư viện Style / Font
+        </a>
       </div>
 
       {/* Nguồn nội dung: chủ đề / tài liệu / link */}
