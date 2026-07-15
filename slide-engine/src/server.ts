@@ -36,7 +36,27 @@ import { configureModelUsageRecorder } from '../vendor/main/model-usage'
 
 const PORT = Number(process.env.SLIDE_ENGINE_PORT || 8100)
 
+// Tự nạp backend/.env (OPENAI_API_KEY, OPENAI_BASE_URL…) nếu env chưa có key,
+// để chạy `npx tsx src/server.ts` trần là đủ — khỏi phải export tay mỗi lần.
+function loadBackendEnv(): void {
+  if (process.env.OPENAI_API_KEY || process.env.SLIDE_ENGINE_API_KEY) return
+  const candidates = [
+    path.join(process.cwd(), '..', 'backend', '.env'),
+    path.join(process.cwd(), 'backend', '.env')
+  ]
+  for (const fp of candidates) {
+    if (!fs.existsSync(fp)) continue
+    for (const raw of fs.readFileSync(fp, 'utf-8').split(/\r?\n/)) {
+      const m = /^\s*(OPENAI_API_KEY|OPENAI_BASE_URL|SLIDE_ENGINE_[A-Z_]+)\s*=\s*(.*)$/.exec(raw)
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim()
+    }
+    log.info('[server] đã nạp env từ', fp)
+    break
+  }
+}
+
 async function bootstrap(): Promise<void> {
+  loadBackendEnv()
   // 1) Database (shim app.getPath('userData') → SLIDE_ENGINE_DATA_DIR)
   const db = new PPTDatabase()
   await db.init()
