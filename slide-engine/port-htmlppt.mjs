@@ -173,6 +173,43 @@ function makeTemplate(cfg) {
   console.log(`✓ ${cfg.name} → ${pages.length} trang`);
 }
 
-makeTemplate({ id: 'tpl_sunsetwarm', order: 1, name: 'Sunset Warm', description: 'Hoàng hôn ấm — cam/hổ phách, layout pro, màu khóa cứng.', tags: ['ấm', 'sáng'], theme: 'sunset-warm' });
-makeTemplate({ id: 'tpl_tokyonight', order: 2, name: 'Tokyo Night', description: 'Tối tech — navy/neon, layout pro, màu khóa cứng.', tags: ['tối', 'tech'], theme: 'tokyo-night' });
-console.log('Xong.');
+// 30 theme × bộ 10 layout VN dùng chung
+const THEMES = [
+  ['sunset-warm', 'Sunset Warm', 'Hoàng hôn ấm — cam/hổ phách', ['ấm', 'sáng']],
+  ['tokyo-night', 'Tokyo Night', 'Tối tech — navy/neon', ['tối', 'tech']],
+  ['minimal-white', 'Minimal White', 'Trắng tối giản, sạch sẽ', ['sáng', 'tối giản']],
+  ['editorial-serif', 'Editorial Serif', 'Tạp chí serif thanh lịch', ['sáng', 'tạp chí']],
+  ['soft-pastel', 'Soft Pastel', 'Pastel dịu nhẹ', ['pastel', 'sáng']],
+  ['swiss-grid', 'Swiss Grid', 'Lưới Thụy Sĩ, kỷ luật', ['sáng', 'grid']],
+  ['xiaohongshu-white', 'Xiaohongshu White', 'Tiểu Hồng Thư trắng', ['sáng', 'social']],
+  ['corporate-clean', 'Corporate Clean', 'Doanh nghiệp sạch sẽ', ['sáng', 'business']],
+  ['academic-paper', 'Academic Paper', 'Học thuật, báo cáo', ['sáng', 'academic']],
+  ['magazine-bold', 'Magazine Bold', 'Tạp chí chữ đậm', ['sáng', 'bold']],
+  ['pitch-deck-vc', 'Pitch Deck', 'Gọi vốn, thuyết trình', ['business', 'pitch']],
+  ['japanese-minimal', 'Japanese Minimal', 'Nhật tối giản', ['sáng', 'zen']],
+  ['dracula', 'Dracula', 'Tối tím dev', ['tối', 'dev']],
+  ['gruvbox-dark', 'Gruvbox Dark', 'Tối retro ấm', ['tối', 'retro']],
+  ['catppuccin-mocha', 'Catppuccin Mocha', 'Tối dịu pastel', ['tối', 'dịu']],
+  ['catppuccin-latte', 'Catppuccin Latte', 'Sáng dịu pastel', ['sáng', 'dịu']],
+  ['nord', 'Nord', 'Lạnh Bắc Âu', ['tối', 'lạnh']],
+  ['arctic-cool', 'Arctic Cool', 'Băng giá xanh', ['sáng', 'lạnh']],
+  ['terminal-green', 'Terminal Green', 'Terminal xanh lá', ['tối', 'code']],
+  ['blueprint', 'Blueprint', 'Bản vẽ kỹ thuật', ['tối', 'tech']],
+  ['cyberpunk-neon', 'Cyberpunk Neon', 'Neon tương lai', ['tối', 'neon']],
+  ['vaporwave', 'Vaporwave', 'Vaporwave hoài niệm', ['tối', 'vibrant']],
+  ['y2k-chrome', 'Y2K Chrome', 'Y2K chrome bóng', ['sáng', 'vibrant']],
+  ['retro-tv', 'Retro TV', 'Truyền hình retro', ['sáng', 'retro']],
+  ['aurora', 'Aurora', 'Cực quang gradient', ['tối', 'gradient']],
+  ['rainbow-gradient', 'Rainbow Gradient', 'Cầu vồng gradient', ['sáng', 'gradient']],
+  ['neo-brutalism', 'Neo Brutalism', 'Brutalism đậm nét', ['sáng', 'bold']],
+  ['memphis-pop', 'Memphis Pop', 'Memphis vui nhộn', ['sáng', 'pop']],
+  ['rose-pine', 'Rose Pine', 'Hồng thông dịu', ['tối', 'dịu']],
+  ['midcentury', 'Midcentury', 'Giữa thế kỷ ấm', ['sáng', 'retro']],
+];
+
+THEMES.forEach(([theme, name, description, tags], i) => {
+  let slug = theme.replace(/-/g, '_');
+  if (slug.length < 8) slug += '_deck';
+  makeTemplate({ id: 'tpl_' + slug, order: i + 1, name, description: description + ' — layout pro, màu khóa cứng.', tags, theme });
+});
+console.log(`Xong — ${THEMES.length} template.`);
