@@ -30,7 +30,7 @@ import {
   editPage, getPageMessages, addPage, deletePage, reorderPages,
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
   extractDoc, extractUrl,
-  listVersions, rollbackToVersion, listTemplates, createEditableFromTemplate, templateManifest, setIndexTransition, getIndexTransition,
+  listVersions, rollbackToVersion, listTemplates, createEditableFromTemplate, createFromTemplate, templateManifest, setIndexTransition, getIndexTransition,
   importPptxAsSession,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle, type HistoryVersion, type TemplateItem, type IndexTransition,
@@ -138,7 +138,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState<StyleItem | null>(null);
-  const [srcMode, setSrcMode] = useState<"topic" | "pptx">("topic");
+  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url" | "pptx">("topic");
   const [content, setContent] = useState("");   // nội dung trích từ doc/url (làm userMessage)
   const [url, setUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
@@ -157,16 +157,26 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   }, []);
 
   async function handleStart() {
-    // Chọn mẫu → tạo bản editable (giữ nguyên 100% màu/bố cục), sửa nội dung sau.
-    if (!tplId) { setError("Chọn một mẫu."); return; }
+    if (!tplId) { setError("Chọn một mẫu thiết kế."); return; }
+    const tpl = templates.find((t) => t.id === tplId);
+    const name = topic.trim() || tpl?.name || "Bản trình bày";
+    const src = content.trim()
+      ? `Chủ đề: ${topic.trim()}\n\nDựa trên nội dung sau để làm slide (giữ ý chính, tiếng Việt):\n\n${content.trim()}`
+      : topic.trim();
     setBusy(true); setError("");
     try {
-      const tpl = templates.find((t) => t.id === tplId);
-      const name = topic.trim() || tpl?.name || "Bản trình bày";
-      const sid = await createEditableFromTemplate(tplId, name);
-      onStarted(sid, name);
+      if (src) {
+        // Có nội dung → AI điền nội dung vào mẫu (giữ thiết kế/màu của mẫu).
+        const sid = await createFromTemplate(tplId, name, pageCount);
+        await startGenerate(sid, `${src}\n\nGIỮ NGUYÊN màu sắc, bố cục, phông chữ và phong cách của mẫu; chỉ thay phần chữ sang tiếng Việt theo chủ đề. Không đổi hệ màu.`);
+        onStarted(sid, name);
+      } else {
+        // Không có nội dung → copy nguyên mẫu (khóa 100% màu/bố cục), sửa sau.
+        const sid = await createEditableFromTemplate(tplId, name);
+        onStarted(sid, name);
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Không tạo được từ mẫu"); setBusy(false);
+      setError(e instanceof Error ? e.message : "Không tạo được"); setBusy(false);
     }
   }
 
@@ -186,10 +196,12 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         </a>
       </div>
 
-      {/* Nguồn: chọn mẫu thiết kế hoặc import PPTX */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      {/* Nguồn nội dung: chủ đề / tài liệu / link — rồi chọn mẫu thiết kế bên dưới */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {([
-          { key: "topic", label: "Chọn mẫu", icon: LayoutTemplate },
+          { key: "topic", label: "Chủ đề", icon: Sparkles },
+          { key: "doc", label: "Tải tài liệu", icon: Upload },
+          { key: "url", label: "Dán link", icon: LinkIcon },
           { key: "pptx", label: "Import PPTX", icon: FileUp }
         ] as const).map(({ key, label, icon: Icon }) => {
           const isSelected = srcMode === key;
@@ -224,9 +236,40 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         </div>
       ) : (
         <>
-          <label style={fieldLabel}>Tên bản trình bày (tuỳ chọn)</label>
-          <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Để trống = dùng tên mẫu"
-            style={{ ...selectStyle, marginBottom: 18 }} />
+          {srcMode === "doc" && (
+            <div style={{ marginBottom: 14 }}>
+              <input type="file" accept=".docx,.md,.txt,.csv" disabled={extracting}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0]; if (!f) return;
+                  setExtracting(true); setError("");
+                  try { const r = await extractDoc(f); setContent(r.text); if (!topic.trim()) setTopic(r.title); }
+                  catch (er) { setError(er instanceof Error ? er.message : "Đọc tài liệu lỗi"); }
+                  finally { setExtracting(false); }
+                }}
+                style={{ fontSize: 13, color: "var(--gray-6)" }} />
+              <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 6 }}>Hỗ trợ .docx .md .txt .csv (PDF: dán nội dung hoặc chuyển docx)</div>
+            </div>
+          )}
+          {srcMode === "url" && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." disabled={extracting}
+                style={{ ...selectStyle, flex: 1 }} />
+              <button type="button" disabled={extracting || !url.trim()} className="btn-ghost" style={{ fontSize: 12 }}
+                onClick={async () => {
+                  setExtracting(true); setError("");
+                  try { const r = await extractUrl(url.trim()); setContent(r.text); if (!topic.trim()) setTopic(r.title); }
+                  catch (er) { setError(er instanceof Error ? er.message : "Trích link lỗi"); }
+                  finally { setExtracting(false); }
+                }}>{extracting ? "Đang đọc…" : "Trích xuất"}</button>
+            </div>
+          )}
+          {content && srcMode !== "topic" && (
+            <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 10 }}>✓ Đã lấy {content.length.toLocaleString()} ký tự — AI sẽ điền nội dung vào mẫu.</div>
+          )}
+          <label style={fieldLabel}>{srcMode === "topic" ? "Chủ đề / mô tả (để trống = chỉ lấy mẫu để tự sửa)" : "Tiêu đề bài (tuỳ chọn)"}</label>
+          <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={srcMode === "topic" ? 3 : 1}
+            placeholder="VD: Giới thiệu game Palworld — tổng quan, gameplay, số liệu Steam, kết luận."
+            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 12, color: "var(--white)", fontSize: 14, padding: "12px 14px", fontFamily: "inherit", lineHeight: 1.6, resize: "vertical", marginBottom: 18 }} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <label style={{ ...fieldLabel, marginBottom: 0 }}>Chọn mẫu thiết kế <span style={{ color: "var(--gray-5)" }}>({templates.length})</span></label>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mẫu…" style={{ ...selectStyle, width: 220, padding: "8px 12px" }} />
