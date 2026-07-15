@@ -138,7 +138,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState<StyleItem | null>(null);
-  const [srcMode, setSrcMode] = useState<"topic" | "doc" | "url" | "template" | "pptx">("topic");
+  const [srcMode, setSrcMode] = useState<"topic" | "pptx">("topic");
   const [content, setContent] = useState("");   // nội dung trích từ doc/url (làm userMessage)
   const [url, setUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
@@ -147,82 +147,49 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [previewTpl, setPreviewTpl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (srcMode === "template" && templates.length === 0) listTemplates().then(setTemplates).catch(() => {});
-  }, [srcMode]);
-
-  useEffect(() => {
     (async () => {
       try {
-        const [st, ft] = await Promise.all([listStyles(), listFonts().catch(() => ({ googleFonts: [], userFonts: [] }))]);
-        setStyles(st);
-        if (st[0]) setStyleId(st[0].id);
-        const apiFonts = [...(ft.googleFonts || []), ...(ft.userFonts || [])];
-        if (apiFonts.length > 0) {
-          setFonts(apiFonts);
-        }
+        setTemplates(await listTemplates().catch(() => []));
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Không tải được style/font");
+        setError(e instanceof Error ? e.message : "Không tải được mẫu");
       } finally { setLoading(false); }
     })();
   }, []);
 
   async function handleStart() {
-    // Từ mẫu: copy template thành session editable ngay, không cần chủ đề/gen.
-    if (srcMode === "template") {
-      if (!tplId) { setError("Chọn một mẫu."); return; }
-      setBusy(true); setError("");
-      try {
-        const tpl = templates.find((t) => t.id === tplId);
-        const sid = await createEditableFromTemplate(tplId, topic.trim() || tpl?.name || "Bản từ mẫu");
-        onStarted(sid, topic.trim() || tpl?.name || "Bản từ mẫu");
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Không tạo được từ mẫu"); setBusy(false);
-      }
-      return;
-    }
-    if (!topic.trim()) { setError("Nhập chủ đề trước đã."); return; }
-    if (!styleId) { setError("Chọn một phong cách."); return; }
+    // Chọn mẫu → tạo bản editable (giữ nguyên 100% màu/bố cục), sửa nội dung sau.
+    if (!tplId) { setError("Chọn một mẫu."); return; }
     setBusy(true); setError("");
     try {
-      const sid = await createSession({
-        topic: topic.trim(), styleId, pageCount,
-        fontSelection: (titleFontId || bodyFontId) ? { titleFontId: titleFontId || undefined, bodyFontId: bodyFontId || undefined } : null,
-      });
-      // Có nội dung trích từ tài liệu/link → dùng làm nguồn; nếu không thì dùng chủ đề.
-      const base = content.trim()
-        ? `Chủ đề: ${topic.trim()}\n\nDựa trên nội dung sau để làm slide (giữ nguyên ý chính, tiếng Việt):\n\n${content.trim()}`
-        : topic.trim();
-      await startGenerate(sid, `${base}\n\n${DESIGN_RULES}`);
-      onStarted(sid, topic.trim());
+      const tpl = templates.find((t) => t.id === tplId);
+      const name = topic.trim() || tpl?.name || "Bản trình bày";
+      const sid = await createEditableFromTemplate(tplId, name);
+      onStarted(sid, name);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Không tạo được phiên");
-      setBusy(false);
+      setError(e instanceof Error ? e.message : "Không tạo được từ mẫu"); setBusy(false);
     }
   }
 
-  const filtered = q
-    ? styles.filter((s) => `${s.label} ${s.name?.en} ${s.category} ${s.styleKey}`.toLowerCase().includes(q.toLowerCase()))
-    : styles;
+  const tfiltered = q
+    ? templates.filter((t) => `${t.name} ${(t.tags || []).join(" ")}`.toLowerCase().includes(q.toLowerCase()))
+    : templates;
 
   return (
     <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px clamp(16px,4vw,48px)" }}>
       <div style={{ marginBottom: 24, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>Tạo slide bằng AI</div>
-          <h1 style={{ fontSize: "clamp(26px,3.4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em" }}>Bạn muốn thuyết trình về điều gì?</h1>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>Tạo slide từ mẫu</div>
+          <h1 style={{ fontSize: "clamp(26px,3.4vw,40px)", fontWeight: 900, letterSpacing: "-0.03em" }}>Chọn một mẫu để bắt đầu</h1>
         </div>
         <a href="/slide/library" className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
           <LayoutTemplate size={14} /> Thư viện Style / Font
         </a>
       </div>
 
-      {/* Nguồn nội dung: chủ đề / tài liệu / link */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+      {/* Nguồn: chọn mẫu thiết kế hoặc import PPTX */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         {([
-          { key: "topic", label: "Chủ đề", icon: Sparkles },
-          { key: "doc", label: "Tải tài liệu", icon: Upload },
-          { key: "url", label: "Dán link", icon: LinkIcon },
-          { key: "template", label: "Từ mẫu", icon: LayoutTemplate },
+          { key: "topic", label: "Chọn mẫu", icon: LayoutTemplate },
           { key: "pptx", label: "Import PPTX", icon: FileUp }
         ] as const).map(({ key, label, icon: Icon }) => {
           const isSelected = srcMode === key;
@@ -240,56 +207,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         })}
       </div>
 
-      {srcMode === "doc" && (
-        <div style={{ marginBottom: 14 }}>
-          <input type="file" accept=".docx,.md,.txt,.csv" disabled={extracting}
-            onChange={async (e) => {
-              const f = e.target.files?.[0]; if (!f) return;
-              setExtracting(true); setError("");
-              try { const r = await extractDoc(f); setContent(r.text); if (!topic.trim()) setTopic(r.title); }
-              catch (er) { setError(er instanceof Error ? er.message : "Đọc tài liệu lỗi"); }
-              finally { setExtracting(false); }
-            }}
-            style={{ fontSize: 13, color: "var(--gray-6)" }} />
-          <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 6 }}>Hỗ trợ .docx .md .txt .csv (PDF: dán nội dung hoặc chuyển docx)</div>
-        </div>
-      )}
-      {srcMode === "url" && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." disabled={extracting}
-            style={{ ...selectStyle, flex: 1 }} />
-          <button type="button" disabled={extracting || !url.trim()} className="btn-ghost" style={{ fontSize: 12 }}
-            onClick={async () => {
-              setExtracting(true); setError("");
-              try { const r = await extractUrl(url.trim()); setContent(r.text); if (!topic.trim()) setTopic(r.title); }
-              catch (er) { setError(er instanceof Error ? er.message : "Trích link lỗi"); }
-              finally { setExtracting(false); }
-            }}>{extracting ? "Đang đọc…" : "Trích xuất"}</button>
-        </div>
-      )}
-      {content && srcMode !== "topic" && srcMode !== "template" && (
-        <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 10 }}>✓ Đã lấy {content.length.toLocaleString()} ký tự nội dung — AI sẽ dựa vào đây.</div>
-      )}
-
-      {srcMode === "template" ? (
-        <>
-          <label style={fieldLabel}>Tên bản mới (tuỳ chọn)</label>
-          <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Để trống = dùng tên mẫu"
-            style={{ ...selectStyle, marginBottom: 16 }} />
-          <label style={fieldLabel}>Chọn mẫu đã lưu <span style={{ color: "var(--gray-5)" }}>({templates.length})</span></label>
-          {templates.length === 0 ? (
-            <div style={{ fontSize: 13, color: "var(--gray-5)", padding: "16px 0" }}>Chưa có mẫu nào. Vào một deck rồi bấm &ldquo;Lưu template&rdquo; để tạo mẫu.</div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 14 }}>
-              {templates.map((t) => (
-                <TemplateCard key={t.id} t={t} selected={t.id === tplId} onSelect={() => setTplId(t.id)} onPreview={() => setPreviewTpl(t.id)} />
-              ))}
-            </div>
-          )}
-          {previewTpl && <TemplatePreviewModal templateId={previewTpl} name={templates.find((t) => t.id === previewTpl)?.name} onClose={() => setPreviewTpl(null)}
-            onUse={() => { setTplId(previewTpl); setPreviewTpl(null); }} />}
-        </>
-      ) : srcMode === "pptx" ? (
+      {srcMode === "pptx" ? (
         <div style={{ padding: "8px 0 4px" }}>
           <label style={fieldLabel}>Chọn file .pptx để mở & chỉnh sửa</label>
           <input type="file" accept=".pptx" disabled={busy}
@@ -306,105 +224,35 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
         </div>
       ) : (
         <>
-          {/* Chủ đề */}
-          <label style={fieldLabel}>{srcMode === "topic" ? "Chủ đề / mô tả" : "Tiêu đề bài thuyết trình"}</label>
-          <textarea
-            value={topic} onChange={(e) => setTopic(e.target.value)} rows={srcMode === "topic" ? 4 : 2}
-            placeholder="VD: Giới thiệu game Duck Out — thể loại Extraction Shooter: tổng quan, gameplay loot/shoot/escape, vũ khí, kết luận kêu gọi chơi thử."
-            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 12, color: "var(--white)", fontSize: 14, padding: "14px 16px", fontFamily: "inherit", lineHeight: 1.6, resize: "vertical" }}
-          />
-
-      {/* Số trang + Font */}
-      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginTop: 20 }}>
-        <div style={{ minWidth: 200 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <label style={{ ...fieldLabel, marginBottom: 0 }}>Số trang</label>
-            <input
-              type="number"
-              min={3}
-              max={100}
-              value={pageCount}
-              onChange={(e) => {
-                const val = Math.max(3, Math.min(100, Number(e.target.value) || 3));
-                setPageCount(val);
-              }}
-              style={{
-                width: 60,
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid var(--gray-3)",
-                borderRadius: 8,
-                color: "var(--accent)",
-                fontSize: 13,
-                fontWeight: 800,
-                textAlign: "center",
-                padding: "4px 6px",
-              }}
-            />
+          <label style={fieldLabel}>Tên bản trình bày (tuỳ chọn)</label>
+          <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Để trống = dùng tên mẫu"
+            style={{ ...selectStyle, marginBottom: 18 }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <label style={{ ...fieldLabel, marginBottom: 0 }}>Chọn mẫu thiết kế <span style={{ color: "var(--gray-5)" }}>({templates.length})</span></label>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mẫu…" style={{ ...selectStyle, width: 220, padding: "8px 12px" }} />
           </div>
-          <input
-            type="range"
-            min={3}
-            max={20}
-            value={pageCount > 20 ? 20 : pageCount}
-            onChange={(e) => setPageCount(Number(e.target.value))}
-            style={{ width: "100%", accentColor: "var(--accent)", cursor: "pointer" }}
-          />
-        </div>
-        <div style={{ minWidth: 180, flex: 1 }}>
-          <label style={fieldLabel}>Font tiêu đề</label>
-          <select value={titleFontId} onChange={(e) => setTitleFontId(e.target.value)} style={selectStyle}>
-            <option value="" style={{ background: "#18181b", color: "#fff" }}>AI tự chọn</option>
-            {fonts.map((f) => <option key={f.id} value={f.id} style={{ background: "#18181b", color: "#fff" }}>{f.family}</option>)}
-          </select>
-        </div>
-        <div style={{ minWidth: 180, flex: 1 }}>
-          <label style={fieldLabel}>Font nội dung</label>
-          <select value={bodyFontId} onChange={(e) => setBodyFontId(e.target.value)} style={selectStyle}>
-            <option value="" style={{ background: "#18181b", color: "#fff" }}>AI tự chọn</option>
-            {fonts.map((f) => <option key={f.id} value={f.id} style={{ background: "#18181b", color: "#fff" }}>{f.family}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Style picker */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 28, marginBottom: 12 }}>
-        <label style={{ ...fieldLabel, marginBottom: 0 }}>Phong cách <span style={{ color: "var(--gray-5)" }}>({styles.length})</span></label>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm phong cách…" style={{ ...selectStyle, width: 220, padding: "8px 12px" }} />
-      </div>
-      {loading ? (
-        <div style={{ color: "var(--gray-5)", fontSize: 13, padding: 20 }}>Đang tải phong cách…</div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 12, maxHeight: 380, overflowY: "auto", padding: 4 }}>
-          {filtered.map((s) => (
-            <StyleCard key={s.id} style={s} active={s.id === styleId} onSelect={() => setStyleId(s.id)} onZoom={() => setPreview(s)} />
-          ))}
-        </div>
-      )}
+          {loading ? (
+            <div style={{ color: "var(--gray-5)", fontSize: 13, padding: 20 }}>Đang tải mẫu…</div>
+          ) : templates.length === 0 ? (
+            <div style={{ fontSize: 13, color: "var(--gray-5)", padding: "16px 0" }}>Chưa có mẫu nào.</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 14, maxHeight: 480, overflowY: "auto", padding: 4 }}>
+              {tfiltered.map((t) => (
+                <TemplateCard key={t.id} t={t} selected={t.id === tplId} onSelect={() => setTplId(t.id)} onPreview={() => setPreviewTpl(t.id)} />
+              ))}
+            </div>
+          )}
+          {previewTpl && <TemplatePreviewModal templateId={previewTpl} name={templates.find((t) => t.id === previewTpl)?.name} onClose={() => setPreviewTpl(null)}
+            onUse={() => { setTplId(previewTpl); setPreviewTpl(null); }} />}
         </>
-      )}
-
-      {preview && (
-        <div onClick={() => setPreview(null)} style={{ position: "fixed", inset: 0, zIndex: 100000, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{preview.name?.en || preview.label}</span>
-            <button onClick={() => setPreview(null)} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
-              <X size={14} />
-              Đóng
-            </button>
-          </div>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(1100px,92vw)", aspectRatio: "16/9", borderRadius: 14, overflow: "hidden", border: "1px solid var(--gray-3)", background: "#0b0b12" }}>
-            <ScaledSlideFrame url={stylePreviewUrl(preview.styleKey)} title={preview.label} frameKey={`stp-${preview.id}`} />
-          </div>
-          <button onClick={(e) => { e.stopPropagation(); setStyleId(preview.id); setPreview(null); }} className="btn-primary" style={{ fontSize: 13 }}>Chọn style này</button>
-        </div>
       )}
 
       {error && <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#fca5a5", fontSize: 13 }}>{error}</div>}
 
       {srcMode !== "pptx" && (
         <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
-          <button onClick={handleStart} disabled={busy} className="btn-primary" style={{ fontSize: 14, padding: "14px 28px", opacity: busy ? 0.6 : 1 }}>
-            {busy ? "Đang khởi tạo…" : srcMode === "template" ? "Dùng mẫu này →" : "Sinh slide →"}
+          <button onClick={handleStart} disabled={busy || !tplId} className="btn-primary" style={{ fontSize: 14, padding: "14px 28px", opacity: (busy || !tplId) ? 0.6 : 1 }}>
+            {busy ? "Đang tạo…" : "Tạo slide →"}
           </button>
         </div>
       )}
