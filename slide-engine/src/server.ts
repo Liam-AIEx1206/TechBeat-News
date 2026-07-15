@@ -332,10 +332,11 @@ async function bootstrap(): Promise<void> {
 
   app.post('/sessions/:id/generate', async (req, res) => {
     try {
-      const result = await __invokeIpc('generate:start', {
-        ...(req.body ?? {}),
-        sessionId: req.params.id
-      })
+      const body = (req.body ?? {}) as Record<string, unknown>
+      // Session mẫu → dùng luồng template (điền vào seed pages, giữ thiết kế),
+      // không phải luồng standard (sẽ sinh thêm trang mới gây nhân đôi).
+      const channel = body.template === true ? 'generate:startTemplate' : 'generate:start'
+      const result = await __invokeIpc(channel, { ...body, sessionId: req.params.id })
       res.json(result)
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : String(error) })

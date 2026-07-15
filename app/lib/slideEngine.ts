@@ -112,6 +112,18 @@ export async function startGenerate(sessionId: string, userMessage: string): Pro
   return data;
 }
 
+/** Sinh theo luồng TEMPLATE: điền nội dung vào seed pages, giữ nguyên thiết kế mẫu. */
+export async function startTemplateGenerate(sessionId: string, userMessage: string): Promise<{ runId: string }> {
+  const res = await fetch(`${P}/sessions/${sessionId}/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userMessage, type: "deck", template: true }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
 export async function getSession(sessionId: string): Promise<SessionData> {
   return invoke<SessionData>("session:get", sessionId);
 }

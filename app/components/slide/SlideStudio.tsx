@@ -25,7 +25,7 @@ import {
   FileUp
 } from "lucide-react";
 import {
-  listStyles, listFonts, createSession, startGenerate, getSession,
+  listStyles, listFonts, createSession, startGenerate, startTemplateGenerate, getSession,
   subscribeProgress, retryFailedPages, pageUrl, exportDownloadUrl,
   editPage, getPageMessages, addPage, deletePage, reorderPages,
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
@@ -166,9 +166,10 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
     setBusy(true); setError("");
     try {
       if (src) {
-        // Có nội dung → AI điền nội dung vào mẫu (giữ thiết kế/màu của mẫu).
+        // Có nội dung → AI điền nội dung vào mẫu qua LUỒNG TEMPLATE (giữ thiết kế/màu,
+        // fill vào seed pages — không sinh thêm trang mới gây nhân đôi).
         const sid = await createFromTemplate(tplId, name, pageCount);
-        await startGenerate(sid, `${src}\n\nGIỮ NGUYÊN màu sắc, bố cục, phông chữ và phong cách của mẫu; chỉ thay phần chữ sang tiếng Việt theo chủ đề. Không đổi hệ màu.`);
+        await startTemplateGenerate(sid, `${src}\n\nGIỮ NGUYÊN màu sắc, bố cục, phông chữ và phong cách của mẫu; chỉ thay phần chữ sang tiếng Việt theo chủ đề. Không đổi hệ màu.`);
         onStarted(sid, name);
       } else {
         // Không có nội dung → copy nguyên mẫu (khóa 100% màu/bố cục), sửa sau.
