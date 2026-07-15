@@ -30,7 +30,7 @@ import {
   editPage, getPageMessages, addPage, deletePage, reorderPages,
   generateSpeech, getSpeech, hasActiveRun, saveAsTemplate, stylePreviewUrl,
   extractDoc, extractUrl,
-  listVersions, rollbackToVersion, listTemplates, createEditableFromTemplate, setIndexTransition, getIndexTransition,
+  listVersions, rollbackToVersion, listTemplates, createEditableFromTemplate, templateManifest, setIndexTransition, getIndexTransition,
   importPptxAsSession,
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle, type HistoryVersion, type TemplateItem, type IndexTransition,
@@ -144,6 +144,7 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
   const [extracting, setExtracting] = useState(false);
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [tplId, setTplId] = useState("");
+  const [previewTpl, setPreviewTpl] = useState<string | null>(null);
 
   useEffect(() => {
     if (srcMode === "template" && templates.length === 0) listTemplates().then(setTemplates).catch(() => {});
@@ -279,22 +280,14 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
           {templates.length === 0 ? (
             <div style={{ fontSize: 13, color: "var(--gray-5)", padding: "16px 0" }}>Chưa có mẫu nào. Vào một deck rồi bấm &ldquo;Lưu template&rdquo; để tạo mẫu.</div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 12 }}>
-              {templates.map((t) => {
-                const on = t.id === tplId;
-                return (
-                  <button key={t.id} type="button" onClick={() => setTplId(t.id)} style={{
-                    textAlign: "left", padding: 14, borderRadius: 12, cursor: "pointer",
-                    background: on ? "rgba(249,115,22,0.1)" : "rgba(255,255,255,0.03)",
-                    border: on ? "1.5px solid var(--accent)" : "1px solid var(--gray-3)",
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: on ? "var(--accent)" : "var(--white)" }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 3 }}>{t.pageCount ?? "?"} trang{t.styleKey ? ` · ${t.styleKey}` : ""}</div>
-                  </button>
-                );
-              })}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 14 }}>
+              {templates.map((t) => (
+                <TemplateCard key={t.id} t={t} selected={t.id === tplId} onSelect={() => setTplId(t.id)} onPreview={() => setPreviewTpl(t.id)} />
+              ))}
             </div>
           )}
+          {previewTpl && <TemplatePreviewModal templateId={previewTpl} name={templates.find((t) => t.id === previewTpl)?.name} onClose={() => setPreviewTpl(null)}
+            onUse={() => { setTplId(previewTpl); setPreviewTpl(null); }} />}
         </>
       ) : srcMode === "pptx" ? (
         <div style={{ padding: "8px 0 4px" }}>
@@ -997,6 +990,62 @@ function ScaledSlideFrame({ url, title, frameKey }: { url: string; title: string
           visibility: scale ? "visible" : "hidden",
         }}
       />
+    </div>
+  );
+}
+
+/* Thẻ template có thumbnail trang đầu + nút xem toàn bộ slide mẫu. */
+function TemplateCard({ t, selected, onSelect, onPreview }: { t: TemplateItem; selected: boolean; onSelect: () => void; onPreview: () => void }) {
+  const [firstUrl, setFirstUrl] = useState<string>("");
+  useEffect(() => { templateManifest(t.id).then((m) => setFirstUrl(m.pages[0]?.url || "")).catch(() => {}); }, [t.id]);
+  return (
+    <div style={{
+      borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative",
+      background: selected ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.03)",
+      border: selected ? "1.5px solid var(--accent)" : "1px solid var(--gray-3)",
+    }} onClick={onSelect}>
+      <div style={{ aspectRatio: "16/9", background: "#0b0b12", position: "relative" }}>
+        {firstUrl ? <ScaledSlideFrame url={firstUrl} title={t.name} frameKey={`tplthumb-${t.id}`} />
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gray-5)", fontSize: 12 }}>Đang tải…</div>}
+        <button type="button" title="Xem tất cả slide mẫu"
+          onClick={(e) => { e.stopPropagation(); onPreview(); }}
+          style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 8, padding: 6, color: "#fff", cursor: "pointer", display: "flex" }}>
+          <Maximize2 size={15} />
+        </button>
+      </div>
+      <div style={{ padding: "10px 12px" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: selected ? "var(--accent)" : "var(--white)" }}>{t.name}</div>
+        <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 2 }}>{t.pageCount ?? "?"} trang</div>
+      </div>
+    </div>
+  );
+}
+
+/* Modal xem toàn bộ slide mẫu của 1 template. */
+function TemplatePreviewModal({ templateId, name, onClose, onUse }: { templateId: string; name?: string; onClose: () => void; onUse: () => void }) {
+  const [pages, setPages] = useState<{ pageNumber: number; title: string; url: string }[]>([]);
+  useEffect(() => { templateManifest(templateId).then((m) => setPages(m.pages)).catch(() => {}); }, [templateId]);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1000, display: "flex", flexDirection: "column", padding: "3vh 4vw" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--black)", border: "1px solid var(--gray-3)", borderRadius: 16, display: "flex", flexDirection: "column", maxHeight: "94vh", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid var(--gray-2)" }}>
+          <div style={{ fontSize: 15, fontWeight: 800 }}>{name || "Mẫu"} <span style={{ color: "var(--gray-5)", fontWeight: 400 }}>· {pages.length} slide mẫu</span></div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={onUse} className="btn-primary" style={{ fontSize: 13 }}>Dùng mẫu này →</button>
+            <button onClick={onClose} className="btn-ghost" style={{ display: "flex", padding: 8 }}><X size={16} /></button>
+          </div>
+        </div>
+        <div style={{ overflowY: "auto", padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(360px,1fr))", gap: 16 }}>
+          {pages.map((p) => (
+            <div key={p.pageNumber} style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--gray-3)" }}>
+              <div style={{ aspectRatio: "16/9", background: "#0b0b12" }}>
+                <ScaledSlideFrame url={p.url} title={p.title} frameKey={`tplprev-${templateId}-${p.pageNumber}`} />
+              </div>
+              <div style={{ padding: "8px 10px", fontSize: 12, color: "var(--gray-5)" }}>{p.pageNumber}. {p.title}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

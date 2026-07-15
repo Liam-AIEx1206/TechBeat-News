@@ -236,6 +236,15 @@ export async function createFromTemplate(templateId: string, title: string, page
   return r.sessionId;
 }
 
+export interface TemplatePreviewPage { pageNumber: number; title: string; url: string; }
+
+/** Danh sách trang (kèm URL preview qua proxy) của 1 template — để hiện thumbnail/gallery. */
+export async function templateManifest(id: string): Promise<{ name?: string; pages: TemplatePreviewPage[] }> {
+  const r = await fetch(`${P}/templates/${encodeURIComponent(id)}/manifest`).then((x) => x.json());
+  const pages: TemplatePreviewPage[] = (r.pages ?? []).map((p: TemplatePreviewPage) => ({ ...p, url: `${P}${p.url}` }));
+  return { name: r.name, pages };
+}
+
 /** Copy template thành session editable ngay (không gọi LLM) — sửa lại nội dung sau. */
 export async function createEditableFromTemplate(templateId: string, title: string): Promise<string> {
   const r = await invoke<{ sessionId: string }>("templates:createEditableSession", { templateId, title });

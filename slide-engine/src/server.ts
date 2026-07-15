@@ -269,6 +269,27 @@ async function bootstrap(): Promise<void> {
     }
   })
 
+  // Xem trước template: phục vụ tĩnh page HTML + assets của template
+  app.use('/templates-static', express.static(path.join(dataDirOf(), 'templates')))
+
+  // Danh sách trang (kèm URL preview) của 1 template — để hiện thumbnail/gallery
+  app.get('/templates/:id/manifest', (req: express.Request, res: express.Response) => {
+    try {
+      const id = req.params.id.replace(/[^a-z0-9_-]/gi, '')
+      const fp = path.join(dataDirOf(), 'templates', id, 'manifest.json')
+      if (!fs.existsSync(fp)) { res.status(404).json({ error: 'không thấy template' }); return }
+      const m = JSON.parse(fs.readFileSync(fp, 'utf-8'))
+      const pages = (m.pages || []).map((p: { pageNumber?: number; title?: string; htmlPath?: string }) => ({
+        pageNumber: p.pageNumber,
+        title: p.title,
+        url: `/templates-static/${id}/${p.htmlPath}`
+      }))
+      res.json({ id, name: m.name, pageCount: m.pageCount, pages })
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : String(error) })
+    }
+  })
+
   // Styles cho picker
   app.get('/styles', async (_req, res) => {
     try {
