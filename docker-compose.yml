@@ -80,6 +80,27 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ── Slide-engine: oh-my-ppt generation + PPTX export (Node + Chromium) ──
+  slide-engine:
+    build:
+      context: ./slide-engine
+      dockerfile: Dockerfile
+    image: dailybyte-slide-engine:latest
+    container_name: dailybyte-slide-engine
+    # Key dùng chung với backend (OPENAI_API_KEY/OPENAI_BASE_URL trong backend/.env)
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      SLIDE_ENGINE_MODEL: ${SLIDE_ENGINE_MODEL:-gpt-5}
+      OPENAI_API_KEY:     ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL:    ${OPENAI_BASE_URL:-https://api.pinkyne.com/v1}
+    volumes:
+      # Session/render sinh ra lưu ở volume (templates đã bake trong image)
+      - slide_storage:/app/data/storage
+    shm_size: '512mb'      # Chromium cần shared memory
+    restart: unless-stopped
+
   # ── Cloudflare Tunnel (cloudflared) ─────────────────────────────────────
   # Kích hoạt dịch vụ này để định tuyến tên miền trực tiếp thông qua Cloudflare Tunnel
   # Không cần mở bất kỳ cổng nào trên Firewall của server và không sợ xung đột cổng!
@@ -98,4 +119,7 @@ services:
 volumes:
   # Cache Playwright Chromium — persist giữa các lần restart container
   playwright_cache:
+    driver: local
+  # Session/deck slide-engine sinh ra
+  slide_storage:
     driver: local

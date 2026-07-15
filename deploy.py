@@ -24,6 +24,18 @@ def make_tarfile(output_filename, source_dir):
         temp_scripts = ['find_large_files.py', 'check_my_video_subdirs.py', 'check_app_subdirs.py', 'check_remote_upload.py', 'check_build_logs.py', 'test_tar_size.py', 'check_logs_exists.py']
         if any(name.endswith(s) for s in temp_scripts):
             return None
+        # slide-engine: CHỈ giữ data/templates (mẫu), loại session/cache/db/out nặng
+        se_heavy = (
+            'slide-engine/data/storage', 'slide-engine/data/downloads',
+            'slide-engine/data/exports', 'slide-engine/data/uploads',
+            'slide-engine/data/html-thumbnails', 'slide-engine/data/styles-dev',
+            'slide-engine/data/skills-dev', 'slide-engine/data/ohmyppt-export',
+            'slide-engine/out', 'slide-engine/boot.log',
+        )
+        if name.startswith(se_heavy):
+            return None
+        if name.startswith('slide-engine/data/') and ('.db' in name or '.sqlite' in name):
+            return None
         return tarinfo
 
     with tarfile.open(output_filename, "w:gz") as tar:

@@ -1,0 +1,9 @@
+node_modules
+out
+boot.log
+*.log
+.git
+.gitignore
+# Chỉ giữ data/templates (30 mẫu ~83MB), loại session/cache/db nặng
+data/*
+!data/templates
