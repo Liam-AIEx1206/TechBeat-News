@@ -616,8 +616,11 @@ export const buildDesignContractWithLLM = async (args: {
     await assertFontFamilyAvailable(requestedFontPair.titleFont, 'titleFont')
     await assertFontFamilyAvailable(requestedFontPair.bodyFont, 'bodyFont')
   }
+  // Detect from user content only. The style skill prompt is authored in Chinese
+  // for these presets, so including it made every deck read as 'cjk' and pick
+  // CJK-only fonts (e.g. Ma Shan Zheng) that break Vietnamese/Latin diacritics.
   const languageHint = detectFontLanguageHint(
-    [args.topic || '', args.userMessage || '', args.styleSkillPrompt || ''].join('\n')
+    [args.topic || '', args.userMessage || ''].join('\n')
   )
   const systemPrompt = buildDesignContractSystemPrompt({
     styleSkill: args.styleSkillPrompt,
@@ -671,6 +674,18 @@ export const buildDesignContractWithLLM = async (args: {
       )
     }
     const contract = normalizeDesignContract(parsed)
+    // Safety net: for Latin/Vietnamese decks, never keep a CJK-only font (its
+    // missing Latin glyphs render as broken/overlapping diacritics). Swap to a
+    // readable Latin default. Skipped when the user explicitly picked a font pair.
+    if (!requestedFontPair && languageHint !== 'cjk') {
+      const cjkOnly = new Set(
+        availableFonts
+          .filter((f) => f.scripts.includes('cjk') && !f.scripts.includes('latin'))
+          .map((f) => f.family)
+      )
+      if (cjkOnly.has(contract.titleFont)) contract.titleFont = 'Montserrat'
+      if (cjkOnly.has(contract.bodyFont)) contract.bodyFont = 'Inter'
+    }
     if (requestedFontPair) {
       if (
         contract.titleFont !== requestedFontPair.titleFont ||
