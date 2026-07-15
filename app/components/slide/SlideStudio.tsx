@@ -1024,21 +1024,32 @@ function TemplateCard({ t, selected, onSelect, onPreview }: { t: TemplateItem; s
 /* Modal xem toàn bộ slide mẫu của 1 template. */
 function TemplatePreviewModal({ templateId, name, onClose, onUse }: { templateId: string; name?: string; onClose: () => void; onUse: () => void }) {
   const [pages, setPages] = useState<{ pageNumber: number; title: string; url: string }[]>([]);
+  const [zoom, setZoom] = useState<number | null>(null);   // index slide đang phóng to
   useEffect(() => { templateManifest(templateId).then((m) => setPages(m.pages)).catch(() => {}); }, [templateId]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (zoom === null) return;
+      if (e.key === "Escape") setZoom(null);
+      if (e.key === "ArrowRight") setZoom((z) => (z === null ? z : Math.min(pages.length - 1, z + 1)));
+      if (e.key === "ArrowLeft") setZoom((z) => (z === null ? z : Math.max(0, z - 1)));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [zoom, pages.length]);
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1000, display: "flex", flexDirection: "column", padding: "3vh 4vw" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--black)", border: "1px solid var(--gray-3)", borderRadius: 16, display: "flex", flexDirection: "column", maxHeight: "94vh", overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid var(--gray-2)" }}>
-          <div style={{ fontSize: 15, fontWeight: 800 }}>{name || "Mẫu"} <span style={{ color: "var(--gray-5)", fontWeight: 400 }}>· {pages.length} slide mẫu</span></div>
+          <div style={{ fontSize: 15, fontWeight: 800 }}>{name || "Mẫu"} <span style={{ color: "var(--gray-5)", fontWeight: 400 }}>· {pages.length} slide mẫu · bấm để phóng to</span></div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onUse} className="btn-primary" style={{ fontSize: 13 }}>Dùng mẫu này →</button>
             <button onClick={onClose} className="btn-ghost" style={{ display: "flex", padding: 8 }}><X size={16} /></button>
           </div>
         </div>
         <div style={{ overflowY: "auto", padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(360px,1fr))", gap: 16 }}>
-          {pages.map((p) => (
-            <div key={p.pageNumber} style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--gray-3)" }}>
-              <div style={{ aspectRatio: "16/9", background: "#0b0b12" }}>
+          {pages.map((p, i) => (
+            <div key={p.pageNumber} onClick={() => setZoom(i)} title="Bấm để phóng to" style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--gray-3)", cursor: "zoom-in" }}>
+              <div style={{ aspectRatio: "16/9", background: "#0b0b12", pointerEvents: "none" }}>
                 <ScaledSlideFrame url={p.url} title={p.title} frameKey={`tplprev-${templateId}-${p.pageNumber}`} />
               </div>
               <div style={{ padding: "8px 10px", fontSize: 12, color: "var(--gray-5)" }}>{p.pageNumber}. {p.title}</div>
@@ -1046,8 +1057,26 @@ function TemplatePreviewModal({ templateId, name, onClose, onUse }: { templateId
           ))}
         </div>
       </div>
+      {zoom !== null && pages[zoom] && (
+        <div onClick={(e) => { e.stopPropagation(); setZoom(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: "2vh 2vw" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "min(1400px,92vw)", color: "var(--white)" }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{pages[zoom].pageNumber}. {pages[zoom].title} <span style={{ color: "var(--gray-5)", fontWeight: 400 }}>({zoom + 1}/{pages.length})</span></div>
+            <button onClick={(e) => { e.stopPropagation(); setZoom(null); }} className="btn-ghost" style={{ display: "flex", padding: 8 }}><X size={18} /></button>
+          </div>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(1400px,92vw)", aspectRatio: "16/9", background: "#0b0b12", borderRadius: 12, overflow: "hidden", border: "1px solid var(--gray-3)", position: "relative" }}>
+            <ScaledSlideFrame url={pages[zoom].url} title={pages[zoom].title} frameKey={`tplzoom-${templateId}-${zoom}`} />
+            {zoom > 0 && <button onClick={(e) => { e.stopPropagation(); setZoom(zoom - 1); }} style={navBtn("left")}><ChevronDown size={22} style={{ transform: "rotate(90deg)" }} /></button>}
+            {zoom < pages.length - 1 && <button onClick={(e) => { e.stopPropagation(); setZoom(zoom + 1); }} style={navBtn("right")}><ChevronDown size={22} style={{ transform: "rotate(-90deg)" }} /></button>}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--gray-5)" }}>← → chuyển slide · Esc / bấm nền để đóng</div>
+        </div>
+      )}
     </div>
   );
+}
+
+function navBtn(side: "left" | "right"): CSSProperties {
+  return { position: "absolute", top: "50%", [side]: 12, transform: "translateY(-50%)", background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 999, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" } as CSSProperties;
 }
 
 /* ─────────────────────────  styles  ───────────────────────── */
