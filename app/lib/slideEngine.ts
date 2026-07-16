@@ -140,7 +140,17 @@ export async function retryFailedPages(sessionId: string): Promise<void> {
 export function pageUrl(page: GeneratedPage): string {
   if (!page.sourceUrl) return "";
   // sourceUrl dạng /fs/<abs>; ghép vào proxy
-  return page.sourceUrl.startsWith("/fs/") ? `${P}${page.sourceUrl}` : page.sourceUrl;
+  if (page.sourceUrl.startsWith("/fs/")) return `${P}${page.sourceUrl}`;
+  // slide-engine trả sourceUrl dạng file:///app/data/... → convert sang proxy /fs/
+  if (page.sourceUrl.startsWith("file:///")) {
+    let absPath = page.sourceUrl.slice("file://".length); // Sẽ giữ lại dấu / ở đầu trên Linux (e.g. "/app/data...")
+    // Nếu là Windows path dạng "/E:/path" -> chuyển thành "E:/path"
+    if (absPath.startsWith("/") && /^\/[a-zA-Z]:\//.test(absPath)) {
+      absPath = absPath.slice(1);
+    }
+    return `${P}/fs/${absPath}`;
+  }
+  return page.sourceUrl;
 }
 
 /** SSE tiến độ generate. Trả hàm huỷ. */
@@ -236,6 +246,7 @@ export interface TemplateItem {
   description?: string;
   pageCount?: number;
   styleKey?: string;
+  tags?: string[];
 }
 
 export async function listTemplates(): Promise<TemplateItem[]> {

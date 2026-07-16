@@ -68,19 +68,21 @@ def run():
         
         # Read existing remote .env to see if keys are already there
         print("Reading remote .env...")
-        stdin, stdout, stderr = client.exec_command("cat TechBeat-News/.env")
+        stdin, stdout, stderr = client.exec_command("cat projects/pinkyne-hub/DailyByte-News/.env")
         remote_env_content = stdout.read().decode('utf-8')
         
         # We will append the new keys
         print("Appending keys to remote .env...")
         sftp = client.open_sftp()
-        with sftp.open('TechBeat-News/.env', 'a') as f:
+        with sftp.open('projects/pinkyne-hub/DailyByte-News/.env', 'a') as f:
             f.write("\n# Appended by update_remote_env.py\n" + env_content_to_append)
         sftp.close()
         print("Remote .env updated successfully.")
 
-        # Re-run docker compose up -d to pick up new env vars for backend and frontend
-        cmd = f"cd TechBeat-News && echo '{password}' | sudo -S docker compose up -d --build backend frontend"
+        # Re-run docker compose up -d to pick up new env vars.
+        # QUAN TRỌNG: phải gồm slide-engine — nó trực tiếp gọi OpenAI, nếu bỏ quên
+        # sẽ chạy mãi với API key rỗng (từ .env.compose.example).
+        cmd = f"cd projects/pinkyne-hub/DailyByte-News && echo '{password}' | sudo -S docker compose up -d --build backend frontend slide-engine"
         print(f"Running command: {cmd}")
         stdin, stdout, stderr = client.exec_command(cmd, get_pty=True)
         for line in iter(stdout.readline, ""):

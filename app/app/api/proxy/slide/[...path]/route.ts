@@ -8,8 +8,11 @@ const BASE = process.env.NODE_ENV === "development"
   : "http://slide-engine:8100";
 
 async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params;
-  const target = `${BASE}/${(path || []).map(encodeURIComponent).join("/")}${req.nextUrl.search}`;
+  // Tránh việc Next.js router tự động nuốt mất dấu double-slash (e.g. fs//app/data/...)
+  const prefix = "/api/proxy/slide";
+  const pathname = req.nextUrl.pathname;
+  const remaining = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : "";
+  const target = `${BASE}${remaining}${req.nextUrl.search}`;
 
   const headers: Record<string, string> = {};
   const ct = req.headers.get("content-type");

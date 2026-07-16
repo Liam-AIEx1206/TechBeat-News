@@ -15,7 +15,7 @@ def make_tarfile(output_filename, source_dir):
         if name.endswith('.env') or name.endswith('.env.local') or name.endswith('.env.production') or name.endswith('.env.development'):
             return None
             
-        excludes = ['.git', 'node_modules', '.next', '__pycache__', '.venv', 'playwright_cache', 'my-video/renders', 'my-video/history', 'my-video/sessions', '.pytest_cache', '.conda', '.agents', '.gemini', '.cache', '.npm', 'scripts']
+        excludes = ['.git', 'node_modules', '.next', '__pycache__', '.venv', 'playwright_cache', 'my-video', 'oh-my-ppt', '.pytest_cache', '.conda', '.agents', '.gemini', '.cache', '.npm', 'scripts']
         if any(f"/{ex}/" in f"/{name}/" or name.endswith(f"/{ex}") for ex in excludes):
             return None
         if name.endswith('.tar.gz') or name.endswith('.zip'):
@@ -65,13 +65,13 @@ def deploy():
         print("Upload complete!")
         
         commands = [
-            "if [ -d TechBeat-News ]; then find TechBeat-News -mindepth 1 -maxdepth 1 ! -name 'my-video' -exec rm -rf {} +; else mkdir -p TechBeat-News; fi",
-            f"tar -xzf {tar_name} -C TechBeat-News --strip-components=1",
+            "if [ -d projects/pinkyne-hub/DailyByte-News ]; then find projects/pinkyne-hub/DailyByte-News -mindepth 1 -maxdepth 1 ! -name 'my-video' -exec rm -rf {} +; else mkdir -p projects/pinkyne-hub/DailyByte-News; fi",
+            f"tar -xzf {tar_name} -C projects/pinkyne-hub/DailyByte-News --strip-components=1",
             f"rm {tar_name}",
-            "cd TechBeat-News && cp .env.compose.example .env",
-            "cd TechBeat-News && sed -i 's|NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=https://xnew.labpinky.com|g' .env",
-            "cd TechBeat-News && echo 'TUNNEL_TOKEN=eyJhIjoiYzJlZTU3NWRkMmE4MWMxMjU0MWUzMzA5YTFjOTA5MjEiLCJ0IjoiN2QyYmQ1MTUtNzA2ZC00YWI5LTk5YWItMDBiZTIzZWZmYTE2IiwicyI6IlpETmhZMlkzTTJJdFpEVmtaaTAwT1dRNExUbG1aVEl0WVdJMU5HSmpOMlprTkRSayJ9' >> .env",
-            f"cd TechBeat-News && echo '{password}' | sudo -S docker compose up -d --build"
+            "cd projects/pinkyne-hub/DailyByte-News && cp .env.compose.example .env",
+            "cd projects/pinkyne-hub/DailyByte-News && sed -i 's|NEXTAUTH_URL=http://localhost:3000|NEXTAUTH_URL=https://xnew.labpinky.com|g' .env",
+            "cd projects/pinkyne-hub/DailyByte-News && echo 'TUNNEL_TOKEN=eyJhIjoiYzJlZTU3NWRkMmE4MWMxMjU0MWUzMzA5YTFjOTA5MjEiLCJ0IjoiN2QyYmQ1MTUtNzA2ZC00YWI5LTk5YWItMDBiZTIzZWZmYTE2IiwicyI6IlpETmhZMlkzTTJJdFpEVmtaaTAwT1dRNExUbG1aVEl0WVdJMU5HSmpOMlprTkRSayJ9' >> .env",
+            f"cd projects/pinkyne-hub/DailyByte-News && echo '{password}' | sudo -S docker compose up -d --build"
         ]
         
         for cmd in commands:
