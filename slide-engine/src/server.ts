@@ -165,7 +165,10 @@ async function bootstrap(): Promise<void> {
   app.get(/^\/fs\/(.+)/, (req, res) => {
     try {
       const raw = decodeURIComponent(req.params[0])
-      const abs = path.resolve(raw)
+      // Next.js gộp '//' → '/' (308 redirect) nên path Linux tuyệt đối
+      // /app/data/... tới đây thành 'app/data/...' (mất dấu / đầu). resolve('/', raw)
+      // hiểu đúng là tuyệt đối-từ-root (Windows 'E:/..' vẫn đúng vì là drive-absolute).
+      const abs = path.resolve('/', raw)
       const roots = [dataDirOf(), path.join(process.cwd(), 'resources')].map((r) => path.resolve(r))
       if (!roots.some((root) => abs.startsWith(root))) {
         res.status(403).json({ error: 'ngoài phạm vi cho phép' })
