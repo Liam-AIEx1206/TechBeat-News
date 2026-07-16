@@ -37,6 +37,14 @@ import { configureModelUsageRecorder } from '../vendor/main/model-usage'
 
 const PORT = Number(process.env.SLIDE_ENGINE_PORT || 8100)
 
+// State cho cơ chế xoay-key-và-sinh-lại (mục 5b):
+//  - lastGenReq: request sinh gần nhất của mỗi phiên, để replay khi xoay key
+//  - retryInFlight: phiên đang được sinh lại → SSE /events nuốt run_error đó
+//  - retryCount: số lần đã xoay key trong 1 phiên (chặn vòng lặp vô hạn)
+const lastGenReq = new Map<string, { channel: string; body: Record<string, unknown> }>()
+const retryInFlight = new Set<string>()
+const retryCount = new Map<string, number>()
+
 // Tự nạp backend/.env (OPENAI_API_KEY, OPENAI_BASE_URL…) nếu env chưa có key,
 // để chạy `npx tsx src/server.ts` trần là đủ — khỏi phải export tay mỗi lần.
 function loadBackendEnv(): void {
@@ -118,32 +126,69 @@ async function bootstrap(): Promise<void> {
   // 5) Seed model config từ env (đi qua đúng channel gốc của oh-my-ppt)
   await seedModelConfigFromEnv()
 
-  // 5b) Tự xoay key khi model config đang dùng gặp lỗi quota — nghe toàn cục
-  // (một lần, không phải theo từng SSE client) để bắt run_error/page_failed
-  // và re-seed config với key kế tiếp trong pool cho lần sinh sau.
+  // 5b) Tự xoay key + SINH LẠI NGAY trong cùng phiên khi gặp lỗi quota.
+  //
+  // Luồng sinh chạy bất đồng bộ; lỗi quota (401/403/429…) hiện ra ở event
+  // 'run_error' cuối cùng. Trước đây ta chỉ re-seed key cho lần sinh SAU nên
+  // người dùng vẫn thấy "Sinh slide thất bại" ở lần hiện tại. Giờ:
+  //   1) nuốt run_error do quota (không đẩy về browser — retryInFlight),
+  //   2) markBad key + re-seed key kế tiếp,
+  //   3) __invokeIpc lại đúng request sinh của phiên đó (lastGenReq).
+  // Hook này đăng ký ở bootstrap nên luôn chạy TRƯỚC listener SSE /events
+  // (đăng ký theo từng request) — đặt cờ retryInFlight đồng bộ để SSE nuốt
+  // đúng event run_error đó trong cùng nhịp emit.
   const keyPool = getKeyPool()
+  const MAX_KEY_RETRIES = Math.min(keyPool.size(), 6)
   if (keyPool.size() > 1) {
-    let rotating = false
     __electronShimBus.on('generate:chunk', (...args: unknown[]) => {
       const payload = (args.length === 1 ? args[0] : args) as any
       const p = payload?.payload ?? payload
       const type = p?.type ?? payload?.type
-      const msg: string = String(p?.message ?? p?.error ?? '')
-      if (rotating || (type !== 'run_error' && type !== 'page_failed')) return
-      if (!isQuotaError(msg)) return
-      const badKey = process.env.SLIDE_ENGINE_API_KEY || process.env.OPENAI_API_KEY || ''
-      if (!badKey) return
-      rotating = true
-      const nextKey = keyPool.markBad(badKey, msg.slice(0, 60))
-      if (nextKey && nextKey !== badKey) {
-        process.env.OPENAI_API_KEY = nextKey
-        seedModelConfigFromEnv(nextKey)
-          .then(() => log.info('[key-pool] đã xoay sang key khác, model config cập nhật cho lần sinh kế tiếp'))
-          .catch((e) => log.error('[key-pool] xoay key thất bại', e))
-          .finally(() => { rotating = false })
-      } else {
-        rotating = false
+      const sessionId = String(p?.sessionId ?? payload?.sessionId ?? '')
+      if (!sessionId) return
+
+      // Phiên hoàn tất/kết thúc → dọn state retry của phiên.
+      if (type === 'run_completed') {
+        retryInFlight.delete(sessionId)
+        retryCount.delete(sessionId)
+        return
       }
+      if (type !== 'run_error') return
+
+      const msg: string = String(p?.message ?? p?.error ?? '')
+      const req = lastGenReq.get(sessionId)
+      // Không phải lỗi quota, hoặc không biết cách sinh lại → để lỗi hiện ra UI.
+      if (!isQuotaError(msg) || !req) {
+        retryInFlight.delete(sessionId)
+        retryCount.delete(sessionId)
+        return
+      }
+
+      const attempts = retryCount.get(sessionId) ?? 0
+      if (attempts >= MAX_KEY_RETRIES) {
+        log.warn(`[key-pool] phiên ${sessionId} đã xoay ${attempts} key vẫn hết quota — để lỗi hiện ra UI`)
+        retryInFlight.delete(sessionId)
+        retryCount.delete(sessionId)
+        return
+      }
+
+      // Nuốt run_error này khỏi luồng SSE + xoay key + sinh lại cùng phiên.
+      retryInFlight.add(sessionId)
+      retryCount.set(sessionId, attempts + 1)
+      const badKey = process.env.OPENAI_API_KEY || process.env.SLIDE_ENGINE_API_KEY || ''
+      const nextKey = keyPool.markBad(badKey, msg.slice(0, 60))
+      if (nextKey) process.env.OPENAI_API_KEY = nextKey
+      ;(async () => {
+        try {
+          if (nextKey) await seedModelConfigFromEnv(nextKey)
+          log.info(`[key-pool] xoay key → sinh lại phiên ${sessionId} (lần ${attempts + 1}/${MAX_KEY_RETRIES})`)
+          await __invokeIpc(req.channel, req.body)
+        } catch (e) {
+          log.error('[key-pool] sinh lại sau khi xoay key thất bại', e)
+          retryInFlight.delete(sessionId)
+          retryCount.delete(sessionId)
+        }
+      })()
     })
   }
 
@@ -256,6 +301,13 @@ async function bootstrap(): Promise<void> {
     })
     res.write(': connected\n\n')
     const onChunk = (...args: unknown[]): void => {
+      const payload = (args.length === 1 ? args[0] : args) as any
+      const p = payload?.payload ?? payload
+      const type = p?.type ?? payload?.type
+      const sessionId = String(p?.sessionId ?? payload?.sessionId ?? '')
+      // Nuốt run_error của phiên đang được xoay-key-và-sinh-lại (mục 5b) — nếu
+      // đẩy về browser, UI sẽ hiện "Sinh slide thất bại" dù ta đang thử key mới.
+      if (type === 'run_error' && sessionId && retryInFlight.has(sessionId)) return
       res.write(`event: generate:chunk\ndata: ${JSON.stringify(args.length === 1 ? args[0] : args)}\n\n`)
     }
     __electronShimBus.on('generate:chunk', onChunk)
@@ -376,7 +428,13 @@ async function bootstrap(): Promise<void> {
       // Session mẫu → dùng luồng template (điền vào seed pages, giữ thiết kế),
       // không phải luồng standard (sẽ sinh thêm trang mới gây nhân đôi).
       const channel = body.template === true ? 'generate:startTemplate' : 'generate:start'
-      const result = await __invokeIpc(channel, { ...body, sessionId: req.params.id })
+      const invokeBody = { ...body, sessionId: req.params.id }
+      // Ghi lại request để cơ chế xoay-key (mục 5b) sinh lại cùng phiên khi
+      // gặp lỗi quota. Bắt đầu lần sinh MỚI → reset đếm số lần xoay key.
+      lastGenReq.set(req.params.id, { channel, body: invokeBody })
+      retryCount.delete(req.params.id)
+      retryInFlight.delete(req.params.id)
+      const result = await __invokeIpc(channel, invokeBody)
       res.json(result)
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : String(error) })
