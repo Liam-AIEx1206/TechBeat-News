@@ -6,6 +6,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Luôn hiện màn CHỌN tài khoản Google (khỏi tự đăng nhập nhầm account cũ)
+      authorization: { params: { prompt: "select_account" } },
     }),
   ],
   callbacks: {

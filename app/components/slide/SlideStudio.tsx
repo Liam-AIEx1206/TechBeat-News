@@ -173,6 +173,12 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
     const src = content.trim()
       ? `Chủ đề: ${topic.trim()}\n\nDựa trên nội dung sau để làm slide (giữ ý chính, tiếng Việt):\n\n${content.trim()}`
       : topic.trim();
+    // Có nội dung → AI điền: số trang phải hợp lệ (≥ 3). Bỏ trống nội dung thì
+    // dùng nguyên số trang của mẫu nên không cần kiểm.
+    if (src && (!Number.isFinite(pageCount) || pageCount < 3)) {
+      setError("Số trang phải từ 3 trở lên — vui lòng nhập lại.");
+      return;
+    }
     setBusy(true); setError("");
     try {
       if (src) {
@@ -286,9 +292,10 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Số trang khi AI điền nội dung theo chủ đề (bỏ trống nội dung = dùng nguyên số trang của mẫu)">
                 <label style={{ ...fieldLabel, marginBottom: 0 }}>Số trang</label>
-                <input type="number" min={3} max={30} value={pageCount}
-                  onChange={(e) => setPageCount(Math.max(3, Math.min(30, Number(e.target.value) || 3)))}
-                  style={{ width: 56, background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 8, color: "var(--accent)", fontSize: 13, fontWeight: 800, textAlign: "center", padding: "6px" }} />
+                <input type="number" min={3} value={Number.isFinite(pageCount) ? pageCount : ""}
+                  placeholder="6"
+                  onChange={(e) => { const v = e.target.value; setPageCount(v === "" ? NaN : Math.max(0, Math.floor(Number(v)))); }}
+                  style={{ width: 60, background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 8, color: "var(--accent)", fontSize: 13, fontWeight: 800, textAlign: "center", padding: "6px" }} />
               </div>
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mẫu…" style={{ ...selectStyle, width: 200, padding: "8px 12px" }} />
             </div>
@@ -362,6 +369,7 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
   const [retrying, setRetrying] = useState(false);
   const doneRef = useRef(false);
   const idleMissRef = useRef(0);
+  const donePagesRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     const fail = (msg: string, fp?: GeneratedPage[]) => {
@@ -377,6 +385,12 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
       const vl = viLabel(p); if (vl) setLabel(vl);
       if (typeof p?.progress === "number") setProgress(Math.max(4, Math.min(99, p.progress)));
       if (typeof p?.totalPages === "number") setTotal(p.totalPages);
+      // Đếm trang xong theo sự kiện SSE (luồng template giữ status DB 'pending'
+      // tới cuối → không thể dựa vào DB để hiện tiến độ từng trang).
+      if ((type === "page_generated" || type === "page_updated") && typeof p?.currentPage === "number") {
+        donePagesRef.current.add(p.currentPage);
+        setCompletedCount((c) => Math.max(c, donePagesRef.current.size));
+      }
     });
     const poll = setInterval(async () => {
       if (doneRef.current) return;
@@ -387,7 +401,7 @@ function GeneratingStep({ sessionId, title, onDone, onBack }: { sessionId: strin
         const gc = Number((data.session as any)?.generated_count ?? data.generatedPages.filter((x) => x.status === "completed").length);
         const fc = Number((data.session as any)?.failed_count ?? data.generatedPages.filter((x) => x.status === "failed").length);
         if (pc > 0) setTotal(pc);
-        setCompletedCount(gc);
+        setCompletedCount((c) => Math.max(c, gc));
         if (pc > 0 && gc + fc >= pc) {
           doneRef.current = true;
           clearInterval(poll); unsub();
@@ -628,11 +642,7 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
             <Play size={14} />
             Trình chiếu
           </button>
-          {(["pptx", "pdf", "png"] as ExportKind[]).map((k) => (
-            <button key={k} onClick={() => handleExport(k)} disabled={!!exporting} className={k === "pptx" ? "btn-primary" : "btn-ghost"} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: exporting && exporting !== k ? 0.5 : 1 }}>
-              {exporting === k ? "Đang xuất…" : `Xuất ${k.toUpperCase()}`}
-            </button>
-          ))}
+          <ExportMenu onExport={handleExport} exporting={exporting} />
         </div>
       </div>
 
@@ -987,6 +997,42 @@ function TemplatePreviewModal({ templateId, name, onClose, onUse }: { templateId
 
 function navBtn(side: "left" | "right"): CSSProperties {
   return { position: "absolute", top: "50%", [side]: 12, transform: "translateY(-50%)", background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 999, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" } as CSSProperties;
+}
+
+/* Nút "Xuất" gộp — bấm mở 3 lựa chọn PPTX / PDF / PNG cho gọn. */
+function ExportMenu({ onExport, exporting }: { onExport: (k: ExportKind) => void; exporting: ExportKind | "" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  const items: { k: ExportKind; label: string; desc: string }[] = [
+    { k: "pptx", label: "PowerPoint", desc: ".pptx — mở/sửa trên PowerPoint, Canva" },
+    { k: "pdf", label: "PDF", desc: ".pdf — chia sẻ, in ấn" },
+    { k: "png", label: "Ảnh PNG", desc: ".zip — mỗi trang 1 ảnh" },
+  ];
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button onClick={() => setOpen((o) => !o)} disabled={!!exporting} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+        {exporting ? `Đang xuất ${exporting.toUpperCase()}…` : "Xuất"} <ChevronDown size={14} />
+      </button>
+      {open && !exporting && (
+        <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: "var(--black)", border: "1px solid var(--gray-3)", borderRadius: 12, padding: 6, minWidth: 240, zIndex: 60, boxShadow: "0 14px 34px rgba(0,0,0,0.55)" }}>
+          {items.map(({ k, label, desc }) => (
+            <button key={k} onClick={() => { setOpen(false); onExport(k); }}
+              style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", background: "transparent", border: "none", color: "var(--white)", cursor: "pointer", borderRadius: 8 }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(249,115,22,0.12)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>{label}</div>
+              <div style={{ fontSize: 11, color: "var(--gray-5)", marginTop: 2 }}>{desc}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ─────────────────────────  styles  ───────────────────────── */

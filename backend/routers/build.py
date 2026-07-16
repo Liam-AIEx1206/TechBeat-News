@@ -795,7 +795,8 @@ async def _transcribe_pinkyne_api(wav_path: Path) -> list[dict]:
         
         for attempt in range(max_retries):
             try:
-                async with httpx.AsyncClient(timeout=25.0) as client:
+                # 60s: file wav + server tải cao dễ vượt 25s → timeout (exception rỗng)
+                async with httpx.AsyncClient(timeout=60.0) as client:
                     resp = await client.post(
                         f"{base_url}/audio/transcriptions",
                         headers={"Authorization": f"Bearer {api_key}"},
@@ -2935,12 +2936,12 @@ async def _run_ffmpeg_job(
             cmd.extend(["-vf", ",".join(vf_filters)])
         cmd.extend([
             "-c:v", "libx264",
-            "-preset", "superfast",
-            "-crf", "22",
+            "-preset", "ultrafast",
+            "-crf", "23",
             "-pix_fmt", "yuv420p",
             "-threads", "0",
             "-c:a", "aac",
-            "-b:a", "192k",
+            "-b:a", "160k",
             "-movflags", "+faststart",
             str(temp_out_path.absolute())
         ])
