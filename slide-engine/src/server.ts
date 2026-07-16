@@ -19,6 +19,7 @@ import { PPTDatabase } from '../vendor/main/db/database'
 import { AgentManager } from '../vendor/main/agent'
 import { setupIPC } from '../vendor/main/ipc'
 import { backfillUserStylePackagesFromDatabase, setStyleDb } from '../vendor/main/utils/style-skills'
+import { getKeyPool, isQuotaError } from './key-pool'
 import {
   initializeSkills,
   resolveBuiltinSkillsSourcePath,
@@ -39,7 +40,9 @@ const PORT = Number(process.env.SLIDE_ENGINE_PORT || 8100)
 // Tự nạp backend/.env (OPENAI_API_KEY, OPENAI_BASE_URL…) nếu env chưa có key,
 // để chạy `npx tsx src/server.ts` trần là đủ — khỏi phải export tay mỗi lần.
 function loadBackendEnv(): void {
-  if (process.env.OPENAI_API_KEY || process.env.SLIDE_ENGINE_API_KEY) return
+  // OPENAI_API_KEYS (pool xoay vòng) luôn được nạp bất kể OPENAI_API_KEY đã có
+  // sẵn hay chưa — các biến còn lại chỉ nạp khi env chưa set (giữ hành vi cũ).
+  const needSingle = !process.env.OPENAI_API_KEY && !process.env.SLIDE_ENGINE_API_KEY
   const candidates = [
     path.join(process.cwd(), '..', 'backend', '.env'),
     path.join(process.cwd(), 'backend', '.env')
@@ -47,8 +50,13 @@ function loadBackendEnv(): void {
   for (const fp of candidates) {
     if (!fs.existsSync(fp)) continue
     for (const raw of fs.readFileSync(fp, 'utf-8').split(/\r?\n/)) {
-      const m = /^\s*(OPENAI_API_KEY|OPENAI_BASE_URL|SLIDE_ENGINE_[A-Z_]+)\s*=\s*(.*)$/.exec(raw)
-      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim()
+      const m = /^\s*(OPENAI_API_KEY|OPENAI_API_KEYS|OPENAI_BASE_URL|SLIDE_ENGINE_[A-Z_]+)\s*=\s*(.*)$/.exec(raw)
+      if (!m) continue
+      if (m[1] === 'OPENAI_API_KEYS') {
+        if (!process.env.OPENAI_API_KEYS) process.env.OPENAI_API_KEYS = m[2].trim()
+      } else if (needSingle && !process.env[m[1]]) {
+        process.env[m[1]] = m[2].trim()
+      }
     }
     log.info('[server] đã nạp env từ', fp)
     break
@@ -109,6 +117,35 @@ async function bootstrap(): Promise<void> {
 
   // 5) Seed model config từ env (đi qua đúng channel gốc của oh-my-ppt)
   await seedModelConfigFromEnv()
+
+  // 5b) Tự xoay key khi model config đang dùng gặp lỗi quota — nghe toàn cục
+  // (một lần, không phải theo từng SSE client) để bắt run_error/page_failed
+  // và re-seed config với key kế tiếp trong pool cho lần sinh sau.
+  const keyPool = getKeyPool()
+  if (keyPool.size() > 1) {
+    let rotating = false
+    __electronShimBus.on('generate:chunk', (...args: unknown[]) => {
+      const payload = (args.length === 1 ? args[0] : args) as any
+      const p = payload?.payload ?? payload
+      const type = p?.type ?? payload?.type
+      const msg: string = String(p?.message ?? p?.error ?? '')
+      if (rotating || (type !== 'run_error' && type !== 'page_failed')) return
+      if (!isQuotaError(msg)) return
+      const badKey = process.env.SLIDE_ENGINE_API_KEY || process.env.OPENAI_API_KEY || ''
+      if (!badKey) return
+      rotating = true
+      const nextKey = keyPool.markBad(badKey, msg.slice(0, 60))
+      if (nextKey && nextKey !== badKey) {
+        process.env.OPENAI_API_KEY = nextKey
+        seedModelConfigFromEnv(nextKey)
+          .then(() => log.info('[key-pool] đã xoay sang key khác, model config cập nhật cho lần sinh kế tiếp'))
+          .catch((e) => log.error('[key-pool] xoay key thất bại', e))
+          .finally(() => { rotating = false })
+      } else {
+        rotating = false
+      }
+    })
+  }
 
   // 6) HTTP adapter
   const app = express()
@@ -479,8 +516,8 @@ function dataDirOf(): string {
  * Seed model config từ env qua channel settings:upsertModelConfig (luồng gốc).
  * Ưu tiên SLIDE_ENGINE_*; fallback OPENAI_* (trùng tên với backend/.env).
  */
-async function seedModelConfigFromEnv(): Promise<void> {
-  const apiKey = process.env.SLIDE_ENGINE_API_KEY || process.env.OPENAI_API_KEY || ''
+async function seedModelConfigFromEnv(overrideApiKey?: string): Promise<void> {
+  const apiKey = overrideApiKey || process.env.SLIDE_ENGINE_API_KEY || process.env.OPENAI_API_KEY || ''
   if (!apiKey) {
     log.warn('[server] chưa có API key (SLIDE_ENGINE_API_KEY/OPENAI_API_KEY) — generate sẽ lỗi tới khi cấu hình model')
     return

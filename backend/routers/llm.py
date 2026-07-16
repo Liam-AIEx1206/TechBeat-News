@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from openai import OpenAI, AsyncOpenAI
 
+from key_pool import get_pool
+
 
 # ─── Provider chain ──────────────────────────────────────────────────────
 # Each provider is tried in order. On a quota / billing error, we move to
@@ -25,6 +27,12 @@ class Provider:
 
     @property
     def api_key(self) -> str | None:
+        # Provider "primary" (pinkyne) có pool nhiều key xoay vòng — ưu tiên
+        # dùng key hiện hành của pool thay vì chỉ đọc 1 biến env cố định.
+        if self.api_key_env == "OPENAI_API_KEY":
+            k = get_pool().current()
+            if k:
+                return k
         v = os.getenv(self.api_key_env)
         return v if v and v.strip() else None
 
@@ -105,11 +113,15 @@ _sync_client: OpenAI | None = None
 
 def _make_async(p: Provider) -> AsyncOpenAI | None:
     """Lazy-init an AsyncOpenAI for provider `p`. Returns None if no key."""
-    if p.name in _async_clients:
-        return _async_clients[p.name]
     key = _resolve_provider_key(p)
     if not key:
         return None
+    if p.name == "primary":
+        # Key primary xoay vòng giữa các lần gọi (key pool) — không cache,
+        # luôn dựng client mới với key hiện hành (rẻ, không tốn network).
+        return AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=25.0)
+    if p.name in _async_clients:
+        return _async_clients[p.name]
     client = AsyncOpenAI(api_key=key, base_url=p.base_url, timeout=25.0)
     _async_clients[p.name] = client
     return client
@@ -166,8 +178,11 @@ def log_provider_status() -> None:
     for p in PROVIDER_CHAIN:
         key = _resolve_provider_key(p)
         if key:
-            masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "***"
-            print(f"[LLM]   OK {p.name:12s} key={masked}  url={p.base_url}")
+            if p.name == "primary" and get_pool().size() > 1:
+                print(f"[LLM]   OK {p.name:12s} key-pool={get_pool().size()} key  url={p.base_url}")
+            else:
+                masked = key[:8] + "..." + key[-4:] if len(key) > 12 else "***"
+                print(f"[LLM]   OK {p.name:12s} key={masked}  url={p.base_url}")
         else:
             print(f"[LLM]   -- {p.name:12s} (key '{p.api_key_env}' chua set -> bo qua)")
     print("[LLM] ==================")
@@ -196,7 +211,9 @@ def _is_quota_or_billing_error(e: Exception) -> bool:
     if type(e).__name__ in ("APITimeoutError", "TimeoutException", "ConnectTimeout"):
         return True
     code = getattr(e, "status_code", None) or getattr(e, "code", None)
-    if code in (402, 429, 502, 504):  # 402 = payment required, 429 = rate limit / quota, 502/504 = gateway timeout
+    # 401/403 thêm vào vì pinkyne trả "401 Token quota exhausted" / "403 token
+    # quota is not enough" khi hết quota — cũng nên xoay key/provider, không abort.
+    if code in (401, 402, 403, 429, 502, 504):
         return True
     return False
 
@@ -233,31 +250,44 @@ async def chat_completions_with_fallback(*, model_kind: str, kwargs_factory=None
     tried: list[str] = []
 
     for i, p in enumerate(providers):
-        client = _make_async(p)
-        if client is None:
-            continue
         # Build per-provider kwargs. Factory wins over static kwargs.
         call_kwargs = dict(kwargs)
         if kwargs_factory is not None:
             call_kwargs = dict(kwargs_factory(p.name))
         model = primary_model_override if (i == 0 and primary_model_override) else p.model_for(model_kind)
-        try:
-            resp = await client.chat.completions.create(model=model, **call_kwargs)
-            if i > 0:
-                print(f"[llm] Used fallback provider '{p.name}' (model={model}). "
-                      f"Skipped: {tried}")
-            return resp, p.name, model  # (response, provider_name, model_name)
-        except Exception as e:
-            tried.append(f"{p.name}={type(e).__name__}")
-            last_err = e
-            if not _is_quota_or_billing_error(e):
-                print(f"[llm] Provider '{p.name}' failed with non-quota error "
-                      f"({type(e).__name__}: {e}). Aborting chain.")
-                raise
-            print(f"[llm] Provider '{p.name}' quota exhausted or timed out ({type(e).__name__}: {e}). "
-                  f"Disabling for 5 minutes and trying next in chain...")
-            _disabled_until[p.name] = time.time() + 300
-            continue
+
+        # Provider "primary" có pool nhiều key — xoay hết key trong pool trước
+        # khi bỏ qua sang provider khác (giữ đúng model/chất lượng thay vì tụt
+        # xuống groq chỉ vì 1/20 key hết quota).
+        pool_attempts = get_pool().size() if p.name == "primary" and get_pool().size() > 1 else 1
+
+        for attempt in range(pool_attempts):
+            used_key = p.api_key  # snapshot key TRƯỚC khi gọi, để mark_bad đúng key vừa lỗi
+            client = _make_async(p)
+            if client is None:
+                break  # provider này không có key nào cả — sang provider kế
+            try:
+                resp = await client.chat.completions.create(model=model, **call_kwargs)
+                if i > 0 or attempt > 0:
+                    print(f"[llm] Used {p.name}"
+                          f"{f' (key rotation, attempt {attempt+1}/{pool_attempts})' if attempt > 0 else ' (fallback provider)' if i > 0 else ''} "
+                          f"(model={model}). Skipped: {tried}")
+                return resp, p.name, model  # (response, provider_name, model_name)
+            except Exception as e:
+                tried.append(f"{p.name}#{attempt}={type(e).__name__}")
+                last_err = e
+                if not _is_quota_or_billing_error(e):
+                    print(f"[llm] Provider '{p.name}' failed with non-quota error "
+                          f"({type(e).__name__}: {e}). Aborting chain.")
+                    raise
+                if pool_attempts > 1 and used_key:
+                    get_pool().mark_bad(used_key, reason=f"{type(e).__name__}")
+                    if attempt < pool_attempts - 1:
+                        continue  # thử key kế tiếp trong pool, vẫn ở provider 'primary'
+                print(f"[llm] Provider '{p.name}' quota exhausted or timed out ({type(e).__name__}: {e}). "
+                      f"Disabling for 5 minutes and trying next in chain...")
+                _disabled_until[p.name] = time.time() + 300
+                break  # hết key/hết cách với provider này -> sang provider kế
 
     msg_lines = [
         "Tất cả LLM provider đều hết quota hoặc lỗi billing.",

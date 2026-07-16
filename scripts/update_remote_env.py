@@ -25,7 +25,7 @@ def run():
         return
 
     # Check key variables we want to copy
-    keys_to_copy = ['OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL', 'FALLBACK_API_KEY', 'FALLBACK_BASE_URL', 'FALLBACK_MODEL', 'GROQ_API_KEY']
+    keys_to_copy = ['OPENAI_API_KEY', 'OPENAI_API_KEYS', 'OPENAI_BASE_URL', 'OPENAI_MODEL', 'FALLBACK_API_KEY', 'FALLBACK_BASE_URL', 'FALLBACK_MODEL', 'GROQ_API_KEY']
     env_content_to_append = ""
     for k in keys_to_copy:
         if k in env_vars:

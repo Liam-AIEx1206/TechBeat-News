@@ -43,6 +43,7 @@ from routers.compositions import (
     get_project_root,
     stream_composition_events,
 )
+from key_pool import get_pool, is_quota_error
 
 router = APIRouter()
 
@@ -168,13 +169,15 @@ def _trim_trailing_silence_sync(wav_path: Path, threshold_db: float = -30.0, pad
 
 async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") -> bool:
     """Synthesize speech using OpenAI-compatible TTS (tts-1) via Pinkyne API.
-    Returns True on success, False to fallback.
+    Xoay qua các key trong pool nếu key hiện tại hết quota. Returns True on
+    success, False to fallback.
     """
-    api_key = os.getenv("OPENAI_API_KEY", "")
     base_url = os.getenv("OPENAI_BASE_URL", "https://api.pinkyne.com/v1").rstrip("/")
-    if not api_key:
-        api_key = "sk-ASUYq9R108cJ2M0B6Rb5xqNCk9lqdrsUpqXVoVDwd5dG77Yq"
-        
+    pool = get_pool()
+    if pool.size() == 0:
+        print("[tts/openai] Không có OPENAI_API_KEY/OPENAI_API_KEYS nào được cấu hình")
+        return False
+
     try:
         clean_text = text or ""
         clean_text = clean_text.replace("&", " và ")
@@ -182,11 +185,11 @@ async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") 
         clean_text = clean_text.replace("<", "").replace(">", "")
         clean_text = clean_text.replace("'", "").replace('"', "").replace("“", "").replace("”", "")
         clean_text = clean_text.strip()
-        
+
         if not clean_text:
             print("[tts/openai] Cleaned text is empty, skipping")
             return False
-            
+
         payload = {
             "model": "tts-1",
             "input": clean_text,
@@ -194,23 +197,35 @@ async def _openai_tts_to_wav(text: str, target: Path, voice_name: str = "onyx") 
             "response_format": "mp3",
             "speed": 1.0
         }
-        
+
         temp_mp3 = target.with_suffix(".mp3.tmp")
-        
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                f"{base_url}/audio/speech",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json"
-                },
-                json=payload
-            )
-            
-        if resp.status_code != 200:
-            print(f"[tts/openai] HTTP {resp.status_code}: {resp.text[:200]}")
+
+        resp = None
+        max_attempts = min(pool.size(), 3)  # tối đa 3 lần xoay key cho 1 câu — tránh trễ quá lâu
+        for attempt in range(max_attempts):
+            api_key = pool.current()
+            if not api_key:
+                break
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    f"{base_url}/audio/speech",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json=payload
+                )
+            if resp.status_code == 200:
+                break
+            if is_quota_error(resp.status_code, resp.text) and attempt < max_attempts - 1:
+                pool.mark_bad(api_key, reason=f"HTTP {resp.status_code}")
+                continue
+            break
+
+        if resp is None or resp.status_code != 200:
+            print(f"[tts/openai] HTTP {resp.status_code if resp else '?'}: {resp.text[:200] if resp else 'no response'}")
             return False
-            
+
         temp_mp3.write_bytes(resp.content)
         
         if not temp_mp3.exists():
@@ -283,7 +298,7 @@ async def _gemini_to_wav(text: str, target: Path, voice_name: str | None = None)
     attempts = []
     
     direct_key = os.getenv("GEMINI_API_KEY")
-    pinky_key = os.getenv("OPENAI_API_KEY")
+    pinky_key = get_pool().current() or os.getenv("OPENAI_API_KEY")
     
     # ── Tier 1: Gemini 3.1 (Ưu tiên hàng đầu) ──────────────────
     if direct_key:
@@ -767,18 +782,20 @@ async def _transcribe_groq_api(wav_path: Path) -> list[dict]:
 
 async def _transcribe_pinkyne_api(wav_path: Path) -> list[dict]:
     """Use Pinkyne Whisper API (https://api.pinkyne.com/v1/audio/transcriptions) for transcription with word timestamps.
-    Returns [] on any failure to fallback to other Whisper engines.
+    Xoay qua các key trong pool nếu key hiện tại hết quota. Returns [] on any
+    failure to fallback to other Whisper engines.
     """
-    api_key = os.getenv("OPENAI_API_KEY", "")
     base_url = "https://api.pinkyne.com/v1"
-    if not api_key:
-        api_key = "sk-ASUYq9R108cJ2M0B6Rb5xqNCk9lqdrsUpqXVoVDwd5dG77Yq"
+    pool = get_pool()
+    if pool.size() == 0:
+        print("[whisper/pinkyne] Không có OPENAI_API_KEY/OPENAI_API_KEYS nào được cấu hình")
+        return []
     try:
         file_bytes = wav_path.read_bytes()
         if len(file_bytes) > 24 * 1024 * 1024:
             print(f"[whisper/pinkyne] {wav_path.name} too large — skipping")
             return []
-        
+
         multipart = [
             ("file",                       (wav_path.name, file_bytes, "audio/wav")),
             ("model",                      (None, "whisper-1")),
@@ -788,12 +805,13 @@ async def _transcribe_pinkyne_api(wav_path: Path) -> list[dict]:
             ("timestamp_granularities[]",  (None, "segment")),
             ("prompt",                     (None, WHISPER_PROMPT)),
         ]
-        
-        import asyncio
-        max_retries = 1
-        backoff = 5.0
-        
-        for attempt in range(max_retries):
+
+        resp = None
+        max_attempts = min(pool.size(), 3)  # tối đa 3 lần xoay key — tránh trễ quá lâu
+        for attempt in range(max_attempts):
+            api_key = pool.current()
+            if not api_key:
+                break
             try:
                 # 60s: file wav + server tải cao dễ vượt 25s → timeout (exception rỗng)
                 async with httpx.AsyncClient(timeout=60.0) as client:
@@ -802,17 +820,20 @@ async def _transcribe_pinkyne_api(wav_path: Path) -> list[dict]:
                         headers={"Authorization": f"Bearer {api_key}"},
                         files=multipart,
                     )
-                if resp.status_code == 429:
-                    print(f"[whisper/pinkyne] Rate limit (429).")
-                    return []
-                if resp.status_code != 200:
-                    print(f"[whisper/pinkyne] HTTP {resp.status_code}: {resp.text[:200]}")
-                    return []
-                break
             except Exception as ex:
                 print(f"[whisper/pinkyne] Request exception: {ex}.")
-                return []
-        
+                return []  # lỗi mạng/timeout — không phải do key, không xoay
+            if resp.status_code == 200:
+                break
+            if is_quota_error(resp.status_code, resp.text) and attempt < max_attempts - 1:
+                pool.mark_bad(api_key, reason=f"HTTP {resp.status_code}")
+                continue
+            print(f"[whisper/pinkyne] HTTP {resp.status_code}: {resp.text[:200]}")
+            return []
+
+        if resp is None or resp.status_code != 200:
+            return []
+
         data = resp.json()
         words: list[dict] = []
 
