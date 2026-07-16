@@ -27,6 +27,7 @@ services:
       HYPERFRAMES_PROJECT: /data/my-video
       # Các biến docker-compose từ file .env root (xem .env.compose.example)
       OPENAI_API_KEY:           ${OPENAI_API_KEY:-}
+      OPENAI_API_KEYS:          ${OPENAI_API_KEYS:-}
       OPENAI_BASE_URL:          ${OPENAI_BASE_URL:-https://api.pinkyne.com/v1}
       OPENAI_MODEL:             ${OPENAI_MODEL:-gpt-5.1}
       OPENAI_COMPOSITION_MODEL: ${OPENAI_COMPOSITION_MODEL:-claude-sonnet-4-6}
@@ -94,6 +95,7 @@ services:
     environment:
       SLIDE_ENGINE_MODEL: ${SLIDE_ENGINE_MODEL:-gpt-5}
       OPENAI_API_KEY:     ${OPENAI_API_KEY:-}
+      OPENAI_API_KEYS:    ${OPENAI_API_KEYS:-}
       OPENAI_BASE_URL:    ${OPENAI_BASE_URL:-https://api.pinkyne.com/v1}
     volumes:
       # Session/render sinh ra lưu ở volume (templates đã bake trong image)
