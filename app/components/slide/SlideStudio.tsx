@@ -35,6 +35,7 @@ import {
   type StyleItem, type FontItem, type GeneratedPage, type ExportKind,
   type ChatMessage, type SpeechStyle, type HistoryVersion, type TemplateItem, type IndexTransition,
 } from "@/lib/slideEngine";
+import { GalaxyCanvas } from "@/components/GalaxyCanvas";
 
 type Step = "input" | "generating" | "preview";
 
@@ -57,19 +58,25 @@ export function SlideStudio() {
   const [initialPages, setInitialPages] = useState<GeneratedPage[]>([]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--white)" }}>
-      <StudioHeader step={step} />
-      {step === "input" && (
-        <InputStep
-          onStarted={(sid, t) => { setSessionId(sid); setTitle(t); setInitialPages([]); setStep("generating"); }}
-        />
-      )}
-      {step === "generating" && (
-        <GeneratingStep sessionId={sessionId} title={title} onDone={(pages) => { setInitialPages(pages); setStep("preview"); }} onBack={() => setStep("input")} />
-      )}
-      {step === "preview" && (
-        <PreviewStep sessionId={sessionId} title={title} initialPages={initialPages} onBack={() => setStep("input")} />
-      )}
+    <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--white)", position: "relative" }}>
+      {/* Nền galaxy cam giống luồng video */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <GalaxyCanvas accentHue={28} starCount={200} nebulaOpacity={0.08} />
+      </div>
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <StudioHeader step={step} />
+        {step === "input" && (
+          <InputStep
+            onStarted={(sid, t) => { setSessionId(sid); setTitle(t); setInitialPages([]); setStep("generating"); }}
+          />
+        )}
+        {step === "generating" && (
+          <GeneratingStep sessionId={sessionId} title={title} onDone={(pages) => { setInitialPages(pages); setStep("preview"); }} onBack={() => setStep("input")} />
+        )}
+        {step === "preview" && (
+          <PreviewStep sessionId={sessionId} title={title} initialPages={initialPages} onBack={() => setStep("input")} />
+        )}
+      </div>
     </div>
   );
 }
@@ -83,7 +90,10 @@ function StudioHeader({ step }: { step: Step }) {
   const order: Step[] = ["input", "generating", "preview"];
   const cur = order.indexOf(step);
   return (
-    <header style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "16px 24px", borderBottom: "1px solid var(--gray-2)" }}>
+    <header style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "16px 24px", borderBottom: "1px solid var(--gray-2)" }}>
+      <a href="/" title="Về trang chủ — xem lịch sử video/slide" style={{ position: "absolute", left: 24, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: 6, color: "var(--gray-5)", textDecoration: "none", fontSize: 12, fontWeight: 700 }}>
+        <ArrowLeft size={14} /> Trang chủ
+      </a>
       {steps.map((s, i) => {
         const done = cur > i, active = cur === i;
         return (
@@ -271,9 +281,17 @@ function InputStep({ onStarted }: { onStarted: (sessionId: string, title: string
           <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={srcMode === "topic" ? 3 : 1}
             placeholder="VD: Giới thiệu game Palworld — tổng quan, gameplay, số liệu Steam, kết luận."
             style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 12, color: "var(--white)", fontSize: 14, padding: "12px 14px", fontFamily: "inherit", lineHeight: 1.6, resize: "vertical", marginBottom: 18 }} />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
             <label style={{ ...fieldLabel, marginBottom: 0 }}>Chọn mẫu thiết kế <span style={{ color: "var(--gray-5)" }}>({templates.length})</span></label>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mẫu…" style={{ ...selectStyle, width: 220, padding: "8px 12px" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Số trang khi AI điền nội dung theo chủ đề (bỏ trống nội dung = dùng nguyên số trang của mẫu)">
+                <label style={{ ...fieldLabel, marginBottom: 0 }}>Số trang</label>
+                <input type="number" min={3} max={30} value={pageCount}
+                  onChange={(e) => setPageCount(Math.max(3, Math.min(30, Number(e.target.value) || 3)))}
+                  style={{ width: 56, background: "rgba(255,255,255,0.04)", border: "1px solid var(--gray-3)", borderRadius: 8, color: "var(--accent)", fontSize: 13, fontWeight: 800, textAlign: "center", padding: "6px" }} />
+              </div>
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mẫu…" style={{ ...selectStyle, width: 200, padding: "8px 12px" }} />
+            </div>
           </div>
           {loading ? (
             <div style={{ color: "var(--gray-5)", fontSize: 13, padding: 20 }}>Đang tải mẫu…</div>
