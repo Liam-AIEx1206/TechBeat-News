@@ -529,6 +529,8 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
   const [refreshKey, setRefreshKey] = useState(0);
   const [panel, setPanel] = useState<"chat" | "speech">("chat");
   const [showHistory, setShowHistory] = useState(false);
+  const [addPageOpen, setAddPageOpen] = useState(false);
+  const [addPageDesc, setAddPageDesc] = useState("");
   const [transition, setTransition] = useState<IndexTransition>("none");
 
   useEffect(() => { getIndexTransition(sessionId).then((t) => setTransition((t as IndexTransition) || "none")).catch(() => {}); }, [sessionId]);
@@ -543,16 +545,17 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
   const activePage = pages[active];
   const failed = pages.filter((p) => p.status === "failed").length;
 
-  async function waitIdleThenRefresh(label: string) {
+  async function waitIdleThenRefresh(label: string): Promise<GeneratedPage[]> {
     setBusyMsg(label);
     await new Promise((r) => setTimeout(r, 1500));
     for (let i = 0; i < 80; i++) {
       if (!(await hasActiveRun(sessionId))) break;
       await new Promise((r) => setTimeout(r, 1500));
     }
-    await refresh();
+    const next = await refresh();
     setRefreshKey((k) => k + 1);
     setBusyMsg("");
+    return next;
   }
 
   async function handleExport(kind: ExportKind) {
@@ -569,11 +572,26 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
     finally { setExporting(""); }
   }
 
-  async function handleAddPage() {
-    const desc = prompt("Nội dung trang mới cần thêm là gì?");
-    if (!desc?.trim()) return;
-    try { await addPage(sessionId, desc.trim(), activePage ? active + 1 : pages.length); await waitIdleThenRefresh("Đang thêm trang…"); }
-    catch (e) { alert(e instanceof Error ? e.message : "Thêm trang lỗi"); }
+  function handleAddPage() {
+    setAddPageDesc("");
+    setAddPageOpen(true);
+  }
+  async function submitAddPage() {
+    const desc = addPageDesc.trim();
+    if (!desc) return;
+    const insertAfter = activePage ? active + 1 : pages.length;
+    setAddPageOpen(false);
+    try {
+      const before = pages.length;
+      await addPage(sessionId, desc, insertAfter);
+      const after = await waitIdleThenRefresh("Đang thêm trang…");
+      // Nhảy tới trang mới vừa sinh (thường được chèn ngay sau trang đang xem)
+      if (after.length > before) {
+        setActive(Math.min(insertAfter, after.length - 1));
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Thêm trang lỗi");
+    }
   }
   async function handleDeletePage(p: GeneratedPage) {
     if (!p.id || !confirm(`Xoá trang "${p.title}"?`)) return;
@@ -726,6 +744,54 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
       {showHistory && (
         <HistoryDialog sessionId={sessionId} onClose={() => setShowHistory(false)}
           onRolledBack={() => { setShowHistory(false); waitIdleThenRefresh("Đang khôi phục phiên bản…"); }} />
+      )}
+
+      {addPageOpen && (
+        <div
+          onClick={() => setAddPageOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 100001, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "min(560px, 92vw)", background: "var(--surface, #141420)", border: "1px solid var(--gray-2, rgba(255,255,255,0.1))", borderRadius: 16, padding: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.55)" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <Plus size={18} style={{ color: "var(--accent, #f97316)" }} />
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--white, #fff)" }}>Thêm trang mới</div>
+            </div>
+            <div style={{ fontSize: 13, color: "var(--gray-5, #a09db8)", marginBottom: 14 }}>
+              Mô tả nội dung cho trang slide kế tiếp. AI sẽ tạo trang mới bám theo style hiện tại.
+            </div>
+            <textarea
+              autoFocus
+              value={addPageDesc}
+              onChange={(e) => setAddPageDesc(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitAddPage(); }
+                if (e.key === "Escape") setAddPageOpen(false);
+              }}
+              placeholder="Ví dụ: Trang tổng kết 3 bài học chính, kèm lời kêu gọi hành động…"
+              rows={4}
+              style={{ width: "100%", resize: "vertical", padding: "12px 14px", borderRadius: 10, border: "1px solid var(--gray-2, rgba(255,255,255,0.12))", background: "rgba(255,255,255,0.04)", color: "var(--white, #fff)", fontSize: 14, lineHeight: 1.5, outline: "none", fontFamily: "inherit" }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button onClick={() => setAddPageOpen(false)} className="btn-ghost" style={{ fontSize: 13, padding: "8px 16px" }}>
+                Huỷ
+              </button>
+              <button
+                onClick={submitAddPage}
+                disabled={!addPageDesc.trim()}
+                style={{ fontSize: 13, fontWeight: 700, padding: "8px 18px", borderRadius: 10, border: "none", cursor: addPageDesc.trim() ? "pointer" : "not-allowed", opacity: addPageDesc.trim() ? 1 : 0.5, background: "var(--accent, #f97316)", color: "#1a0f08", display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <Plus size={14} />
+                Tạo trang
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--gray-5, #6b6880)", marginTop: 10, textAlign: "right" }}>
+              Ctrl/⌘ + Enter để tạo nhanh
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
