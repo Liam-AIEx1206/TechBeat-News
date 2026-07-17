@@ -50,12 +50,43 @@ const DESIGN_RULES = `[QUY TẮC THIẾT KẾ — áp dụng cho toàn bộ slid
 — TƯƠNG PHẢN CAO giữa chữ và nền (style pastel/sáng thì chữ đậm & tối màu).
 — Tiêu đề mỗi trang là nội dung thật, không ghi chung chung "Bìa"/"Slide 1".`;
 
+/* ─── Slide-flow persistence (sống sót qua reload / swipe-back) ───────────
+ * Giống luồng video (xnew_build_state): lưu step + sessionId + title vào
+ * localStorage để khi tải lại trang không mất slide vừa tạo. Chỉ khôi phục
+ * khi phiên < 24h và đang ở bước preview/generating (bước input thì không cần). */
+const SLIDE_KEY = "xnew_slide_state";
+type PersistedSlide = { step: Step; sessionId: string; title: string; savedAt: number };
+function loadSlide(): PersistedSlide | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem(SLIDE_KEY);
+    if (!raw) return null;
+    const s: PersistedSlide = JSON.parse(raw);
+    if (!s.sessionId || s.step === "input") return null;
+    if (Date.now() - s.savedAt > 86_400_000) { localStorage.removeItem(SLIDE_KEY); return null; }
+    // "generating" đã xong lúc reload thì mở lại ở preview (an toàn hơn kẹt loading).
+    if (s.step === "generating") s.step = "preview";
+    return s;
+  } catch { return null; }
+}
+function saveSlide(s: Omit<PersistedSlide, "savedAt">) {
+  try { localStorage.setItem(SLIDE_KEY, JSON.stringify({ ...s, savedAt: Date.now() })); } catch { /* quota */ }
+}
+function clearSlide() { try { localStorage.removeItem(SLIDE_KEY); } catch { /* noop */ } }
+
 /* ─────────────────────────  ROOT  ───────────────────────── */
 export function SlideStudio() {
-  const [step, setStep] = useState<Step>("input");
-  const [sessionId, setSessionId] = useState("");
-  const [title, setTitle] = useState("");
+  const restored = typeof window !== "undefined" ? loadSlide() : null;
+  const [step, setStep] = useState<Step>(restored?.step ?? "input");
+  const [sessionId, setSessionId] = useState(restored?.sessionId ?? "");
+  const [title, setTitle] = useState(restored?.title ?? "");
   const [initialPages, setInitialPages] = useState<GeneratedPage[]>([]);
+
+  // Lưu lại mỗi khi step/session đổi để reload giữ nguyên trạng thái.
+  useEffect(() => {
+    if (step === "input" || !sessionId) clearSlide();
+    else saveSlide({ step, sessionId, title });
+  }, [step, sessionId, title]);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--black)", color: "var(--white)", position: "relative" }}>
@@ -954,9 +985,13 @@ function ScaledSlideFrame({ url, title, frameKey }: { url: string; title: string
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Container LUÔN là khung 16:9 (khớp đúng 1600×900). Vì thế chỉ scale theo
+    // width — height tự khớp cùng tỉ lệ. Trước đây dùng min(w/1600, h/900) với
+    // clientHeight dao động (aspect-ratio chưa resolve xong lúc đo) khiến hệ số
+    // scale ra khác nhau mỗi lần render → cỡ chữ nhìn "nhảy" khi lướt qua lại.
     const measure = () => {
-      const w = el.clientWidth, h = el.clientHeight;
-      if (w && h) setScale(Math.min(w / 1600, h / 900));
+      const w = el.clientWidth;
+      if (w) setScale(w / 1600);
     };
     measure();
     const ro = new ResizeObserver(measure);
