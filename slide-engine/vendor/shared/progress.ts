@@ -1,4 +1,4 @@
-export type AppLocale = 'zh' | 'en'
+export type AppLocale = 'zh' | 'en' | 'vi'
 
 export type ProgressStatusKey =
   | 'understanding'
@@ -15,43 +15,53 @@ export type ProgressStatusKey =
 const PROGRESS_TEXT: Record<ProgressStatusKey, Record<AppLocale, string>> = {
   understanding: {
     zh: '理解需求',
-    en: 'Understanding request'
+    en: 'Understanding request',
+    vi: 'Đang phân tích yêu cầu'
   },
   planning: {
     zh: '规划结构',
-    en: 'Planning structure'
+    en: 'Planning structure',
+    vi: 'Đang lên bố cục'
   },
   preparing: {
     zh: '准备画布',
-    en: 'Preparing canvas'
+    en: 'Preparing canvas',
+    vi: 'Đang chuẩn bị khung slide'
   },
   generating: {
     zh: '生成页面',
-    en: 'Generating pages'
+    en: 'Generating pages',
+    vi: 'Đang sinh trang'
   },
   checking: {
     zh: '检查页面',
-    en: 'Checking pages'
+    en: 'Checking pages',
+    vi: 'Đang kiểm tra trang'
   },
   retrying: {
     zh: '正在重试',
-    en: 'Retrying'
+    en: 'Retrying',
+    vi: 'Đang thử lại'
   },
   finalizing: {
     zh: '正在收尾',
-    en: 'Finalizing'
+    en: 'Finalizing',
+    vi: 'Đang hoàn tất'
   },
   completed: {
     zh: '已完成',
-    en: 'Completed'
+    en: 'Completed',
+    vi: 'Đã xong'
   },
   failed: {
     zh: '已失败',
-    en: 'Failed'
+    en: 'Failed',
+    vi: 'Thất bại'
   },
   canceled: {
     zh: '已取消',
-    en: 'Canceled'
+    en: 'Canceled',
+    vi: 'Đã huỷ'
   }
 }
 
@@ -69,7 +79,7 @@ const LABEL_MAP: Array<[RegExp, ProgressStatusKey]> = [
 ]
 
 export const normalizeLocale = (locale: AppLocale | undefined): AppLocale =>
-  locale === 'en' ? 'en' : 'zh'
+  locale === 'en' ? 'en' : locale === 'zh' ? 'zh' : 'vi'
 
 export const progressText = (locale: AppLocale | undefined, key: ProgressStatusKey): string =>
   PROGRESS_TEXT[key][normalizeLocale(locale)]

@@ -69,7 +69,7 @@ export type GenerationContext = {
   sourcePlan: SourceDocumentPlan | null
   topic: string
   deckTitle: string
-  appLocale: 'zh' | 'en'
+  appLocale: 'zh' | 'en' | 'vi'
   fontSelection: FontSelection
   animationPreferences: AnimationPreferencesPayload | null
 }

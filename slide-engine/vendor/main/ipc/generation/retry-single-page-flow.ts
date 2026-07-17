@@ -49,7 +49,7 @@ export type RetrySinglePageContext = {
   styleVersion: string
   topic: string
   deckTitle: string
-  appLocale: 'zh' | 'en'
+  appLocale: 'zh' | 'en' | 'vi'
   sessionRecord: Record<string, unknown>
   previousSessionStatus: string
   messageScope: 'main' | 'page'

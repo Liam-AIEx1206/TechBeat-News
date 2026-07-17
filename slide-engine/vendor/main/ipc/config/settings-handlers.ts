@@ -40,7 +40,7 @@ const normalizeMaxTokens = (value: unknown): number => {
 const normalizeVerifyErrorMessage = (
   error: unknown,
   options: {
-    locale: 'zh' | 'en'
+    locale: 'zh' | 'en' | 'vi'
     provider: unknown
   }
 ): string | null => {

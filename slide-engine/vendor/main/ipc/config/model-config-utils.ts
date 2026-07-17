@@ -73,7 +73,7 @@ const resolveModelConfigRow = (
     thinkingParameterMode?: string | null
   },
   options: {
-    locale: 'zh' | 'en'
+    locale: 'zh' | 'en' | 'vi'
     missingPrefixZh: string
     missingPrefixEn: string
   }

@@ -37,10 +37,10 @@ import { logAgentToolEvents } from '../../utils/agent-tool-logger'
 import { normalizeKeyPoints, normalizeOutlineText } from './outline-normalizer'
 import { buildLocalCompletedGenerationPageSummary } from '../generation/generation-summary'
 
-type AppLocale = 'zh' | 'en'
+type AppLocale = 'zh' | 'en' | 'vi'
 
 const uiText = (locale: AppLocale | undefined, zh: string, en: string): string =>
-  locale === 'en' ? en : zh
+  locale === 'en' ? en : locale === 'zh' ? zh : en
 
 async function readPageHtmlIfExists(filePath: string): Promise<string> {
   try {

@@ -15,8 +15,8 @@ import { buildSessionAssetHeadTags } from '../ipc/engine/page-assets'
 import { normalizeCreativePageFragment } from './page-fragment-normalizer'
 import { validateTemplateSkeletonPreserved } from '../ipc/templates/template-skeleton-validator'
 
-const uiText = (locale: 'zh' | 'en' | undefined, zh: string, en: string): string =>
-  locale === 'en' ? en : zh
+const uiText = (locale: 'zh' | 'en' | 'vi' | undefined, zh: string, en: string): string =>
+  locale === 'en' ? en : locale === 'zh' ? zh : en
 
 export const BASE_PAGE_STYLE_TAG = `<style id="ppt-page-guard-style">
   :root {

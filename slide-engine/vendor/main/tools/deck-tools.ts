@@ -19,8 +19,8 @@ import {
   validateIndexShellHtml
 } from '../session/index-transition'
 
-const uiText = (locale: 'zh' | 'en' | undefined, zh: string, en: string): string =>
-  locale === 'en' ? en : zh
+const uiText = (locale: 'zh' | 'en' | 'vi' | undefined, zh: string, en: string): string =>
+  locale === 'en' ? en : locale === 'zh' ? zh : en
 
 export function createSessionBoundDeckTools(context: SessionDeckGenerationContext): unknown[] {
   let lastReportedProgress = 0
@@ -45,7 +45,8 @@ export function createSessionBoundDeckTools(context: SessionDeckGenerationContex
   const isContainerScopeEdit = isEditMode && context.editScope === 'presentation-container'
   const isDeckScopeEdit = isEditMode && context.editScope === 'deck'
   const hasSelector = Boolean(context.selectedSelector?.trim())
-  const statusLanguage = context.appLocale === 'en' ? 'English' : 'Simplified Chinese'
+  const statusLanguage =
+    context.appLocale === 'en' ? 'English' : context.appLocale === 'zh' ? 'Simplified Chinese' : 'Vietnamese'
   const isSinglePageTask =
     !isEditMode &&
     (Boolean(context.selectedPageId) || targetPageIds.length === 1 || context.outlineTitles.length === 1)

@@ -8,8 +8,11 @@ import { runDeepAgentDeckGeneration } from '../engine/generate'
 import type { AnyFlowContext, EmitAssistantFn } from './types'
 import { STABLE_HTML_FRAGMENT_PROTOCOL } from '../../prompt/shared'
 
-export const uiText = (locale: 'zh' | 'en', zh: string, en: string): string =>
-  locale === 'en' ? en : zh
+export const uiText = (locale: 'zh' | 'en' | 'vi', zh: string, en: string, vi?: string): string => {
+  if (locale === 'en') return en
+  if (locale === 'zh') return zh
+  return vi ?? en
+}
 
 export const resolvePageHtmlPath = (args: {
   projectDir: string
@@ -170,7 +173,7 @@ type CreateGenerationPageCallbacksArgs = {
 type GeneratePagesWithRetryArgs = {
   runArgs: DeckGenerationArgs
   emitChunk: (chunk: GenerateChunkEvent) => void
-  appLocale: 'zh' | 'en'
+  appLocale: 'zh' | 'en' | 'vi'
   runId: string
   totalPages: number
   retryDetail?: string

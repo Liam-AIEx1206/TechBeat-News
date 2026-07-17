@@ -1,4 +1,4 @@
-export type GenerationSummaryLocale = 'zh' | 'en'
+export type GenerationSummaryLocale = 'zh' | 'en' | 'vi'
 
 export function buildLocalCompletedGenerationPageSummary(args: {
   appLocale: GenerationSummaryLocale

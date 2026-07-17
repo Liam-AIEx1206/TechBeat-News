@@ -54,7 +54,7 @@ export type CommonGenerationContext = {
   styleVersion: string
   topic: string
   deckTitle: string
-  appLocale: 'zh' | 'en'
+  appLocale: 'zh' | 'en' | 'vi'
   fontSelection: FontSelection
   sourcePlan: SourceDocumentPlan | null
   projectId: string
@@ -283,7 +283,8 @@ export async function resolveCommonContext(
   if (!entry) throw new Error('Session not found')
 
   const settings = await db.getAllSettings()
-  const appLocale: 'zh' | 'en' = settings.locale === 'en' ? 'en' : 'zh'
+  const appLocale: 'zh' | 'en' | 'vi' =
+    settings.locale === 'en' ? 'en' : settings.locale === 'zh' ? 'zh' : 'vi'
   const projectId = existingProject?.id ?? (await db.getProject(sessionId))?.id
   if (!projectId) throw new Error('Failed to resolve project for session')
 

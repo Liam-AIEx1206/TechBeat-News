@@ -82,7 +82,7 @@ export type ExecuteDeckEditBatchFlowArgs = {
   indexPath: string
   originalUserMessage: string
   runId: string
-  appLocale: 'zh' | 'en'
+  appLocale: 'zh' | 'en' | 'vi'
   signal?: AbortSignal
   launchStaggerMs?: number
   heartbeatIntervalMs?: number
@@ -240,7 +240,7 @@ const remapChunk = (
     totalPages: number
     pageNumber: number
     pageId: string
-    appLocale?: 'zh' | 'en'
+    appLocale?: 'zh' | 'en' | 'vi'
     pageProgress: Map<string, number>
     lastProgress: { value: number }
   }

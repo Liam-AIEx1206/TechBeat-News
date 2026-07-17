@@ -55,7 +55,7 @@ export interface SessionDeckGenerationContext {
   styleKey?: string;
   styleName?: string;
   styleVersion?: string;
-  appLocale?: "zh" | "en";
+  appLocale?: "zh" | "en" | "vi";
   animationPreferences?: AnimationPreferencesPayload | null;
   userMessage: string;
   outlineTitles: string[];

@@ -644,7 +644,8 @@ export async function executeRetryFailedPages(
   const fallbackCompletionSummary = uiText(
     context.appLocale,
     `失败页面已经重试完成，本次修复 ${retrySuccessPages.length} 页。`,
-    `Failed pages were retried. ${retrySuccessPages.length} pages were fixed.`
+    `Failed pages were retried. ${retrySuccessPages.length} pages were fixed.`,
+    `Đã thử lại các trang lỗi, lần này sửa được ${retrySuccessPages.length} trang.`
   )
   await emitAssistant(context, agentSummary.trim() || fallbackCompletionSummary)
   await db.updateGenerationRunStatus(context.runId, 'completed', null)

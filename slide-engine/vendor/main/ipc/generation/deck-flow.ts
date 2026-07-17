@@ -802,12 +802,14 @@ export async function executeDeckGeneration(
       ? uiText(
           context.appLocale,
           `演示已生成完成。当前共 ${pageDescriptors.length} 页，主题「${context.topic}」。其中 ${placeholderPages.length} 页可以继续优化。`,
-          `The presentation has been generated. It has ${pageDescriptors.length} pages for "${context.topic}". ${placeholderPages.length} pages can still be improved.`
+          `The presentation has been generated. It has ${pageDescriptors.length} pages for "${context.topic}". ${placeholderPages.length} pages can still be improved.`,
+          `Đã sinh xong slide. Tổng ${pageDescriptors.length} trang, chủ đề "${context.topic}". Trong đó ${placeholderPages.length} trang có thể tối ưu thêm.`
         )
       : uiText(
           context.appLocale,
           `演示已生成完成。共 ${pageDescriptors.length} 页，主题「${context.topic}」。`,
-          `The presentation has been generated. It has ${pageDescriptors.length} pages for "${context.topic}".`
+          `The presentation has been generated. It has ${pageDescriptors.length} pages for "${context.topic}".`,
+          `Đã sinh xong slide. Tổng ${pageDescriptors.length} trang, chủ đề "${context.topic}".`
         )
   await emitAssistant(context, agentSummary.trim() || fallbackCompletionSummary)
 

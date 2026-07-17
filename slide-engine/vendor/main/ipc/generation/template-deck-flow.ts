@@ -638,7 +638,10 @@ export async function executeTemplateDeckGeneration(
       : `模板生成已完成。共 ${fullDeckPageCount} 页，主题「${context.topic}」。`,
     context.templateRetry
       ? `Unfinished template pages are complete. The deck now has ${fullDeckPageCount} pages for "${context.topic}".`
-      : `Template generation completed. It has ${fullDeckPageCount} pages for "${context.topic}".`
+      : `Template generation completed. It has ${fullDeckPageCount} pages for "${context.topic}".`,
+    context.templateRetry
+      ? `Đã sinh nốt các trang mẫu còn thiếu. Slide hiện có ${fullDeckPageCount} trang, chủ đề "${context.topic}".`
+      : `Đã sinh xong slide theo mẫu. Tổng ${fullDeckPageCount} trang, chủ đề "${context.topic}".`
   )
   await emitAssistant(context, agentSummary.trim() || fallbackCompletionSummary)
   await db.updateGenerationRunStatus(context.runId, 'completed', null)
