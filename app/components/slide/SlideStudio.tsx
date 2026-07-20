@@ -562,6 +562,8 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
   const [showHistory, setShowHistory] = useState(false);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [addPageDesc, setAddPageDesc] = useState("");
+  const [addingPage, setAddingPage] = useState(false);
+  const [addingAt, setAddingAt] = useState(0); // vị trí chèn placeholder trong sidebar
   const [transition, setTransition] = useState<IndexTransition>("none");
 
   useEffect(() => { getIndexTransition(sessionId).then((t) => setTransition((t as IndexTransition) || "none")).catch(() => {}); }, [sessionId]);
@@ -612,16 +614,23 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
     if (!desc) return;
     const insertAfter = activePage ? active + 1 : pages.length;
     setAddPageOpen(false);
+    // Bật loading NGAY — trước đây busyMsg chỉ bật sau khi addPage() đã xong
+    // (30-60s) nên user không thấy dấu hiệu nào trong lúc AI đang thiết kế.
+    setAddingAt(insertAfter);
+    setAddingPage(true);
+    setBusyMsg("Đang tạo trang mới… (AI đang thiết kế, ~30–60s)");
     try {
       const before = pages.length;
       await addPage(sessionId, desc, insertAfter);
-      const after = await waitIdleThenRefresh("Đang thêm trang…");
+      const after = await waitIdleThenRefresh("Đang tạo trang mới… (AI đang thiết kế, ~30–60s)");
       // Nhảy tới trang mới vừa sinh (thường được chèn ngay sau trang đang xem)
       if (after.length > before) {
         setActive(Math.min(insertAfter, after.length - 1));
       }
     } catch (e) {
       alert(e instanceof Error ? e.message : "Thêm trang lỗi");
+    } finally {
+      setAddingPage(false);
     }
   }
   async function handleDeletePage(p: GeneratedPage) {
@@ -653,6 +662,7 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 57px)" }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 24px", borderBottom: "1px solid var(--gray-2)", flexWrap: "wrap" }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 360 }}>{title}</div>
@@ -724,7 +734,23 @@ function PreviewStep({ sessionId, title, initialPages, onBack }: { sessionId: st
               )}
             </div>
           ))}
-          <button onClick={handleAddPage} className="btn-ghost" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 11, marginTop: 6 }}>
+          {addingPage && (
+            <div style={{
+              padding: "8px 10px", borderRadius: 10,
+              background: "rgba(249,115,22,0.06)",
+              border: "1px dashed var(--accent, #f97316)",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <div style={{ width: 14, height: 14, flexShrink: 0, border: "2px solid var(--accent, #f97316)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent, #f97316)", marginBottom: 2 }}>
+                  Trang {Math.min(addingAt, pages.length) + 1}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--gray-5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Đang tạo…</div>
+              </div>
+            </div>
+          )}
+          <button onClick={handleAddPage} disabled={addingPage} className="btn-ghost" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 11, marginTop: 6, opacity: addingPage ? 0.5 : 1, cursor: addingPage ? "not-allowed" : "pointer" }}>
             <Plus size={13} />
             Thêm trang
           </button>

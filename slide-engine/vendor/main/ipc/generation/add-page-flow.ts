@@ -157,6 +157,40 @@ export async function executeAddPageGeneration(
 
   const existingTitles = existingPages.map((p) => p.title).filter(Boolean)
 
+  // ── Chọn 1 slide cũ làm MẪU THAM CHIẾU để trang mới đồng bộ visual ──
+  // Trang mới sinh cô lập (single page) nên chỉ dựa vào mô tả text của design
+  // contract thì hay lệch font/màu/spacing. Ép agent đọc HTML một trang cũ
+  // (ưu tiên trang liền trước vị trí chèn, chỉ lấy trang đã completed) để bám
+  // đúng thang font-size, họ font, palette, nhịp spacing, phong cách card.
+  const completedPages = existingPages.filter((p) => p.status === 'completed' && p.file_slug)
+  const referencePages = completedPages.length > 0 ? completedPages : existingPages.filter((p) => p.file_slug)
+  const referencePage =
+    [...referencePages]
+      .filter((p) => p.page_number <= insertAfterPageNumber)
+      .sort((a, b) => b.page_number - a.page_number)[0] ||
+    [...referencePages].sort((a, b) => a.page_number - b.page_number)[0] ||
+    null
+  const referenceSlug = referencePage?.file_slug || ''
+  const styleReferenceAddendum = referenceSlug
+    ? uiText(
+        context.appLocale,
+        [
+          '【风格同步 — 新增页必须与现有页视觉一致】',
+          `1. 写入前，先调用 read_file(path="/${referenceSlug}.html") 阅读这张现有页作为视觉参考。`,
+          '2. 严格复用参考页的：字号层级(font-size 具体数值)、字体族(var(--ppt-title-font)/var(--ppt-body-font))、调色板 hex、留白/间距节奏、圆角/描边/阴影语言、卡片/面板/列表的结构与质感。',
+          '3. 只替换业务文本与数据为新页内容；不要照搬参考页的原文/数字，也不要另起一套新风格或改变整体色系。',
+          '4. 参考页只用于对齐视觉语言，不要复制它的骨架类或 runtime 结构。'
+        ].join('\n'),
+        [
+          '[Style sync — the new page MUST look consistent with the existing deck]',
+          `1. Before writing, call read_file(path="/${referenceSlug}.html") to inspect this existing page as a visual reference.`,
+          '2. Strictly reuse the reference page: exact font-size scale, font families (var(--ppt-title-font)/var(--ppt-body-font)), palette hex tokens, spacing/whitespace rhythm, corner-radius/border/shadow language, and the card/panel/list structure and texture.',
+          '3. Only swap in the new business text and data; do NOT copy the reference page\'s original wording/numbers, and do NOT invent a new style or re-theme the colors.',
+          '4. The reference page is only for aligning the visual language — do not copy its skeleton classes or runtime structure.'
+        ].join('\n')
+      )
+    : ''
+
   let planResult: { title: string; contentOutline: string; layoutIntent: LayoutIntent }
   try {
     planResult = await planNewPage({
@@ -292,6 +326,7 @@ export async function executeAddPageGeneration(
         outlineItems: [planResult],
         sourceDocumentPaths: [],
         generationMode: 'generate',
+        singlePagePromptAddendum: styleReferenceAddendum,
         renderingLabel: uiText(context.appLocale, '正在生成新增页面', 'Generating the new page'),
         pageTasks: [
           {
