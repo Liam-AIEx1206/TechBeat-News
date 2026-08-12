@@ -436,6 +436,37 @@ export function useClientRender() {
             console.warn("Failed to focus or toggle pointer events:", e);
           }
 
+          // ── Preload font/ảnh/âm thanh TRƯỚC khi ghi hình ─────────────────
+          // Nếu ghi hình khi font/ảnh chưa tải xong, mấy giây đầu sẽ tĩnh/
+          // lệch font ("đơ"). Nếu audio chưa buffer, audio.play() phải chờ
+          // tải WAV → tiếng bắt đầu trễ hơn phụ đề suốt video.
+          try {
+            const idoc = iframe.contentDocument;
+            if (idoc) {
+              if (idoc.fonts?.ready) {
+                await Promise.race([idoc.fonts.ready, sleep(5000)]);
+              }
+              const imgs = Array.from(idoc.querySelectorAll("img"));
+              await Promise.race([
+                Promise.all(imgs.map((img) => img.complete
+                  ? Promise.resolve()
+                  : new Promise((r) => { img.onload = r; img.onerror = r; }))),
+                sleep(6000),
+              ]);
+              const audios = Array.from(idoc.querySelectorAll("audio")) as HTMLAudioElement[];
+              audios.forEach((a) => { a.preload = "auto"; a.load(); });
+              await Promise.race([
+                Promise.all(audios.map((a) => a.readyState >= 3
+                  ? Promise.resolve()
+                  : new Promise((r) => { a.oncanplaythrough = r; a.onerror = r; }))),
+                sleep(8000),
+              ]);
+              onLog?.(`[client-render] preloaded: fonts + ${imgs.length} imgs + ${audios.length} audios`);
+            }
+          } catch (e) {
+            console.warn("Preload before record failed:", e);
+          }
+
           // After stream starts, Chrome shows a share banner that shrinks the viewport.
           // Wait a moment for layout to stabilize before computing crop.
           await sleep(300);
@@ -539,7 +570,10 @@ export function useClientRender() {
           const chunks: Blob[] = [];
           const recorder = new MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: 8_000_000,  // 8 Mbps for high-quality 1080p
+            // 5 Mbps là đủ cho nội dung animation (server sẽ re-encode crf 23
+            // sau khi nhận). 8 Mbps trước đây sinh ~123MB/2 phút → khâu upload
+            // mất 4-5 phút trên đường truyền yếu.
+            videoBitsPerSecond: 5_000_000,
           });
           mediaRecorder = recorder; // bind to outer scope for visibility check
 
